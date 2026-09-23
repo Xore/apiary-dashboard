@@ -59,7 +59,7 @@ function buildAnomalies(): MlAnomaly[] {
       sourceEventId: event.id,
       sourceIndex: `honeypot-${event.sensor.split('-')[0]}-2026.09.23`,
       eventType: event.type,
-      dstPort: { ssh: 22, telnet: 23, http: 80, smb: 445, rdp: 3389, ftp: 21, mysql: 3306, sip: 5060 }[event.protocol],
+      dstPort: event.dstPort,
       proto: event.protocol === 'sip' ? 'udp' : 'tcp',
       sensor: event.sensor,
       status,

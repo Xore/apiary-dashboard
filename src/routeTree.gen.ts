@@ -32,12 +32,13 @@ import { Route as LayoutProblemReportsRouteImport } from './routes/_layout/probl
 import { Route as LayoutRecordingsRouteImport } from './routes/_layout/recordings'
 import { Route as LayoutReportsRouteImport } from './routes/_layout/reports'
 import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
-import { Route as LayoutSensorsRouteImport } from './routes/_layout/sensors'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutSourceHealthRouteImport } from './routes/_layout/source-health'
 import { Route as LayoutTopologyRouteImport } from './routes/_layout/topology'
 import { Route as LayoutInvestigateLookupRouteImport } from './routes/_layout/investigate.lookup'
 import { Route as LayoutPayloadWorkbenchResultsRouteImport } from './routes/_layout/payload-workbench.results'
+import { Route as LayoutSensorsIndexRouteImport } from './routes/_layout/sensors.index'
+import { Route as LayoutSensorsSensorRouteImport } from './routes/_layout/sensors.$sensor'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -153,11 +154,6 @@ const LayoutSearchRoute = LayoutSearchRouteImport.update({
   path: '/search',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutSensorsRoute = LayoutSensorsRouteImport.update({
-  id: '/sensors',
-  path: '/sensors',
-  getParentRoute: () => LayoutRoute,
-} as any)
 const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -184,6 +180,16 @@ const LayoutPayloadWorkbenchResultsRoute =
     path: '/payload-workbench/results',
     getParentRoute: () => LayoutRoute,
   } as any)
+const LayoutSensorsIndexRoute = LayoutSensorsIndexRouteImport.update({
+  id: '/sensors/',
+  path: '/sensors/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSensorsSensorRoute = LayoutSensorsSensorRouteImport.update({
+  id: '/sensors/$sensor',
+  path: '/sensors/$sensor',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
@@ -208,12 +214,13 @@ export interface FileRoutesByFullPath {
   '/recordings': typeof LayoutRecordingsRoute
   '/reports': typeof LayoutReportsRoute
   '/search': typeof LayoutSearchRoute
-  '/sensors': typeof LayoutSensorsRoute
   '/settings': typeof LayoutSettingsRoute
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
   '/investigate/lookup': typeof LayoutInvestigateLookupRoute
   '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
+  '/sensors/$sensor': typeof LayoutSensorsSensorRoute
+  '/sensors/': typeof LayoutSensorsIndexRoute
 }
 export interface FileRoutesByTo {
   '/agent-campaigns': typeof LayoutAgentCampaignsRoute
@@ -237,13 +244,14 @@ export interface FileRoutesByTo {
   '/recordings': typeof LayoutRecordingsRoute
   '/reports': typeof LayoutReportsRoute
   '/search': typeof LayoutSearchRoute
-  '/sensors': typeof LayoutSensorsRoute
   '/settings': typeof LayoutSettingsRoute
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
   '/': typeof LayoutIndexRoute
   '/investigate/lookup': typeof LayoutInvestigateLookupRoute
   '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
+  '/sensors/$sensor': typeof LayoutSensorsSensorRoute
+  '/sensors': typeof LayoutSensorsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -269,13 +277,14 @@ export interface FileRoutesById {
   '/_layout/recordings': typeof LayoutRecordingsRoute
   '/_layout/reports': typeof LayoutReportsRoute
   '/_layout/search': typeof LayoutSearchRoute
-  '/_layout/sensors': typeof LayoutSensorsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/source-health': typeof LayoutSourceHealthRoute
   '/_layout/topology': typeof LayoutTopologyRoute
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/investigate/lookup': typeof LayoutInvestigateLookupRoute
   '/_layout/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
+  '/_layout/sensors/$sensor': typeof LayoutSensorsSensorRoute
+  '/_layout/sensors/': typeof LayoutSensorsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -302,12 +311,13 @@ export interface FileRouteTypes {
     | '/recordings'
     | '/reports'
     | '/search'
-    | '/sensors'
     | '/settings'
     | '/source-health'
     | '/topology'
     | '/investigate/lookup'
     | '/payload-workbench/results'
+    | '/sensors/$sensor'
+    | '/sensors/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/agent-campaigns'
@@ -331,13 +341,14 @@ export interface FileRouteTypes {
     | '/recordings'
     | '/reports'
     | '/search'
-    | '/sensors'
     | '/settings'
     | '/source-health'
     | '/topology'
     | '/'
     | '/investigate/lookup'
     | '/payload-workbench/results'
+    | '/sensors/$sensor'
+    | '/sensors'
   id:
     | '__root__'
     | '/_layout'
@@ -362,13 +373,14 @@ export interface FileRouteTypes {
     | '/_layout/recordings'
     | '/_layout/reports'
     | '/_layout/search'
-    | '/_layout/sensors'
     | '/_layout/settings'
     | '/_layout/source-health'
     | '/_layout/topology'
     | '/_layout/'
     | '/_layout/investigate/lookup'
     | '/_layout/payload-workbench/results'
+    | '/_layout/sensors/$sensor'
+    | '/_layout/sensors/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -538,13 +550,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSearchRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/sensors': {
-      id: '/_layout/sensors'
-      path: '/sensors'
-      fullPath: '/sensors'
-      preLoaderRoute: typeof LayoutSensorsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
     '/_layout/settings': {
       id: '/_layout/settings'
       path: '/settings'
@@ -580,6 +585,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutPayloadWorkbenchResultsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/sensors/': {
+      id: '/_layout/sensors/'
+      path: '/sensors'
+      fullPath: '/sensors/'
+      preLoaderRoute: typeof LayoutSensorsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/sensors/$sensor': {
+      id: '/_layout/sensors/$sensor'
+      path: '/sensors/$sensor'
+      fullPath: '/sensors/$sensor'
+      preLoaderRoute: typeof LayoutSensorsSensorRouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
@@ -605,13 +624,14 @@ interface LayoutRouteChildren {
   LayoutRecordingsRoute: typeof LayoutRecordingsRoute
   LayoutReportsRoute: typeof LayoutReportsRoute
   LayoutSearchRoute: typeof LayoutSearchRoute
-  LayoutSensorsRoute: typeof LayoutSensorsRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutSourceHealthRoute: typeof LayoutSourceHealthRoute
   LayoutTopologyRoute: typeof LayoutTopologyRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutInvestigateLookupRoute: typeof LayoutInvestigateLookupRoute
   LayoutPayloadWorkbenchResultsRoute: typeof LayoutPayloadWorkbenchResultsRoute
+  LayoutSensorsSensorRoute: typeof LayoutSensorsSensorRoute
+  LayoutSensorsIndexRoute: typeof LayoutSensorsIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -636,13 +656,14 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutRecordingsRoute: LayoutRecordingsRoute,
   LayoutReportsRoute: LayoutReportsRoute,
   LayoutSearchRoute: LayoutSearchRoute,
-  LayoutSensorsRoute: LayoutSensorsRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutSourceHealthRoute: LayoutSourceHealthRoute,
   LayoutTopologyRoute: LayoutTopologyRoute,
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutInvestigateLookupRoute: LayoutInvestigateLookupRoute,
   LayoutPayloadWorkbenchResultsRoute: LayoutPayloadWorkbenchResultsRoute,
+  LayoutSensorsSensorRoute: LayoutSensorsSensorRoute,
+  LayoutSensorsIndexRoute: LayoutSensorsIndexRoute,
 }
 
 const LayoutRouteWithChildren =

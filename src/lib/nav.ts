@@ -106,7 +106,6 @@ const PAGE_PREFIXES: Array<[string, string]> = [
   ['/github-analysis/', 'GitHub analysis'],
   ['/sessions/', 'Session replay'],
   ['/event/', 'Event detail'],
-  ['/sensors/', 'Sensor detail'],
   ['/investigate/ip/', 'Attacker profile'],
   ['/investigate/cidr/', 'CIDR investigation'],
   ['/investigate/cluster', 'Cluster investigation'],
@@ -170,6 +169,8 @@ export function pageFor(pathname: string): string {
     if (hit) return hit.label
   }
   if (PAGE_LABELS[pathname]) return PAGE_LABELS[pathname]
+  // A sensor page is named after its sensor.
+  if (pathname.startsWith('/sensors/')) return decodeURIComponent(pathname.slice('/sensors/'.length))
   for (const [prefix, label] of PAGE_PREFIXES) {
     if (pathname.startsWith(prefix)) return label
   }

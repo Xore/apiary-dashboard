@@ -60,6 +60,17 @@ export const COMMANDS = [
   'history -c; rm -rf ~/.bash_history',
 ] as const
 
+export const PORTS: Record<Protocol, number> = { ssh: 22, telnet: 23, http: 80, smb: 445, rdp: 3389, ftp: 21, mysql: 3306, sip: 5060 }
+
+const IDS_ALERTS: Partial<Record<Protocol, string>> = {
+  ssh: 'ET SCAN Potential SSH Scan',
+  telnet: 'ET SCAN Potential Telnet Scan',
+  mysql: 'ET SCAN Suspicious inbound to mySQL port 3306',
+  smb: 'ET EXPLOIT Possible EternalBlue MS17-010',
+  rdp: 'ET SCAN MS Terminal Server Traffic on Non-standard Port',
+  sip: 'ET SCAN Sipvicious User-Agent Detected',
+}
+
 const PROTOCOL_WEIGHTS: Protocol[] = ['ssh', 'ssh', 'ssh', 'ssh', 'telnet', 'telnet', 'http', 'http', 'smb', 'rdp', 'ftp', 'mysql', 'sip']
 
 function sensorFor(protocol: Protocol, rng: () => number): Sensor {
@@ -121,7 +132,7 @@ function eventShape(
     return { type: 'http.request', severity: path.includes('phpunit') ? 'high' : 'low', summary: `GET ${path}` }
   }
   if (roll > 0.9) {
-    return { type: 'ids.alert', severity: 'high', summary: pick(rng, ['ET SCAN Suspicious inbound to mySQL port 3306', 'ET EXPLOIT Possible EternalBlue MS17-010', 'ET SCAN Potential SSH Scan']) }
+    return { type: 'ids.alert', severity: 'high', summary: IDS_ALERTS[protocol] ?? `ET SCAN Suspicious inbound to ${protocol.toUpperCase()} port` }
   }
   return { type: 'connection', severity: 'info', summary: `${protocol.toUpperCase()} connection opened` }
 }
@@ -152,6 +163,7 @@ function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
       protocol,
       srcIp: source.ip,
       srcPort: int(rng, 1024, 65535),
+      dstPort: PORTS[protocol],
       country: source.country,
       asn: source.asn,
       sessionId: sessionIdFor(`${source.ip}#${int(rng, 1, 6)}`),

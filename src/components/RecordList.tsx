@@ -49,6 +49,12 @@ export function RecordList<T extends Record<string, unknown>>({
   pageSize = 25,
 }: RecordListProps<T>) {
   const [page, setPage] = useState(1)
+  // A new filter result starts back on the first page.
+  const [rowCount, setRowCount] = useState(rows.length)
+  if (rowCount !== rows.length) {
+    setRowCount(rows.length)
+    setPage(1)
+  }
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const isNarrow = useMediaQuery('(max-width: 1024px)')
   const inspector = useResizable({ defaultSize: 360, minSize: 300, maxSize: 560 })

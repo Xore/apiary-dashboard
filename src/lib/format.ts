@@ -16,6 +16,9 @@ const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
 export const formatNumber = (value: number) => numberFormat.format(value)
 export const formatCompact = (value: number) => compactFormat.format(value)
 export const formatTime = (iso: string) => `${timeFormat.format(new Date(iso))} UTC`
+const dayFormat = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', month: 'short', day: '2-digit' })
+export const formatDay = (iso: string) => dayFormat.format(new Date(iso))
+
 /** HH:MM only, for table cells whose header already says UTC. */
 export const formatClock = (iso: string) => timeFormat.format(new Date(iso))
 export const formatDateTime = (iso: string) => `${dateTimeFormat.format(new Date(iso))} UTC`
