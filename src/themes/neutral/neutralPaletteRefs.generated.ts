@@ -5,7 +5,7 @@
 export const neutralPaletteRefs = {
   purple: {
     light: {25: '#5c0e6c', 30: '#6b187c', 70: '#d885eb', 75: '#e496f6', 80: '#efa8ff', 85: '#f3bfff', 90: '#f7d5ff'},
-    dark: {25: '#4a2f51', 80: '#eaacf8'},
+    dark: {25: '#4a2f51', 45: '#895196', 80: '#eaacf8'},
   },
   green: {
     light: {25: '#00490b', 30: '#0b5615', 40: '#237028', 45: '#2f7d33', 65: '#6ab26b', 75: '#90ca90', 80: '#a4d6a3'},
@@ -17,11 +17,11 @@ export const neutralPaletteRefs = {
   },
   orange: {
     light: {25: '#622700', 30: '#733100', 75: '#ff9e55', 85: '#ffc7a1'},
-    dark: {25: '#503424', 65: '#df843f', 80: '#ffb37e'},
+    dark: {25: '#503424', 60: '#d1762b', 65: '#df843f', 80: '#ffb37e'},
   },
   blue: {
     light: {25: '#003978', 30: '#00458c', 50: '#0074e2', 80: '#a1caff', 85: '#b9d7ff'},
-    dark: {25: '#253c5a', 65: '#5aa0f8', 75: '#88bcff', 80: '#a1caff'},
+    dark: {25: '#253c5a', 60: '#4a92eb', 65: '#5aa0f8', 75: '#88bcff', 80: '#a1caff'},
   },
   red: {
     light: {25: '#76000c', 30: '#8a0011', 35: '#9e0015', 55: '#de4745', 65: '#fa6762', 70: '#ff7f77', 80: '#ffaea7', 85: '#ffc4be'},
@@ -33,7 +33,7 @@ export const neutralPaletteRefs = {
   },
   teal: {
     light: {25: '#00463d', 30: '#005348', 80: '#90d7c8', 85: '#a9e2d6'},
-    dark: {25: '#28413c', 65: '#4fb1a0', 75: '#81c9bb'},
+    dark: {25: '#28413c', 60: '#39a593', 65: '#4fb1a0', 75: '#81c9bb'},
   },
   cyan: {
     dark: {25: '#274046', 65: '#49adc4', 75: '#71c7dd', 80: '#85d5e9', 85: '#9ae2f4'},
@@ -41,7 +41,7 @@ export const neutralPaletteRefs = {
   },
   pink: {
     light: {25: '#70003f', 30: '#83004b', 70: '#fc78b1', 85: '#ffc0d7'},
-    dark: {25: '#572b3d', 75: '#fd92bd', 80: '#ffa9ca'},
+    dark: {25: '#572b3d', 60: '#d76395', 75: '#fd92bd', 80: '#ffa9ca'},
   },
 } as const;
 

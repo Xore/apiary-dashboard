@@ -107,6 +107,18 @@ export const neutralTheme = defineTheme({
     '--color-background-popover': [neutral.light[100], neutral.dark[10]],
     '--color-background-muted': [neutral.light[95], neutral.dark[10]],
 
+    // Chart series in the dashboard's fixed order (blue, orange, teal,
+    // purple, pink). Light keeps the core values; dark gets its own steps
+    // instead of reusing light hex. Purple sits darker and pink lighter so
+    // the pair stays apart; the set passes the dataviz palette checks
+    // (lightness band, chroma, CVD and normal-vision separation, 3:1
+    // contrast) against the #1b1b1b dark card.
+    '--color-data-categorical-blue': ['#0171E3', blue.dark[60]],
+    '--color-data-categorical-orange': ['#EB6E00', orange.dark[60]],
+    '--color-data-categorical-teal': ['#08A3A3', teal.dark[60]],
+    '--color-data-categorical-purple': ['#6B1EFD', purple.dark[45]],
+    '--color-data-categorical-pink': ['#F351C0', pink.dark[60]],
+
     '--color-accent': [neutral.light[10], neutral.dark[95]],
     '--color-accent-muted': [neutral.light[95], neutral.dark[15]],
     '--color-neutral': [
