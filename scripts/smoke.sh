@@ -30,6 +30,7 @@ bun install --frozen-lockfile
 step "typecheck";  bunx tsc --noEmit
 step "lint";       bun run lint
 step "unit tests"; bun run test
+step "theme outputs match source"; bun run theme:check
 step "build";      bun run build
 
 step "start production server on :$PORT"

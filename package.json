@@ -16,6 +16,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "theme:build": "bunx --bun astryx theme build src/themes/neutral/neutralTheme.ts",
+    "theme:check": "bunx --bun astryx theme build src/themes/neutral/neutralTheme.ts --check",
+    "smoke": "scripts/smoke.sh",
     "lint": "eslint",
     "format": "prettier",
     "check": "prettier --write . && eslint --fix"
