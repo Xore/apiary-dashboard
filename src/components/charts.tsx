@@ -19,8 +19,9 @@ import type { KillChainData, Protocol, TimeBucket } from '#/data/types'
 import { formatDateTime, formatDay, formatNumber, formatTime } from '#/lib/format'
 
 // Colors follow the protocol, never its rank, so filtering never repaints a
-// series. Order validated (light surface) with the dataviz palette checker:
-// blue, orange, teal, purple, pink; everything else folds into gray "Other".
+// series. Order (blue, orange, teal, purple, pink) is validated with the
+// dataviz palette checker on both surfaces; the theme sets separate dark
+// values (#14). Everything else folds into gray "Other".
 const SERIES = [
   { key: 'ssh', label: 'SSH', color: 'var(--color-data-categorical-blue)' },
   { key: 'telnet', label: 'Telnet', color: 'var(--color-data-categorical-orange)' },

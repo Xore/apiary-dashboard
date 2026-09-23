@@ -230,6 +230,11 @@
     --color-background-card: light-dark(#ffffff, #1b1b1b);
     --color-background-popover: light-dark(#ffffff, #1b1b1b);
     --color-background-muted: light-dark(#f1f1f1, #1b1b1b);
+    --color-data-categorical-blue: light-dark(#0171E3, #4a92eb);
+    --color-data-categorical-orange: light-dark(#EB6E00, #d1762b);
+    --color-data-categorical-teal: light-dark(#08A3A3, #39a593);
+    --color-data-categorical-purple: light-dark(#6B1EFD, #895196);
+    --color-data-categorical-pink: light-dark(#F351C0, #d76395);
     --color-accent: light-dark(#1b1b1b, #f1f1f1);
     --color-accent-muted: light-dark(#f1f1f1, #262626);
     --color-neutral: light-dark(#0000000F, #ffffff1A);
