@@ -384,3 +384,207 @@ export interface Replay {
   durationSeconds: number
   transcript: string
 }
+
+// ---- Operations ------------------------------------------------------------
+
+export interface AlertRecord {
+  key: string
+  kind: string
+  message: string
+  severity: Severity
+  count: number
+  firstSeen: string
+  lastSeen: string
+  lastNotified?: string
+  acknowledged: boolean
+  acknowledgedBy?: string
+  link?: string
+}
+
+/** Same-rule alerts folded into one row (hashes/IPs blanked in the message). */
+export interface AlertGroup extends Record<string, unknown> {
+  id: string
+  kind: string
+  message: string
+  severity: Severity
+  count: number
+  firstSeen: string
+  lastSeen: string
+  acknowledged: boolean
+  members: AlertRecord[]
+}
+
+export type FeedState = 'fresh' | 'delayed' | 'stale' | 'silent'
+
+export interface SensorFeed extends Record<string, unknown> {
+  sensor: string
+  state: FeedState
+  documents: number
+  lastSeen: string
+}
+
+export interface SourceHealth {
+  clusterStatus: 'green' | 'yellow' | 'red'
+  indexedDocuments: number
+  feeds: SensorFeed[]
+  ingest: { state: FeedState; lastIngest: string; ageSeconds: number; recentDeadLetters: number }
+  yara: { enabled: boolean; lastScan: string; rulesSha256: string; samples: number; matched: number; errors: number }
+  runtime: { uptimeSeconds: number; rssBytes: number; vmBytes: number }
+  pipeline: { state: 'running' | 'degraded' | 'stopped'; acked: number; failed: number; dropped: number; active: number; decodeFailures: number }
+  deadLetters: number
+}
+
+export interface TopologySensor extends Record<string, unknown> {
+  sensor: string
+  ingress: Array<'portbridge' | 'traefik' | 'direct' | 'proxy'>
+  hostnames: string[]
+  ports: Array<{ proto: 'tcp' | 'udp'; public: number; host: number }>
+  rawIndex: string
+  feed: FeedState
+}
+
+export type ContainerState = 'running' | 'restarting' | 'exited' | 'unknown'
+
+export interface Topology {
+  flow: { nodes: Array<{ name: string }>; links: Array<{ source: number; target: number; value: number }> }
+  sensors: TopologySensor[]
+  stacks: Array<{ stack: string; containers: Array<{ name: string; state: ContainerState }> }>
+}
+
+// ---- Reports ---------------------------------------------------------------
+
+export type ReportFrequency = 'daily' | 'weekly' | 'monthly'
+
+export interface ReportDefinition extends Record<string, unknown> {
+  id: string
+  name: string
+  template: string
+  theme: 'dark' | 'light'
+  elements: string[]
+  scope: { window: string; ip: string; sensor: string; port: string; signature: string }
+  branding: { title: string; author: string; headerLeft: string; headerRight: string; footerLeft: string; classification: string }
+  schedule: { frequency: ReportFrequency; hour: number; minute: number; weekday: number; monthDay: number } | null
+  created: string
+}
+
+export interface ReportTemplate {
+  id: string
+  name: string
+  description: string
+  elements: string[]
+}
+
+export interface GeneratedReport extends Record<string, unknown> {
+  id: string
+  title: string
+  template: string
+  origin: 'manual' | 'schedule'
+  createdAt: string
+  sizeBytes: number
+  definitionId: string
+}
+
+export interface ReportsData {
+  templates: ReportTemplate[]
+  elements: Array<{ id: string; label: string; description: string }>
+  definitions: ReportDefinition[]
+  generated: GeneratedReport[]
+}
+
+// ---- Tools -----------------------------------------------------------------
+
+export interface CanaryToken extends Record<string, unknown> {
+  id: string
+  type: string
+  memo: string
+  url: string
+  hostname: string
+  createdAt: string
+  createdBy: string
+  artifact?: string
+}
+
+export interface CanaryTrigger extends Record<string, unknown> {
+  id: string
+  tokenId: string
+  memo: string
+  type: string
+  triggeredAt: string
+  srcIp: string
+  userAgent: string
+  location: string
+}
+
+export interface CanaryTokenType {
+  type: string
+  label: string
+  description: string
+  needs?: 'text' | 'image'
+}
+
+export interface BaitCredential extends Record<string, unknown> {
+  id: string
+  path: string
+  target: string
+  username: string
+  password: string
+  memo: string
+  template: string
+  linkedTokenId?: string
+  createdAt: string
+  createdBy: string
+  rotatedAt?: string
+  rotatedBy?: string
+}
+
+// ---- Evidence --------------------------------------------------------------
+
+export interface CapturedPayload extends Record<string, unknown> {
+  hash: string
+  sources: string[]
+  kind: string
+  platform: string
+  mime: string
+  sizeBytes: number
+  copies: number
+  dynamic: boolean
+  preview: string
+  capturedAt: string
+  verdict?: { label: 'malicious' | 'suspicious' | 'clean'; family?: string }
+}
+
+export type AnalyzerTab = 'workbench' | 'static' | 'yara' | 'sandbox' | 'ghidra'
+
+export interface AnalysisResult extends Record<string, unknown> {
+  id: string
+  analyzer: AnalyzerTab
+  hash: string
+  file: string
+  at: string
+  summary: string
+  state?: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled'
+  risk?: number
+  matches?: string[]
+  platform?: string
+  owner?: string
+  recipe?: string
+  detail: Record<string, unknown>
+}
+
+export interface GpuJob extends Record<string, unknown> {
+  jobId: string
+  requestedAt: string
+  jobType: string
+  model: string
+  status: 'queued' | 'running' | 'done' | 'failed' | 'aborted'
+  attempts: number
+  abortRequested: boolean
+  ref: string
+  vramMib: number
+}
+
+export interface AnalysisResultsData {
+  results: AnalysisResult[]
+  gpuQueue: GpuJob[]
+  analyzers: Array<{ id: string; label: string; description: string; gpu: boolean }>
+}

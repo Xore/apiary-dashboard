@@ -2,7 +2,7 @@ import { Link } from '@astryxdesign/core/Link'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
-import { CampaignTimeline, CoverageHeatmap, KillChainFlow } from '#/components/charts'
+import { CampaignTimeline, CoverageHeatmap, FlowSankey } from '#/components/charts'
 import { Panel } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
 import { getKillChain } from '#/data/queries'
@@ -31,7 +31,7 @@ function KillChainPage() {
             Each attacker session contributes one flow unit between every pair of tactics its traffic touched, in
             kill-chain order.
           </Text>
-          <KillChainFlow flow={data.flow} />
+          <FlowSankey flow={data.flow} />
         </Panel>
         <Panel title="Campaign timeline" action={<Link href="/campaigns">All campaigns</Link>}>
           <Text color="secondary">Current network campaigns, from first to last observed activity.</Text>

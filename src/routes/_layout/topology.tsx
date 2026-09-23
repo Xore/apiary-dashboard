@@ -1,10 +1,108 @@
+import { Grid } from '@astryxdesign/core/Grid'
+import { Link } from '@astryxdesign/core/Link'
+import { HStack, VStack } from '@astryxdesign/core/Stack'
+import { Table, pixel, proportional } from '@astryxdesign/core/Table'
+import type { TableColumn } from '@astryxdesign/core/Table'
+import { Heading, Text } from '@astryxdesign/core/Text'
+import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute } from '@tanstack/react-router'
-import { PendingPage } from '#/components/PageFrame'
+import { FlowSankey } from '#/components/charts'
+import { Panel } from '#/components/DashboardBlocks'
+import { ContainerStateLabel, FeedStateLabel } from '#/components/FeedState'
+import { PageFrame } from '#/components/PageFrame'
+import { getTopology } from '#/data/queries'
+import type { TopologySensor } from '#/data/types'
 
 export const Route = createFileRoute('/_layout/topology')({
+  loader: () => getTopology(),
   component: TopologyPage,
 })
 
+const INGRESS_COLOR = { portbridge: 'blue', traefik: 'purple', direct: 'gray', proxy: 'teal' } as const
+
+const exposureColumns: TableColumn<TopologySensor>[] = [
+  { key: 'sensor', header: 'Sensor', width: pixel(160), renderCell: (row) => <Link href={`/sensors/${row.sensor}`}>{row.sensor}</Link> },
+  {
+    key: 'ingress',
+    header: 'Ingress',
+    width: proportional(2),
+    renderCell: (row) => (
+      <VStack gap={1}>
+        <HStack gap={1}>
+          {row.ingress.map((kind) => (
+            <Token key={kind} size="sm" color={INGRESS_COLOR[kind]} label={kind === 'proxy' ? '+PROXY' : kind} />
+          ))}
+        </HStack>
+        {row.hostnames.length > 0 && <Text type="supporting">{row.hostnames.join(' · ')}</Text>}
+      </VStack>
+    ),
+  },
+  {
+    key: 'ports',
+    header: 'Ports (public → host)',
+    width: proportional(2),
+    renderCell: (row) =>
+      row.ports.length === 0 ? (
+        <Text type="supporting">hostname only</Text>
+      ) : (
+        <HStack gap={1} wrap="wrap">
+          {row.ports.map((port) => (
+            <Token key={`${port.proto}-${port.public}`} size="sm" label={`${port.public} → ${port.host}/${port.proto}`} />
+          ))}
+        </HStack>
+      ),
+  },
+  { key: 'rawIndex', header: 'Raw index', width: pixel(168), renderCell: (row) => <Text type="code">{row.rawIndex}</Text> },
+  { key: 'feed', header: 'Feed', width: pixel(112), renderCell: (row) => <FeedStateLabel state={row.feed} /> },
+]
+
 function TopologyPage() {
-  return <PendingPage title="Fleet topology" issue={11} />
+  const topology = Route.useLoaderData()
+  const containers = topology.stacks.reduce((sum, s) => sum + s.containers.length, 0)
+
+  return (
+    <PageFrame
+      title="Fleet topology"
+      description="What exposes what, where a byte flows, and which stack owns which container."
+      actions={
+        <HStack gap={1.5}>
+          <Token size="sm" label={`${topology.sensors.length} sensors`} />
+          <Token size="sm" label={`${topology.stacks.length} stacks`} />
+          <Token size="sm" label={`${containers} containers`} />
+        </HStack>
+      }
+    >
+      <VStack gap={6}>
+        <Panel title="How a byte flows">
+          <Text color="secondary">Ingress path → sensor → Filebeat → raw index → worker → derived index → the dashboard.</Text>
+          <FlowSankey flow={topology.flow} height={480} />
+          <Text type="supporting">
+            Every public path crosses the VPS: if it restarts, new attack traffic stops reaching every decoy at once, while
+            already-captured logs keep indexing from disk.
+          </Text>
+        </Panel>
+
+        <Panel title="Exposure">
+          <Text color="secondary">Per sensor: the ports an attacker can reach, the path they arrive by, and whether the sensor is still feeding.</Text>
+          <Table data={topology.sensors} columns={exposureColumns} idKey="sensor" density="compact" />
+          <Text type="supporting">+PROXY means the upstream sends PROXY protocol v1, so the sensor sees the real client address.</Text>
+        </Panel>
+
+        <VStack gap={3}>
+          <Heading level={2}>Runtime containers</Heading>
+          <Grid columns={{ minWidth: 280, repeat: 'fit' }} gap={4}>
+            {topology.stacks.map((stack) => (
+              <Panel key={stack.stack} title={stack.stack}>
+                <VStack gap={1.5}>
+                  {stack.containers.map((container) => (
+                    <ContainerStateLabel key={container.name} name={container.name} state={container.state} />
+                  ))}
+                </VStack>
+              </Panel>
+            ))}
+          </Grid>
+        </VStack>
+      </VStack>
+    </PageFrame>
+  )
 }

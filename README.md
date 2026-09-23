@@ -24,6 +24,8 @@ bun run build        # production build into dist/
 bun run start        # Bun production server (server.ts)
 ```
 
+In dev, TanStack devtools open with **Ctrl+~** (the floating trigger is hidden so it never covers page actions).
+
 ## Stack notes
 
 - Routing: TanStack Router file routes in `src/routes/`; `src/routeTree.gen.ts` is generated.
