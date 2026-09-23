@@ -43,6 +43,7 @@ export interface HoneypotEvent extends Record<string, unknown> {
   severity: Severity
   srcIp: string
   srcPort: number
+  dstPort: number
   country: string
   asn: string
   sessionId: string
@@ -242,4 +243,144 @@ export interface AuthEventsData {
   failed24h: number
   byClient: CountRow[]
   topSources: CountRow[]
+}
+
+// ---- Investigate -----------------------------------------------------------
+
+export type EventKind = 'connection' | 'login' | 'command' | 'download' | 'http' | 'alert'
+
+export interface EventFilters {
+  ip?: string
+  sensor?: string
+  country?: string
+  proto?: Protocol
+  port?: number
+  kind?: EventKind
+  /** Relative window such as `1h`, `6h`, `24h`. */
+  since?: string
+}
+
+export interface EventsPage {
+  rows: HoneypotEvent[]
+  total: number
+  values: { sensors: string[]; countries: string[]; protos: Protocol[]; ports: number[] }
+}
+
+export interface SourceProfile extends Record<string, unknown> {
+  ip: string
+  country: string
+  org: string
+  events: number
+  logins: number
+  sessions: number
+  sensors: string[]
+  first: string
+  last: string
+}
+
+export interface MapPoint {
+  country: string
+  lat: number
+  lon: number
+  events: number
+}
+
+export interface NetworkCampaign extends Record<string, unknown> {
+  cidr: string
+  score: number
+  events: number
+  uniqueIps: number
+  sensors: string[]
+  ports: number[]
+  creds: number
+  payloads: number
+  alerts: number
+  providers: string[]
+  asns: string[]
+  fingerprints: number
+  explanation: string
+  sequence: string[]
+  scan?: 'horizontal' | 'vertical'
+  dstIpsTouched: number
+  portsTouched: number
+  first: string
+  last: string
+}
+
+export interface CredEdge extends Record<string, unknown> {
+  id: string
+  user: string
+  pass: string
+  uniqueIps: number
+  sensors: string[]
+  events: number
+  last: string
+}
+
+export type ClusterKind = 'fingerprint' | 'payload' | 'asn' | 'provider' | 'credential'
+
+export interface InfraCluster extends Record<string, unknown> {
+  id: string
+  kind: ClusterKind
+  value: string
+  sources: number
+  events: number
+  sensors: string[]
+}
+
+export interface AttackerEntity extends Record<string, unknown> {
+  id: string
+  ips: string[]
+  fingerprints: string[]
+  payloads: string[]
+  credentials: string[]
+  sensors: string[]
+  events: number
+  first: string
+  last: string
+  updated: string
+  verdicts: string[]
+  techniques: string[]
+  scan?: 'horizontal' | 'vertical'
+  destIps: number
+  portsTouched: number
+}
+
+export interface KillChainData {
+  flow: { nodes: Array<{ name: string }>; links: Array<{ source: number; target: number; value: number }> }
+  timeline: Array<{ cidr: string; first: string; last: string; events: number }>
+  coverage: Array<{ tactic: string; technique: string; name: string; events: number }>
+  tactics: string[]
+}
+
+export interface SensorSummary {
+  sensor: string
+  events: number
+}
+
+export interface SensorDetail {
+  sensor: Sensor
+  uniqueSources: number
+  timeline: TimeBucket[]
+  topSources: CountRow[]
+  byType: CountRow[]
+  recentEvents: HoneypotEvent[]
+}
+
+export interface Recording extends Record<string, unknown> {
+  id: string
+  when: string
+  srcIp?: string
+  country?: string
+  session: string
+  shasum: string
+  sizeBytes: number
+  durationMs: number
+}
+
+export interface Replay {
+  shasum: string
+  frames: number
+  durationSeconds: number
+  transcript: string
 }

@@ -2,10 +2,37 @@
 // they resolve mock fixtures, later each becomes a createServerFn call to the
 // backend with the same signature.
 import { EVENTS, MOCK_USER, PASSWORDS, SENSORS, SOURCES, USERNAMES } from './mock/fixtures'
+import {
+  ATTACKERS,
+  COUNTRY_CENTROIDS,
+  CRED_REUSE,
+  INFRA_CLUSTERS,
+  KILL_CHAIN,
+  NETWORK_CAMPAIGNS,
+  RECORDINGS,
+  REPLAYS,
+  SOURCE_PROFILES,
+} from './mock/investigate'
 import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALTH, SCORE_TIMELINE } from './mock/monitor'
 import { MOCK_NOW, createRng } from './mock/random'
 import type {
   AgentCampaign,
+  AttackerEntity,
+  ClusterKind,
+  CredEdge,
+  EventFilters,
+  EventKind,
+  EventType,
+  EventsPage,
+  InfraCluster,
+  KillChainData,
+  MapPoint,
+  NetworkCampaign,
+  Recording,
+  Replay,
+  SensorDetail,
+  SensorSummary,
+  SourceProfile,
   AuthEventsData,
   CountRow,
   Disposition,
@@ -188,4 +215,137 @@ export async function getAuthEvents(): Promise<AuthEventsData> {
     byClient: countBy(recent.map((e) => e.clientId), 10),
     topSources: countBy(recent.map((e) => e.ip), 10),
   }
+}
+
+// ---- Investigate -----------------------------------------------------------
+
+const KIND_TYPES: Record<EventKind, EventType[]> = {
+  connection: ['connection'],
+  login: ['login.failed', 'login.success'],
+  command: ['command.input'],
+  download: ['file.download'],
+  http: ['http.request'],
+  alert: ['ids.alert'],
+}
+
+/** `30m`, `6h`, `7d` → milliseconds; anything else → no window. */
+function sinceMs(since?: string): number | undefined {
+  const match = since?.match(/^(\d+)([mhd])$/)
+  if (!match) return undefined
+  return Number(match[1]) * { m: 60_000, h: HOUR, d: DAY }[match[2] as 'm' | 'h' | 'd']
+}
+
+export async function getEvents(filters: EventFilters): Promise<EventsPage> {
+  await mockDelay()
+  const window = sinceMs(filters.since)
+  const rows = EVENTS.filter(
+    (e) =>
+      (!filters.ip || e.srcIp === filters.ip) &&
+      (!filters.sensor || e.sensor === filters.sensor) &&
+      (!filters.country || e.country === filters.country) &&
+      (!filters.proto || e.protocol === filters.proto) &&
+      (!filters.port || e.dstPort === filters.port) &&
+      (!filters.kind || KIND_TYPES[filters.kind].includes(e.type)) &&
+      (window === undefined || MOCK_NOW - Date.parse(e.timestamp) <= window),
+  )
+  return {
+    rows,
+    total: rows.length,
+    values: {
+      sensors: SENSORS.map((s) => s.id),
+      countries: [...new Set(EVENTS.map((e) => e.country))].sort(),
+      protos: [...new Set(EVENTS.map((e) => e.protocol))].sort(),
+      ports: [...new Set(EVENTS.map((e) => e.dstPort))].sort((a, b) => a - b),
+    },
+  }
+}
+
+export async function getSourceProfiles(): Promise<{ sources: SourceProfile[]; mapPoints: MapPoint[] }> {
+  await mockDelay()
+  const byCountry = countBy(EVENTS.map((e) => e.country), 50)
+  const mapPoints = byCountry.flatMap((row) => {
+    const centroid = COUNTRY_CENTROIDS[row.label] as [number, number] | undefined
+    return centroid ? [{ country: row.label, lat: centroid[0], lon: centroid[1], events: row.count }] : []
+  })
+  return { sources: SOURCE_PROFILES, mapPoints }
+}
+
+export async function getNetworkCampaigns(): Promise<{ campaigns: NetworkCampaign[]; credReuse: CredEdge[] }> {
+  await mockDelay()
+  return { campaigns: NETWORK_CAMPAIGNS, credReuse: CRED_REUSE }
+}
+
+export async function getInfraClusters(): Promise<InfraCluster[]> {
+  await mockDelay()
+  return INFRA_CLUSTERS
+}
+
+export async function getAttackers(): Promise<AttackerEntity[]> {
+  await mockDelay()
+  return ATTACKERS
+}
+
+export async function getKillChain(): Promise<KillChainData> {
+  await mockDelay()
+  return KILL_CHAIN
+}
+
+export async function getCommands(): Promise<HoneypotEvent[]> {
+  await mockDelay()
+  return EVENTS.filter((e) => e.type === 'command.input')
+}
+
+/** Sensors ordered busiest first. */
+export async function getSensorCatalog(): Promise<SensorSummary[]> {
+  await mockDelay()
+  return [...SENSORS].sort((a, b) => b.eventsLast24h - a.eventsLast24h).map((s) => ({ sensor: s.id, events: s.eventsLast24h }))
+}
+
+export async function getSensorDetail(id: string): Promise<SensorDetail | null> {
+  await mockDelay()
+  const sensor = SENSORS.find((s) => s.id === id)
+  if (!sensor) return null
+  const events = EVENTS.filter((e) => e.sensor === id)
+  const timeline: TimeBucket[] = Array.from({ length: 24 }, (_, i) => ({
+    time: new Date(MOCK_NOW - (24 - i) * HOUR).toISOString(),
+    total: 0,
+    byProtocol: {},
+  }))
+  for (const event of events) {
+    const bucket = timeline[hourIndex(event.timestamp)]
+    bucket.total += 1
+    bucket.byProtocol[event.protocol] = (bucket.byProtocol[event.protocol] ?? 0) + 1
+  }
+  return {
+    sensor,
+    uniqueSources: new Set(events.map((e) => e.srcIp)).size,
+    timeline,
+    topSources: countBy(events.map((e) => e.srcIp), 10),
+    byType: countBy(events.map((e) => e.type), 10),
+    recentEvents: events.slice(0, 15),
+  }
+}
+
+export async function getRecordings(ip?: string): Promise<Recording[]> {
+  await mockDelay()
+  return ip ? RECORDINGS.filter((r) => r.srcIp === ip) : RECORDINGS
+}
+
+export async function getReplay(shasum: string): Promise<Replay | null> {
+  await mockDelay()
+  return REPLAYS.get(shasum) ?? null
+}
+
+export type LookupTarget =
+  | { kind: 'ip' | 'cidr'; value: string }
+  | { kind: 'cluster'; clusterKind: ClusterKind; value: string }
+  | { kind: 'not-found'; value: string }
+
+/** Resolves a hex value to the cluster kind that knows it. */
+export async function resolveHash(value: string): Promise<LookupTarget> {
+  await mockDelay()
+  const hit = INFRA_CLUSTERS.find(
+    (c) => (c.kind === 'payload' || c.kind === 'fingerprint') && c.value.toLowerCase().replace(/^hassh:/, '') === value,
+  )
+  return hit ? { kind: 'cluster', clusterKind: hit.kind, value: hit.value } : { kind: 'not-found', value }
 }
