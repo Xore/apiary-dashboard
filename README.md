@@ -10,4 +10,22 @@ Planning and progress:
 
 The canonical implementation is a behavioral reference, not a component source to copy mechanically. Every migration slice must trace its routes, data, actions, security, and states before being rebuilt with current TanStack and Astryx conventions.
 
-Current stage: canonical inventory. No application baseline has been accepted yet.
+Current stage: UI-first. The dashboard is built against mock data first; real data, server functions, and auth are wired afterwards per route slice.
+
+## Development
+
+```bash
+bun install
+bun run dev          # vite dev server on :3009
+bunx tsc --noEmit    # typecheck
+bun run lint
+bun run test
+bun run build        # production build into dist/
+bun run start        # Bun production server (server.ts)
+```
+
+## Stack notes
+
+- Routing: TanStack Router file routes in `src/routes/`; `src/routeTree.gen.ts` is generated.
+- UI: Astryx components (see `AGENTS.md` for the CLI workflow — `bunx astryx build "<idea>"`).
+- Theme: editable neutral theme in `src/themes/neutral/`, built from `theme.template.ts`.
