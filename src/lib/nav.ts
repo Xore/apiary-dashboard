@@ -118,19 +118,22 @@ const PAGE_LABELS: Record<string, string> = {
   '/search': 'Search',
   '/dead-letters': 'Ingest dead letters',
   '/problem-reports': 'Problem reports',
+  '/sandbox/vnc': 'Sandbox live view',
+  '/revdeck': 'RevDeck',
+  '/cape': 'CAPE',
+  '/github-analysis': 'GitHub analysis',
 }
 
 /** The sidebar entry a pathname rolls up to: detail pages highlight (and
  * breadcrumb under) their parent. */
 export function navHrefFor(pathname: string): string {
   if (pathname.startsWith('/payload-analysis')) return '/payloads'
+  // Analyzer lists and their result pages all roll up to Analysis results.
   if (
     pathname.startsWith('/payload-workbench/') ||
     pathname.startsWith('/sandbox/') ||
     pathname.startsWith('/ghidra/') ||
-    pathname.startsWith('/revdeck/') ||
-    pathname.startsWith('/cape/') ||
-    pathname.startsWith('/github-analysis/')
+    /^\/(revdeck|cape|github-analysis)(\/|$)/.test(pathname)
   ) {
     return '/payload-workbench/results'
   }

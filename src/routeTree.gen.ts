@@ -35,10 +35,20 @@ import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutSourceHealthRouteImport } from './routes/_layout/source-health'
 import { Route as LayoutTopologyRouteImport } from './routes/_layout/topology'
+import { Route as LayoutCapeIndexRouteImport } from './routes/_layout/cape.index'
+import { Route as LayoutCapeShaRouteImport } from './routes/_layout/cape.$sha'
 import { Route as LayoutEventIdRouteImport } from './routes/_layout/event.$id'
+import { Route as LayoutGhidraShaRouteImport } from './routes/_layout/ghidra.$sha'
+import { Route as LayoutGithubAnalysisIndexRouteImport } from './routes/_layout/github-analysis.index'
+import { Route as LayoutGithubAnalysisShaRouteImport } from './routes/_layout/github-analysis.$sha'
 import { Route as LayoutInvestigateClusterRouteImport } from './routes/_layout/investigate.cluster'
 import { Route as LayoutInvestigateLookupRouteImport } from './routes/_layout/investigate.lookup'
+import { Route as LayoutPayloadAnalysisHashRouteImport } from './routes/_layout/payload-analysis.$hash'
 import { Route as LayoutPayloadWorkbenchResultsRouteImport } from './routes/_layout/payload-workbench.results'
+import { Route as LayoutRevdeckIndexRouteImport } from './routes/_layout/revdeck.index'
+import { Route as LayoutRevdeckShaRouteImport } from './routes/_layout/revdeck.$sha'
+import { Route as LayoutSandboxJobRouteImport } from './routes/_layout/sandbox.$job'
+import { Route as LayoutSandboxVncRouteImport } from './routes/_layout/sandbox.vnc'
 import { Route as LayoutSensorsIndexRouteImport } from './routes/_layout/sensors.index'
 import { Route as LayoutSensorsSensorRouteImport } from './routes/_layout/sensors.$sensor'
 import { Route as LayoutSessionsIdRouteImport } from './routes/_layout/sessions.$id'
@@ -175,9 +185,35 @@ const LayoutTopologyRoute = LayoutTopologyRouteImport.update({
   path: '/topology',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutCapeIndexRoute = LayoutCapeIndexRouteImport.update({
+  id: '/cape/',
+  path: '/cape/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCapeShaRoute = LayoutCapeShaRouteImport.update({
+  id: '/cape/$sha',
+  path: '/cape/$sha',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutEventIdRoute = LayoutEventIdRouteImport.update({
   id: '/event/$id',
   path: '/event/$id',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutGhidraShaRoute = LayoutGhidraShaRouteImport.update({
+  id: '/ghidra/$sha',
+  path: '/ghidra/$sha',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutGithubAnalysisIndexRoute =
+  LayoutGithubAnalysisIndexRouteImport.update({
+    id: '/github-analysis/',
+    path: '/github-analysis/',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutGithubAnalysisShaRoute = LayoutGithubAnalysisShaRouteImport.update({
+  id: '/github-analysis/$sha',
+  path: '/github-analysis/$sha',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutInvestigateClusterRoute =
@@ -191,12 +227,38 @@ const LayoutInvestigateLookupRoute = LayoutInvestigateLookupRouteImport.update({
   path: '/investigate/lookup',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutPayloadAnalysisHashRoute =
+  LayoutPayloadAnalysisHashRouteImport.update({
+    id: '/payload-analysis/$hash',
+    path: '/payload-analysis/$hash',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 const LayoutPayloadWorkbenchResultsRoute =
   LayoutPayloadWorkbenchResultsRouteImport.update({
     id: '/payload-workbench/results',
     path: '/payload-workbench/results',
     getParentRoute: () => LayoutRoute,
   } as any)
+const LayoutRevdeckIndexRoute = LayoutRevdeckIndexRouteImport.update({
+  id: '/revdeck/',
+  path: '/revdeck/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutRevdeckShaRoute = LayoutRevdeckShaRouteImport.update({
+  id: '/revdeck/$sha',
+  path: '/revdeck/$sha',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSandboxJobRoute = LayoutSandboxJobRouteImport.update({
+  id: '/sandbox/$job',
+  path: '/sandbox/$job',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSandboxVncRoute = LayoutSandboxVncRouteImport.update({
+  id: '/sandbox/vnc',
+  path: '/sandbox/vnc',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutSensorsIndexRoute = LayoutSensorsIndexRouteImport.update({
   id: '/sensors/',
   path: '/sensors/',
@@ -255,13 +317,23 @@ export interface FileRoutesByFullPath {
   '/settings': typeof LayoutSettingsRoute
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
+  '/cape/$sha': typeof LayoutCapeShaRoute
   '/event/$id': typeof LayoutEventIdRoute
+  '/ghidra/$sha': typeof LayoutGhidraShaRoute
+  '/github-analysis/$sha': typeof LayoutGithubAnalysisShaRoute
   '/investigate/cluster': typeof LayoutInvestigateClusterRoute
   '/investigate/lookup': typeof LayoutInvestigateLookupRoute
+  '/payload-analysis/$hash': typeof LayoutPayloadAnalysisHashRoute
   '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
+  '/revdeck/$sha': typeof LayoutRevdeckShaRoute
+  '/sandbox/$job': typeof LayoutSandboxJobRoute
+  '/sandbox/vnc': typeof LayoutSandboxVncRoute
   '/sensors/$sensor': typeof LayoutSensorsSensorRoute
   '/sessions/$id': typeof LayoutSessionsIdRoute
   '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/cape/': typeof LayoutCapeIndexRoute
+  '/github-analysis/': typeof LayoutGithubAnalysisIndexRoute
+  '/revdeck/': typeof LayoutRevdeckIndexRoute
   '/sensors/': typeof LayoutSensorsIndexRoute
   '/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
@@ -292,13 +364,23 @@ export interface FileRoutesByTo {
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
   '/': typeof LayoutIndexRoute
+  '/cape/$sha': typeof LayoutCapeShaRoute
   '/event/$id': typeof LayoutEventIdRoute
+  '/ghidra/$sha': typeof LayoutGhidraShaRoute
+  '/github-analysis/$sha': typeof LayoutGithubAnalysisShaRoute
   '/investigate/cluster': typeof LayoutInvestigateClusterRoute
   '/investigate/lookup': typeof LayoutInvestigateLookupRoute
+  '/payload-analysis/$hash': typeof LayoutPayloadAnalysisHashRoute
   '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
+  '/revdeck/$sha': typeof LayoutRevdeckShaRoute
+  '/sandbox/$job': typeof LayoutSandboxJobRoute
+  '/sandbox/vnc': typeof LayoutSandboxVncRoute
   '/sensors/$sensor': typeof LayoutSensorsSensorRoute
   '/sessions/$id': typeof LayoutSessionsIdRoute
   '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/cape': typeof LayoutCapeIndexRoute
+  '/github-analysis': typeof LayoutGithubAnalysisIndexRoute
+  '/revdeck': typeof LayoutRevdeckIndexRoute
   '/sensors': typeof LayoutSensorsIndexRoute
   '/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
@@ -331,13 +413,23 @@ export interface FileRoutesById {
   '/_layout/source-health': typeof LayoutSourceHealthRoute
   '/_layout/topology': typeof LayoutTopologyRoute
   '/_layout/': typeof LayoutIndexRoute
+  '/_layout/cape/$sha': typeof LayoutCapeShaRoute
   '/_layout/event/$id': typeof LayoutEventIdRoute
+  '/_layout/ghidra/$sha': typeof LayoutGhidraShaRoute
+  '/_layout/github-analysis/$sha': typeof LayoutGithubAnalysisShaRoute
   '/_layout/investigate/cluster': typeof LayoutInvestigateClusterRoute
   '/_layout/investigate/lookup': typeof LayoutInvestigateLookupRoute
+  '/_layout/payload-analysis/$hash': typeof LayoutPayloadAnalysisHashRoute
   '/_layout/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
+  '/_layout/revdeck/$sha': typeof LayoutRevdeckShaRoute
+  '/_layout/sandbox/$job': typeof LayoutSandboxJobRoute
+  '/_layout/sandbox/vnc': typeof LayoutSandboxVncRoute
   '/_layout/sensors/$sensor': typeof LayoutSensorsSensorRoute
   '/_layout/sessions/$id': typeof LayoutSessionsIdRoute
   '/_layout/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/_layout/cape/': typeof LayoutCapeIndexRoute
+  '/_layout/github-analysis/': typeof LayoutGithubAnalysisIndexRoute
+  '/_layout/revdeck/': typeof LayoutRevdeckIndexRoute
   '/_layout/sensors/': typeof LayoutSensorsIndexRoute
   '/_layout/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/_layout/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
@@ -370,13 +462,23 @@ export interface FileRouteTypes {
     | '/settings'
     | '/source-health'
     | '/topology'
+    | '/cape/$sha'
     | '/event/$id'
+    | '/ghidra/$sha'
+    | '/github-analysis/$sha'
     | '/investigate/cluster'
     | '/investigate/lookup'
+    | '/payload-analysis/$hash'
     | '/payload-workbench/results'
+    | '/revdeck/$sha'
+    | '/sandbox/$job'
+    | '/sandbox/vnc'
     | '/sensors/$sensor'
     | '/sessions/$id'
     | '/tty-replay/$shasum'
+    | '/cape/'
+    | '/github-analysis/'
+    | '/revdeck/'
     | '/sensors/'
     | '/investigate/cidr/$cidr'
     | '/investigate/ip/$ip'
@@ -407,13 +509,23 @@ export interface FileRouteTypes {
     | '/source-health'
     | '/topology'
     | '/'
+    | '/cape/$sha'
     | '/event/$id'
+    | '/ghidra/$sha'
+    | '/github-analysis/$sha'
     | '/investigate/cluster'
     | '/investigate/lookup'
+    | '/payload-analysis/$hash'
     | '/payload-workbench/results'
+    | '/revdeck/$sha'
+    | '/sandbox/$job'
+    | '/sandbox/vnc'
     | '/sensors/$sensor'
     | '/sessions/$id'
     | '/tty-replay/$shasum'
+    | '/cape'
+    | '/github-analysis'
+    | '/revdeck'
     | '/sensors'
     | '/investigate/cidr/$cidr'
     | '/investigate/ip/$ip'
@@ -445,13 +557,23 @@ export interface FileRouteTypes {
     | '/_layout/source-health'
     | '/_layout/topology'
     | '/_layout/'
+    | '/_layout/cape/$sha'
     | '/_layout/event/$id'
+    | '/_layout/ghidra/$sha'
+    | '/_layout/github-analysis/$sha'
     | '/_layout/investigate/cluster'
     | '/_layout/investigate/lookup'
+    | '/_layout/payload-analysis/$hash'
     | '/_layout/payload-workbench/results'
+    | '/_layout/revdeck/$sha'
+    | '/_layout/sandbox/$job'
+    | '/_layout/sandbox/vnc'
     | '/_layout/sensors/$sensor'
     | '/_layout/sessions/$id'
     | '/_layout/tty-replay/$shasum'
+    | '/_layout/cape/'
+    | '/_layout/github-analysis/'
+    | '/_layout/revdeck/'
     | '/_layout/sensors/'
     | '/_layout/investigate/cidr/$cidr'
     | '/_layout/investigate/ip/$ip'
@@ -645,11 +767,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutTopologyRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/cape/': {
+      id: '/_layout/cape/'
+      path: '/cape'
+      fullPath: '/cape/'
+      preLoaderRoute: typeof LayoutCapeIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/cape/$sha': {
+      id: '/_layout/cape/$sha'
+      path: '/cape/$sha'
+      fullPath: '/cape/$sha'
+      preLoaderRoute: typeof LayoutCapeShaRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/event/$id': {
       id: '/_layout/event/$id'
       path: '/event/$id'
       fullPath: '/event/$id'
       preLoaderRoute: typeof LayoutEventIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/ghidra/$sha': {
+      id: '/_layout/ghidra/$sha'
+      path: '/ghidra/$sha'
+      fullPath: '/ghidra/$sha'
+      preLoaderRoute: typeof LayoutGhidraShaRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/github-analysis/': {
+      id: '/_layout/github-analysis/'
+      path: '/github-analysis'
+      fullPath: '/github-analysis/'
+      preLoaderRoute: typeof LayoutGithubAnalysisIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/github-analysis/$sha': {
+      id: '/_layout/github-analysis/$sha'
+      path: '/github-analysis/$sha'
+      fullPath: '/github-analysis/$sha'
+      preLoaderRoute: typeof LayoutGithubAnalysisShaRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/investigate/cluster': {
@@ -666,11 +823,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutInvestigateLookupRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/payload-analysis/$hash': {
+      id: '/_layout/payload-analysis/$hash'
+      path: '/payload-analysis/$hash'
+      fullPath: '/payload-analysis/$hash'
+      preLoaderRoute: typeof LayoutPayloadAnalysisHashRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/payload-workbench/results': {
       id: '/_layout/payload-workbench/results'
       path: '/payload-workbench/results'
       fullPath: '/payload-workbench/results'
       preLoaderRoute: typeof LayoutPayloadWorkbenchResultsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/revdeck/': {
+      id: '/_layout/revdeck/'
+      path: '/revdeck'
+      fullPath: '/revdeck/'
+      preLoaderRoute: typeof LayoutRevdeckIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/revdeck/$sha': {
+      id: '/_layout/revdeck/$sha'
+      path: '/revdeck/$sha'
+      fullPath: '/revdeck/$sha'
+      preLoaderRoute: typeof LayoutRevdeckShaRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/sandbox/$job': {
+      id: '/_layout/sandbox/$job'
+      path: '/sandbox/$job'
+      fullPath: '/sandbox/$job'
+      preLoaderRoute: typeof LayoutSandboxJobRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/sandbox/vnc': {
+      id: '/_layout/sandbox/vnc'
+      path: '/sandbox/vnc'
+      fullPath: '/sandbox/vnc'
+      preLoaderRoute: typeof LayoutSandboxVncRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/sensors/': {
@@ -744,13 +936,23 @@ interface LayoutRouteChildren {
   LayoutSourceHealthRoute: typeof LayoutSourceHealthRoute
   LayoutTopologyRoute: typeof LayoutTopologyRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutCapeShaRoute: typeof LayoutCapeShaRoute
   LayoutEventIdRoute: typeof LayoutEventIdRoute
+  LayoutGhidraShaRoute: typeof LayoutGhidraShaRoute
+  LayoutGithubAnalysisShaRoute: typeof LayoutGithubAnalysisShaRoute
   LayoutInvestigateClusterRoute: typeof LayoutInvestigateClusterRoute
   LayoutInvestigateLookupRoute: typeof LayoutInvestigateLookupRoute
+  LayoutPayloadAnalysisHashRoute: typeof LayoutPayloadAnalysisHashRoute
   LayoutPayloadWorkbenchResultsRoute: typeof LayoutPayloadWorkbenchResultsRoute
+  LayoutRevdeckShaRoute: typeof LayoutRevdeckShaRoute
+  LayoutSandboxJobRoute: typeof LayoutSandboxJobRoute
+  LayoutSandboxVncRoute: typeof LayoutSandboxVncRoute
   LayoutSensorsSensorRoute: typeof LayoutSensorsSensorRoute
   LayoutSessionsIdRoute: typeof LayoutSessionsIdRoute
   LayoutTtyReplayShasumRoute: typeof LayoutTtyReplayShasumRoute
+  LayoutCapeIndexRoute: typeof LayoutCapeIndexRoute
+  LayoutGithubAnalysisIndexRoute: typeof LayoutGithubAnalysisIndexRoute
+  LayoutRevdeckIndexRoute: typeof LayoutRevdeckIndexRoute
   LayoutSensorsIndexRoute: typeof LayoutSensorsIndexRoute
   LayoutInvestigateCidrCidrRoute: typeof LayoutInvestigateCidrCidrRoute
   LayoutInvestigateIpIpRoute: typeof LayoutInvestigateIpIpRoute
@@ -782,13 +984,23 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutSourceHealthRoute: LayoutSourceHealthRoute,
   LayoutTopologyRoute: LayoutTopologyRoute,
   LayoutIndexRoute: LayoutIndexRoute,
+  LayoutCapeShaRoute: LayoutCapeShaRoute,
   LayoutEventIdRoute: LayoutEventIdRoute,
+  LayoutGhidraShaRoute: LayoutGhidraShaRoute,
+  LayoutGithubAnalysisShaRoute: LayoutGithubAnalysisShaRoute,
   LayoutInvestigateClusterRoute: LayoutInvestigateClusterRoute,
   LayoutInvestigateLookupRoute: LayoutInvestigateLookupRoute,
+  LayoutPayloadAnalysisHashRoute: LayoutPayloadAnalysisHashRoute,
   LayoutPayloadWorkbenchResultsRoute: LayoutPayloadWorkbenchResultsRoute,
+  LayoutRevdeckShaRoute: LayoutRevdeckShaRoute,
+  LayoutSandboxJobRoute: LayoutSandboxJobRoute,
+  LayoutSandboxVncRoute: LayoutSandboxVncRoute,
   LayoutSensorsSensorRoute: LayoutSensorsSensorRoute,
   LayoutSessionsIdRoute: LayoutSessionsIdRoute,
   LayoutTtyReplayShasumRoute: LayoutTtyReplayShasumRoute,
+  LayoutCapeIndexRoute: LayoutCapeIndexRoute,
+  LayoutGithubAnalysisIndexRoute: LayoutGithubAnalysisIndexRoute,
+  LayoutRevdeckIndexRoute: LayoutRevdeckIndexRoute,
   LayoutSensorsIndexRoute: LayoutSensorsIndexRoute,
   LayoutInvestigateCidrCidrRoute: LayoutInvestigateCidrCidrRoute,
   LayoutInvestigateIpIpRoute: LayoutInvestigateIpIpRoute,
