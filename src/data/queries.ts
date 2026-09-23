@@ -117,11 +117,12 @@ import type {
 
 const HOUR = 3_600_000
 
-/** Simulated backend latency, e.g. VITE_MOCK_LATENCY_MS=800 to exercise
- * pending states. */
-async function mockDelay(): Promise<void> {
+/** Simulated backend behavior: VITE_MOCK_LATENCY_MS=800 exercises pending
+ * states, VITE_MOCK_FAIL=1 makes every call fail to exercise error states. */
+async function mockDelay({ canFail = true } = {}): Promise<void> {
   const ms = Number(import.meta.env.VITE_MOCK_LATENCY_MS ?? 0)
   if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms))
+  if (canFail && import.meta.env.VITE_MOCK_FAIL === '1') throw new Error('Mock backend unavailable (VITE_MOCK_FAIL=1)')
 }
 
 function hourIndex(timestamp: string): number {
@@ -152,7 +153,9 @@ function kpi(id: string, label: string, events: HoneypotEvent[], value = events.
 }
 
 export async function getSessionUser(): Promise<SessionUser> {
-  await mockDelay()
+  // The session comes from the auth layer, not the data backend; keeping it
+  // up lets page errors render inside the shell.
+  await mockDelay({ canFail: false })
   return MOCK_USER
 }
 
