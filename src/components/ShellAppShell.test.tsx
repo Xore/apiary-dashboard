@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // Shell composition (#4): one shell, one content region, navigation metadata
 // driving active item and breadcrumbs, and the palette's keyboard contract.
+import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -17,11 +18,18 @@ import { NAV_SECTIONS } from '#/lib/nav'
 import { neutralTheme } from '#/themes/neutral/neutral'
 import { RouterLink } from './RouterLink'
 import { ShellAppShell } from './ShellAppShell'
+import { useViewTabs } from './ViewTabs'
+
+function TabbedPage() {
+  const [view, setView] = useState('one')
+  useViewTabs({ label: 'Test views', tabs: [{ id: 'one', label: 'View one' }, { id: 'two', label: 'View two' }], value: view, onChange: setView })
+  return <p>{view === 'one' ? 'first view' : 'second view'}</p>
+}
 
 const user = { name: 'Test Operator', email: 'op@example.test', roles: ['admin'] }
 
 function renderShell(path: string) {
-  const root = createRootRoute({ component: () => <ShellAppShell user={user} /> })
+  const root = createRootRoute({ component: () => <ShellAppShell user={user} onSettingsPane={() => {}} /> })
   const page = (routePath: string, text: string) =>
     createRoute({ getParentRoute: () => root, path: routePath, component: () => <p>{text}</p> })
   const router = createRouter({
@@ -31,6 +39,7 @@ function renderShell(path: string) {
       page('/event/$id', 'event detail content'),
       page('/alerts', 'alerts content'),
       page('/settings', 'settings content'),
+      createRoute({ getParentRoute: () => root, path: '/tabbed', component: TabbedPage }),
     ]),
     history: createMemoryHistory({ initialEntries: [path] }),
   })
@@ -97,5 +106,20 @@ describe('ShellAppShell', () => {
     await act(async () => {})
     expect(router.state.location.pathname).toBe('/alerts')
     expect(await screen.findByText('alerts content')).toBeTruthy()
+  })
+
+  it("puts a page's views in the top bar and switches between them", async () => {
+    renderShell('/tabbed')
+    await screen.findByText('first view')
+    const header = screen.getByRole('navigation', { name: 'Page header' })
+    await userEvent.setup().click(within(header).getAllByText('View two')[0])
+    expect(await screen.findByText('second view')).toBeTruthy()
+  })
+
+  it('shows no view tabs on a page without views', async () => {
+    renderShell('/alerts')
+    await screen.findByText('alerts content')
+    const header = screen.getByRole('navigation', { name: 'Page header' })
+    expect(within(header).queryByText('View one')).toBeNull()
   })
 })

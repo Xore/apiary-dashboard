@@ -13,12 +13,11 @@ import {
   ShieldCheckIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline'
-import { useLocation, useNavigate } from '@tanstack/react-router'
+import { useLocation } from '@tanstack/react-router'
 import type { SessionUser } from '#/data/types'
 import { NAV_SECTIONS, navHrefFor } from '#/lib/nav'
 
-function AccountMenu({ user }: { user: SessionUser }) {
-  const navigate = useNavigate()
+function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettings: () => void }) {
 
   return (
     <DropdownMenu
@@ -33,7 +32,7 @@ function AccountMenu({ user }: { user: SessionUser }) {
       <DropdownMenuItem
         label="Settings"
         icon={Cog6ToothIcon}
-        onClick={() => void navigate({ to: '/settings' })}
+        onClick={onOpenSettings}
       />
       {/* Sign-out is wired to /auth/logout with the auth work (#5). */}
       <DropdownMenuItem label="Sign out" icon={ArrowRightStartOnRectangleIcon} onClick={() => {}} />
@@ -41,7 +40,7 @@ function AccountMenu({ user }: { user: SessionUser }) {
   )
 }
 
-export function ShellSideNav({ user }: { user: SessionUser }) {
+export function ShellSideNav({ user, onOpenSettings }: { user: SessionUser; onOpenSettings: () => void }) {
   const pathname = useLocation({ select: (location) => location.pathname })
   const activeHref = navHrefFor(pathname)
 
@@ -59,7 +58,7 @@ export function ShellSideNav({ user }: { user: SessionUser }) {
       }
       footer={
         <SideNavSection title="Account" isHeaderHidden>
-          <AccountMenu user={user} />
+          <AccountMenu user={user} onOpenSettings={onOpenSettings} />
         </SideNavSection>
       }
     >

@@ -4,9 +4,9 @@ import { Button } from '@astryxdesign/core/Button'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
-import { Tab, TabList } from '@astryxdesign/core/TabList'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
+import { useViewTabs } from '#/components/ViewTabs'
 import { createFileRoute, notFound, useRouter } from '@tanstack/react-router'
 import { MiniTable, Panel, StatTile } from '#/components/DashboardBlocks'
 import { EventsPanel, TechniquesPanel } from '#/components/DetailBlocks'
@@ -69,6 +69,12 @@ function IpProfilePage() {
   const { ip } = Route.useParams()
   const { tab = 'activity' } = Route.useSearch()
   const navigate = Route.useNavigate()
+  useViewTabs({
+    label: 'Attacker profile views',
+    tabs: [{ id: 'activity', label: 'Activity' }, { id: 'indicators', label: 'Indicators' }, { id: 'correlation', label: 'Correlation & timeline' }],
+    value: tab,
+    onChange: (value) => void navigate({ search: { tab: value === 'activity' ? undefined : (value as ProfileTab) } }),
+  })
 
   return (
     <PageFrame
@@ -100,11 +106,6 @@ function IpProfilePage() {
           <Link href={`/recordings?ip=${ip}`}>Session recordings</Link>
           {p.attackerId && <Link href="/attackers">Part of attacker identity {p.attackerId.slice(0, 8)}</Link>}
         </HStack>
-        <TabList value={tab} onChange={(value) => void navigate({ search: { tab: value === 'activity' ? undefined : (value as ProfileTab) } })} hasDivider>
-          <Tab value="activity" label="Activity" />
-          <Tab value="indicators" label="Indicators" />
-          <Tab value="correlation" label="Correlation & timeline" />
-        </TabList>
         {tab === 'activity' && (
           <VStack gap={4}>
             <TechniquesPanel techniques={p.techniques} />

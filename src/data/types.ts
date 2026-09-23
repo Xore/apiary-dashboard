@@ -283,6 +283,8 @@ export interface MapPoint {
   lat: number
   lon: number
   events: number
+  /** Distinct source addresses from this country, when known. */
+  ips?: number
 }
 
 export interface NetworkCampaign extends Record<string, unknown> {
@@ -358,13 +360,38 @@ export interface SensorSummary {
   events: number
 }
 
+export interface SensorMeasure {
+  label: string
+  value: number
+  /** Most in a single event, e.g. the longest session. */
+  peak: string
+}
+
+export interface SensorRequest extends Record<string, unknown> {
+  id: string
+  timestamp: string
+  srcIp: string
+  method: string
+  path: string
+  detection: string
+  userAgent: string
+}
+
 export interface SensorDetail {
   sensor: Sensor
   uniqueSources: number
+  firstSeen: string
   timeline: TimeBucket[]
+  /** The quantities this sensor type exists to produce. */
+  measures: SensorMeasure[]
   topSources: CountRow[]
+  topCountries: CountRow[]
+  /** This sensor type's own leaderboards. */
+  topLists: Array<{ label: string; rows: CountRow[] }>
   byType: CountRow[]
   recentEvents: HoneypotEvent[]
+  /** Hand-written reading for web sensors: requests with detections. */
+  requests?: SensorRequest[]
 }
 
 export interface Recording extends Record<string, unknown> {
@@ -586,6 +613,8 @@ export interface GpuJob extends Record<string, unknown> {
 export interface AnalysisResultsData {
   results: AnalysisResult[]
   gpuQueue: GpuJob[]
+  /** Latest retrain outcome per approved local model. */
+  modelHealth: ModelHealth[]
   analyzers: Array<{ id: string; label: string; description: string; gpu: boolean }>
 }
 
@@ -846,4 +875,59 @@ export interface GithubAnalysis extends Record<string, unknown> {
   results: Array<{ engine: string; verdict: 'malicious' | 'suspicious' | 'undetected'; label?: string }>
   yaraRules: string[]
   repoPath: string
+}
+
+// ---- Overview views --------------------------------------------------------
+
+export interface SeriesPoint extends Record<string, unknown> {
+  time: string
+}
+
+export interface HeatmapRow {
+  sensor: string
+  /** Events per hour, oldest → newest (24 cells). */
+  cells: number[]
+}
+
+export interface AttackVectors {
+  ports: CountRow[]
+  protocols: CountRow[]
+}
+
+export interface OverviewViews {
+  heatmap: HeatmapRow[]
+  vectors: Record<string, AttackVectors>
+  mapPoints: MapPoint[]
+  feeds: SensorFeed[]
+  protocols: CountRow[]
+  mlBacklog: SeriesPoint[]
+  topIps: CountRow[]
+  topPorts: CountRow[]
+  countries: CountRow[]
+  asns: CountRow[]
+  providers: CountRow[]
+  netflowBytes: SeriesPoint[]
+  netflowPackets: SeriesPoint[]
+  conformance: SeriesPoint[]
+  cves: CountRow[]
+  credentials: CountRow[]
+  commands: CountRow[]
+  clients: CountRow[]
+  fingerprints: CountRow[]
+  paths: CountRow[]
+  osDistribution: CountRow[]
+  tcpClusters: CountRow[]
+  icsFunctions: CountRow[]
+  decoyRequests: CountRow[]
+  decoyClients: CountRow[]
+  ja4h: CountRow[]
+  ja4l: CountRow[]
+  ja4x: CountRow[]
+  tls: CountRow[]
+  ssh: CountRow[]
+  endlessh: CountRow[]
+  alerts: CountRow[]
+  alertCategories: CountRow[]
+  payloads: CapturedPayload[]
+  campaigns: NetworkCampaign[]
 }

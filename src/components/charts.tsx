@@ -15,7 +15,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { KillChainData, Protocol, TimeBucket } from '#/data/types'
+import type { CountRow, HeatmapRow, KillChainData, Protocol, SeriesPoint, TimeBucket } from '#/data/types'
 import { formatDateTime, formatDay, formatNumber, formatTime } from '#/lib/format'
 
 // Colors follow the protocol, never its rank, so filtering never repaints a
@@ -376,5 +376,158 @@ export function CoverageHeatmap({ tactics, cells }: { tactics: string[]; cells: 
         <Text type="supporting">More events</Text>
       </HStack>
     </VStack>
+  )
+}
+
+// ---- Overview views --------------------------------------------------------
+
+const HEAT = [12, 28, 46, 66, 88]
+
+/** Sensors × hours, one hue light→dark; the exact count is in each cell's
+ * tooltip. */
+export function SensorHeatmap({ rows, startIso }: { rows: HeatmapRow[]; startIso: string }) {
+  const max = Math.max(1, ...rows.flatMap((r) => r.cells))
+  const labelW = 132
+  const cell = 26
+  const gap = 3
+  const width = labelW + 24 * (cell + gap)
+  const start = Date.parse(startIso)
+  return (
+    <VStack gap={2}>
+      <svg viewBox={`0 0 ${width} ${rows.length * (cell + gap) + 22}`} width="100%" role="img" aria-label="Hourly events per sensor, last 24 hours">
+        {rows.map((row, ri) => (
+          <g key={row.sensor} transform={`translate(0, ${ri * (cell + gap)})`}>
+            <text x={0} y={cell / 2} dy="0.35em" fontSize={12} fill="var(--color-text-primary)">
+              {row.sensor}
+            </text>
+            {row.cells.map((count, ci) => {
+              const pct = count === 0 ? 0 : HEAT[Math.min(HEAT.length - 1, Math.floor((count / max) * HEAT.length))]
+              const hour = new Date(start + ci * 3_600_000).toISOString()
+              return (
+                <rect
+                  key={ci}
+                  x={labelW + ci * (cell + gap)}
+                  width={cell}
+                  height={cell}
+                  rx={3}
+                  fill={pct ? `color-mix(in srgb, var(--color-data-categorical-blue) ${pct}%, var(--color-background-card))` : 'var(--color-background-muted)'}
+                >
+                  <title>{`${row.sensor} · ${formatTime(hour)} · ${formatNumber(count)} events`}</title>
+                </rect>
+              )
+            })}
+          </g>
+        ))}
+        {[0, 6, 12, 18, 23].map((ci) => (
+          <text key={ci} x={labelW + ci * (cell + gap)} y={rows.length * (cell + gap) + 14} fontSize={11} fill="var(--color-text-secondary)">
+            {formatTime(new Date(start + ci * 3_600_000).toISOString()).slice(0, 5)}
+          </text>
+        ))}
+      </svg>
+      <Text type="supporting">Darker cells mean more events. Hover a cell for the exact count.</Text>
+    </VStack>
+  )
+}
+
+/** Horizontal bars for a leaderboard, largest first, one hue. */
+export function RankBars({ rows, height }: { rows: CountRow[]; height?: number }) {
+  const h = height ?? Math.max(140, rows.length * 30 + 20)
+  return (
+    <ResponsiveContainer width="100%" height={h}>
+      <BarChart data={rows} layout="vertical" margin={{ top: 0, right: 48, left: 0, bottom: 0 }} barCategoryGap={6}>
+        <XAxis type="number" hide />
+        <YAxis type="category" dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} width={230} />
+        <Tooltip cursor={{ fill: 'var(--color-background-muted)' }} content={<ValueTooltip />} />
+        <Bar
+          dataKey="count"
+          name="Events"
+          fill="var(--color-data-categorical-blue)"
+          radius={[0, 4, 4, 0]}
+          isAnimationActive={false}
+          label={{ position: 'right', fontSize: 11, fill: 'var(--color-text-secondary)', formatter: (v: unknown) => formatNumber(Number(v)) }}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
+/** Up to three series over time with auto-scaled axis and value formatter. */
+export function SeriesLines({
+  data,
+  series,
+  format = formatNumber,
+  dayTicks = false,
+}: {
+  data: SeriesPoint[]
+  series: LineSeries[]
+  format?: (value: number) => string
+  dayTicks?: boolean
+}) {
+  return (
+    <VStack gap={3}>
+      <ResponsiveContainer width="100%" height={240}>
+        <LineChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+          <CartesianGrid vertical={false} stroke={GRID_STROKE} />
+          <XAxis
+            dataKey="time"
+            tickFormatter={(value: string) => (dayTicks ? formatDay(value) : formatTime(value).slice(0, 5))}
+            tick={AXIS_TICK}
+            axisLine={false}
+            tickLine={false}
+            minTickGap={32}
+          />
+          <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={64} tickFormatter={(v: number) => format(v)} />
+          <Tooltip
+            cursor={{ stroke: GRID_STROKE }}
+            content={({ active, payload, label }) => {
+              if (!active || !payload.length || typeof label !== 'string') return null
+              return (
+                <Card padding={3}>
+                  <VStack gap={1}>
+                    <Text type="supporting">{formatDateTime(label)}</Text>
+                    {payload.map((entry) => (
+                      <HStack key={String(entry.name)} gap={2} vAlign="center">
+                        <Swatch color={String(entry.color)} />
+                        <Text type="supporting" color="primary">
+                          {entry.name}: {format(Number(entry.value))}
+                        </Text>
+                      </HStack>
+                    ))}
+                  </VStack>
+                </Card>
+              )
+            }}
+          />
+          {series.map((s, index) => (
+            <Line key={s.key} type="monotone" dataKey={s.key} name={s.label} stroke={LINE_COLORS[index]} strokeWidth={2} dot={false} isAnimationActive={false} />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+      {series.length > 1 && (
+        <HStack gap={4} wrap="wrap">
+          {series.map((s, index) => (
+            <HStack key={s.key} gap={1.5} vAlign="center">
+              <Swatch color={LINE_COLORS[index]} />
+              <Text type="supporting">{s.label}</Text>
+            </HStack>
+          ))}
+        </HStack>
+      )}
+    </VStack>
+  )
+}
+
+/** Vertical bars over ordered buckets (a histogram). */
+export function Histogram({ rows }: { rows: CountRow[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={240}>
+      <BarChart data={rows} margin={{ top: 16, right: 8, left: 0, bottom: 0 }} barCategoryGap={8}>
+        <CartesianGrid vertical={false} stroke={GRID_STROKE} />
+        <XAxis dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+        <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={40} />
+        <Tooltip cursor={{ fill: 'var(--color-background-muted)' }} content={<ValueTooltip />} />
+        <Bar dataKey="count" name="Connections" fill="var(--color-data-categorical-blue)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+      </BarChart>
+    </ResponsiveContainer>
   )
 }

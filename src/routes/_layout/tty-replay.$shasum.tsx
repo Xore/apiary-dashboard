@@ -6,8 +6,8 @@ import { Link } from '@astryxdesign/core/Link'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Slider } from '@astryxdesign/core/Slider'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
-import { Tab, TabList } from '@astryxdesign/core/TabList'
 import { Text } from '@astryxdesign/core/Text'
+import { useViewTabs } from '#/components/ViewTabs'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { MiniTable, Panel, StatTile } from '#/components/DashboardBlocks'
 import { NotFound } from '#/components/NotFound'
@@ -108,6 +108,12 @@ function ReplayPage() {
   const { shasum } = Route.useParams()
   const { tab } = Route.useSearch()
   const navigate = Route.useNavigate()
+  useViewTabs({
+    label: 'Recording views',
+    tabs: [{ id: 'playback', label: 'Playback' }, { id: 'attacker', label: 'Attacker replay' }],
+    value: tab ?? 'playback',
+    onChange: (value) => void navigate({ search: { tab: value === 'attacker' ? 'attacker' : undefined } }),
+  })
 
   return (
     <PageFrame
@@ -123,10 +129,6 @@ function ReplayPage() {
       }
     >
       <VStack gap={5}>
-        <TabList value={tab ?? 'playback'} onChange={(value) => void navigate({ search: { tab: value === 'attacker' ? 'attacker' : undefined } })} hasDivider>
-          <Tab value="playback" label="Playback" />
-          <Tab value="attacker" label="Attacker replay" />
-        </TabList>
         {tab !== 'attacker' ? (
           <VStack gap={4}>
             <Player replay={replay} />

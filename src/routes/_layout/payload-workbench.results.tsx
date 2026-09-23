@@ -3,15 +3,16 @@ import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { CheckboxList, CheckboxListItem } from '@astryxdesign/core/CheckboxList'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
+import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
-import { Tab, TabList } from '@astryxdesign/core/TabList'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Heading, Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
+import { useViewTabs } from '#/components/ViewTabs'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
@@ -206,8 +207,17 @@ function AnalysisResultsPage() {
   const data = Route.useLoaderData()
   const { tab = 'workbench', hash } = Route.useSearch()
   const navigate = Route.useNavigate()
-  const rows = data.results.filter((r) => r.analyzer === tab)
+  const [query, setQuery] = useState('')
+  const needle = query.trim().toLowerCase()
+  const rows = data.results.filter((r) => r.analyzer === tab && (!needle || JSON.stringify(r).toLowerCase().includes(needle)))
+  const myRuns = data.results.filter((r) => r.analyzer === 'workbench' && r.owner).slice(0, 5)
   const count = (id: AnalyzerTab) => data.results.filter((r) => r.analyzer === id).length
+  useViewTabs({
+    label: 'Analysis results views',
+    tabs: TABS.map((t) => ({ id: t.id, label: `${t.label} (${count(t.id)})` })),
+    value: tab,
+    onChange: (value) => void navigate({ search: { tab: value as AnalyzerTab } }),
+  })
 
   return (
     <RecordList
@@ -223,17 +233,41 @@ function AnalysisResultsPage() {
       }
       summary={
         tab === 'workbench' ? (
-          <WorkbenchBuilder key={hash ?? ''} analyzers={data.analyzers} initialHash={hash ?? ''} />
+          <VStack gap={4}>
+            <WorkbenchBuilder key={hash ?? ''} analyzers={data.analyzers} initialHash={hash ?? ''} />
+            <Grid columns={{ minWidth: 380, repeat: 'fit' }} gap={4}>
+              <Panel title="My recent runs">
+                <Table data={myRuns} columns={COLUMNS.workbench} idKey="id" density="compact" />
+              </Panel>
+              <Panel title="Approved local-model health">
+                <Text type="supporting">Advisory: each approved model's latest retrain outcome.</Text>
+                <Table
+                  data={data.modelHealth}
+                  columns={[
+                    { key: 'model', header: 'Model', width: proportional(1), renderCell: (row) => <Text type="code">{row.model}</Text> },
+                    { key: 'accepted', header: 'Last retrain', width: pixel(112), renderCell: (row) => <Token size="sm" color={row.accepted ? 'green' : 'orange'} label={row.accepted ? 'accepted' : 'rejected'} /> },
+                    { key: 'timestamp', header: 'When', width: pixel(96), renderCell: (row) => <Text type="supporting">{formatTime(row.timestamp)}</Text> },
+                  ]}
+                  idKey="model"
+                  density="compact"
+                />
+              </Panel>
+            </Grid>
+          </VStack>
         ) : tab === 'ghidra' ? (
           <GpuQueue jobs={data.gpuQueue} />
         ) : undefined
       }
       toolbar={
-        <TabList value={tab} onChange={(value) => void navigate({ search: { tab: value as AnalyzerTab } })} hasDivider>
-          {TABS.map((t) => (
-            <Tab key={t.id} value={t.id} label={`${t.label} (${count(t.id)})`} />
-          ))}
-        </TabList>
+        <TextInput
+          label="Filter results"
+          isLabelHidden
+          size="sm"
+          width={320}
+          placeholder={`Filter ${TABS.find((t) => t.id === tab)?.label ?? ''} results`}
+          value={query}
+          onChange={setQuery}
+        />
       }
       rows={rows}
       columns={COLUMNS[tab]}
