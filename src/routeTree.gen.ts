@@ -11,7 +11,33 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutAgentCampaignsRouteImport } from './routes/_layout/agent-campaigns'
+import { Route as LayoutAlertsRouteImport } from './routes/_layout/alerts'
+import { Route as LayoutAttackersRouteImport } from './routes/_layout/attackers'
+import { Route as LayoutAuthEventsRouteImport } from './routes/_layout/auth-events'
+import { Route as LayoutCampaignsRouteImport } from './routes/_layout/campaigns'
+import { Route as LayoutCanarytokensRouteImport } from './routes/_layout/canarytokens'
+import { Route as LayoutClustersRouteImport } from './routes/_layout/clusters'
+import { Route as LayoutCommandsRouteImport } from './routes/_layout/commands'
+import { Route as LayoutCredentialsRouteImport } from './routes/_layout/credentials'
+import { Route as LayoutDeadLettersRouteImport } from './routes/_layout/dead-letters'
+import { Route as LayoutEventsRouteImport } from './routes/_layout/events'
+import { Route as LayoutHistoryRouteImport } from './routes/_layout/history'
+import { Route as LayoutIpsRouteImport } from './routes/_layout/ips'
+import { Route as LayoutKillChainRouteImport } from './routes/_layout/kill-chain'
+import { Route as LayoutLlmAnalysisRouteImport } from './routes/_layout/llm-analysis'
+import { Route as LayoutMlAnomaliesRouteImport } from './routes/_layout/ml-anomalies'
+import { Route as LayoutPayloadsRouteImport } from './routes/_layout/payloads'
+import { Route as LayoutProblemReportsRouteImport } from './routes/_layout/problem-reports'
+import { Route as LayoutRecordingsRouteImport } from './routes/_layout/recordings'
+import { Route as LayoutReportsRouteImport } from './routes/_layout/reports'
+import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
+import { Route as LayoutSensorsRouteImport } from './routes/_layout/sensors'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutSourceHealthRouteImport } from './routes/_layout/source-health'
+import { Route as LayoutTopologyRouteImport } from './routes/_layout/topology'
+import { Route as LayoutInvestigateLookupRouteImport } from './routes/_layout/investigate.lookup'
+import { Route as LayoutPayloadWorkbenchResultsRouteImport } from './routes/_layout/payload-workbench.results'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -22,32 +48,327 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutAgentCampaignsRoute = LayoutAgentCampaignsRouteImport.update({
+  id: '/agent-campaigns',
+  path: '/agent-campaigns',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAlertsRoute = LayoutAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAttackersRoute = LayoutAttackersRouteImport.update({
+  id: '/attackers',
+  path: '/attackers',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAuthEventsRoute = LayoutAuthEventsRouteImport.update({
+  id: '/auth-events',
+  path: '/auth-events',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCampaignsRoute = LayoutCampaignsRouteImport.update({
+  id: '/campaigns',
+  path: '/campaigns',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCanarytokensRoute = LayoutCanarytokensRouteImport.update({
+  id: '/canarytokens',
+  path: '/canarytokens',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutClustersRoute = LayoutClustersRouteImport.update({
+  id: '/clusters',
+  path: '/clusters',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCommandsRoute = LayoutCommandsRouteImport.update({
+  id: '/commands',
+  path: '/commands',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCredentialsRoute = LayoutCredentialsRouteImport.update({
+  id: '/credentials',
+  path: '/credentials',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutDeadLettersRoute = LayoutDeadLettersRouteImport.update({
+  id: '/dead-letters',
+  path: '/dead-letters',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutEventsRoute = LayoutEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutHistoryRoute = LayoutHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutIpsRoute = LayoutIpsRouteImport.update({
+  id: '/ips',
+  path: '/ips',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutKillChainRoute = LayoutKillChainRouteImport.update({
+  id: '/kill-chain',
+  path: '/kill-chain',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutLlmAnalysisRoute = LayoutLlmAnalysisRouteImport.update({
+  id: '/llm-analysis',
+  path: '/llm-analysis',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutMlAnomaliesRoute = LayoutMlAnomaliesRouteImport.update({
+  id: '/ml-anomalies',
+  path: '/ml-anomalies',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutPayloadsRoute = LayoutPayloadsRouteImport.update({
+  id: '/payloads',
+  path: '/payloads',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutProblemReportsRoute = LayoutProblemReportsRouteImport.update({
+  id: '/problem-reports',
+  path: '/problem-reports',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutRecordingsRoute = LayoutRecordingsRouteImport.update({
+  id: '/recordings',
+  path: '/recordings',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutReportsRoute = LayoutReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSearchRoute = LayoutSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSensorsRoute = LayoutSensorsRouteImport.update({
+  id: '/sensors',
+  path: '/sensors',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutSourceHealthRoute = LayoutSourceHealthRouteImport.update({
+  id: '/source-health',
+  path: '/source-health',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTopologyRoute = LayoutTopologyRouteImport.update({
+  id: '/topology',
+  path: '/topology',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutInvestigateLookupRoute = LayoutInvestigateLookupRouteImport.update({
+  id: '/investigate/lookup',
+  path: '/investigate/lookup',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutPayloadWorkbenchResultsRoute =
+  LayoutPayloadWorkbenchResultsRouteImport.update({
+    id: '/payload-workbench/results',
+    path: '/payload-workbench/results',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
+  '/agent-campaigns': typeof LayoutAgentCampaignsRoute
+  '/alerts': typeof LayoutAlertsRoute
+  '/attackers': typeof LayoutAttackersRoute
+  '/auth-events': typeof LayoutAuthEventsRoute
+  '/campaigns': typeof LayoutCampaignsRoute
+  '/canarytokens': typeof LayoutCanarytokensRoute
+  '/clusters': typeof LayoutClustersRoute
+  '/commands': typeof LayoutCommandsRoute
+  '/credentials': typeof LayoutCredentialsRoute
+  '/dead-letters': typeof LayoutDeadLettersRoute
+  '/events': typeof LayoutEventsRoute
+  '/history': typeof LayoutHistoryRoute
+  '/ips': typeof LayoutIpsRoute
+  '/kill-chain': typeof LayoutKillChainRoute
+  '/llm-analysis': typeof LayoutLlmAnalysisRoute
+  '/ml-anomalies': typeof LayoutMlAnomaliesRoute
+  '/payloads': typeof LayoutPayloadsRoute
+  '/problem-reports': typeof LayoutProblemReportsRoute
+  '/recordings': typeof LayoutRecordingsRoute
+  '/reports': typeof LayoutReportsRoute
+  '/search': typeof LayoutSearchRoute
+  '/sensors': typeof LayoutSensorsRoute
   '/settings': typeof LayoutSettingsRoute
+  '/source-health': typeof LayoutSourceHealthRoute
+  '/topology': typeof LayoutTopologyRoute
+  '/investigate/lookup': typeof LayoutInvestigateLookupRoute
+  '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
 }
 export interface FileRoutesByTo {
+  '/agent-campaigns': typeof LayoutAgentCampaignsRoute
+  '/alerts': typeof LayoutAlertsRoute
+  '/attackers': typeof LayoutAttackersRoute
+  '/auth-events': typeof LayoutAuthEventsRoute
+  '/campaigns': typeof LayoutCampaignsRoute
+  '/canarytokens': typeof LayoutCanarytokensRoute
+  '/clusters': typeof LayoutClustersRoute
+  '/commands': typeof LayoutCommandsRoute
+  '/credentials': typeof LayoutCredentialsRoute
+  '/dead-letters': typeof LayoutDeadLettersRoute
+  '/events': typeof LayoutEventsRoute
+  '/history': typeof LayoutHistoryRoute
+  '/ips': typeof LayoutIpsRoute
+  '/kill-chain': typeof LayoutKillChainRoute
+  '/llm-analysis': typeof LayoutLlmAnalysisRoute
+  '/ml-anomalies': typeof LayoutMlAnomaliesRoute
+  '/payloads': typeof LayoutPayloadsRoute
+  '/problem-reports': typeof LayoutProblemReportsRoute
+  '/recordings': typeof LayoutRecordingsRoute
+  '/reports': typeof LayoutReportsRoute
+  '/search': typeof LayoutSearchRoute
+  '/sensors': typeof LayoutSensorsRoute
   '/settings': typeof LayoutSettingsRoute
+  '/source-health': typeof LayoutSourceHealthRoute
+  '/topology': typeof LayoutTopologyRoute
   '/': typeof LayoutIndexRoute
+  '/investigate/lookup': typeof LayoutInvestigateLookupRoute
+  '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
+  '/_layout/agent-campaigns': typeof LayoutAgentCampaignsRoute
+  '/_layout/alerts': typeof LayoutAlertsRoute
+  '/_layout/attackers': typeof LayoutAttackersRoute
+  '/_layout/auth-events': typeof LayoutAuthEventsRoute
+  '/_layout/campaigns': typeof LayoutCampaignsRoute
+  '/_layout/canarytokens': typeof LayoutCanarytokensRoute
+  '/_layout/clusters': typeof LayoutClustersRoute
+  '/_layout/commands': typeof LayoutCommandsRoute
+  '/_layout/credentials': typeof LayoutCredentialsRoute
+  '/_layout/dead-letters': typeof LayoutDeadLettersRoute
+  '/_layout/events': typeof LayoutEventsRoute
+  '/_layout/history': typeof LayoutHistoryRoute
+  '/_layout/ips': typeof LayoutIpsRoute
+  '/_layout/kill-chain': typeof LayoutKillChainRoute
+  '/_layout/llm-analysis': typeof LayoutLlmAnalysisRoute
+  '/_layout/ml-anomalies': typeof LayoutMlAnomaliesRoute
+  '/_layout/payloads': typeof LayoutPayloadsRoute
+  '/_layout/problem-reports': typeof LayoutProblemReportsRoute
+  '/_layout/recordings': typeof LayoutRecordingsRoute
+  '/_layout/reports': typeof LayoutReportsRoute
+  '/_layout/search': typeof LayoutSearchRoute
+  '/_layout/sensors': typeof LayoutSensorsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
+  '/_layout/source-health': typeof LayoutSourceHealthRoute
+  '/_layout/topology': typeof LayoutTopologyRoute
   '/_layout/': typeof LayoutIndexRoute
+  '/_layout/investigate/lookup': typeof LayoutInvestigateLookupRoute
+  '/_layout/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/settings'
+  fullPaths:
+    | '/'
+    | '/agent-campaigns'
+    | '/alerts'
+    | '/attackers'
+    | '/auth-events'
+    | '/campaigns'
+    | '/canarytokens'
+    | '/clusters'
+    | '/commands'
+    | '/credentials'
+    | '/dead-letters'
+    | '/events'
+    | '/history'
+    | '/ips'
+    | '/kill-chain'
+    | '/llm-analysis'
+    | '/ml-anomalies'
+    | '/payloads'
+    | '/problem-reports'
+    | '/recordings'
+    | '/reports'
+    | '/search'
+    | '/sensors'
+    | '/settings'
+    | '/source-health'
+    | '/topology'
+    | '/investigate/lookup'
+    | '/payload-workbench/results'
   fileRoutesByTo: FileRoutesByTo
-  to: '/settings' | '/'
-  id: '__root__' | '/_layout' | '/_layout/settings' | '/_layout/'
+  to:
+    | '/agent-campaigns'
+    | '/alerts'
+    | '/attackers'
+    | '/auth-events'
+    | '/campaigns'
+    | '/canarytokens'
+    | '/clusters'
+    | '/commands'
+    | '/credentials'
+    | '/dead-letters'
+    | '/events'
+    | '/history'
+    | '/ips'
+    | '/kill-chain'
+    | '/llm-analysis'
+    | '/ml-anomalies'
+    | '/payloads'
+    | '/problem-reports'
+    | '/recordings'
+    | '/reports'
+    | '/search'
+    | '/sensors'
+    | '/settings'
+    | '/source-health'
+    | '/topology'
+    | '/'
+    | '/investigate/lookup'
+    | '/payload-workbench/results'
+  id:
+    | '__root__'
+    | '/_layout'
+    | '/_layout/agent-campaigns'
+    | '/_layout/alerts'
+    | '/_layout/attackers'
+    | '/_layout/auth-events'
+    | '/_layout/campaigns'
+    | '/_layout/canarytokens'
+    | '/_layout/clusters'
+    | '/_layout/commands'
+    | '/_layout/credentials'
+    | '/_layout/dead-letters'
+    | '/_layout/events'
+    | '/_layout/history'
+    | '/_layout/ips'
+    | '/_layout/kill-chain'
+    | '/_layout/llm-analysis'
+    | '/_layout/ml-anomalies'
+    | '/_layout/payloads'
+    | '/_layout/problem-reports'
+    | '/_layout/recordings'
+    | '/_layout/reports'
+    | '/_layout/search'
+    | '/_layout/sensors'
+    | '/_layout/settings'
+    | '/_layout/source-health'
+    | '/_layout/topology'
+    | '/_layout/'
+    | '/_layout/investigate/lookup'
+    | '/_layout/payload-workbench/results'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -70,6 +391,160 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/agent-campaigns': {
+      id: '/_layout/agent-campaigns'
+      path: '/agent-campaigns'
+      fullPath: '/agent-campaigns'
+      preLoaderRoute: typeof LayoutAgentCampaignsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/alerts': {
+      id: '/_layout/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof LayoutAlertsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/attackers': {
+      id: '/_layout/attackers'
+      path: '/attackers'
+      fullPath: '/attackers'
+      preLoaderRoute: typeof LayoutAttackersRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/auth-events': {
+      id: '/_layout/auth-events'
+      path: '/auth-events'
+      fullPath: '/auth-events'
+      preLoaderRoute: typeof LayoutAuthEventsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/campaigns': {
+      id: '/_layout/campaigns'
+      path: '/campaigns'
+      fullPath: '/campaigns'
+      preLoaderRoute: typeof LayoutCampaignsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/canarytokens': {
+      id: '/_layout/canarytokens'
+      path: '/canarytokens'
+      fullPath: '/canarytokens'
+      preLoaderRoute: typeof LayoutCanarytokensRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/clusters': {
+      id: '/_layout/clusters'
+      path: '/clusters'
+      fullPath: '/clusters'
+      preLoaderRoute: typeof LayoutClustersRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/commands': {
+      id: '/_layout/commands'
+      path: '/commands'
+      fullPath: '/commands'
+      preLoaderRoute: typeof LayoutCommandsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/credentials': {
+      id: '/_layout/credentials'
+      path: '/credentials'
+      fullPath: '/credentials'
+      preLoaderRoute: typeof LayoutCredentialsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/dead-letters': {
+      id: '/_layout/dead-letters'
+      path: '/dead-letters'
+      fullPath: '/dead-letters'
+      preLoaderRoute: typeof LayoutDeadLettersRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/events': {
+      id: '/_layout/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof LayoutEventsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/history': {
+      id: '/_layout/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof LayoutHistoryRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/ips': {
+      id: '/_layout/ips'
+      path: '/ips'
+      fullPath: '/ips'
+      preLoaderRoute: typeof LayoutIpsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/kill-chain': {
+      id: '/_layout/kill-chain'
+      path: '/kill-chain'
+      fullPath: '/kill-chain'
+      preLoaderRoute: typeof LayoutKillChainRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/llm-analysis': {
+      id: '/_layout/llm-analysis'
+      path: '/llm-analysis'
+      fullPath: '/llm-analysis'
+      preLoaderRoute: typeof LayoutLlmAnalysisRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/ml-anomalies': {
+      id: '/_layout/ml-anomalies'
+      path: '/ml-anomalies'
+      fullPath: '/ml-anomalies'
+      preLoaderRoute: typeof LayoutMlAnomaliesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/payloads': {
+      id: '/_layout/payloads'
+      path: '/payloads'
+      fullPath: '/payloads'
+      preLoaderRoute: typeof LayoutPayloadsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/problem-reports': {
+      id: '/_layout/problem-reports'
+      path: '/problem-reports'
+      fullPath: '/problem-reports'
+      preLoaderRoute: typeof LayoutProblemReportsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/recordings': {
+      id: '/_layout/recordings'
+      path: '/recordings'
+      fullPath: '/recordings'
+      preLoaderRoute: typeof LayoutRecordingsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/reports': {
+      id: '/_layout/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof LayoutReportsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/search': {
+      id: '/_layout/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof LayoutSearchRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/sensors': {
+      id: '/_layout/sensors'
+      path: '/sensors'
+      fullPath: '/sensors'
+      preLoaderRoute: typeof LayoutSensorsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/settings': {
       id: '/_layout/settings'
       path: '/settings'
@@ -77,17 +552,97 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/source-health': {
+      id: '/_layout/source-health'
+      path: '/source-health'
+      fullPath: '/source-health'
+      preLoaderRoute: typeof LayoutSourceHealthRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/topology': {
+      id: '/_layout/topology'
+      path: '/topology'
+      fullPath: '/topology'
+      preLoaderRoute: typeof LayoutTopologyRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/investigate/lookup': {
+      id: '/_layout/investigate/lookup'
+      path: '/investigate/lookup'
+      fullPath: '/investigate/lookup'
+      preLoaderRoute: typeof LayoutInvestigateLookupRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/payload-workbench/results': {
+      id: '/_layout/payload-workbench/results'
+      path: '/payload-workbench/results'
+      fullPath: '/payload-workbench/results'
+      preLoaderRoute: typeof LayoutPayloadWorkbenchResultsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
 interface LayoutRouteChildren {
+  LayoutAgentCampaignsRoute: typeof LayoutAgentCampaignsRoute
+  LayoutAlertsRoute: typeof LayoutAlertsRoute
+  LayoutAttackersRoute: typeof LayoutAttackersRoute
+  LayoutAuthEventsRoute: typeof LayoutAuthEventsRoute
+  LayoutCampaignsRoute: typeof LayoutCampaignsRoute
+  LayoutCanarytokensRoute: typeof LayoutCanarytokensRoute
+  LayoutClustersRoute: typeof LayoutClustersRoute
+  LayoutCommandsRoute: typeof LayoutCommandsRoute
+  LayoutCredentialsRoute: typeof LayoutCredentialsRoute
+  LayoutDeadLettersRoute: typeof LayoutDeadLettersRoute
+  LayoutEventsRoute: typeof LayoutEventsRoute
+  LayoutHistoryRoute: typeof LayoutHistoryRoute
+  LayoutIpsRoute: typeof LayoutIpsRoute
+  LayoutKillChainRoute: typeof LayoutKillChainRoute
+  LayoutLlmAnalysisRoute: typeof LayoutLlmAnalysisRoute
+  LayoutMlAnomaliesRoute: typeof LayoutMlAnomaliesRoute
+  LayoutPayloadsRoute: typeof LayoutPayloadsRoute
+  LayoutProblemReportsRoute: typeof LayoutProblemReportsRoute
+  LayoutRecordingsRoute: typeof LayoutRecordingsRoute
+  LayoutReportsRoute: typeof LayoutReportsRoute
+  LayoutSearchRoute: typeof LayoutSearchRoute
+  LayoutSensorsRoute: typeof LayoutSensorsRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
+  LayoutSourceHealthRoute: typeof LayoutSourceHealthRoute
+  LayoutTopologyRoute: typeof LayoutTopologyRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutInvestigateLookupRoute: typeof LayoutInvestigateLookupRoute
+  LayoutPayloadWorkbenchResultsRoute: typeof LayoutPayloadWorkbenchResultsRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutAgentCampaignsRoute: LayoutAgentCampaignsRoute,
+  LayoutAlertsRoute: LayoutAlertsRoute,
+  LayoutAttackersRoute: LayoutAttackersRoute,
+  LayoutAuthEventsRoute: LayoutAuthEventsRoute,
+  LayoutCampaignsRoute: LayoutCampaignsRoute,
+  LayoutCanarytokensRoute: LayoutCanarytokensRoute,
+  LayoutClustersRoute: LayoutClustersRoute,
+  LayoutCommandsRoute: LayoutCommandsRoute,
+  LayoutCredentialsRoute: LayoutCredentialsRoute,
+  LayoutDeadLettersRoute: LayoutDeadLettersRoute,
+  LayoutEventsRoute: LayoutEventsRoute,
+  LayoutHistoryRoute: LayoutHistoryRoute,
+  LayoutIpsRoute: LayoutIpsRoute,
+  LayoutKillChainRoute: LayoutKillChainRoute,
+  LayoutLlmAnalysisRoute: LayoutLlmAnalysisRoute,
+  LayoutMlAnomaliesRoute: LayoutMlAnomaliesRoute,
+  LayoutPayloadsRoute: LayoutPayloadsRoute,
+  LayoutProblemReportsRoute: LayoutProblemReportsRoute,
+  LayoutRecordingsRoute: LayoutRecordingsRoute,
+  LayoutReportsRoute: LayoutReportsRoute,
+  LayoutSearchRoute: LayoutSearchRoute,
+  LayoutSensorsRoute: LayoutSensorsRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
+  LayoutSourceHealthRoute: LayoutSourceHealthRoute,
+  LayoutTopologyRoute: LayoutTopologyRoute,
   LayoutIndexRoute: LayoutIndexRoute,
+  LayoutInvestigateLookupRoute: LayoutInvestigateLookupRoute,
+  LayoutPayloadWorkbenchResultsRoute: LayoutPayloadWorkbenchResultsRoute,
 }
 
 const LayoutRouteWithChildren =

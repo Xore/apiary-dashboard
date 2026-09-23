@@ -1,7 +1,9 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { LinkProvider } from '@astryxdesign/core/Link'
 import { Theme } from '@astryxdesign/core/theme'
+import { RouterLink } from '../components/RouterLink'
 import { neutralTheme } from '../themes/neutral/neutral'
 
 import appCss from '../styles.css?url'
@@ -17,7 +19,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'APIARY',
       },
     ],
     links: [
@@ -38,7 +40,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <Theme theme={neutralTheme}>
-          {children}
+          <LinkProvider component={RouterLink}>{children}</LinkProvider>
         </Theme>
         <TanStackDevtools
           config={{
