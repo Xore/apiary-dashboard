@@ -8,13 +8,24 @@ import { NAV_SECTIONS } from '#/lib/nav'
 import { ShellSideNav } from './ShellSideNav'
 import { ShellTopNav } from './ShellTopNav'
 
-const PAGES = NAV_SECTIONS.flatMap((section) =>
-  section.items.map((item) => ({
-    id: item.to,
-    label: item.label,
-    auxiliaryData: { group: section.label },
-  })),
-)
+// Pages without a sidebar entry stay reachable from the palette.
+const UNLISTED = [
+  { id: '/search', label: 'Search everything' },
+  { id: '/settings', label: 'Settings' },
+  { id: '/dead-letters', label: 'Ingest dead letters' },
+  { id: '/problem-reports', label: 'Problem reports' },
+]
+
+const PAGES = [
+  ...NAV_SECTIONS.flatMap((section) =>
+    section.items.map((item) => ({
+      id: item.to,
+      label: item.label,
+      auxiliaryData: { group: section.label },
+    })),
+  ),
+  ...UNLISTED.map((page) => ({ ...page, auxiliaryData: { group: 'More' } })),
+]
 
 /** The single application shell: one topbar, one sidebar, one content
  * region, and the global command palette. */
