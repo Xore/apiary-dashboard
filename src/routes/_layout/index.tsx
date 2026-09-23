@@ -1,63 +1,24 @@
-import { Card } from '@astryxdesign/core/Card'
 import { Divider } from '@astryxdesign/core/Divider'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Icon } from '@astryxdesign/core/Icon'
 import { Link } from '@astryxdesign/core/Link'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
-import { Heading, Text } from '@astryxdesign/core/Text'
-import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/react/24/outline'
+import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
-import type { ReactNode } from 'react'
-import { ProtocolTimeline, Sparkline } from '#/components/charts'
+import { ProtocolTimeline } from '#/components/charts'
+import { CountTable, Panel, StatTile } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
 import { SeverityToken } from '#/components/SeverityToken'
 import { getOverview } from '#/data/queries'
-import type { AttackSource, CountRow, HoneypotEvent, Kpi, Sensor, SensorStatus } from '#/data/types'
-import { formatChange, formatCompact, formatDateTime, formatNumber, formatTime } from '#/lib/format'
+import type { AttackSource, HoneypotEvent, Sensor, SensorStatus } from '#/data/types'
+import { formatDateTime, formatNumber, formatTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/')({
   loader: () => getOverview(),
   component: OverviewPage,
 })
-
-function KpiTile({ kpi }: { kpi: Kpi }) {
-  const isUp = kpi.value >= kpi.previous
-  return (
-    <Card>
-      <VStack gap={2}>
-        <Text type="label" color="secondary">
-          {kpi.label}
-        </Text>
-        <HStack gap={2} vAlign="center">
-          <Heading level={2}>{formatCompact(kpi.value)}</Heading>
-          <HStack gap={1} vAlign="center">
-            <Icon icon={isUp ? ArrowUpIcon : ArrowDownIcon} size="xsm" color="secondary" />
-            <Text type="supporting">{formatChange(kpi.value, kpi.previous)}</Text>
-          </HStack>
-        </HStack>
-        <Text type="supporting">Last 24h vs. previous 24h</Text>
-        <Sparkline data={kpi.trend} />
-      </VStack>
-    </Card>
-  )
-}
-
-function Panel({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
-  return (
-    <Card>
-      <VStack gap={4}>
-        <HStack hAlign="between" vAlign="center">
-          <Heading level={3}>{title}</Heading>
-          {action}
-        </HStack>
-        {children}
-      </VStack>
-    </Card>
-  )
-}
 
 const sourceColumns: TableColumn<AttackSource>[] = [
   {
@@ -129,11 +90,6 @@ const sensorColumns: TableColumn<Sensor>[] = [
   },
 ]
 
-const countColumns = (header: string): TableColumn<CountRow>[] => [
-  { key: 'label', header, width: proportional(1), renderCell: (row) => <Text type="code">{row.label}</Text> },
-  { key: 'count', header: 'Count', width: pixel(80), align: 'end', renderCell: (row) => formatNumber(row.count) },
-]
-
 function OverviewPage() {
   const data = Route.useLoaderData()
 
@@ -142,7 +98,7 @@ function OverviewPage() {
       <VStack gap={6}>
         <Grid columns={{ minWidth: 200, repeat: 'fit' }} gap={4}>
           {data.kpis.map((kpi) => (
-            <KpiTile key={kpi.id} kpi={kpi} />
+            <StatTile key={kpi.id} {...kpi} caption="Last 24h vs. previous 24h" />
           ))}
         </Grid>
 
@@ -161,13 +117,13 @@ function OverviewPage() {
 
         <Grid columns={{ minWidth: 260, repeat: 'fit' }} gap={4}>
           <Panel title="Countries">
-            <Table data={data.topCountries} columns={countColumns('Country')} idKey="id" density="compact" />
+            <CountTable header="Country" rows={data.topCountries} />
           </Panel>
           <Panel title="Usernames tried" action={<Link href="/credentials">Credentials</Link>}>
-            <Table data={data.topUsernames} columns={countColumns('Username')} idKey="id" density="compact" />
+            <CountTable header="Username" rows={data.topUsernames} isCode />
           </Panel>
           <Panel title="Passwords tried">
-            <Table data={data.topPasswords} columns={countColumns('Password')} idKey="id" density="compact" />
+            <CountTable header="Password" rows={data.topPasswords} isCode />
           </Panel>
         </Grid>
 

@@ -129,6 +129,13 @@ function eventShape(
 function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
   const rng = createRng(0xbee5)
   const events: HoneypotEvent[] = []
+  // Cowrie-style hex session ids, stable per (source, connection slot).
+  const sessionRng = createRng(0x5e55)
+  const sessionIds = new Map<string, string>()
+  const sessionIdFor = (key: string) => {
+    if (!sessionIds.has(key)) sessionIds.set(key, hex(sessionRng, 12))
+    return sessionIds.get(key)!
+  }
   const count = 1800
   for (let i = 0; i < count; i++) {
     // Denser traffic in recent hours with a mid-window burst.
@@ -147,7 +154,7 @@ function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
       srcPort: int(rng, 1024, 65535),
       country: source.country,
       asn: source.asn,
-      sessionId: `${source.ip.replaceAll('.', '')}-${int(rng, 1, 6)}`,
+      sessionId: sessionIdFor(`${source.ip}#${int(rng, 1, 6)}`),
       ...shape,
     })
   }
