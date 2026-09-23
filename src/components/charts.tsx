@@ -246,20 +246,28 @@ function ValueTooltip({ active, payload }: { active?: boolean; payload?: Array<{
   )
 }
 
-/** Tactic-to-tactic flow of attacker sessions, in kill-chain order. */
-export function KillChainFlow({ flow }: { flow: KillChainData['flow'] }) {
+/** Left-to-right flow between named stages (kill-chain tactics, pipeline
+ * components). Labels sit above each node so neighbours never collide. */
+export function FlowSankey({ flow, height = 420 }: { flow: KillChainData['flow']; height?: number }) {
   return (
-    <ResponsiveContainer width="100%" height={420}>
+    <ResponsiveContainer width="100%" height={height}>
       <Sankey
         data={flow}
         nodePadding={28}
         nodeWidth={12}
-        margin={{ top: 24, right: 56, bottom: 8, left: 8 }}
+        margin={{ top: 24, right: 8, bottom: 8, left: 8 }}
         link={{ stroke: 'var(--color-data-categorical-blue)', strokeOpacity: 0.25 }}
-        node={({ x, y, width, height, payload }: { x: number; y: number; width: number; height: number; payload: { name: string; value: number } }) => (
+        node={({ x, y, width, height: nodeHeight, payload }: { x: number; y: number; width: number; height: number; payload: { name: string; value: number; sourceLinks?: unknown[] } }) => (
           <g>
-            <rect x={x} y={y} width={width} height={height} rx={2} fill="var(--color-data-categorical-blue)" />
-            <text x={x} y={y - 8} fontSize={12} fill="var(--color-text-primary)">
+            <rect x={x} y={y} width={width} height={nodeHeight} rx={2} fill="var(--color-data-categorical-blue)" />
+            {/* Terminal nodes sit on the right edge, so their label reads leftwards. */}
+            <text
+              x={payload.sourceLinks?.length ? x : x + width}
+              y={y - 8}
+              textAnchor={payload.sourceLinks?.length ? 'start' : 'end'}
+              fontSize={12}
+              fill="var(--color-text-primary)"
+            >
               {payload.name}
               <tspan fill="var(--color-text-secondary)"> · {formatNumber(payload.value)}</tspan>
             </text>

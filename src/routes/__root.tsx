@@ -43,8 +43,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <LinkProvider component={RouterLink}>{children}</LinkProvider>
         </Theme>
         <TanStackDevtools
+          // The floating trigger sat over page actions (e.g. the reports
+          // wizard's Next button); open the devtools with Ctrl+~ instead.
           config={{
             position: 'bottom-right',
+            triggerHidden: true,
           }}
           plugins={[
             {

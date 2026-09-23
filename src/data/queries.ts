@@ -13,10 +13,41 @@ import {
   REPLAYS,
   SOURCE_PROFILES,
 } from './mock/investigate'
+import {
+  ALERTS,
+  ANALYSIS_RESULTS,
+  ANALYZERS,
+  BAIT_CREDENTIALS,
+  CANARY_TOKENS,
+  CANARY_TRIGGERS,
+  CANARY_TYPES,
+  GENERATED_REPORTS,
+  GPU_QUEUE,
+  PAYLOADS,
+  REPORT_DEFINITIONS,
+  REPORT_ELEMENTS,
+  REPORT_TEMPLATES,
+  SOURCE_HEALTH,
+  TOPOLOGY,
+} from './mock/operations'
 import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALTH, SCORE_TIMELINE } from './mock/monitor'
 import { MOCK_NOW, createRng } from './mock/random'
 import type {
   AgentCampaign,
+  AlertGroup,
+  AlertRecord,
+  AnalysisResult,
+  AnalysisResultsData,
+  BaitCredential,
+  CanaryToken,
+  CanaryTokenType,
+  CanaryTrigger,
+  CapturedPayload,
+  GeneratedReport,
+  ReportDefinition,
+  ReportsData,
+  SourceHealth,
+  Topology,
   AttackerEntity,
   ClusterKind,
   CredEdge,
@@ -348,4 +379,262 @@ export async function resolveHash(value: string): Promise<LookupTarget> {
     (c) => (c.kind === 'payload' || c.kind === 'fingerprint') && c.value.toLowerCase().replace(/^hassh:/, '') === value,
   )
   return hit ? { kind: 'cluster', clusterKind: hit.kind, value: hit.value } : { kind: 'not-found', value }
+}
+
+// ---- Operations ------------------------------------------------------------
+
+/** Same-class alerts collapse into one row: the kind plus the message with
+ * hash-like and dotted-quad tokens blanked. */
+function alertClass(alert: AlertRecord): string {
+  return `${alert.kind}|${alert.message.replace(/\b[0-9a-f]{16,}\b/gi, '#').replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, '#')}`
+}
+
+export async function getAlerts(): Promise<AlertGroup[]> {
+  await mockDelay()
+  const groups = new Map<string, AlertRecord[]>()
+  for (const alert of ALERTS) {
+    // Acknowledged and open members of one class land in separate groups so
+    // each tab shows only its own records.
+    const key = `${alertClass(alert)}|${alert.acknowledged}`
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push({ ...alert })
+  }
+  return [...groups]
+    .map(([id, members]) => ({
+      id,
+      kind: members[0].kind,
+      message: members.length > 1 ? members[0].message.replace(/\b[0-9a-f]{16,}\b/gi, '<hash>') : members[0].message,
+      severity: members[0].severity,
+      count: members.reduce((sum, m) => sum + m.count, 0),
+      firstSeen: members.map((m) => m.firstSeen).sort()[0],
+      lastSeen: members.map((m) => m.lastSeen).sort().at(-1)!,
+      acknowledged: members[0].acknowledged,
+      members,
+    }))
+    .sort((a, b) => b.lastSeen.localeCompare(a.lastSeen))
+}
+
+/** Mock write: acknowledges (or reopens) the given alert keys. */
+export async function setAlertsAcknowledged(keys: string[], acknowledged: boolean): Promise<number> {
+  await mockDelay()
+  let changed = 0
+  for (const alert of ALERTS) {
+    if (keys.includes(alert.key) && alert.acknowledged !== acknowledged) {
+      alert.acknowledged = acknowledged
+      alert.acknowledgedBy = acknowledged ? MOCK_USER.name : undefined
+      changed += 1
+    }
+  }
+  return changed
+}
+
+export async function acknowledgeAllAlerts(): Promise<number> {
+  return setAlertsAcknowledged(ALERTS.filter((a) => !a.acknowledged).map((a) => a.key), true)
+}
+
+export async function getSourceHealth(): Promise<SourceHealth> {
+  await mockDelay()
+  return SOURCE_HEALTH
+}
+
+export async function getTopology(): Promise<Topology> {
+  await mockDelay()
+  return TOPOLOGY
+}
+
+const HISTORY_FIELDS: Record<string, (e: HoneypotEvent) => string> = {
+  'source.ip': (e) => e.srcIp,
+  ip: (e) => e.srcIp,
+  sensor: (e) => e.sensor,
+  'honeypot.event': (e) => e.type,
+  event: (e) => e.type,
+  protocol: (e) => e.protocol,
+  port: (e) => String(e.dstPort),
+  country: (e) => e.country,
+  session: (e) => e.sessionId,
+  username: (e) => e.username ?? '',
+}
+
+/** Mock of the archive's Lucene passthrough: `field:value` terms and free
+ * text, joined with AND. Unknown fields match nothing. */
+export async function searchHistory(query: string): Promise<HoneypotEvent[]> {
+  await mockDelay()
+  const terms = query
+    .split(/\s+AND\s+/i)
+    .map((t) => t.trim())
+    .filter(Boolean)
+  return EVENTS.filter((event) =>
+    terms.every((term) => {
+      const match = term.match(/^([\w.]+):"?([^"]*)"?$/)
+      if (match) {
+        const field = HISTORY_FIELDS[match[1]] as ((e: HoneypotEvent) => string) | undefined
+        return field ? field(event).toLowerCase().includes(match[2].toLowerCase()) : false
+      }
+      return JSON.stringify(event).toLowerCase().includes(term.toLowerCase())
+    }),
+  ).slice(0, 500)
+}
+
+// ---- Reports ---------------------------------------------------------------
+
+export async function getReports(): Promise<ReportsData> {
+  await mockDelay()
+  return {
+    templates: REPORT_TEMPLATES,
+    elements: REPORT_ELEMENTS,
+    definitions: REPORT_DEFINITIONS.map((d) => structuredClone(d)),
+    generated: [...GENERATED_REPORTS],
+  }
+}
+
+/** Mock write: creates (empty id) or replaces a definition. */
+export async function saveReportDefinition(definition: ReportDefinition): Promise<ReportDefinition> {
+  await mockDelay()
+  const saved = { ...structuredClone(definition), id: definition.id || `def-${Date.now().toString(36)}`, created: definition.created || new Date(MOCK_NOW).toISOString() }
+  const index = REPORT_DEFINITIONS.findIndex((d) => d.id === saved.id)
+  if (index >= 0) REPORT_DEFINITIONS[index] = saved
+  else REPORT_DEFINITIONS.unshift(saved)
+  return saved
+}
+
+export async function deleteReportDefinition(id: string): Promise<void> {
+  await mockDelay()
+  const index = REPORT_DEFINITIONS.findIndex((d) => d.id === id)
+  if (index >= 0) REPORT_DEFINITIONS.splice(index, 1)
+}
+
+export async function generateReport(definitionId: string): Promise<GeneratedReport | null> {
+  await mockDelay()
+  const definition = REPORT_DEFINITIONS.find((d) => d.id === definitionId)
+  if (!definition) return null
+  const report: GeneratedReport = {
+    id: `rpt-${Date.now().toString(36)}`,
+    title: definition.branding.title || definition.name,
+    template: definition.template,
+    origin: 'manual',
+    createdAt: new Date(MOCK_NOW).toISOString(),
+    sizeBytes: 200 * 1024 + definition.elements.length * 90 * 1024,
+    definitionId,
+  }
+  GENERATED_REPORTS.unshift(report)
+  return report
+}
+
+export async function deleteGeneratedReport(id: string): Promise<void> {
+  await mockDelay()
+  const index = GENERATED_REPORTS.findIndex((r) => r.id === id)
+  if (index >= 0) GENERATED_REPORTS.splice(index, 1)
+}
+
+// ---- Tools -----------------------------------------------------------------
+
+export async function getCanarytokens(): Promise<{ types: CanaryTokenType[]; tokens: CanaryToken[]; triggers: CanaryTrigger[] }> {
+  await mockDelay()
+  return { types: CANARY_TYPES, tokens: [...CANARY_TOKENS], triggers: CANARY_TRIGGERS }
+}
+
+/** Mock write: mints a token as the self-hosted Canarytokens platform would. */
+export async function createCanarytoken(input: { type: string; memo: string; text?: string }): Promise<CanaryToken> {
+  await mockDelay()
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(13)), (b) => b.toString(16).padStart(2, '0')).join('').slice(0, 25)
+  const token: CanaryToken = {
+    id,
+    type: input.type,
+    memo: input.memo,
+    url: `http://canary.example.test/tags/${id}/index.html`,
+    hostname: `${id}.canary.example.test`,
+    createdAt: new Date(MOCK_NOW).toISOString(),
+    createdBy: MOCK_USER.name,
+    artifact: ['aws_keys', 'kubeconfig', 'ms_word', 'pdf', 'qr_code'].includes(input.type) ? `${input.type}-${id.slice(0, 6)}` : undefined,
+  }
+  CANARY_TOKENS.unshift(token)
+  return token
+}
+
+// Visually unambiguous alphabet (no 0/O, 1/l/I).
+const PASSWORD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%^&*'
+
+export function generatePassword(length = 16): string {
+  return Array.from(crypto.getRandomValues(new Uint32Array(length)), (n) => PASSWORD_ALPHABET[n % PASSWORD_ALPHABET.length]).join('')
+}
+
+export async function getCredentials(): Promise<{ credentials: BaitCredential[]; tokens: CanaryToken[]; targets: string[] }> {
+  await mockDelay()
+  return {
+    credentials: BAIT_CREDENTIALS.map((c) => ({ ...c })),
+    tokens: CANARY_TOKENS,
+    targets: SENSORS.filter((s) => s.kind === 'Cowrie').map((s) => s.id),
+  }
+}
+
+/** Mock write: provisioning implants the file immediately (not a draft). */
+export async function provisionCredential(input: Pick<BaitCredential, 'path' | 'target' | 'username' | 'password' | 'memo' | 'template'>): Promise<BaitCredential> {
+  await mockDelay()
+  const credential: BaitCredential = {
+    ...input,
+    template: input.template || 'username={{username}}\npassword={{password}}',
+    id: `cred-${Date.now().toString(36)}`,
+    createdAt: new Date(MOCK_NOW).toISOString(),
+    createdBy: MOCK_USER.name,
+  }
+  BAIT_CREDENTIALS.unshift(credential)
+  return credential
+}
+
+export async function rotateCredential(id: string, password?: string): Promise<void> {
+  await mockDelay()
+  const credential = BAIT_CREDENTIALS.find((c) => c.id === id)
+  if (!credential) return
+  credential.password = password || generatePassword()
+  credential.rotatedAt = new Date(MOCK_NOW).toISOString()
+  credential.rotatedBy = MOCK_USER.name
+}
+
+export async function linkCredentialToken(id: string, tokenId?: string): Promise<void> {
+  await mockDelay()
+  const credential = BAIT_CREDENTIALS.find((c) => c.id === id)
+  if (credential) credential.linkedTokenId = tokenId
+}
+
+// ---- Evidence --------------------------------------------------------------
+
+export async function getPayloads(): Promise<{ payloads: CapturedPayload[]; sources: CountRow[] }> {
+  await mockDelay()
+  return { payloads: PAYLOADS, sources: countBy(PAYLOADS.flatMap((p) => p.sources), 10) }
+}
+
+export async function getAnalysisResults(): Promise<AnalysisResultsData> {
+  await mockDelay()
+  return { results: [...ANALYSIS_RESULTS], gpuQueue: GPU_QUEUE.map((j) => ({ ...j })), analyzers: ANALYZERS }
+}
+
+/** Mock write: queues a workbench run for a captured payload. */
+export async function startWorkbenchRun(hash: string, analyzers: string[]): Promise<AnalysisResult | null> {
+  await mockDelay()
+  const payload = PAYLOADS.find((p) => p.hash === hash.toLowerCase())
+  if (!payload) return null
+  const run: AnalysisResult = {
+    id: `wb-${Date.now().toString(36)}`,
+    analyzer: 'workbench',
+    hash: payload.hash,
+    file: `${payload.hash.slice(0, 12)}`,
+    at: new Date(MOCK_NOW).toISOString(),
+    owner: MOCK_USER.name,
+    recipe: analyzers.join('+'),
+    state: 'queued',
+    summary: 'Workbench run',
+    detail: { analyzers },
+  }
+  ANALYSIS_RESULTS.unshift(run)
+  return run
+}
+
+/** Mock write: only a still-queued job can be aborted. */
+export async function abortGpuJob(jobId: string): Promise<boolean> {
+  await mockDelay()
+  const job = GPU_QUEUE.find((j) => j.jobId === jobId)
+  if (job?.status !== 'queued') return false
+  job.abortRequested = true
+  job.status = 'aborted'
+  return true
 }

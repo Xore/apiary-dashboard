@@ -20,9 +20,9 @@ export const MOCK_USER: SessionUser = {
 export const SENSORS: Sensor[] = [
   { id: 'cowrie-vps-01', name: 'cowrie-vps-01', kind: 'Cowrie', protocols: ['ssh', 'telnet'], location: 'Frankfurt, DE', status: 'online', eventsLast24h: 0, lastSeen: isoMinutesAgo(0) },
   { id: 'cowrie-home-01', name: 'cowrie-home-01', kind: 'Cowrie', protocols: ['ssh', 'telnet'], location: 'Home lab', status: 'online', eventsLast24h: 0, lastSeen: isoMinutesAgo(1) },
-  { id: 'dionaea-vps-01', name: 'dionaea-vps-01', kind: 'Dionaea', protocols: ['smb', 'ftp', 'mysql', 'sip'], location: 'Frankfurt, DE', status: 'online', eventsLast24h: 0, lastSeen: isoMinutesAgo(2) },
+  { id: 'dionaea-vps-01', name: 'dionaea-vps-01', kind: 'Dionaea', protocols: ['smb', 'ftp', 'mysql', 'sip'], location: 'Frankfurt, DE', status: 'online', eventsLast24h: 0, lastSeen: isoMinutesAgo(1) },
   { id: 'tanner-vps-01', name: 'tanner-vps-01', kind: 'Snare/Tanner', protocols: ['http'], location: 'Frankfurt, DE', status: 'degraded', eventsLast24h: 0, lastSeen: isoMinutesAgo(14) },
-  { id: 'rdpy-home-01', name: 'rdpy-home-01', kind: 'RDPY', protocols: ['rdp'], location: 'Home lab', status: 'online', eventsLast24h: 0, lastSeen: isoMinutesAgo(3) },
+  { id: 'rdpy-home-01', name: 'rdpy-home-01', kind: 'RDPY', protocols: ['rdp'], location: 'Home lab', status: 'online', eventsLast24h: 0, lastSeen: isoMinutesAgo(1) },
   { id: 'suricata-vps-01', name: 'suricata-vps-01', kind: 'Suricata', protocols: ['http', 'ssh', 'smb'], location: 'Frankfurt, DE', status: 'offline', eventsLast24h: 0, lastSeen: isoMinutesAgo(190) },
 ]
 
