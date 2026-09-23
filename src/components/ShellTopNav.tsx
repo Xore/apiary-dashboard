@@ -1,151 +1,58 @@
-// Copyright (c) Meta Platforms, Inc. and affiliates.
+import { BreadcrumbItem, Breadcrumbs } from '@astryxdesign/core/Breadcrumbs'
+import { Button } from '@astryxdesign/core/Button'
+import { Icon } from '@astryxdesign/core/Icon'
+import { Kbd } from '@astryxdesign/core/Kbd'
+import { HStack } from '@astryxdesign/core/Stack'
+import { StatusDot } from '@astryxdesign/core/StatusDot'
+import { Text } from '@astryxdesign/core/Text'
+import { Token } from '@astryxdesign/core/Token'
+import { TopNav } from '@astryxdesign/core/TopNav'
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { useLocation } from '@tanstack/react-router'
+import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
 
-'use client';
+function ShellBreadcrumbs() {
+  const pathname = useLocation({ select: (location) => location.pathname })
+  const section = sectionFor(pathname)
+  const parent = navItemFor(pathname)
+  const page = pageFor(pathname)
+  const isDrillDown = parent !== undefined && parent.to !== pathname
 
-import {Fragment} from 'react';
-import {TopNav} from '@astryxdesign/core/TopNav';
-import {DropdownMenu, DropdownMenuItem} from '@astryxdesign/core/DropdownMenu';
-import {Divider} from '@astryxdesign/core/Divider';
-import {Kbd} from '@astryxdesign/core/Kbd';
-import {Icon} from '@astryxdesign/core/Icon';
-import {IconButton} from '@astryxdesign/core/IconButton';
-import {Button} from '@astryxdesign/core/Button';
-import {TextInput} from '@astryxdesign/core/TextInput';
-import {Stack} from '@astryxdesign/core/Stack';
-import {PlayIcon, MagnifyingGlassIcon} from '@heroicons/react/24/outline';
+  return (
+    <Breadcrumbs variant="supporting" label="Current page">
+      {section && <BreadcrumbItem isCurrent={false}>{section}</BreadcrumbItem>}
+      {isDrillDown && <BreadcrumbItem href={parent.to}>{parent.label}</BreadcrumbItem>}
+      <BreadcrumbItem isCurrent>{page}</BreadcrumbItem>
+    </Breadcrumbs>
+  )
+}
 
-const noop = () => {};
-
-type MenuEntry = [label: string, shortcut: string];
-
-const MENU_WIDTH = 280;
-
-const MENUS: {label: string; groups: MenuEntry[][]}[] = [
-  {
-    label: 'File',
-    groups: [
-      [
-        ['New File', '⌘N'],
-        ['New Window', '⇧⌘N'],
-      ],
-      [
-        ['Open...', '⌘O'],
-        ['Save', '⌘S'],
-        ['Save As...', '⇧⌘S'],
-      ],
-      [['Close Editor', '⌘W']],
-    ],
-  },
-  {
-    label: 'Edit',
-    groups: [
-      [
-        ['Undo', '⌘Z'],
-        ['Redo', '⇧⌘Z'],
-      ],
-      [
-        ['Cut', '⌘X'],
-        ['Copy', '⌘C'],
-        ['Paste', '⌘V'],
-      ],
-      [['Find', '⌘F']],
-    ],
-  },
-  {
-    label: 'View',
-    groups: [
-      [['Command Palette', '⇧⌘P']],
-      [
-        ['Explorer', '⇧⌘E'],
-        ['Search', '⇧⌘F'],
-      ],
-      [
-        ['Toggle Terminal', '⌃`'],
-        ['Zen Mode', '⌘K'],
-      ],
-    ],
-  },
-  {
-    label: 'Window',
-    groups: [
-      [
-        ['Minimize', '⌘M'],
-        ['Zoom', ''],
-      ],
-      [
-        ['Next Tab', '⌃⇥'],
-        ['Previous Tab', '⌃⇧⇥'],
-      ],
-      [['Bring All to Front', '']],
-    ],
-  },
-  {
-    label: 'Help',
-    groups: [
-      [
-        ['Documentation', ''],
-        ['Release Notes', ''],
-        ['Report Issue', ''],
-        ['About', ''],
-      ],
-    ],
-  },
-];
-
-export function ShellTopNav({onOpenPalette}: {onOpenPalette: () => void}) {
+export function ShellTopNav({ onOpenPalette }: { onOpenPalette: () => void }) {
   return (
     <TopNav
-      label="Astryx Studio menu bar"
-      startContent={
-        <>
-          {MENUS.map(menu => (
-            <DropdownMenu
-              key={menu.label}
-              button={{label: menu.label, variant: 'ghost', size: 'sm'}}
-              hasChevron={false}
-              menuWidth={MENU_WIDTH}>
-              {menu.groups.map((group, gi) => (
-                <Fragment key={gi}>
-                  {gi > 0 && <Divider />}
-                  {group.map(([label, shortcut]) => (
-                    <DropdownMenuItem
-                      key={label}
-                      label={label}
-                      onClick={noop}
-                      endContent={
-                        shortcut ? <Kbd keys={shortcut} /> : undefined
-                      }
-                    />
-                  ))}
-                </Fragment>
-              ))}
-            </DropdownMenu>
-          ))}
-        </>
-      }
+      label="Page header"
+      startContent={<ShellBreadcrumbs />}
       endContent={
         <>
-          <Stack onClick={onOpenPalette}>
-            <TextInput
-              label="Search files and commands"
-              isLabelHidden
-              size="sm"
-              width={240}
-              startIcon={MagnifyingGlassIcon}
-              placeholder="Search files and commands…"
-              value=""
-              onChange={() => {}}
-            />
-          </Stack>
-          <IconButton
-            label="Run project"
-            tooltip="Run"
-            variant="ghost"
-            icon={<Icon icon={PlayIcon} size="sm" />}
-          />
-          <Button label="Share" variant="secondary" />
+          <Button
+            label="Search"
+            variant="secondary"
+            size="sm"
+            icon={<Icon icon={MagnifyingGlassIcon} size="sm" />}
+            onClick={onOpenPalette}
+          >
+            <HStack gap={2} vAlign="center">
+              <Text>Search</Text>
+              <Kbd keys="⌘K" />
+            </HStack>
+          </Button>
+          <Token label="Mock data" size="sm" color="orange" />
+          <HStack gap={1.5} vAlign="center">
+            <StatusDot variant="success" label="Live feed connected" isPulsing />
+            <Text type="supporting">Live</Text>
+          </HStack>
         </>
       }
     />
-  );
+  )
 }
