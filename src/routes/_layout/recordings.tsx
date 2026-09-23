@@ -1,18 +1,13 @@
-import { useEffect, useState } from 'react'
-import { CodeBlock } from '@astryxdesign/core/CodeBlock'
-import { Link } from '@astryxdesign/core/Link'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
-import { Skeleton } from '@astryxdesign/core/Skeleton'
-import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
+import { entityHref } from '#/lib/entities'
 import { createFileRoute } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
-import { getRecordings, getReplay } from '#/data/queries'
-import type { Recording, Replay } from '#/data/types'
-import { formatClock, formatDateTime, formatNumber } from '#/lib/format'
+import { getRecordings } from '#/data/queries'
+import type { Recording } from '#/data/types'
+import { formatClock, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/recordings')({
   validateSearch: (search: Record<string, unknown>): { ip?: string } => ({
@@ -32,59 +27,6 @@ const columns: TableColumn<Recording>[] = [
   { key: 'durationMs', header: 'Duration', width: pixel(104), align: 'end', renderCell: (row) => `${(row.durationMs / 1000).toFixed(1)} s` },
 ]
 
-function ReplayPane({ recording }: { recording: Recording }) {
-  const [replay, setReplay] = useState<Replay | null | 'loading'>('loading')
-  useEffect(() => {
-    let cancelled = false
-    setReplay('loading')
-    getReplay(recording.shasum).then(
-      (result) => !cancelled && setReplay(result),
-      () => !cancelled && setReplay(null),
-    )
-    return () => {
-      cancelled = true
-    }
-  }, [recording.shasum])
-
-  return (
-    <VStack gap={4}>
-      <MetadataList label={{ position: 'start', width: 88 }}>
-        <MetadataListItem label="Closed">{formatDateTime(recording.when)}</MetadataListItem>
-        <MetadataListItem label="Source">
-          {recording.srcIp ? (
-            <HStack gap={1.5} vAlign="center">
-              <Link href={`/investigate/ip/${recording.srcIp}`}>{recording.srcIp}</Link>
-              {recording.country && <Token label={recording.country} size="sm" />}
-            </HStack>
-          ) : (
-            'unattributed'
-          )}
-        </MetadataListItem>
-        <MetadataListItem label="Session">
-          <Link href={`/sessions/${recording.session}`}>{recording.session}</Link>
-        </MetadataListItem>
-        <MetadataListItem label="SHA-256">
-          <Text type="code">{`${recording.shasum.slice(0, 24)}…`}</Text>
-        </MetadataListItem>
-      </MetadataList>
-      {replay === 'loading' ? (
-        <Skeleton height={160} />
-      ) : replay === null ? (
-        <Text color="secondary">Replay unavailable for this recording.</Text>
-      ) : (
-        <VStack gap={2}>
-          <HStack gap={3} vAlign="center" wrap="wrap">
-            <Text type="supporting">
-              {formatNumber(replay.frames)} frames · {replay.durationSeconds.toFixed(1)}s of terminal time
-            </Text>
-            <Link href={`/tty-replay/${recording.shasum}`}>Open replay page</Link>
-          </HStack>
-          <CodeBlock code={replay.transcript} title="Transcript" maxHeight={360} isWrapped />
-        </VStack>
-      )}
-    </VStack>
-  )
-}
 
 function RecordingsPage() {
   const recordings = Route.useLoaderData()
@@ -101,9 +43,8 @@ function RecordingsPage() {
       }
       rows={recordings}
       columns={columns}
+      getHref={(row) => entityHref('recording', row.shasum)!}
       getId={(row) => row.id}
-      inspectorTitle="Recording"
-      renderInspector={(row) => <ReplayPane recording={row} />}
       emptyState={{
         title: ip ? `No recordings from ${ip}` : 'No recordings yet',
         description: 'Cowrie stores a TTY log for every interactive session.',

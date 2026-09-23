@@ -1,4 +1,3 @@
-import { Link } from '@astryxdesign/core/Link'
 import { HStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -8,15 +7,16 @@ import type { HoneypotEvent, Technique } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { Panel } from './DashboardBlocks'
 import { SeverityToken } from './SeverityToken'
+import { EntityLink } from './EntityLink'
 
 const eventColumns = (showSource: boolean): TableColumn<HoneypotEvent>[] => [
   { key: 'timestamp', header: 'Time', width: pixel(184), renderCell: (row) => <Text type="supporting">{formatDateTime(row.timestamp)}</Text> },
   { key: 'severity', header: 'Severity', width: pixel(96), renderCell: (row) => <SeverityToken severity={row.severity} /> },
   { key: 'sensor', header: 'Sensor', width: pixel(144) },
   ...(showSource
-    ? [{ key: 'srcIp', header: 'Source', width: pixel(136), renderCell: (row: HoneypotEvent) => <Link href={`/investigate/ip/${row.srcIp}`}>{row.srcIp}</Link> }]
+    ? [{ key: 'srcIp', header: 'Source', width: pixel(136), renderCell: (row: HoneypotEvent) => <EntityLink kind="source" id={row.srcIp} /> }]
     : []),
-  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <Link href={`/event/${row.id}`}><Text type="code">{row.summary}</Text></Link> },
+  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <EntityLink kind="event" id={row.id}><Text type="code">{row.summary}</Text></EntityLink> },
 ]
 
 /** Events around a subject, each linking to its full event page. */

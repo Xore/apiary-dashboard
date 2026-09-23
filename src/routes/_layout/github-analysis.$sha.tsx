@@ -3,7 +3,6 @@ import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
@@ -16,6 +15,7 @@ import { PageFrame } from '#/components/PageFrame'
 import { getGithubAnalysis, queuePayloadAction } from '#/data/queries'
 import type { GithubStatus } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/github-analysis/$sha')({
   loader: async ({ params }) => {
@@ -47,7 +47,7 @@ function GithubPage() {
     >
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap">
-          <Link href={`/payload-analysis/${g.sha}`}><Text type="code">{`${g.sha.slice(0, 24)}…`}</Text></Link>
+          <EntityLink kind="payload" id={g.sha}><Text type="code">{`${g.sha.slice(0, 24)}…`}</Text></EntityLink>
           <Text type="supporting">{formatDateTime(g.at)}</Text>
         </HStack>
         {g.status !== 'published' && <Banner status="warning" {...STATUS_BANNER[g.status]} />}

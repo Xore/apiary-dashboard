@@ -1,20 +1,20 @@
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Link } from '@astryxdesign/core/Link'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
-import { HStack, VStack } from '@astryxdesign/core/Stack'
+import { VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { entityHref } from '#/lib/entities'
 import { createFileRoute } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { getNetworkCampaigns } from '#/data/queries'
 import type { CredEdge, NetworkCampaign } from '#/data/types'
 import { downloadCsv } from '#/lib/export'
-import { formatDateTime, formatNumber, formatTime } from '#/lib/format'
+import { formatNumber, formatTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/campaigns')({
   loader: () => getNetworkCampaigns(),
@@ -46,35 +46,6 @@ const credColumns: TableColumn<CredEdge>[] = [
   { key: 'last', header: 'Last', width: pixel(96), renderCell: (row) => <Text type="supporting">{formatTime(row.last)}</Text> },
 ]
 
-function CampaignInspector({ campaign }: { campaign: NetworkCampaign }) {
-  return (
-    <VStack gap={4}>
-      <HStack gap={2} vAlign="center">
-        <Text weight="semibold">{campaign.cidr}</Text>
-        <Token label={`score ${campaign.score}`} size="sm" color="blue" />
-      </HStack>
-      <Text>{campaign.explanation}</Text>
-      <MetadataList label={{ position: 'start', width: 104 }}>
-        <MetadataListItem label="Window">{`${formatDateTime(campaign.first)} → ${formatTime(campaign.last)}`}</MetadataListItem>
-        <MetadataListItem label="Sensors">{campaign.sensors.join(', ')}</MetadataListItem>
-        <MetadataListItem label="Ports">{campaign.ports.join(', ')}</MetadataListItem>
-        <MetadataListItem label="Scan shape">
-          {campaign.scan ? `${campaign.scan} (${campaign.dstIpsTouched} hosts, ${campaign.portsTouched} ports)` : '—'}
-        </MetadataListItem>
-        <MetadataListItem label="Credentials">{String(campaign.creds)}</MetadataListItem>
-        <MetadataListItem label="Payloads">{String(campaign.payloads)}</MetadataListItem>
-        <MetadataListItem label="IDS alerts">{String(campaign.alerts)}</MetadataListItem>
-        <MetadataListItem label="Fingerprints">{String(campaign.fingerprints)}</MetadataListItem>
-        <MetadataListItem label="ASNs">{campaign.asns.join(', ')}</MetadataListItem>
-        <MetadataListItem label="Providers">{campaign.providers.join(', ')}</MetadataListItem>
-        <MetadataListItem label="Sequence">{campaign.sequence.join(' → ')}</MetadataListItem>
-      </MetadataList>
-      <Link href={cidrHref(campaign.cidr)} isStandalone>
-        Investigate this network
-      </Link>
-    </VStack>
-  )
-}
 
 function CampaignsPage() {
   const { campaigns, credReuse } = Route.useLoaderData()
@@ -115,9 +86,8 @@ function CampaignsPage() {
       }
       rows={campaigns}
       columns={columns}
+      getHref={(row) => entityHref('network', row.cidr)!}
       getId={(row) => row.cidr}
-      inspectorTitle="Campaign details"
-      renderInspector={(row) => <CampaignInspector campaign={row} />}
       emptyState={{
         title: 'No active campaigns in this window',
         description: 'Campaigns appear once related networks correlate across sensors.',

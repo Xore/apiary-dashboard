@@ -20,6 +20,7 @@ import { getPayloadAnalysis, queuePayloadAction } from '#/data/queries'
 import type { PayloadAction } from '#/data/queries'
 import type { Ioc, PayloadAnalysis } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 type PayloadTab = 'identity' | 'findings' | 'content'
 
@@ -45,7 +46,7 @@ const iocColumns: TableColumn<Ioc>[] = [
     header: 'Indicator',
     width: proportional(1),
     renderCell: (row) =>
-      row.kind === 'ip' ? <Link href={`/investigate/ip/${row.value}`}>{row.value}</Link> : <Text type="code">{row.value}</Text>,
+      row.kind === 'ip' ? <EntityLink kind="source" id={row.value} /> : <Text type="code">{row.value}</Text>,
   },
 ]
 

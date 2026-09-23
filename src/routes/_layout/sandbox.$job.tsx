@@ -4,7 +4,6 @@ import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
@@ -18,6 +17,7 @@ import { NotFound } from '#/components/NotFound'
 import { PageFrame } from '#/components/PageFrame'
 import { getSandboxRun, queuePayloadAction } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 const TABS = ['verdict', 'behavior', 'network', 'diagnostics', 'raw'] as const
 type SandboxTab = (typeof TABS)[number]
@@ -77,9 +77,9 @@ function SandboxPage() {
     >
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap" vAlign="center">
-          <Link href={`/payload-analysis/${run.hash}`}>
+          <EntityLink kind="payload" id={run.hash}>
             <Text type="code">{`${run.hash.slice(0, 24)}…`}</Text>
-          </Link>
+          </EntityLink>
           <Text type="supporting">detonated {formatDateTime(run.at)}</Text>
         </HStack>
         {queued && <Banner status="success" title={queued} description="Mock: nothing was actually queued." isDismissable onDismiss={() => setQueued(null)} />}

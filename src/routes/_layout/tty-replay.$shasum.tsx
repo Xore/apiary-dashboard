@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Slider } from '@astryxdesign/core/Slider'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
@@ -16,6 +15,7 @@ import { getReplayDetail } from '#/data/queries'
 import type { Replay } from '#/data/types'
 import { downloadJson } from '#/lib/export'
 import { formatDateTime, formatNumber } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/tty-replay/$shasum')({
   validateSearch: (search: Record<string, unknown>): { tab?: 'attacker' } => ({
@@ -145,7 +145,7 @@ function ReplayPage() {
           <VStack gap={4}>
             <HStack gap={3} vAlign="center">
               <Text weight="semibold">Source</Text>
-              <Link href={`/investigate/ip/${attacker.ip}`}>{attacker.ip}</Link>
+              <EntityLink kind="source" id={attacker.ip} />
               <Text type="supporting">first session closed {formatDateTime(sessions[0].when)}</Text>
             </HStack>
             <Grid columns={{ minWidth: 180, repeat: 'fit' }} gap={4}>

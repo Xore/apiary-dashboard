@@ -1,24 +1,23 @@
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
-import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Icon } from '@astryxdesign/core/Icon'
-import { Link } from '@astryxdesign/core/Link'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Selector } from '@astryxdesign/core/Selector'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
-import { Heading, Text } from '@astryxdesign/core/Text'
+import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { entityHref } from '#/lib/entities'
 import { createFileRoute } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { SeverityToken } from '#/components/SeverityToken'
 import { getEvents } from '#/data/queries'
 import type { EventFilters, EventKind, HoneypotEvent, Protocol } from '#/data/types'
 import { downloadCsv, downloadJson } from '#/lib/export'
-import { formatClock, formatDateTime, formatNumber } from '#/lib/format'
+import { formatClock, formatNumber } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http', 'alert']
 const SINCE = ['1h', '6h', '24h']
@@ -40,7 +39,8 @@ export const Route = createFileRoute('/_layout/events')({
       since: str('since'),
     }
   },
-  loaderDeps: ({ search }) => search,
+  // An explicit ?since= wins; otherwise the app-wide range applies.
+  loaderDeps: ({ search }) => ({ ...search, since: search.since ?? search.range }),
   loader: ({ deps }) => getEvents(deps),
   component: EventsPage,
 })
@@ -55,7 +55,7 @@ const columns: TableColumn<HoneypotEvent>[] = [
     width: pixel(152),
     renderCell: (row) => (
       <HStack gap={1.5} vAlign="center">
-        <Link href={`/investigate/ip/${row.srcIp}`}>{row.srcIp}</Link>
+        <EntityLink kind="source" id={row.srcIp} />
         <Text type="supporting">{row.country}</Text>
       </HStack>
     ),
@@ -64,40 +64,6 @@ const columns: TableColumn<HoneypotEvent>[] = [
   { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <Text type="code">{row.summary}</Text> },
 ]
 
-function EventInspector({ event }: { event: HoneypotEvent }) {
-  return (
-    <VStack gap={4}>
-      <HStack gap={2} vAlign="center" wrap="wrap">
-        <SeverityToken severity={event.severity} />
-        <Token label={event.type} size="sm" />
-      </HStack>
-      <Text type="code">{event.summary}</Text>
-      <MetadataList label={{ position: 'start', width: 104 }}>
-        <MetadataListItem label="Time">{formatDateTime(event.timestamp)}</MetadataListItem>
-        <MetadataListItem label="Source">
-          <Link href={`/investigate/ip/${event.srcIp}`}>{`${event.srcIp}:${event.srcPort}`}</Link>
-        </MetadataListItem>
-        <MetadataListItem label="Network">{`${event.asn} · ${event.country}`}</MetadataListItem>
-        <MetadataListItem label="Sensor">
-          <Link href={`/sensors/${event.sensor}`}>{event.sensor}</Link>
-        </MetadataListItem>
-        <MetadataListItem label="Service">{`${event.protocol.toUpperCase()} ${event.dstPort}`}</MetadataListItem>
-        <MetadataListItem label="Session">
-          <Link href={`/sessions/${event.sessionId}`}>{event.sessionId}</Link>
-        </MetadataListItem>
-        {event.username && <MetadataListItem label="Credential">{`${event.username} / ${event.password}`}</MetadataListItem>}
-      </MetadataList>
-      <HStack gap={3} wrap="wrap">
-        <Link href={`/events?ip=${event.srcIp}`}>All events from this IP</Link>
-        <Link href={`/event/${event.id}`}>Open event page</Link>
-      </HStack>
-      <VStack gap={2}>
-        <Heading level={3}>Normalized record</Heading>
-        <CodeBlock code={JSON.stringify(event, null, 2)} language="json" maxHeight={320} />
-      </VStack>
-    </VStack>
-  )
-}
 
 function EventsPage() {
   const data = Route.useLoaderData()
@@ -236,9 +202,8 @@ function EventsPage() {
       }
       rows={data.rows}
       columns={columns}
+      getHref={(row) => entityHref('event', row.id)!}
       getId={(row) => row.id}
-      inspectorTitle="Event details"
-      renderInspector={(row) => <EventInspector event={row} />}
       emptyState={{ title: 'No events match these filters', description: 'Remove a filter or widen the time window.' }}
     />
   )

@@ -1,7 +1,6 @@
 import { Banner } from '@astryxdesign/core/Banner'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
@@ -13,6 +12,7 @@ import { NotFound } from '#/components/NotFound'
 import { PageFrame } from '#/components/PageFrame'
 import { getCapeRun } from '#/data/queries'
 import { formatDateTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/cape/$sha')({
   loader: async ({ params }) => {
@@ -30,7 +30,7 @@ function CapePage() {
     <PageFrame title="CAPE result" description="Detonation in an isolated, debugger-instrumented Windows guest, built to defeat debugger-class time evasion.">
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap">
-          <Link href={`/payload-analysis/${run.sha}`}><Text type="code">{`${run.sha.slice(0, 24)}…`}</Text></Link>
+          <EntityLink kind="payload" id={run.sha}><Text type="code">{`${run.sha.slice(0, 24)}…`}</Text></EntityLink>
           <Text type="supporting">{formatDateTime(run.at)}</Text>
         </HStack>
         {run.status === 'failed_analysis' ? (

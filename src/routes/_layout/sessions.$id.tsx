@@ -1,5 +1,4 @@
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, notFound } from '@tanstack/react-router'
@@ -9,6 +8,7 @@ import { NotFound } from '#/components/NotFound'
 import { PageFrame } from '#/components/PageFrame'
 import { getSessionDetail } from '#/data/queries'
 import { formatDateTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/sessions/$id')({
   loader: async ({ params }) => {
@@ -31,8 +31,8 @@ function SessionPage() {
       actions={
         <HStack gap={2} vAlign="center">
           <Token size="sm" label={s.country} />
-          <Link href={`/investigate/ip/${s.srcIp}`}>{s.srcIp}</Link>
-          {s.recordingShasum && <Link href={`/tty-replay/${s.recordingShasum}`}>Replay recording</Link>}
+          <EntityLink kind="source" id={s.srcIp} />
+          {s.recordingShasum && <EntityLink kind="recording" id={s.recordingShasum}>Replay recording</EntityLink>}
         </HStack>
       }
     >

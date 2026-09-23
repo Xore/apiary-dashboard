@@ -17,6 +17,7 @@ import { getSourceProfiles } from '#/data/queries'
 import type { SourceProfile } from '#/data/types'
 import { downloadCsv } from '#/lib/export'
 import { formatDateTime, formatNumber } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 const PAGE = 24
 
@@ -45,9 +46,9 @@ function SourceCard({ source }: { source: SourceProfile }) {
     <Card>
       <VStack gap={3}>
         <HStack hAlign="between" vAlign="center" gap={2}>
-          <Link href={`/investigate/ip/${ip}`}>
+          <EntityLink kind="source" id={ip}>
             <Text weight="semibold">{source.ip}</Text>
-          </Link>
+          </EntityLink>
           <Token label={source.country} size="sm" color="blue" href={`/events?country=${source.country}`} />
         </HStack>
         <Text type="supporting">{source.org}</Text>

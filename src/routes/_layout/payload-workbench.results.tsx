@@ -2,23 +2,22 @@ import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { CheckboxList, CheckboxListItem } from '@astryxdesign/core/CheckboxList'
-import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
-import { Heading, Text } from '@astryxdesign/core/Text'
+import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { useViewTabs } from '#/components/ViewTabs'
+import { entityHref } from '#/lib/entities'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { abortGpuJob, getAnalysisResults, startWorkbenchRun } from '#/data/queries'
 import type { AnalysisResult, AnalysisResultsData, AnalyzerTab, GpuJob } from '#/data/types'
-import { formatDateTime, formatTime } from '#/lib/format'
+import { formatTime } from '#/lib/format'
 
 const TABS: Array<{ id: AnalyzerTab; label: string }> = [
   { id: 'workbench', label: 'Workbench' },
@@ -78,42 +77,15 @@ const COLUMNS: Record<AnalyzerTab, TableColumn<AnalysisResult>[]> = {
   ghidra: [time, file, summary],
 }
 
-const DETAIL_ROUTE: Partial<Record<AnalyzerTab, string>> = { sandbox: '/sandbox/', ghidra: '/ghidra/' }
-
-function ResultInspector({ result }: { result: AnalysisResult }) {
-  const hash = encodeURIComponent(result.hash)
-  return (
-    <VStack gap={4}>
-      <HStack gap={2} vAlign="center" wrap="wrap">
-        <Token size="sm" label={result.analyzer} />
-        {result.state && <Token size="sm" color={STATE_COLOR[result.state]} label={result.state} />}
-        {result.risk !== undefined && <Token size="sm" color={result.risk > 70 ? 'red' : 'orange'} label={`risk ${result.risk}`} />}
-      </HStack>
-      <Text>{result.summary}</Text>
-      <MetadataList label={{ position: 'start', width: 88 }}>
-        <MetadataListItem label="Time">{formatDateTime(result.at)}</MetadataListItem>
-        <MetadataListItem label="File">
-          <Text type="code">{result.file}</Text>
-        </MetadataListItem>
-        <MetadataListItem label="SHA-256">
-          <Link href={`/payload-analysis/${hash}`}>
-            <Text type="code">{`${result.hash.slice(0, 24)}…`}</Text>
-          </Link>
-        </MetadataListItem>
-        {result.owner && <MetadataListItem label="Owner">{result.owner}</MetadataListItem>}
-      </MetadataList>
-      {DETAIL_ROUTE[result.analyzer] && (
-        <Link href={`${DETAIL_ROUTE[result.analyzer]}${hash}`} isStandalone>
-          Open full {result.analyzer} result
-        </Link>
-      )}
-      <VStack gap={2}>
-        <Heading level={3}>Result document</Heading>
-        <CodeBlock code={JSON.stringify(result.detail, null, 2)} language="json" maxHeight={320} />
-      </VStack>
-    </VStack>
-  )
+/** Sandbox and Ghidra runs have their own pages; everything else opens the
+ * payload. (Phase B merges these into /payloads/$hash tabs.) */
+function resultHref(row: AnalysisResult): string {
+  if (row.analyzer === 'sandbox') return `/sandbox/${row.hash}`
+  if (row.analyzer === 'ghidra') return `/ghidra/${row.hash}`
+  return entityHref('payload', row.hash) ?? '/payloads'
 }
+
+
 
 function WorkbenchBuilder({ analyzers, initialHash }: { analyzers: AnalysisResultsData['analyzers']; initialHash: string }) {
   const router = useRouter()
@@ -271,9 +243,8 @@ function AnalysisResultsPage() {
       }
       rows={rows}
       columns={COLUMNS[tab]}
+      getHref={resultHref}
       getId={(row) => row.id}
-      inspectorTitle="Result"
-      renderInspector={(row) => <ResultInspector result={row} />}
       emptyState={{ title: 'No results from this analyzer yet', description: 'Start a workbench run to produce some.' }}
     />
   )

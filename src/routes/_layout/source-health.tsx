@@ -13,6 +13,7 @@ import { PageFrame } from '#/components/PageFrame'
 import { getSourceHealth } from '#/data/queries'
 import type { SensorFeed, SourceHealth } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/source-health')({
   loader: () => getSourceHealth(),
@@ -42,7 +43,7 @@ const CLUSTER = { green: 'success', yellow: 'warning', red: 'error' } as const s
 const PIPELINE = { running: 'success', degraded: 'warning', stopped: 'error' } as const satisfies Record<SourceHealth['pipeline']['state'], string>
 
 const feedColumns: TableColumn<SensorFeed>[] = [
-  { key: 'sensor', header: 'Sensor', width: proportional(2), renderCell: (row) => <Link href={`/sensors/${row.sensor}`}>{row.sensor}</Link> },
+  { key: 'sensor', header: 'Sensor', width: proportional(2), renderCell: (row) => <EntityLink kind="sensor" id={row.sensor} /> },
   { key: 'state', header: 'State', width: pixel(128), renderCell: (row) => <FeedStateLabel state={row.state} /> },
   { key: 'documents', header: 'Documents', width: pixel(112), align: 'end', renderCell: (row) => formatNumber(row.documents) },
   { key: 'lastSeen', header: 'Last event', width: pixel(200), renderCell: (row) => formatDateTime(row.lastSeen) },

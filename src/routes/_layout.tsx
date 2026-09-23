@@ -1,14 +1,19 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, retainSearchParams, useNavigate } from '@tanstack/react-router'
+import { isRange } from '#/lib/range'
+import type { RangeId } from '#/lib/range'
 import { PANE_IDS } from '#/components/SettingsDialog'
 import type { PaneId } from '#/components/SettingsDialog'
 import { ShellAppShell } from '#/components/ShellAppShell'
 import { getSessionUser } from '#/data/queries'
 
 export const Route = createFileRoute('/_layout')({
-  // `?settings=<pane>` opens the settings modal over any page.
-  validateSearch: (search: Record<string, unknown>): { settings?: PaneId } => ({
+  // `?settings=<pane>` opens the settings modal over any page; `?range=` is
+  // the app-wide time range, kept on every navigation.
+  validateSearch: (search: Record<string, unknown>): { settings?: PaneId; range?: RangeId } => ({
     settings: PANE_IDS.includes(search.settings as PaneId) ? (search.settings as PaneId) : undefined,
+    range: isRange(search.range) && search.range !== '24h' ? search.range : undefined,
   }),
+  search: { middlewares: [retainSearchParams(['range'])] },
   loader: () => getSessionUser(),
   component: LayoutComponent,
 })

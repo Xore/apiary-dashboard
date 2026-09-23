@@ -19,6 +19,7 @@ import { PageFrame } from '#/components/PageFrame'
 import { getGhidraAnalysis, queuePayloadAction } from '#/data/queries'
 import type { GhidraFunction } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 const TABS = ['overview', 'code', 'data', 'deepdive'] as const
 type GhidraTab = (typeof TABS)[number]
@@ -67,9 +68,9 @@ function GhidraPage() {
     >
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap" vAlign="center">
-          <Link href={`/payload-analysis/${sha}`}>
+          <EntityLink kind="payload" id={sha}>
             <Text type="code">{`${sha.slice(0, 24)}…`}</Text>
-          </Link>
+          </EntityLink>
           <Text type="supporting">
             {g.arch} · analyzed {formatDateTime(g.at)}
           </Text>

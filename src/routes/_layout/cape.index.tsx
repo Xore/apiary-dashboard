@@ -1,6 +1,4 @@
 import { Link } from '@astryxdesign/core/Link'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
-import { VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -32,18 +30,8 @@ function CapeIndexPage() {
       description="Detonations in CAPE's debugger-instrumented Windows guest, with configuration extraction for payloads that warrant it."
       rows={runs}
       columns={columns}
+      getHref={(row) => `/cape/${row.sha}`}
       getId={(row) => row.sha}
-      inspectorTitle="Run"
-      renderInspector={(row) => (
-        <VStack gap={3}>
-          <MetadataList label={{ position: 'start', width: 88 }}>
-            <MetadataListItem label="Status">{row.status}</MetadataListItem>
-            <MetadataListItem label="Malscore">{row.malscore.toFixed(1)}</MetadataListItem>
-            <MetadataListItem label="Family">{row.config.family || '—'}</MetadataListItem>
-          </MetadataList>
-          <Link href={`/cape/${row.sha}`} isStandalone>Open the full result</Link>
-        </VStack>
-      )}
       emptyState={{ title: 'No CAPE runs yet', description: 'Runs appear once the CAPE route detonates a sample.' }}
     />
   )

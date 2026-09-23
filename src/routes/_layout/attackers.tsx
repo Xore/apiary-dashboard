@@ -14,6 +14,7 @@ import { RecordList } from '#/components/RecordList'
 import { getAttackers } from '#/data/queries'
 import type { AttackerEntity } from '#/data/types'
 import { formatDateTime, formatNumber, formatTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/attackers')({
   loader: () => getAttackers(),
@@ -116,7 +117,7 @@ function Dossier({ entity }: { entity: AttackerEntity }) {
             title="Member IPs"
             items={entity.ips}
             empty="No member IPs recorded."
-            render={(ip) => <Link href={`/investigate/ip/${ip}`}>{ip}</Link>}
+            render={(ip) => <EntityLink kind="source" id={ip} />}
           />
           <Evidence title="Sensors" items={entity.sensors} empty="No sensors recorded." render={(s) => <Token label={s} size="sm" />} />
         </VStack>
@@ -139,9 +140,9 @@ function Dossier({ entity }: { entity: AttackerEntity }) {
             items={entity.payloads}
             empty="No payload hashes recorded."
             render={(hash) => (
-              <Link href={`/payload-analysis/${hash}`}>
+              <EntityLink kind="payload" id={hash}>
                 <Text type="code">{`${hash.slice(0, 24)}…`}</Text>
-              </Link>
+              </EntityLink>
             )}
           />
           <Evidence
