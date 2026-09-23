@@ -5,6 +5,8 @@ import { CommandPalette } from '@astryxdesign/core/CommandPalette'
 import { createStaticSource } from '@astryxdesign/core/Typeahead'
 import type { SessionUser } from '#/data/types'
 import { NAV_SECTIONS } from '#/lib/nav'
+import { SettingsDialog } from './SettingsDialog'
+import type { PaneId } from './SettingsDialog'
 import { ShellSideNav } from './ShellSideNav'
 import { ShellTopNav } from './ShellTopNav'
 
@@ -29,7 +31,14 @@ const PAGES = [
 
 /** The single application shell: one topbar, one sidebar, one content
  * region, and the global command palette. */
-export function ShellAppShell({ user }: { user: SessionUser }) {
+type ShellProps = {
+  user: SessionUser
+  /** The open settings pane, if the settings modal is showing. */
+  settingsPane?: PaneId
+  onSettingsPane: (pane: PaneId | undefined) => void
+}
+
+export function ShellAppShell({ user, settingsPane, onSettingsPane }: ShellProps) {
   const navigate = useNavigate()
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
   const searchSource = useMemo(() => createStaticSource(PAGES), [])
@@ -50,7 +59,7 @@ export function ShellAppShell({ user }: { user: SessionUser }) {
       <AppShell
         contentPadding={0}
         topNav={<ShellTopNav onOpenPalette={() => setIsPaletteOpen(true)} />}
-        sideNav={<ShellSideNav user={user} />}
+        sideNav={<ShellSideNav user={user} onOpenSettings={() => onSettingsPane('account')} />}
       >
         <Outlet />
       </AppShell>
@@ -61,9 +70,12 @@ export function ShellAppShell({ user }: { user: SessionUser }) {
         label="Go to page"
         onValueChange={(to) => {
           setIsPaletteOpen(false)
-          void navigate({ to })
+          // Settings opens as a modal over the current page.
+          if (to === '/settings') onSettingsPane('account')
+          else void navigate({ to })
         }}
       />
+      {settingsPane && <SettingsDialog pane={settingsPane} onPane={onSettingsPane} onClose={() => onSettingsPane(undefined)} />}
     </>
   )
 }

@@ -10,6 +10,7 @@ import { TopNav } from '@astryxdesign/core/TopNav'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { useLocation } from '@tanstack/react-router'
 import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
+import { ViewTabsBar } from './ViewTabs'
 
 function ShellBreadcrumbs() {
   const pathname = useLocation({ select: (location) => location.pathname })
@@ -31,7 +32,12 @@ export function ShellTopNav({ onOpenPalette }: { onOpenPalette: () => void }) {
   return (
     <TopNav
       label="Page header"
-      startContent={<ShellBreadcrumbs />}
+      startContent={
+        <HStack gap={4} vAlign="center">
+          <ShellBreadcrumbs />
+          <ViewTabsBar />
+        </HStack>
+      }
       endContent={
         <>
           <Button

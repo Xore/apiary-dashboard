@@ -51,6 +51,8 @@ import {
   TOPOLOGY,
 } from './mock/operations'
 import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALTH, SCORE_TIMELINE } from './mock/monitor'
+import { OVERVIEW_VIEWS } from './mock/overview'
+import { sensorReading } from './mock/sensors'
 import { MOCK_NOW, createRng } from './mock/random'
 import type {
   AgentCampaign,
@@ -110,6 +112,7 @@ import type {
   HoneypotEvent,
   Kpi,
   OverviewData,
+  OverviewViews,
   Protocol,
   SessionUser,
   TimeBucket,
@@ -387,13 +390,19 @@ export async function getSensorDetail(id: string): Promise<SensorDetail | null> 
     bucket.total += 1
     bucket.byProtocol[event.protocol] = (bucket.byProtocol[event.protocol] ?? 0) + 1
   }
+  const reading = sensorReading(sensor, events)
   return {
     sensor,
     uniqueSources: new Set(events.map((e) => e.srcIp)).size,
+    firstSeen: SOURCES.map((s) => s.firstSeen).sort()[0],
     timeline,
+    measures: reading.measures,
     topSources: countBy(events.map((e) => e.srcIp), 10),
+    topCountries: countBy(events.map((e) => e.country), 10),
+    topLists: reading.topLists,
     byType: countBy(events.map((e) => e.type), 10),
     recentEvents: events.slice(0, 15),
+    requests: reading.requests,
   }
 }
 
@@ -645,7 +654,7 @@ export async function getPayloads(): Promise<{ payloads: CapturedPayload[]; sour
 
 export async function getAnalysisResults(): Promise<AnalysisResultsData> {
   await mockDelay()
-  return { results: [...ANALYSIS_RESULTS], gpuQueue: GPU_QUEUE.map((j) => ({ ...j })), analyzers: ANALYZERS }
+  return { results: [...ANALYSIS_RESULTS], gpuQueue: GPU_QUEUE.map((j) => ({ ...j })), modelHealth: MODEL_HEALTH, analyzers: ANALYZERS }
 }
 
 /** Mock write: queues a workbench run for a captured payload. */
@@ -983,4 +992,10 @@ export async function getGithubAnalyses(): Promise<GithubAnalysis[]> {
 export async function getGithubAnalysis(sha: string): Promise<GithubAnalysis | null> {
   await mockDelay()
   return GITHUB_ANALYSES.find((r) => r.sha === sha) ?? null
+}
+
+/** Everything behind the Overview's five views. */
+export async function getOverviewViews(): Promise<OverviewViews> {
+  await mockDelay()
+  return OVERVIEW_VIEWS
 }

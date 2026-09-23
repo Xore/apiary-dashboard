@@ -7,11 +7,11 @@ import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
-import { Tab, TabList } from '@astryxdesign/core/TabList'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
+import { useViewTabs } from '#/components/ViewTabs'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { Panel, StatTile } from '#/components/DashboardBlocks'
 import { NotFound } from '#/components/NotFound'
@@ -92,6 +92,12 @@ function PayloadAnalysisPage() {
   const { hash } = Route.useParams()
   const { tab = 'identity' } = Route.useSearch()
   const navigate = Route.useNavigate()
+  useViewTabs({
+    label: 'Payload analysis views',
+    tabs: [{ id: 'identity', label: 'Identity' }, { id: 'findings', label: 'Findings' }, { id: 'content', label: 'Content' }],
+    value: tab,
+    onChange: (value) => void navigate({ search: { tab: value === 'identity' ? undefined : (value as PayloadTab) } }),
+  })
   const p = a.payload
 
   return (
@@ -125,11 +131,6 @@ function PayloadAnalysisPage() {
           </HStack>
         </Panel>
         <OperatorActions a={a} />
-        <TabList value={tab} onChange={(value) => void navigate({ search: { tab: value === 'identity' ? undefined : (value as PayloadTab) } })} hasDivider>
-          <Tab value="identity" label="Identity" />
-          <Tab value="findings" label="Findings" />
-          <Tab value="content" label="Content" />
-        </TabList>
         {tab === 'identity' && (
           <Panel title="What this file is">
             <MetadataList label={{ position: 'start', width: 128 }}>

@@ -48,7 +48,7 @@ CHECKS=(
   "/investigate/ip/198.51.100.13 200"
   "/reports?step=library 200"
   "/payload-workbench/results?tab=ghidra 200"
-  "/settings?pane=services 200"
+  "/settings?pane=services 307"
   "/sensors 307"
   "/investigate/ip/10.0.0.1 404"
   "/no-such-page 404"

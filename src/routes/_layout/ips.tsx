@@ -10,7 +10,7 @@ import { Heading, Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { createFileRoute } from '@tanstack/react-router'
-import { Panel } from '#/components/DashboardBlocks'
+import { CountTable, Panel, StatTile } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
 import { WorldMap } from '#/components/WorldMap'
 import { getSourceProfiles } from '#/data/queries'
@@ -94,9 +94,27 @@ function SourcesPage() {
       }
     >
       <VStack gap={6}>
-        <Panel title="Attack origins" action={<Text type="supporting">Click a country to see its events</Text>}>
-          <WorldMap points={mapPoints} />
-        </Panel>
+        <Grid columns={{ minWidth: 460, repeat: 'fit' }} gap={4}>
+          <Panel title="Attack origins" action={<Text type="supporting">Click a country to see its events</Text>}>
+            <WorldMap points={mapPoints} />
+          </Panel>
+          <VStack gap={4}>
+            <Grid columns={{ minWidth: 150, repeat: 'fit' }} gap={3}>
+              <StatTile label="Unique source IPs" value={sources.length} />
+              <StatTile label="Countries" value={mapPoints.length} />
+              <StatTile label="Sessions" value={sources.reduce((n, s) => n + s.sessions, 0)} />
+              <StatTile label="Login attempts" value={sources.reduce((n, s) => n + s.logins, 0)} href="/events?kind=login" />
+            </Grid>
+            <Panel title="By country">
+              <CountTable
+                header="Country"
+                countHeader="Events"
+                rows={[...mapPoints].sort((a, b) => b.events - a.events).slice(0, 8).map((p) => ({ id: p.country, label: p.country, count: p.events }))}
+                linkTo={(c) => `/events?country=${c}`}
+              />
+            </Panel>
+          </VStack>
+        </Grid>
         <VStack gap={4}>
           <Heading level={2}>Sources</Heading>
           <Grid columns={{ minWidth: 260, repeat: 'fill' }} gap={4}>

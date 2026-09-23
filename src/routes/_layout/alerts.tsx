@@ -4,7 +4,6 @@ import { Button } from '@astryxdesign/core/Button'
 import { Link } from '@astryxdesign/core/Link'
 import { List, ListItem } from '@astryxdesign/core/List'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
-import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -12,6 +11,7 @@ import { Heading, Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { useViewTabs } from '#/components/ViewTabs'
 import { RecordList } from '#/components/RecordList'
 import { SeverityToken } from '#/components/SeverityToken'
 import { acknowledgeAllAlerts, getAlerts, setAlertsAcknowledged } from '#/data/queries'
@@ -122,6 +122,15 @@ function AlertsPage() {
   const open = groups.filter((g) => !g.acknowledged)
   const acked = groups.filter((g) => g.acknowledged)
   const openRecords = open.reduce((sum, g) => sum + g.members.length, 0)
+  useViewTabs({
+    label: 'Alert views',
+    tabs: [
+      { id: 'new', label: `New (${open.length})` },
+      { id: 'acknowledged', label: `Acknowledged (${acked.length})` },
+    ],
+    value: view,
+    onChange: (value) => void navigate({ search: { view: value === 'acknowledged' ? 'acknowledged' : undefined } }),
+  })
   const needle = filter.trim().toLowerCase()
   const rows = (view === 'new' ? open : acked).filter(
     (g) => !needle || g.message.toLowerCase().includes(needle) || g.members.some((m) => m.key.toLowerCase().includes(needle)),
@@ -143,15 +152,6 @@ function AlertsPage() {
         }
         toolbar={
           <HStack gap={3} vAlign="center" wrap="wrap">
-            <SegmentedControl
-              label="Alert views"
-              size="sm"
-              value={view}
-              onChange={(value) => void navigate({ search: { view: value === 'acknowledged' ? 'acknowledged' : undefined } })}
-            >
-              <SegmentedControlItem value="new" label={`New (${open.length})`} />
-              <SegmentedControlItem value="acknowledged" label={`Acknowledged (${acked.length})`} />
-            </SegmentedControl>
             <TextInput label="Filter alerts" isLabelHidden size="sm" width={260} placeholder="Filter by message or key" value={filter} onChange={setFilter} />
           </HStack>
         }

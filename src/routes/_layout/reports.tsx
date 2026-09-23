@@ -15,13 +15,13 @@ import { SelectableCard } from '@astryxdesign/core/SelectableCard'
 import { Selector } from '@astryxdesign/core/Selector'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Switch } from '@astryxdesign/core/Switch'
-import { Tab, TabList } from '@astryxdesign/core/TabList'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Heading, Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { DocumentTextIcon } from '@heroicons/react/24/outline'
+import { useViewTabs } from '#/components/ViewTabs'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
@@ -330,6 +330,12 @@ function ReportsPage() {
   const [saving, setSaving] = useState(false)
 
   const go = (next: Step) => void navigate({ search: { step: next === 'design' ? undefined : next } })
+  useViewTabs({
+    label: 'Reports studio steps',
+    tabs: STEPS.map((s, i) => ({ id: s.id, label: s.id === 'library' ? s.label : `${i + 1}. ${s.label}` })),
+    value: step,
+    onChange: (value) => go(value as Step),
+  })
   const update = (patch: Partial<ReportDefinition>) => setDraft((d) => ({ ...d, ...patch }))
   const current = STEPS.find((s) => s.id === step)!
   const index = BUILD_STEPS.findIndex((s) => s.id === step)
@@ -362,11 +368,6 @@ function ReportsPage() {
       }
     >
       <VStack gap={5}>
-        <TabList value={step} onChange={(value) => go(value as Step)} hasDivider>
-          {STEPS.map((s, i) => (
-            <Tab key={s.id} value={s.id} label={s.id === 'library' ? s.label : `${i + 1}. ${s.label}`} />
-          ))}
-        </TabList>
         <VStack gap={1}>
           <Heading level={2}>{current.label}</Heading>
           <Text color="secondary">{current.lede}</Text>

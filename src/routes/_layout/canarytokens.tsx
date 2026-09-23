@@ -3,7 +3,6 @@ import { Button } from '@astryxdesign/core/Button'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
-import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { SelectableCard } from '@astryxdesign/core/SelectableCard'
 import { Selector } from '@astryxdesign/core/Selector'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
@@ -13,6 +12,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { useViewTabs } from '#/components/ViewTabs'
 import { Panel } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { createCanarytoken, getCanarytokens } from '#/data/queries'
@@ -166,12 +166,15 @@ function CanarytokensPage() {
   const navigate = Route.useNavigate()
   const [minted, setMinted] = useState<CanaryToken | null>(null)
 
-  const toolbar = (
-    <SegmentedControl label="Canarytoken views" size="sm" value={view} onChange={(value) => void navigate({ search: { view: value === 'fired' ? 'fired' : undefined } })}>
-      <SegmentedControlItem value="deployed" label={`Deployed (${tokens.length})`} />
-      <SegmentedControlItem value="fired" label={`Fired (${triggers.length})`} />
-    </SegmentedControl>
-  )
+  useViewTabs({
+    label: 'Canarytoken views',
+    tabs: [
+      { id: 'deployed', label: `Deployed (${tokens.length})` },
+      { id: 'fired', label: `Fired (${triggers.length})` },
+    ],
+    value: view,
+    onChange: (value) => void navigate({ search: { view: value === 'fired' ? 'fired' : undefined } }),
+  })
 
   return view === 'deployed' ? (
     <RecordList
@@ -188,7 +191,6 @@ function CanarytokensPage() {
           )}
         </VStack>
       }
-      toolbar={toolbar}
       rows={tokens}
       columns={tokenColumns}
       getId={(row) => row.id}
@@ -200,7 +202,6 @@ function CanarytokensPage() {
     <RecordList
       title="Canarytokens"
       description="Every planted token that phoned home, wherever it was opened."
-      toolbar={toolbar}
       rows={triggers}
       columns={triggerColumns}
       getId={(row) => row.id}

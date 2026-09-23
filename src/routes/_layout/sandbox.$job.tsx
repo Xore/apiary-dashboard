@@ -7,10 +7,10 @@ import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
-import { Tab, TabList } from '@astryxdesign/core/TabList'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
+import { useViewTabs } from '#/components/ViewTabs'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { MiniTable, Panel, StatTile } from '#/components/DashboardBlocks'
 import { TechniquesPanel } from '#/components/DetailBlocks'
@@ -55,6 +55,12 @@ function SandboxPage() {
   const run = Route.useLoaderData()
   const { tab = 'verdict' } = Route.useSearch()
   const navigate = Route.useNavigate()
+  useViewTabs({
+    label: 'Sandbox result views',
+    tabs: [{ id: 'verdict', label: 'Verdict' }, { id: 'behavior', label: 'Behavior' }, { id: 'network', label: 'Network' }, { id: 'diagnostics', label: 'Diagnostics' }, { id: 'raw', label: 'Raw' }],
+    value: tab,
+    onChange: (value) => void navigate({ search: { tab: value === 'verdict' ? undefined : (value as SandboxTab) } }),
+  })
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [queued, setQueued] = useState<string | null>(null)
 
@@ -83,13 +89,6 @@ function SandboxPage() {
           <StatTile label="Captured packets" value={run.packets} />
           <StatTile label="Changed paths" value={run.changedPaths.length} />
         </Grid>
-        <TabList value={tab} onChange={(value) => void navigate({ search: { tab: value === 'verdict' ? undefined : (value as SandboxTab) } })} hasDivider>
-          <Tab value="verdict" label="Verdict" />
-          <Tab value="behavior" label="Behavior" />
-          <Tab value="network" label="Network" />
-          <Tab value="diagnostics" label="Diagnostics" />
-          <Tab value="raw" label="Raw" />
-        </TabList>
         {tab === 'verdict' && (
           <VStack gap={4}>
             <Panel title="What this run concluded">

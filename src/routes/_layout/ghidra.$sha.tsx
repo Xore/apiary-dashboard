@@ -7,11 +7,11 @@ import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
-import { Tab, TabList } from '@astryxdesign/core/TabList'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
+import { useViewTabs } from '#/components/ViewTabs'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { MiniTable, Panel, StatTile } from '#/components/DashboardBlocks'
 import { NotFound } from '#/components/NotFound'
@@ -49,6 +49,12 @@ function GhidraPage() {
   const { sha } = Route.useParams()
   const { tab = 'overview', fn } = Route.useSearch()
   const navigate = Route.useNavigate()
+  useViewTabs({
+    label: 'Ghidra result views',
+    tabs: [{ id: 'overview', label: 'Overview' }, { id: 'code', label: 'Code' }, { id: 'data', label: 'Data' }, { id: 'deepdive', label: 'Deep dive' }],
+    value: tab,
+    onChange: (value) => void navigate({ search: (prev) => ({ ...prev, tab: value === 'overview' ? undefined : (value as GhidraTab) }) }),
+  })
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [queued, setQueued] = useState<string | null>(null)
   const selected = g.functions.find((f) => f.name === fn) ?? g.functions[0]
@@ -76,12 +82,6 @@ function GhidraPage() {
           <StatTile label="Strings" value={g.strings.length} />
           <StatTile label="Crypto constants" value={g.cryptoConstants.length} />
         </Grid>
-        <TabList value={tab} onChange={(value) => void navigate({ search: (prev) => ({ ...prev, tab: value === 'overview' ? undefined : (value as GhidraTab) }) })} hasDivider>
-          <Tab value="overview" label="Overview" />
-          <Tab value="code" label="Code" />
-          <Tab value="data" label="Data" />
-          <Tab value="deepdive" label="Deep dive" />
-        </TabList>
         {tab === 'overview' && (
           <VStack gap={4}>
             <Panel title="Automated triage" action={<Token size="sm" label="AI-generated" />}>
