@@ -18,6 +18,7 @@ import { WorldMap } from '#/components/WorldMap'
 import { getOverview, getOverviewViews } from '#/data/queries'
 import type { CapturedPayload, HoneypotEvent, NetworkCampaign, OverviewViews, SensorFeed } from '#/data/types'
 import { formatClock, formatDateTime, formatNumber, formatTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 const VIEWS = [
   { id: 'live', label: 'Live operations' },
@@ -50,7 +51,7 @@ const eventColumns: TableColumn<HoneypotEvent>[] = [
   { key: 'sensor', header: 'Sensor', width: pixel(140) },
   { key: 'srcIp', header: 'Source', width: pixel(150), renderCell: (row) => <HStack gap={1.5} vAlign="center"><Link href={ipLink(row.srcIp)}>{row.srcIp}</Link><Text type="supporting">{row.country}</Text></HStack> },
   { key: 'dstPort', header: 'Port', width: pixel(96), renderCell: (row) => `${row.dstPort}/${row.protocol}` },
-  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <Link href={`/event/${row.id}`}><Text type="code">{row.summary}</Text></Link> },
+  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <EntityLink kind="event" id={row.id}><Text type="code">{row.summary}</Text></EntityLink> },
 ]
 
 function AttackVectorsPanel({ views }: { views: OverviewViews }) {
@@ -103,7 +104,7 @@ function LiveView({ views, recent, timeline, start }: { views: OverviewViews; re
 // ---- Collection health -------------------------------------------------------
 
 const feedColumns: TableColumn<SensorFeed>[] = [
-  { key: 'sensor', header: 'Sensor', width: proportional(2), renderCell: (row) => <Link href={`/sensors/${row.sensor}`}>{row.sensor}</Link> },
+  { key: 'sensor', header: 'Sensor', width: proportional(2), renderCell: (row) => <EntityLink kind="sensor" id={row.sensor} /> },
   { key: 'state', header: 'State', width: pixel(120), renderCell: (row) => <FeedStateLabel state={row.state} /> },
   { key: 'documents', header: 'Documents', width: pixel(104), align: 'end', renderCell: (row) => formatNumber(row.documents) },
   { key: 'lastSeen', header: 'Last event', width: pixel(96), renderCell: (row) => <Text type="supporting">{formatTime(row.lastSeen)}</Text> },
@@ -197,7 +198,7 @@ function BehaviorView({ views }: { views: OverviewViews }) {
 // ---- Evidence & campaigns ----------------------------------------------------
 
 const payloadColumns: TableColumn<CapturedPayload>[] = [
-  { key: 'hash', header: 'SHA-256', width: proportional(2), renderCell: (row) => <Link href={`/payload-analysis/${row.hash}`}><Text type="code">{`${row.hash.slice(0, 20)}…`}</Text></Link> },
+  { key: 'hash', header: 'SHA-256', width: proportional(2), renderCell: (row) => <EntityLink kind="payload" id={row.hash}><Text type="code">{`${row.hash.slice(0, 20)}…`}</Text></EntityLink> },
   { key: 'kind', header: 'Kind', width: pixel(112) },
   { key: 'sources', header: 'Source', width: pixel(120), renderCell: (row) => row.sources.join(' ') },
   { key: 'copies', header: 'Copies', width: pixel(72), align: 'end' },

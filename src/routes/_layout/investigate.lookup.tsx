@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
-import { Link } from '@astryxdesign/core/Link'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
@@ -10,6 +9,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
 import { getInfraClusters, getNetworkCampaigns, getSourceProfiles, resolveHash } from '#/data/queries'
+import { EntityLink } from '#/components/EntityLink'
 
 const IPV4 = /^(\d{1,3}\.){3}\d{1,3}$/
 const IPV4_CIDR = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/
@@ -123,7 +123,7 @@ function LookupPage() {
             status="info"
             title="No cluster correlation"
             description={`${lastHash} matched no payload hash or fingerprint seen from two or more source IPs. It may still be real but below the correlation floor.`}
-            endContent={<Link href={`/payload-analysis/${lastHash}`}>Open as a payload</Link>}
+            endContent={<EntityLink kind="payload" id={lastHash}>Open as a payload</EntityLink>}
           />
         )}
         <Text color="secondary">

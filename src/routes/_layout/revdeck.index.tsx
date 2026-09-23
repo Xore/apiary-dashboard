@@ -1,6 +1,4 @@
 import { Link } from '@astryxdesign/core/Link'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
-import { VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -33,18 +31,8 @@ function RevDeckIndexPage() {
       description="Reverse-engineering deck runs: deep binary walkthroughs produced by the Ghidra worker's drain queue."
       rows={runs}
       columns={columns}
+      getHref={(row) => `/revdeck/${row.sha}`}
       getId={(row) => row.sha}
-      inspectorTitle="Run"
-      renderInspector={(row) => (
-        <VStack gap={3}>
-          <MetadataList label={{ position: 'start', width: 80 }}>
-            <MetadataListItem label="Status">{row.status}</MetadataListItem>
-            <MetadataListItem label="Verdict">{row.verdict}</MetadataListItem>
-          </MetadataList>
-          {row.summary && <Text>{row.summary}</Text>}
-          <Link href={`/revdeck/${row.sha}`} isStandalone>Open the full walkthrough</Link>
-        </VStack>
-      )}
       emptyState={{ title: 'No RevDeck runs yet', description: 'Runs appear once the Ghidra worker drains its queue.' }}
     />
   )

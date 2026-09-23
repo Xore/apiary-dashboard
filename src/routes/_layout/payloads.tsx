@@ -5,7 +5,6 @@ import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { MoreMenu } from '@astryxdesign/core/MoreMenu'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -15,6 +14,7 @@ import { PageFrame } from '#/components/PageFrame'
 import { getPayloads } from '#/data/queries'
 import type { CapturedPayload } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 const PAGE = 12
 
@@ -39,11 +39,11 @@ function PayloadCard({ payload, onPublish }: { payload: CapturedPayload; onPubli
     <Card>
       <VStack gap={3}>
         <HStack hAlign="between" vAlign="start" gap={2}>
-          <Link href={`/payload-analysis/${hash}`}>
+          <EntityLink kind="payload" id={hash}>
             <Text type="code" maxLines={1}>
               {`${payload.hash.slice(0, 20)}…`}
             </Text>
-          </Link>
+          </EntityLink>
           <MoreMenu
             size="sm"
             label="Payload actions"

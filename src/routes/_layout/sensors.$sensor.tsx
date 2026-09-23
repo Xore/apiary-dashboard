@@ -17,6 +17,7 @@ import { useViewTabs } from '#/components/ViewTabs'
 import { getSensorCatalog, getSensorDetail } from '#/data/queries'
 import type { HoneypotEvent, SensorRequest, SensorStatus } from '#/data/types'
 import { formatClock, formatDateTime, formatNumber } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/sensors/$sensor')({
   loader: async ({ params }) => {
@@ -33,13 +34,13 @@ const STATUS_VARIANT = { online: 'success', degraded: 'warning', offline: 'error
 const eventColumns: TableColumn<HoneypotEvent>[] = [
   { key: 'timestamp', header: 'Time (UTC)', width: pixel(96), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
   { key: 'severity', header: 'Severity', width: pixel(96), renderCell: (row) => <SeverityToken severity={row.severity} /> },
-  { key: 'srcIp', header: 'Source', width: pixel(140), renderCell: (row) => <Link href={`/investigate/ip/${row.srcIp}`}>{row.srcIp}</Link> },
-  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <Link href={`/event/${row.id}`}><Text type="code">{row.summary}</Text></Link> },
+  { key: 'srcIp', header: 'Source', width: pixel(140), renderCell: (row) => <EntityLink kind="source" id={row.srcIp} /> },
+  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <EntityLink kind="event" id={row.id}><Text type="code">{row.summary}</Text></EntityLink> },
 ]
 
 const requestColumns: TableColumn<SensorRequest>[] = [
   { key: 'timestamp', header: 'Time (UTC)', width: pixel(96), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
-  { key: 'srcIp', header: 'Source', width: pixel(140), renderCell: (row) => <Link href={`/investigate/ip/${row.srcIp}`}>{row.srcIp}</Link> },
+  { key: 'srcIp', header: 'Source', width: pixel(140), renderCell: (row) => <EntityLink kind="source" id={row.srcIp} /> },
   { key: 'path', header: 'Request', width: proportional(3), renderCell: (row) => <Text type="code">{`${row.method} ${row.path}`}</Text> },
   { key: 'detection', header: 'Detection', width: pixel(112), renderCell: (row) => <Token size="sm" color={row.detection === 'index' ? 'gray' : 'orange'} label={row.detection} /> },
   { key: 'userAgent', header: 'User agent', width: proportional(2), renderCell: (row) => <Text type="supporting">{row.userAgent}</Text> },

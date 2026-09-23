@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { SelectableCard } from '@astryxdesign/core/SelectableCard'
 import { Selector } from '@astryxdesign/core/Selector'
@@ -19,6 +18,7 @@ import { createCanarytoken, getCanarytokens } from '#/data/queries'
 import type { CanaryToken, CanaryTokenType, CanaryTrigger } from '#/data/types'
 import { downloadJson } from '#/lib/export'
 import { formatDateTime, formatTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 type View = 'deployed' | 'fired'
 
@@ -105,7 +105,7 @@ const triggerColumns: TableColumn<CanaryTrigger>[] = [
   { key: 'triggeredAt', header: 'Fired', width: pixel(112), renderCell: (row) => <Text type="supporting">{formatTime(row.triggeredAt)}</Text> },
   { key: 'type', header: 'Type', width: pixel(120), renderCell: (row) => <Token size="sm" color="red" label={row.type} /> },
   { key: 'memo', header: 'Token', width: proportional(3) },
-  { key: 'srcIp', header: 'Source', width: pixel(136), renderCell: (row) => <Link href={`/investigate/ip/${row.srcIp}`}>{row.srcIp}</Link> },
+  { key: 'srcIp', header: 'Source', width: pixel(136), renderCell: (row) => <EntityLink kind="source" id={row.srcIp} /> },
   { key: 'location', header: 'Location', width: pixel(144) },
 ]
 
@@ -149,7 +149,7 @@ function TriggerInspector({ trigger }: { trigger: CanaryTrigger }) {
       <MetadataList label={{ position: 'start', width: 96 }}>
         <MetadataListItem label="Fired">{formatDateTime(trigger.triggeredAt)}</MetadataListItem>
         <MetadataListItem label="Source">
-          <Link href={`/investigate/ip/${trigger.srcIp}`}>{trigger.srcIp}</Link>
+          <EntityLink kind="source" id={trigger.srcIp} />
         </MetadataListItem>
         <MetadataListItem label="Location">{trigger.location}</MetadataListItem>
         <MetadataListItem label="User agent">

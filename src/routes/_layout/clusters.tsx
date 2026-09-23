@@ -1,8 +1,6 @@
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Link } from '@astryxdesign/core/Link'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
-import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -40,26 +38,6 @@ const columns: TableColumn<InfraCluster>[] = [
   { key: 'sensors', header: 'Sensors', width: pixel(80), align: 'end', renderCell: (row) => row.sensors.length },
 ]
 
-function ClusterInspector({ cluster }: { cluster: InfraCluster }) {
-  return (
-    <VStack gap={4}>
-      <HStack gap={2} vAlign="center">
-        <Token label={cluster.kind} size="sm" />
-      </HStack>
-      <Text type="code">{cluster.value}</Text>
-      <MetadataList label={{ position: 'start', width: 104 }}>
-        <MetadataListItem label="Source IPs">{formatNumber(cluster.sources)}</MetadataListItem>
-        <MetadataListItem label="Events">{formatNumber(cluster.events)}</MetadataListItem>
-        <MetadataListItem label="Coverage">
-          {`${cluster.sensors.length} ${cluster.sensors.length === 1 ? 'sensor' : 'sensors'}: ${cluster.sensors.join(', ')}`}
-        </MetadataListItem>
-      </MetadataList>
-      <Link href={clusterHref(cluster)} isStandalone>
-        Investigate this cluster
-      </Link>
-    </VStack>
-  )
-}
 
 function ClustersPage() {
   const clusters = Route.useLoaderData()
@@ -81,9 +59,8 @@ function ClustersPage() {
       }
       rows={clusters}
       columns={columns}
+      getHref={clusterHref}
       getId={(row) => row.id}
-      inspectorTitle="Cluster details"
-      renderInspector={(row) => <ClusterInspector cluster={row} />}
       emptyState={{
         title: 'No shared pivots in the current window',
         description: 'Clusters appear once two or more source IPs share a strong signal.',

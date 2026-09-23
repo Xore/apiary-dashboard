@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
-import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Icon } from '@astryxdesign/core/Icon'
-import { Link } from '@astryxdesign/core/Link'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -10,6 +8,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { entityHref } from '#/lib/entities'
 import { createFileRoute } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { searchHistory } from '#/data/queries'
@@ -92,17 +91,8 @@ function HistoryPage() {
       }
       rows={rows}
       columns={columns}
+      getHref={(row) => entityHref('event', row.id)!}
       getId={(row) => row.id}
-      inspectorTitle="Record"
-      renderInspector={(row) => (
-        <VStack gap={3}>
-          <HStack gap={3}>
-            <Link href={`/event/${row.id}`}>Open event page</Link>
-            <Link href={`/investigate/ip/${row.srcIp}`}>Attacker profile</Link>
-          </HStack>
-          <CodeBlock code={JSON.stringify(row, null, 2)} language="json" maxHeight={560} />
-        </VStack>
-      )}
       emptyState={{ title: 'No matches', description: 'Check the field names, or loosen the query.' }}
     />
   )

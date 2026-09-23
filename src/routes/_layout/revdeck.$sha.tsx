@@ -11,6 +11,7 @@ import { NotFound } from '#/components/NotFound'
 import { PageFrame } from '#/components/PageFrame'
 import { getRevDeckRun } from '#/data/queries'
 import { formatDateTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/revdeck/$sha')({
   loader: async ({ params }) => {
@@ -32,7 +33,7 @@ function RevDeckPage() {
     >
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap">
-          <Link href={`/payload-analysis/${run.sha}`}><Text type="code">{`${run.sha.slice(0, 24)}…`}</Text></Link>
+          <EntityLink kind="payload" id={run.sha}><Text type="code">{`${run.sha.slice(0, 24)}…`}</Text></EntityLink>
           <Link href={`/ghidra/${run.sha}`}>Ghidra result</Link>
           <Text type="supporting">{formatDateTime(run.at)}</Text>
         </HStack>

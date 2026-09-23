@@ -3,7 +3,6 @@ import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Button } from '@astryxdesign/core/Button'
 import { Divider } from '@astryxdesign/core/Divider'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Selector } from '@astryxdesign/core/Selector'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -27,6 +26,7 @@ import {
 import { DISPOSITIONS } from '#/data/types'
 import type { AnomalyStatus, Disposition, MlAnomaly, ModelHealth, Severity } from '#/data/types'
 import { formatClock, formatDateTime, formatNumber, formatTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
 const STATUSES: AnomalyStatus[] = ['open', 'acknowledged', ...DISPOSITIONS]
@@ -78,7 +78,7 @@ const columns: TableColumn<MlAnomaly>[] = [
     renderCell: (row) =>
       row.srcIp ? (
         <HStack gap={1.5} vAlign="center">
-          <Link href={`/investigate/ip/${row.srcIp}`}>{row.srcIp}</Link>
+          <EntityLink kind="source" id={row.srcIp} />
           <Text type="supporting">{row.country}</Text>
         </HStack>
       ) : (
@@ -162,7 +162,7 @@ function AnomalyInspector({ anomaly }: { anomaly: MlAnomaly }) {
           <Text type="code">{anomaly.sourceIndex}</Text>
         </MetadataListItem>
         <MetadataListItem label="Source event">
-          <Link href={`/event/${anomaly.sourceEventId}`}>{anomaly.sourceEventId}</Link>
+          <EntityLink kind="event" id={anomaly.sourceEventId} />
         </MetadataListItem>
         <MetadataListItem label="Threshold">{anomaly.thresholdAtScoring.toFixed(2)}</MetadataListItem>
         <MetadataListItem label="Model state">{anomaly.modelState ?? 'no full detector trio promoted'}</MetadataListItem>

@@ -1,5 +1,4 @@
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -12,6 +11,7 @@ import { ContainerStateLabel, FeedStateLabel } from '#/components/FeedState'
 import { PageFrame } from '#/components/PageFrame'
 import { getTopology } from '#/data/queries'
 import type { TopologySensor } from '#/data/types'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/topology')({
   loader: () => getTopology(),
@@ -21,7 +21,7 @@ export const Route = createFileRoute('/_layout/topology')({
 const INGRESS_COLOR = { portbridge: 'blue', traefik: 'purple', direct: 'gray', proxy: 'teal' } as const
 
 const exposureColumns: TableColumn<TopologySensor>[] = [
-  { key: 'sensor', header: 'Sensor', width: pixel(160), renderCell: (row) => <Link href={`/sensors/${row.sensor}`}>{row.sensor}</Link> },
+  { key: 'sensor', header: 'Sensor', width: pixel(160), renderCell: (row) => <EntityLink kind="sensor" id={row.sensor} /> },
   {
     key: 'ingress',
     header: 'Ingress',

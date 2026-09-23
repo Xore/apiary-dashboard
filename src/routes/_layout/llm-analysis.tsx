@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { EmptyState } from '@astryxdesign/core/EmptyState'
-import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
@@ -17,6 +16,7 @@ import { SeverityToken } from '#/components/SeverityToken'
 import { getLlmAnalyses, semanticSearch } from '#/data/queries'
 import type { LlmAnalysis, SemanticHit, SemanticSearchResult } from '#/data/types'
 import { formatDateTime, formatTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/llm-analysis')({
   loader: () => getLlmAnalyses(),
@@ -26,9 +26,9 @@ export const Route = createFileRoute('/_layout/llm-analysis')({
 /** Pivot back to what the analysis was generated from. Reports aggregate
  * many sources, so they have no single link. */
 function EvidenceLink({ row }: { row: LlmAnalysis }) {
-  if (row.docType === 'session' && row.sessionId) return <Link href={`/sessions/${row.sessionId}`}>session</Link>
+  if (row.docType === 'session' && row.sessionId) return <EntityLink kind="session" id={row.sessionId}>session</EntityLink>
   if (row.docType === 'payload' && row.payloadSha256) {
-    return <Link href={`/payload-analysis/${row.payloadSha256}`}>payload</Link>
+    return <EntityLink kind="payload" id={row.payloadSha256}>payload</EntityLink>
   }
   return <Text type="supporting">—</Text>
 }
@@ -65,7 +65,7 @@ const hitColumns: TableColumn<SemanticHit>[] = [
     key: 'sessionId',
     header: 'Session',
     width: pixel(152),
-    renderCell: (row) => (row.sessionId ? <Link href={`/sessions/${row.sessionId}`}>{row.sessionId}</Link> : '—'),
+    renderCell: (row) => (row.sessionId ? <EntityLink kind="session" id={row.sessionId} /> : '—'),
   },
 ]
 

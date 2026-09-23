@@ -13,6 +13,7 @@ import { PageFrame } from '#/components/PageFrame'
 import { SeverityToken } from '#/components/SeverityToken'
 import { getEventDetail } from '#/data/queries'
 import { formatDateTime } from '#/lib/format'
+import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/event/$id')({
   loader: async ({ params }) => {
@@ -33,8 +34,8 @@ function EventPage() {
       description={`${event.summary} · ${formatDateTime(event.timestamp)}`}
       actions={
         <HStack gap={3}>
-          <Link href={`/investigate/ip/${event.srcIp}`}>Attacker profile</Link>
-          <Link href={`/sessions/${event.sessionId}`}>Session</Link>
+          <EntityLink kind="source" id={event.srcIp}>Attacker profile</EntityLink>
+          <EntityLink kind="session" id={event.sessionId}>Session</EntityLink>
         </HStack>
       }
     >
@@ -48,15 +49,15 @@ function EventPage() {
             <MetadataList label={{ position: 'start', width: 104 }}>
               <MetadataListItem label="Time">{formatDateTime(event.timestamp)}</MetadataListItem>
               <MetadataListItem label="Sensor">
-                <Link href={`/sensors/${event.sensor}`}>{event.sensor}</Link>
+                <EntityLink kind="sensor" id={event.sensor} />
               </MetadataListItem>
               <MetadataListItem label="Service">{`${event.protocol.toUpperCase()} ${event.dstPort}`}</MetadataListItem>
               <MetadataListItem label="Source">
-                <Link href={`/investigate/ip/${event.srcIp}`}>{`${event.srcIp}:${event.srcPort}`}</Link>
+                <EntityLink kind="source" id={event.srcIp}>{`${event.srcIp}:${event.srcPort}`}</EntityLink>
               </MetadataListItem>
               <MetadataListItem label="Network">{`${event.asn} · ${event.country}`}</MetadataListItem>
               <MetadataListItem label="Session">
-                <Link href={`/sessions/${event.sessionId}`}>{event.sessionId}</Link>
+                <EntityLink kind="session" id={event.sessionId} />
               </MetadataListItem>
             </MetadataList>
           </Panel>
@@ -83,7 +84,7 @@ function EventPage() {
             )}
           </Panel>
         </Grid>
-        <EventsPanel title="The rest of this session" events={session} action={<Link href={`/sessions/${event.sessionId}`}>Full session</Link>} empty="This event is the whole session." />
+        <EventsPanel title="The rest of this session" events={session} action={<EntityLink kind="session" id={event.sessionId}>Full session</EntityLink>} empty="This event is the whole session." />
         <EventsPanel title="The rest of this connection" events={connection} empty="No other event on this connection." />
         <EventsPanel title="What else this source did" events={source} action={<Link href={`/events?ip=${event.srcIp}`}>All events</Link>} empty="Nothing else from this address." />
         <Panel title="The complete record">

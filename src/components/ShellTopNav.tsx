@@ -8,9 +8,31 @@ import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { TopNav } from '@astryxdesign/core/TopNav'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
-import { useLocation } from '@tanstack/react-router'
 import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
 import { ViewTabsBar } from './ViewTabs'
+import { Selector } from '@astryxdesign/core/Selector'
+import { useLocation, useNavigate, useSearch } from '@tanstack/react-router'
+import { DEFAULT_RANGE, RANGES, isRange } from '#/lib/range'
+import type { RangeId } from '#/lib/range'
+
+/** The app-wide time range; every page reads it from ?range=. */
+function RangePicker() {
+  const navigate = useNavigate()
+  const raw = useSearch({ strict: false, select: (search: Record<string, unknown>) => search.range })
+  const range: RangeId = isRange(raw) ? raw : DEFAULT_RANGE
+  return (
+    <Selector
+      label="Time range"
+      isLabelHidden
+      size="sm"
+      value={range}
+      onChange={(value) =>
+        void navigate({ to: '.', search: (prev: Record<string, unknown>) => ({ ...prev, range: value === DEFAULT_RANGE || !isRange(value) ? undefined : value }) })
+      }
+      options={RANGES.map((r) => ({ value: r.id, label: r.label }))}
+    />
+  )
+}
 
 function ShellBreadcrumbs() {
   const pathname = useLocation({ select: (location) => location.pathname })
@@ -40,6 +62,7 @@ export function ShellTopNav({ onOpenPalette }: { onOpenPalette: () => void }) {
       }
       endContent={
         <>
+          <RangePicker />
           <Button
             label="Search"
             variant="secondary"

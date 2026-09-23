@@ -1,6 +1,4 @@
 import { Link } from '@astryxdesign/core/Link'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
-import { VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -35,18 +33,8 @@ function GithubIndexPage() {
       description="Multi-engine verdicts for captured payloads published to the analysis repository."
       rows={rows}
       columns={columns}
+      getHref={(row) => `/github-analysis/${row.sha}`}
       getId={(row) => row.sha}
-      inspectorTitle="Publication"
-      renderInspector={(row) => (
-        <VStack gap={3}>
-          <MetadataList label={{ position: 'start', width: 96 }}>
-            <MetadataListItem label="Status">{row.status}</MetadataListItem>
-            <MetadataListItem label="Detections">{`${row.detections}/${row.engines}`}</MetadataListItem>
-            <MetadataListItem label="Risk">{row.risk}</MetadataListItem>
-          </MetadataList>
-          <Link href={`/github-analysis/${row.sha}`} isStandalone>Open the full result</Link>
-        </VStack>
-      )}
       emptyState={{ title: 'Nothing published yet', description: 'Results appear once a sample is published and scanned.' }}
     />
   )
