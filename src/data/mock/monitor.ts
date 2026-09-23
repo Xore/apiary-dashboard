@@ -13,6 +13,7 @@ import type {
   Severity,
 } from '../types'
 import { EVENTS, SOURCES } from './fixtures'
+import { PAYLOADS } from './operations'
 import { MOCK_NOW, createRng, hex, int, isoMinutesAgo, pick, pickSkewed } from './random'
 
 const severityForScore = (score: number): Severity =>
@@ -128,7 +129,7 @@ function buildLlmAnalyses(): LlmAnalysis[] {
       intent: pickSkewed(rng, INTENTS),
       summary: failed ? '' : pick(rng, SUMMARIES[docType]),
       sessionId: docType === 'session' ? event.sessionId : undefined,
-      payloadSha256: docType === 'payload' ? hex(rng, 64) : undefined,
+      payloadSha256: docType === 'payload' ? pick(rng, PAYLOADS).hash : undefined,
       srcIp: docType === 'report' ? undefined : event.srcIp,
       model: 'qwen2.5:14b-instruct',
       behaviors: docType === 'report' ? [] : Array.from(new Set([pick(rng, BEHAVIORS), pick(rng, BEHAVIORS)])),

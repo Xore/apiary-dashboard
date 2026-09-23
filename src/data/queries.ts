@@ -14,6 +14,15 @@ import {
   SOURCE_PROFILES,
 } from './mock/investigate'
 import {
+  CAPE_RUNS,
+  GITHUB_ANALYSES,
+  REVDECK_RUNS,
+  buildGhidraAnalysis,
+  buildPayloadAnalysis,
+  buildSandboxRun,
+  findPayload,
+} from './mock/evidence'
+import {
   AUDIT_LOG,
   BLOCKED_IPS,
   CONFIG_HISTORY,
@@ -45,6 +54,12 @@ import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALT
 import { MOCK_NOW, createRng } from './mock/random'
 import type {
   AgentCampaign,
+  CapeRun,
+  GhidraAnalysis,
+  GithubAnalysis,
+  PayloadAnalysis,
+  RevDeckRun,
+  SandboxRun,
   Correlation,
   DeadLetter,
   EventDetail,
@@ -892,4 +907,77 @@ export async function rollbackConfig(revisionId: string): Promise<void> {
   if (!revision) return
   CONFIG_HISTORY.unshift({ id: `rev-${Date.now().toString(36)}`, at: new Date(MOCK_NOW).toISOString(), actor: MOCK_USER.name, section: revision.section, summary: `Rolled back to ${revision.id}` })
   audit('config.rollback', [revision.id])
+}
+
+// ---- Evidence detail -------------------------------------------------------
+
+export async function getPayloadAnalysis(hash: string): Promise<PayloadAnalysis | null> {
+  await mockDelay()
+  const payload = findPayload(hash)
+  return payload ? buildPayloadAnalysis(payload) : null
+}
+
+export type PayloadAction = 'sandbox' | 'ghidra' | 'github' | 'pdf'
+
+/** Mock write: queues follow-up work on a sample. Returns what was queued. */
+export async function queuePayloadAction(hash: string, action: PayloadAction): Promise<string> {
+  await mockDelay()
+  const labels: Record<PayloadAction, string> = {
+    sandbox: 'Sandbox detonation queued',
+    ghidra: 'Ghidra decompilation queued on the GPU queue',
+    github: 'Submitted for GitHub publication and scanning',
+    pdf: 'PDF report generation started',
+  }
+  if (action === 'ghidra') {
+    GPU_QUEUE.push({ jobId: `gpu-${Date.now().toString(36)}`, requestedAt: new Date(MOCK_NOW).toISOString(), jobType: 'ghidra-summary', model: 'qwen2.5-coder:14b', status: 'queued', attempts: 0, abortRequested: false, ref: hash.slice(0, 16), vramMib: 10_240 })
+  }
+  return labels[action]
+}
+
+export async function getSandboxRun(job: string): Promise<SandboxRun | null> {
+  await mockDelay()
+  const payload = findPayload(job)
+  return payload && payload.dynamic ? buildSandboxRun(payload) : null
+}
+
+/** Whether a Windows-sandbox detonation is live right now (mock: none is). */
+export async function getSandboxLiveStatus(): Promise<{ running: boolean; job?: string; since?: string }> {
+  await mockDelay()
+  return { running: false }
+}
+
+export async function getGhidraAnalysis(sha: string): Promise<GhidraAnalysis | null> {
+  await mockDelay()
+  const payload = findPayload(sha)
+  return payload && payload.kind !== 'shell script' ? buildGhidraAnalysis(payload) : null
+}
+
+export async function getRevDeckRuns(): Promise<RevDeckRun[]> {
+  await mockDelay()
+  return REVDECK_RUNS
+}
+
+export async function getRevDeckRun(sha: string): Promise<RevDeckRun | null> {
+  await mockDelay()
+  return REVDECK_RUNS.find((r) => r.sha === sha) ?? null
+}
+
+export async function getCapeRuns(): Promise<CapeRun[]> {
+  await mockDelay()
+  return CAPE_RUNS
+}
+
+export async function getCapeRun(sha: string): Promise<CapeRun | null> {
+  await mockDelay()
+  return CAPE_RUNS.find((r) => r.sha === sha) ?? null
+}
+
+export async function getGithubAnalyses(): Promise<GithubAnalysis[]> {
+  await mockDelay()
+  return GITHUB_ANALYSES
+}
+
+export async function getGithubAnalysis(sha: string): Promise<GithubAnalysis | null> {
+  await mockDelay()
+  return GITHUB_ANALYSES.find((r) => r.sha === sha) ?? null
 }

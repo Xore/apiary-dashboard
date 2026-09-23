@@ -13,6 +13,7 @@ import type {
   SourceProfile,
 } from '../types'
 import { COMMANDS, EVENTS, SOURCES } from './fixtures'
+import { PAYLOADS } from './operations'
 import { createRng, hex, int, isoMinutesAgo, pick } from './random'
 
 const unique = <T,>(values: T[]) => [...new Set(values)]
@@ -155,7 +156,8 @@ function buildClusters(): InfraCluster[] {
   }
   for (let i = 0; i < 10; i++) {
     const ips = unique(Array.from({ length: int(rng, 2, 9) }, () => pick(rng, SOURCES).ip))
-    add(i % 2 ? 'payload' : 'fingerprint', i % 2 ? hex(rng, 64) : `hassh:${hex(rng, 32)}`, ips)
+    // Payload clusters point at real captured samples so their pivots resolve.
+    add(i % 2 ? 'payload' : 'fingerprint', i % 2 ? PAYLOADS[i % PAYLOADS.length].hash : `hassh:${hex(rng, 32)}`, ips)
   }
   return clusters.sort((a, b) => b.sources - a.sources)
 }
@@ -182,7 +184,7 @@ function buildAttackers(): AttackerEntity[] {
       id: `${hex(rng, 8)}-${hex(rng, 4)}-${hex(rng, 4)}-${hex(rng, 4)}-${hex(rng, 12)}`,
       ips: members.map((m) => m.ip),
       fingerprints: Array.from({ length: int(rng, 0, 3) }, () => `hassh:${hex(rng, 32)}`),
-      payloads: Array.from({ length: rng() < 0.4 ? int(rng, 1, 3) : 0 }, () => hex(rng, 64)),
+      payloads: Array.from(new Set(Array.from({ length: rng() < 0.4 ? int(rng, 1, 3) : 0 }, () => pick(rng, PAYLOADS).hash))),
       credentials: creds,
       sensors: unique(events.map((e) => e.sensor)),
       events: events.length,

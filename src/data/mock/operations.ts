@@ -306,7 +306,8 @@ export const ANALYSIS_RESULTS: AnalysisResult[] = (() => {
       const risk = int(rng, 10, 98)
       results.push({ id: `sandbox-${i}`, analyzer: 'sandbox', hash: payload.hash, file, at, risk, platform: payload.platform, summary: risk > 70 ? 'Contacts C2, spawns shell, modifies crontab' : 'Network scan, no persistence', detail: { exitStatus: 0, dns: ['cnc.example.test'], processes: int(rng, 2, 14) } })
     }
-    if (i % 3 === 0) {
+    // Ghidra only decompiles binaries; scripts stop at static analysis.
+    if (i % 3 === 0 && payload.kind !== 'shell script') {
       results.push({ id: `ghidra-${i}`, analyzer: 'ghidra', hash: payload.hash, file, at, summary: 'Main loop connects to a hardcoded host, receives commands, and launches flood attacks.', detail: { functions: int(rng, 80, 900), model: 'qwen2.5-coder:14b' } })
     }
     if (i % 4 === 0) {

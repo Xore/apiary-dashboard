@@ -213,6 +213,14 @@ function AnalysisResultsPage() {
     <RecordList
       title="Analysis results"
       description="Submit a workbench run against a captured payload, then follow every analyzer's verdict: static analysis, YARA, sandbox detonations, and Ghidra decompilations."
+      actions={
+        <HStack gap={3} wrap="wrap">
+          <Link href="/revdeck">RevDeck</Link>
+          <Link href="/cape">CAPE</Link>
+          <Link href="/github-analysis">GitHub analysis</Link>
+          <Link href="/sandbox/vnc">Sandbox live view</Link>
+        </HStack>
+      }
       summary={
         tab === 'workbench' ? (
           <WorkbenchBuilder key={hash ?? ''} analyzers={data.analyzers} initialHash={hash ?? ''} />

@@ -738,3 +738,112 @@ export interface SettingsData {
   branding: { productName: string; helpUrl: string; notice: string; footer: string }
   honeypot: { alertCooldownMinutes: number; blocklistTtlHours: number; sandboxConcurrency: number; llmDailyReport: boolean }
 }
+
+// ---- Evidence detail -------------------------------------------------------
+
+export interface Ioc extends Record<string, unknown> {
+  id: string
+  kind: 'ip' | 'domain' | 'url' | 'path'
+  value: string
+}
+
+export interface PayloadAnalysis {
+  payload: CapturedPayload
+  staticRisk: number
+  packingLikelihood: number
+  hashes: { md5: string; sha1: string; sha256: string; ssdeep: string; tlsh: string }
+  fileType: string
+  entryPoint?: string
+  classification?: string
+  yara: string[]
+  iocs: Ioc[]
+  strings: string[]
+  decoded: Array<{ encoding: string; value: string }>
+  sections: Array<{ name: string; size: number; entropy: number }>
+  preview: string
+  sandbox?: { job: string; risk: number; verdict: string }
+  ghidra: boolean
+  github?: { status: GithubStatus; detections: number; engines: number }
+}
+
+export interface SandboxRun {
+  job: string
+  hash: string
+  at: string
+  verdict: 'malicious' | 'suspicious' | 'benign'
+  risk: number
+  platform: string
+  durationSeconds: number
+  packets: number
+  changedPaths: string[]
+  syscalls: CountRow[]
+  processesAdded: string[]
+  socketsAdded: string[]
+  output: string
+  dns: string[]
+  connections: Array<{ proto: string; dst: string; port: number; bytes: number }>
+  iocsStatic: string[]
+  iocsDynamic: string[]
+  techniques: Technique[]
+  diagnostics: Record<string, string>
+}
+
+export interface GhidraFunction extends Record<string, unknown> {
+  name: string
+  address: string
+  size: number
+  calls: number
+  decompiled: string
+}
+
+export interface GhidraAnalysis {
+  hash: string
+  at: string
+  arch: string
+  functions: GhidraFunction[]
+  imports: CountRow[]
+  strings: string[]
+  cryptoConstants: Array<{ name: string; address: string }>
+  fuzzy: { ssdeep: string; tlsh: string; imphash: string }
+  capa: Array<{ capability: string; namespace: string; attck?: string }>
+  floss: { decoded: string[]; stack: string[]; tight: string[] }
+  aiTriage: { summary: string; model: string; confidence: 'low' | 'medium' | 'high' }
+}
+
+export interface RevDeckRun extends Record<string, unknown> {
+  sha: string
+  at: string
+  status: 'completed' | 'failed'
+  verdict: string
+  summary: string
+  steps: Array<{ tool: string; input: string; output: string }>
+  citations: { valid: string[]; invalid: string[] }
+  error?: string
+}
+
+export interface CapeRun extends Record<string, unknown> {
+  sha: string
+  at: string
+  status: 'reported' | 'failed_analysis'
+  malscore: number
+  signatures: Array<{ name: string; severity: number; description: string }>
+  processes: Array<{ pid: number; name: string; commandLine: string }>
+  dumps: string[]
+  config: Record<string, string>
+  log: string
+}
+
+export type GithubStatus = 'published' | 'dry_run' | 'denylist_blocked' | 'quota_exceeded'
+
+export interface GithubAnalysis extends Record<string, unknown> {
+  sha: string
+  at: string
+  status: GithubStatus
+  detections: number
+  engines: number
+  risk: 'high' | 'medium' | 'low'
+  family?: string
+  results: Array<{ engine: string; verdict: 'malicious' | 'suspicious' | 'undetected'; label?: string }>
+  yaraRules: string[]
+  repoPath: string
+}
