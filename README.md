@@ -24,6 +24,15 @@ bun run build        # production build into dist/
 bun run start        # Bun production server (server.ts)
 ```
 
+### Mock data
+
+Every page reads through `src/data/queries.ts`, which currently resolves seeded fixtures from `src/data/mock/`. Mock writes (acknowledge, save, mint, …) change in-memory state in the running tab; a full reload starts from the fixtures again.
+
+```bash
+VITE_MOCK_LATENCY_MS=800 bun run dev   # slow backend: see pending states
+VITE_MOCK_FAIL=1 bun run dev           # failing backend: see error states
+```
+
 In dev, TanStack devtools open with **Ctrl+~** (the floating trigger is hidden so it never covers page actions).
 
 ## Stack notes
