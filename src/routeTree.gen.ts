@@ -35,10 +35,16 @@ import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutSourceHealthRouteImport } from './routes/_layout/source-health'
 import { Route as LayoutTopologyRouteImport } from './routes/_layout/topology'
+import { Route as LayoutEventIdRouteImport } from './routes/_layout/event.$id'
+import { Route as LayoutInvestigateClusterRouteImport } from './routes/_layout/investigate.cluster'
 import { Route as LayoutInvestigateLookupRouteImport } from './routes/_layout/investigate.lookup'
 import { Route as LayoutPayloadWorkbenchResultsRouteImport } from './routes/_layout/payload-workbench.results'
 import { Route as LayoutSensorsIndexRouteImport } from './routes/_layout/sensors.index'
 import { Route as LayoutSensorsSensorRouteImport } from './routes/_layout/sensors.$sensor'
+import { Route as LayoutSessionsIdRouteImport } from './routes/_layout/sessions.$id'
+import { Route as LayoutTtyReplayShasumRouteImport } from './routes/_layout/tty-replay.$shasum'
+import { Route as LayoutInvestigateCidrCidrRouteImport } from './routes/_layout/investigate.cidr.$cidr'
+import { Route as LayoutInvestigateIpIpRouteImport } from './routes/_layout/investigate.ip.$ip'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -169,6 +175,17 @@ const LayoutTopologyRoute = LayoutTopologyRouteImport.update({
   path: '/topology',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutEventIdRoute = LayoutEventIdRouteImport.update({
+  id: '/event/$id',
+  path: '/event/$id',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutInvestigateClusterRoute =
+  LayoutInvestigateClusterRouteImport.update({
+    id: '/investigate/cluster',
+    path: '/investigate/cluster',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 const LayoutInvestigateLookupRoute = LayoutInvestigateLookupRouteImport.update({
   id: '/investigate/lookup',
   path: '/investigate/lookup',
@@ -188,6 +205,27 @@ const LayoutSensorsIndexRoute = LayoutSensorsIndexRouteImport.update({
 const LayoutSensorsSensorRoute = LayoutSensorsSensorRouteImport.update({
   id: '/sensors/$sensor',
   path: '/sensors/$sensor',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSessionsIdRoute = LayoutSessionsIdRouteImport.update({
+  id: '/sessions/$id',
+  path: '/sessions/$id',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTtyReplayShasumRoute = LayoutTtyReplayShasumRouteImport.update({
+  id: '/tty-replay/$shasum',
+  path: '/tty-replay/$shasum',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutInvestigateCidrCidrRoute =
+  LayoutInvestigateCidrCidrRouteImport.update({
+    id: '/investigate/cidr/$cidr',
+    path: '/investigate/cidr/$cidr',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutInvestigateIpIpRoute = LayoutInvestigateIpIpRouteImport.update({
+  id: '/investigate/ip/$ip',
+  path: '/investigate/ip/$ip',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -217,10 +255,16 @@ export interface FileRoutesByFullPath {
   '/settings': typeof LayoutSettingsRoute
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
+  '/event/$id': typeof LayoutEventIdRoute
+  '/investigate/cluster': typeof LayoutInvestigateClusterRoute
   '/investigate/lookup': typeof LayoutInvestigateLookupRoute
   '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
   '/sensors/$sensor': typeof LayoutSensorsSensorRoute
+  '/sessions/$id': typeof LayoutSessionsIdRoute
+  '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
   '/sensors/': typeof LayoutSensorsIndexRoute
+  '/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
+  '/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
 }
 export interface FileRoutesByTo {
   '/agent-campaigns': typeof LayoutAgentCampaignsRoute
@@ -248,10 +292,16 @@ export interface FileRoutesByTo {
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
   '/': typeof LayoutIndexRoute
+  '/event/$id': typeof LayoutEventIdRoute
+  '/investigate/cluster': typeof LayoutInvestigateClusterRoute
   '/investigate/lookup': typeof LayoutInvestigateLookupRoute
   '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
   '/sensors/$sensor': typeof LayoutSensorsSensorRoute
+  '/sessions/$id': typeof LayoutSessionsIdRoute
+  '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
   '/sensors': typeof LayoutSensorsIndexRoute
+  '/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
+  '/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -281,10 +331,16 @@ export interface FileRoutesById {
   '/_layout/source-health': typeof LayoutSourceHealthRoute
   '/_layout/topology': typeof LayoutTopologyRoute
   '/_layout/': typeof LayoutIndexRoute
+  '/_layout/event/$id': typeof LayoutEventIdRoute
+  '/_layout/investigate/cluster': typeof LayoutInvestigateClusterRoute
   '/_layout/investigate/lookup': typeof LayoutInvestigateLookupRoute
   '/_layout/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
   '/_layout/sensors/$sensor': typeof LayoutSensorsSensorRoute
+  '/_layout/sessions/$id': typeof LayoutSessionsIdRoute
+  '/_layout/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
   '/_layout/sensors/': typeof LayoutSensorsIndexRoute
+  '/_layout/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
+  '/_layout/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -314,10 +370,16 @@ export interface FileRouteTypes {
     | '/settings'
     | '/source-health'
     | '/topology'
+    | '/event/$id'
+    | '/investigate/cluster'
     | '/investigate/lookup'
     | '/payload-workbench/results'
     | '/sensors/$sensor'
+    | '/sessions/$id'
+    | '/tty-replay/$shasum'
     | '/sensors/'
+    | '/investigate/cidr/$cidr'
+    | '/investigate/ip/$ip'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/agent-campaigns'
@@ -345,10 +407,16 @@ export interface FileRouteTypes {
     | '/source-health'
     | '/topology'
     | '/'
+    | '/event/$id'
+    | '/investigate/cluster'
     | '/investigate/lookup'
     | '/payload-workbench/results'
     | '/sensors/$sensor'
+    | '/sessions/$id'
+    | '/tty-replay/$shasum'
     | '/sensors'
+    | '/investigate/cidr/$cidr'
+    | '/investigate/ip/$ip'
   id:
     | '__root__'
     | '/_layout'
@@ -377,10 +445,16 @@ export interface FileRouteTypes {
     | '/_layout/source-health'
     | '/_layout/topology'
     | '/_layout/'
+    | '/_layout/event/$id'
+    | '/_layout/investigate/cluster'
     | '/_layout/investigate/lookup'
     | '/_layout/payload-workbench/results'
     | '/_layout/sensors/$sensor'
+    | '/_layout/sessions/$id'
+    | '/_layout/tty-replay/$shasum'
     | '/_layout/sensors/'
+    | '/_layout/investigate/cidr/$cidr'
+    | '/_layout/investigate/ip/$ip'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -571,6 +645,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutTopologyRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/event/$id': {
+      id: '/_layout/event/$id'
+      path: '/event/$id'
+      fullPath: '/event/$id'
+      preLoaderRoute: typeof LayoutEventIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/investigate/cluster': {
+      id: '/_layout/investigate/cluster'
+      path: '/investigate/cluster'
+      fullPath: '/investigate/cluster'
+      preLoaderRoute: typeof LayoutInvestigateClusterRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/investigate/lookup': {
       id: '/_layout/investigate/lookup'
       path: '/investigate/lookup'
@@ -597,6 +685,34 @@ declare module '@tanstack/react-router' {
       path: '/sensors/$sensor'
       fullPath: '/sensors/$sensor'
       preLoaderRoute: typeof LayoutSensorsSensorRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/sessions/$id': {
+      id: '/_layout/sessions/$id'
+      path: '/sessions/$id'
+      fullPath: '/sessions/$id'
+      preLoaderRoute: typeof LayoutSessionsIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/tty-replay/$shasum': {
+      id: '/_layout/tty-replay/$shasum'
+      path: '/tty-replay/$shasum'
+      fullPath: '/tty-replay/$shasum'
+      preLoaderRoute: typeof LayoutTtyReplayShasumRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/investigate/cidr/$cidr': {
+      id: '/_layout/investigate/cidr/$cidr'
+      path: '/investigate/cidr/$cidr'
+      fullPath: '/investigate/cidr/$cidr'
+      preLoaderRoute: typeof LayoutInvestigateCidrCidrRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/investigate/ip/$ip': {
+      id: '/_layout/investigate/ip/$ip'
+      path: '/investigate/ip/$ip'
+      fullPath: '/investigate/ip/$ip'
+      preLoaderRoute: typeof LayoutInvestigateIpIpRouteImport
       parentRoute: typeof LayoutRoute
     }
   }
@@ -628,10 +744,16 @@ interface LayoutRouteChildren {
   LayoutSourceHealthRoute: typeof LayoutSourceHealthRoute
   LayoutTopologyRoute: typeof LayoutTopologyRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutEventIdRoute: typeof LayoutEventIdRoute
+  LayoutInvestigateClusterRoute: typeof LayoutInvestigateClusterRoute
   LayoutInvestigateLookupRoute: typeof LayoutInvestigateLookupRoute
   LayoutPayloadWorkbenchResultsRoute: typeof LayoutPayloadWorkbenchResultsRoute
   LayoutSensorsSensorRoute: typeof LayoutSensorsSensorRoute
+  LayoutSessionsIdRoute: typeof LayoutSessionsIdRoute
+  LayoutTtyReplayShasumRoute: typeof LayoutTtyReplayShasumRoute
   LayoutSensorsIndexRoute: typeof LayoutSensorsIndexRoute
+  LayoutInvestigateCidrCidrRoute: typeof LayoutInvestigateCidrCidrRoute
+  LayoutInvestigateIpIpRoute: typeof LayoutInvestigateIpIpRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -660,10 +782,16 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutSourceHealthRoute: LayoutSourceHealthRoute,
   LayoutTopologyRoute: LayoutTopologyRoute,
   LayoutIndexRoute: LayoutIndexRoute,
+  LayoutEventIdRoute: LayoutEventIdRoute,
+  LayoutInvestigateClusterRoute: LayoutInvestigateClusterRoute,
   LayoutInvestigateLookupRoute: LayoutInvestigateLookupRoute,
   LayoutPayloadWorkbenchResultsRoute: LayoutPayloadWorkbenchResultsRoute,
   LayoutSensorsSensorRoute: LayoutSensorsSensorRoute,
+  LayoutSessionsIdRoute: LayoutSessionsIdRoute,
+  LayoutTtyReplayShasumRoute: LayoutTtyReplayShasumRoute,
   LayoutSensorsIndexRoute: LayoutSensorsIndexRoute,
+  LayoutInvestigateCidrCidrRoute: LayoutInvestigateCidrCidrRoute,
+  LayoutInvestigateIpIpRoute: LayoutInvestigateIpIpRoute,
 }
 
 const LayoutRouteWithChildren =

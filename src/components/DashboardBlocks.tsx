@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Card } from '@astryxdesign/core/Card'
 import { ClickableCard } from '@astryxdesign/core/ClickableCard'
 import { Icon } from '@astryxdesign/core/Icon'
+import { Link } from '@astryxdesign/core/Link'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -61,20 +62,45 @@ export function StatTile({ label, value, previous, caption, trend, href }: StatT
 }
 
 /** Two-column "value, count" table for top-N breakdowns. */
-export function CountTable({ header, rows, countHeader = 'Count', isCode = false }: {
+export function CountTable({ header, rows, countHeader = 'Count', isCode = false, linkTo }: {
   header: string
   rows: CountRow[]
   countHeader?: string
   isCode?: boolean
+  /** Makes each value a link, e.g. to its own detail page. */
+  linkTo?: (label: string) => string
 }) {
   const columns: TableColumn<CountRow>[] = [
     {
       key: 'label',
       header,
       width: proportional(1),
-      renderCell: (row) => (isCode ? <Text type="code">{row.label}</Text> : row.label),
+      renderCell: (row) => {
+        const text = isCode ? <Text type="code">{row.label}</Text> : row.label
+        return linkTo ? <Link href={linkTo(row.label)}>{text}</Link> : text
+      },
     },
     { key: 'count', header: countHeader, width: pixel(88), align: 'end', renderCell: (row) => formatNumber(row.count) },
   ]
   return <Table data={rows} columns={columns} idKey="id" density="compact" />
+}
+
+/** A titled top-N breakdown; renders a short note instead of an empty table. */
+export function MiniTable({ title, header = 'Value', countHeader, rows, isCode, linkTo }: {
+  title: string
+  header?: string
+  countHeader?: string
+  rows: CountRow[]
+  isCode?: boolean
+  linkTo?: (label: string) => string
+}) {
+  return (
+    <Panel title={title}>
+      {rows.length ? (
+        <CountTable header={header} countHeader={countHeader} rows={rows} isCode={isCode} linkTo={linkTo} />
+      ) : (
+        <Text type="supporting">Nothing recorded.</Text>
+      )}
+    </Panel>
+  )
 }

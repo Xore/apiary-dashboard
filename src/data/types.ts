@@ -588,3 +588,153 @@ export interface AnalysisResultsData {
   gpuQueue: GpuJob[]
   analyzers: Array<{ id: string; label: string; description: string; gpu: boolean }>
 }
+
+// ---- Detail pages ----------------------------------------------------------
+
+export interface Technique extends Record<string, unknown> {
+  id: string
+  name: string
+  tactic: string
+  events: number
+}
+
+export interface EventDetail {
+  event: HoneypotEvent
+  session: HoneypotEvent[]
+  connection: HoneypotEvent[]
+  source: HoneypotEvent[]
+  hashes: string[]
+}
+
+export interface SessionDetail {
+  id: string
+  events: HoneypotEvent[]
+  srcIp: string
+  country: string
+  first: string
+  last: string
+  sensors: CountRow[]
+  commands: CountRow[]
+  credentials: CountRow[]
+  payloads: CountRow[]
+  techniques: Technique[]
+  recordingShasum?: string
+}
+
+export interface IpProfile {
+  source: SourceProfile & { asn: string; riskScore: number; tags: string[] }
+  blocked: boolean
+  events: HoneypotEvent[]
+  sensors: CountRow[]
+  credentials: CountRow[]
+  commands: CountRow[]
+  paths: CountRow[]
+  ports: CountRow[]
+  protocols: CountRow[]
+  sessions: CountRow[]
+  payloads: CountRow[]
+  alerts: CountRow[]
+  techniques: Technique[]
+  correlation: { totalMatches: number; tunnelConnections: number; distinctSensors: number }
+  attackerId?: string
+}
+
+export interface Correlation {
+  title: string
+  members: string[]
+  totalMatches: number
+  tunnelConnections: number
+  sensors: CountRow[]
+  events: HoneypotEvent[]
+}
+
+export interface ReplayDetail {
+  replay: Replay
+  sessions: Recording[]
+  attacker: { ip: string; events: number; sessions: number; commands: CountRow[]; credentials: CountRow[]; sensors: CountRow[]; sessionIds: CountRow[] } | null
+}
+
+export interface SearchGroup {
+  id: string
+  title: string
+  total: number
+  items: Array<{ label: string; detail: string; href: string }>
+}
+
+export interface DeadLetter extends Record<string, unknown> {
+  id: string
+  timestamp: string
+  reason: string
+  source: string
+  index: string
+  document: Record<string, unknown>
+}
+
+export type ProblemStatus = 'open' | 'triaged' | 'fixed' | 'wontfix'
+
+export interface ProblemReport extends Record<string, unknown> {
+  id: string
+  submittedAt: string
+  submittedBy: string
+  status: ProblemStatus
+  page: string
+  expected: string
+  actual: string
+  consoleErrors: string[]
+  networkFailures: string[]
+  apiCalls: Array<{ method: string; path: string; status: number }>
+  actionTrail: string[]
+  userAgent: string
+  hasSnapshot: boolean
+}
+
+export interface Preferences {
+  theme: 'system' | 'dark' | 'light'
+  density: 'comfortable' | 'compact'
+  motion: 'system' | 'on' | 'off'
+  landing: string
+  rowsPerPage: number
+  openDetailsInNewTab: boolean
+  timezone: 'UTC' | 'local'
+  clock: 'h24' | 'h12'
+  timestamps: 'relative' | 'absolute'
+  refreshSeconds: number
+  notifyCritical: boolean
+  notifyCanary: boolean
+  defaultWindow: string
+}
+
+export interface ServiceStatus extends Record<string, unknown> {
+  name: string
+  stack: string
+  state: ContainerState
+  uptime: string
+  image: string
+}
+
+export interface ConfigRevision extends Record<string, unknown> {
+  id: string
+  at: string
+  actor: string
+  section: string
+  summary: string
+}
+
+export interface AuditEntry extends Record<string, unknown> {
+  id: string
+  at: string
+  actor: string
+  action: string
+  fields: string[]
+  result: 'ok' | 'rejected'
+}
+
+export interface SettingsData {
+  user: SessionUser
+  preferences: Preferences
+  services: ServiceStatus[]
+  history: ConfigRevision[]
+  audit: AuditEntry[]
+  branding: { productName: string; helpUrl: string; notice: string; footer: string }
+  honeypot: { alertCooldownMinutes: number; blocklistTtlHours: number; sandboxConcurrency: number; llmDailyReport: boolean }
+}

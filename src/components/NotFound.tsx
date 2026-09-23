@@ -1,25 +1,33 @@
-import { Link } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
+import { Button } from '@astryxdesign/core/Button'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
+import { Icon } from '@astryxdesign/core/Icon'
+import { Link } from '@astryxdesign/core/Link'
+import { HStack } from '@astryxdesign/core/Stack'
+import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
+import { PageFrame } from './PageFrame'
 
-export function NotFound({ children }: { children?: any }) {
+type NotFoundProps = {
+  title?: string
+  description?: ReactNode
+}
+
+/** Shown for unknown routes and for detail pages whose record does not
+ * exist (aged out of the index, mistyped id). */
+export function NotFound({ title = 'Page not found', description = 'Nothing lives at this address.' }: NotFoundProps) {
   return (
-    <div className="space-y-2 p-2">
-      <div className="text-gray-600 dark:text-gray-400">
-        {children || <p>The page you are looking for does not exist.</p>}
-      </div>
-      <p className="flex items-center gap-2 flex-wrap">
-        <button
-          onClick={() => window.history.back()}
-          className="bg-emerald-500 text-white px-2 py-1 rounded-sm uppercase font-black text-sm"
-        >
-          Go back
-        </button>
-        <Link
-          to="/"
-          className="bg-cyan-600 text-white px-2 py-1 rounded-sm uppercase font-black text-sm"
-        >
-          Start Over
-        </Link>
-      </p>
-    </div>
+    <PageFrame title={title}>
+      <EmptyState
+        icon={<Icon icon={QuestionMarkCircleIcon} size="lg" />}
+        title="Nothing to show"
+        description={typeof description === 'string' ? description : undefined}
+        actions={
+          <HStack gap={3} vAlign="center">
+            <Button label="Go back" variant="secondary" onClick={() => window.history.back()} />
+            <Link href="/">Overview</Link>
+          </HStack>
+        }
+      />
+    </PageFrame>
   )
 }

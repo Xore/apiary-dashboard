@@ -14,6 +14,17 @@ import {
   SOURCE_PROFILES,
 } from './mock/investigate'
 import {
+  AUDIT_LOG,
+  BLOCKED_IPS,
+  CONFIG_HISTORY,
+  DEAD_LETTERS,
+  PREFERENCES,
+  PROBLEM_REPORTS,
+  SERVICES,
+  SETTINGS_ADMIN,
+  techniquesFor,
+} from './mock/details'
+import {
   ALERTS,
   ANALYSIS_RESULTS,
   ANALYZERS,
@@ -34,6 +45,17 @@ import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALT
 import { MOCK_NOW, createRng } from './mock/random'
 import type {
   AgentCampaign,
+  Correlation,
+  DeadLetter,
+  EventDetail,
+  IpProfile,
+  Preferences,
+  ProblemReport,
+  ProblemStatus,
+  ReplayDetail,
+  SearchGroup,
+  SessionDetail,
+  SettingsData,
   AlertGroup,
   AlertRecord,
   AnalysisResult,
@@ -637,4 +659,237 @@ export async function abortGpuJob(jobId: string): Promise<boolean> {
   job.abortRequested = true
   job.status = 'aborted'
   return true
+}
+
+// ---- Detail pages ----------------------------------------------------------
+
+export async function getEventDetail(id: string): Promise<EventDetail | null> {
+  await mockDelay()
+  const event = EVENTS.find((e) => e.id === id)
+  if (!event) return null
+  return {
+    event,
+    session: EVENTS.filter((e) => e.sessionId === event.sessionId && e.id !== id).slice(0, 25),
+    // Same 5-tuple in spirit: same source address and port on the same sensor.
+    connection: EVENTS.filter((e) => e.srcIp === event.srcIp && e.sensor === event.sensor && e.dstPort === event.dstPort && e.id !== id).slice(0, 10),
+    source: EVENTS.filter((e) => e.srcIp === event.srcIp && e.sessionId !== event.sessionId).slice(0, 25),
+    hashes: event.type === 'file.download' ? [event.summary.match(/[0-9a-f]{12}/)?.[0] ?? ''].filter(Boolean) : [],
+  }
+}
+
+export async function getSessionDetail(id: string): Promise<SessionDetail | null> {
+  await mockDelay()
+  const events = EVENTS.filter((e) => e.sessionId === id)
+  if (events.length === 0) return null
+  return {
+    id,
+    events,
+    srcIp: events[0].srcIp,
+    country: events[0].country,
+    first: events.at(-1)!.timestamp,
+    last: events[0].timestamp,
+    sensors: countBy(events.map((e) => e.sensor), 10),
+    commands: countBy(events.map((e) => e.command), 15),
+    credentials: countBy(events.map((e) => (e.username ? `${e.username}:${e.password}` : undefined)), 15),
+    payloads: countBy(events.filter((e) => e.type === 'file.download').map((e) => e.summary), 10),
+    techniques: techniquesFor(events),
+    recordingShasum: RECORDINGS.find((r) => r.session === id)?.shasum,
+  }
+}
+
+export async function getIpProfile(ip: string): Promise<IpProfile | null> {
+  await mockDelay()
+  const source = SOURCES.find((s) => s.ip === ip)
+  const profile = SOURCE_PROFILES.find((p) => p.ip === ip)
+  if (!source || !profile) return null
+  const events = EVENTS.filter((e) => e.srcIp === ip)
+  return {
+    source: { ...profile, asn: source.asn, riskScore: source.riskScore, tags: source.tags },
+    blocked: BLOCKED_IPS.has(ip),
+    events,
+    sensors: countBy(events.map((e) => e.sensor), 10),
+    credentials: countBy(events.map((e) => (e.username ? `${e.username}:${e.password}` : undefined)), 10),
+    commands: countBy(events.map((e) => e.command), 10),
+    paths: countBy(events.filter((e) => e.type === 'http.request').map((e) => e.summary.replace(/^GET /, '')), 10),
+    ports: countBy(events.map((e) => String(e.dstPort)), 10),
+    protocols: countBy(events.map((e) => e.protocol), 10),
+    sessions: countBy(events.map((e) => e.sessionId), 10),
+    payloads: countBy(events.filter((e) => e.type === 'file.download').map((e) => e.summary), 10),
+    alerts: countBy(events.filter((e) => e.type === 'ids.alert').map((e) => e.summary), 10),
+    techniques: techniquesFor(events),
+    correlation: {
+      totalMatches: events.length + Math.round(events.length * 0.4),
+      tunnelConnections: Math.round(events.length * 0.3),
+      distinctSensors: new Set(events.map((e) => e.sensor)).size,
+    },
+    attackerId: ATTACKERS.find((a) => a.ips.includes(ip))?.id,
+  }
+}
+
+/** Mock write: adds/removes the address on the portbridge manual blackhole. */
+export async function setIpBlocked(ip: string, blocked: boolean): Promise<void> {
+  await mockDelay()
+  if (blocked) BLOCKED_IPS.add(ip)
+  else BLOCKED_IPS.delete(ip)
+}
+
+function correlate(title: string, members: string[]): Correlation {
+  const events = EVENTS.filter((e) => members.includes(e.srcIp))
+  return {
+    title,
+    members,
+    totalMatches: events.length + Math.round(events.length * 0.35),
+    tunnelConnections: Math.round(events.length * 0.28),
+    sensors: countBy(events.map((e) => e.sensor), 10),
+    events: events.slice(0, 100),
+  }
+}
+
+export async function getCidrCorrelation(cidr: string): Promise<Correlation | null> {
+  await mockDelay()
+  const match = cidr.match(/^(\d+\.\d+\.\d+)\.(\d+)\/(\d+)$/)
+  if (!match) return null
+  const size = 2 ** (32 - Number(match[3]))
+  const start = Number(match[2])
+  const members = SOURCES.filter((s) => {
+    const [a, b, c, d] = s.ip.split('.')
+    return `${a}.${b}.${c}` === match[1] && Number(d) >= start && Number(d) < start + size
+  }).map((s) => s.ip)
+  return members.length ? correlate(cidr, members) : null
+}
+
+export async function getClusterCorrelation(kind: string, value: string): Promise<Correlation | null> {
+  await mockDelay()
+  const cluster = INFRA_CLUSTERS.find((c) => c.kind === kind && c.value === value)
+  if (cluster) {
+    const members =
+      kind === 'asn'
+        ? SOURCES.filter((s) => s.asn === value).map((s) => s.ip)
+        : kind === 'provider'
+          ? SOURCES.filter((s) => s.org === value).map((s) => s.ip)
+          : kind === 'credential'
+            ? [...new Set(EVENTS.filter((e) => `${e.username}:${e.password}` === value).map((e) => e.srcIp))]
+            : SOURCES.slice(0, cluster.sources).map((s) => s.ip)
+    return correlate(`${kind}: ${value}`, members)
+  }
+  // ASNs/providers with a single member are not clusters, but the lookup
+  // page can still route to them.
+  const members = SOURCES.filter((s) => (kind === 'asn' && s.asn === value) || (kind === 'provider' && s.org === value)).map((s) => s.ip)
+  return members.length ? correlate(`${kind}: ${value}`, members) : null
+}
+
+export async function getReplayDetail(shasum: string): Promise<ReplayDetail | null> {
+  await mockDelay()
+  const replay = REPLAYS.get(shasum)
+  if (!replay) return null
+  const sessions = RECORDINGS.filter((r) => r.shasum === shasum)
+  const ip = sessions.find((r) => r.srcIp)?.srcIp
+  const events = ip ? EVENTS.filter((e) => e.srcIp === ip) : []
+  return {
+    replay,
+    sessions,
+    attacker: ip
+      ? {
+          ip,
+          events: events.length,
+          sessions: new Set(events.map((e) => e.sessionId)).size,
+          commands: countBy(events.map((e) => e.command), 10),
+          credentials: countBy(events.map((e) => (e.username ? `${e.username}:${e.password}` : undefined)), 10),
+          sensors: countBy(events.map((e) => e.sensor), 10),
+          sessionIds: countBy(events.map((e) => e.sessionId), 10),
+        }
+      : null,
+  }
+}
+
+/** Grouped search across the mock data set, as behind the palette's Enter. */
+export async function searchAll(query: string): Promise<SearchGroup[]> {
+  await mockDelay()
+  const q = query.trim().toLowerCase()
+  if (!q) return []
+  const groups: SearchGroup[] = []
+  const add = (id: string, title: string, items: SearchGroup['items']) => {
+    if (items.length) groups.push({ id, title, total: items.length, items: items.slice(0, 8) })
+  }
+  add('sources', 'Source IPs', SOURCES.filter((s) => s.ip.includes(q) || s.org.toLowerCase().includes(q) || s.asn.toLowerCase() === q).map((s) => ({ label: s.ip, detail: `${s.org} · ${s.country} · ${s.events} events`, href: `/investigate/ip/${s.ip}` })))
+  add('sessions', 'Sessions', [...new Set(EVENTS.filter((e) => e.sessionId.includes(q)).map((e) => e.sessionId))].map((id) => ({ label: id, detail: 'session', href: `/sessions/${id}` })))
+  add('commands', 'Commands', [...new Set(EVENTS.filter((e) => e.command?.toLowerCase().includes(q)).map((e) => e.command!))].map((c) => ({ label: c, detail: 'executed command', href: `/history?q=${encodeURIComponent(q)}` })))
+  add('credentials', 'Credentials', [...new Set(EVENTS.filter((e) => e.username && `${e.username}:${e.password}`.toLowerCase().includes(q)).map((e) => `${e.username}:${e.password}`))].map((c) => ({ label: c, detail: 'credential pair', href: `/investigate/cluster?kind=credential&value=${encodeURIComponent(c)}` })))
+  add('payloads', 'Payloads', PAYLOADS.filter((p) => p.hash.includes(q) || p.verdict?.family?.toLowerCase().includes(q)).map((p) => ({ label: p.hash.slice(0, 24), detail: `${p.kind}${p.verdict?.family ? ` · ${p.verdict.family}` : ''}`, href: `/payload-analysis/${p.hash}` })))
+  add('fingerprints', 'Fingerprints', INFRA_CLUSTERS.filter((c) => c.kind === 'fingerprint' && c.value.includes(q)).map((c) => ({ label: c.value, detail: `${c.sources} sources`, href: `/investigate/cluster?kind=fingerprint&value=${encodeURIComponent(c.value)}` })))
+  add('signatures', 'IDS signatures', [...new Set(EVENTS.filter((e) => e.type === 'ids.alert' && e.summary.toLowerCase().includes(q)).map((e) => e.summary))].map((s) => ({ label: s, detail: 'Suricata signature', href: `/history?q=${encodeURIComponent(q)}` })))
+  return groups
+}
+
+export async function getDeadLetters(query: string): Promise<DeadLetter[]> {
+  await mockDelay()
+  const q = query.trim().toLowerCase()
+  return q ? DEAD_LETTERS.filter((d) => JSON.stringify(d).toLowerCase().includes(q)) : [...DEAD_LETTERS]
+}
+
+/** Mock write: purges exactly the documents the current query shows. */
+export async function purgeDeadLetters(ids: string[]): Promise<number> {
+  await mockDelay()
+  const before = DEAD_LETTERS.length
+  for (let i = DEAD_LETTERS.length - 1; i >= 0; i--) if (ids.includes(DEAD_LETTERS[i].id)) DEAD_LETTERS.splice(i, 1)
+  return before - DEAD_LETTERS.length
+}
+
+export async function getProblemReports(): Promise<ProblemReport[]> {
+  await mockDelay()
+  return PROBLEM_REPORTS.map((r) => ({ ...r }))
+}
+
+export async function setProblemStatus(id: string, status: ProblemStatus): Promise<void> {
+  await mockDelay()
+  const report = PROBLEM_REPORTS.find((r) => r.id === id)
+  if (report) report.status = status
+}
+
+export async function getSettings(): Promise<SettingsData> {
+  await mockDelay()
+  return {
+    user: MOCK_USER,
+    preferences: { ...PREFERENCES },
+    services: SERVICES.map((s) => ({ ...s })),
+    history: [...CONFIG_HISTORY],
+    audit: [...AUDIT_LOG],
+    branding: { ...SETTINGS_ADMIN.branding },
+    honeypot: { ...SETTINGS_ADMIN.honeypot },
+  }
+}
+
+export async function savePreferences(next: Preferences): Promise<void> {
+  await mockDelay()
+  Object.assign(PREFERENCES, next)
+}
+
+function audit(action: string, fields: string[]) {
+  AUDIT_LOG.unshift({ id: `a-${Date.now().toString(36)}`, at: new Date(MOCK_NOW).toISOString(), actor: MOCK_USER.name, action, fields, result: 'ok' })
+}
+
+/** Mock write: stages an admin config section and records a revision. */
+export async function saveAdminSection<TSection extends keyof typeof SETTINGS_ADMIN>(section: TSection, value: (typeof SETTINGS_ADMIN)[TSection]): Promise<void> {
+  await mockDelay()
+  const changed = Object.keys(value).filter((k) => (value as Record<string, unknown>)[k] !== (SETTINGS_ADMIN[section] as Record<string, unknown>)[k])
+  Object.assign(SETTINGS_ADMIN[section], value)
+  CONFIG_HISTORY.unshift({ id: `rev-${Date.now().toString(36)}`, at: new Date(MOCK_NOW).toISOString(), actor: MOCK_USER.name, section, summary: `Changed ${changed.join(', ') || 'nothing'}` })
+  audit('config.save', changed.map((k) => `${section}.${k}`))
+}
+
+export async function runServiceAction(name: string, action: 'start' | 'stop' | 'restart'): Promise<void> {
+  await mockDelay()
+  const service = SERVICES.find((s) => s.name === name)
+  if (!service) return
+  service.state = action === 'stop' ? 'exited' : 'running'
+  service.uptime = action === 'stop' ? '—' : '0m'
+  audit(`service.${action}`, [name])
+}
+
+export async function rollbackConfig(revisionId: string): Promise<void> {
+  await mockDelay()
+  const revision = CONFIG_HISTORY.find((r) => r.id === revisionId)
+  if (!revision) return
+  CONFIG_HISTORY.unshift({ id: `rev-${Date.now().toString(36)}`, at: new Date(MOCK_NOW).toISOString(), actor: MOCK_USER.name, section: revision.section, summary: `Rolled back to ${revision.id}` })
+  audit('config.rollback', [revision.id])
 }
