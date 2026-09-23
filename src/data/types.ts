@@ -99,3 +99,147 @@ export interface OverviewData {
   recentEvents: HoneypotEvent[]
   sensors: Sensor[]
 }
+
+// ---- Monitor: ML anomalies -------------------------------------------------
+
+export const DISPOSITIONS = ['false_positive', 'true_positive', 'benign_known'] as const
+export type Disposition = (typeof DISPOSITIONS)[number]
+export type AnomalyStatus = 'open' | 'acknowledged' | Disposition
+
+export interface MlAnomaly extends Record<string, unknown> {
+  id: string
+  timestamp: string
+  severity: Severity
+  compositeScore: number
+  modelScores: { isolationForest: number; lstmAe: number; hbos: number }
+  srcIp?: string
+  country?: string
+  explanation: string
+  sourceEventId: string
+  sourceIndex: string
+  eventType: string
+  dstPort: number
+  proto: string
+  sensor: string
+  status: AnomalyStatus
+  dispositionReason?: string
+  /** Anomalies from the same address in the same second, folded into this row. */
+  folded: number
+  thresholdAtScoring: number
+  modelState?: string
+}
+
+export interface ModelHealth extends Record<string, unknown> {
+  model: string
+  timestamp: string
+  accepted: boolean
+  reason: string
+  anomalyRateNew: number
+  anomalyRatePrevious: number
+  trainSamples: number
+}
+
+export interface ScorePoint extends Record<string, unknown> {
+  time: string
+  isolationForest: number
+  lstmAe: number
+  hbos: number
+}
+
+export interface MlAnomaliesData {
+  anomalies: MlAnomaly[]
+  total24h: number
+  openBacklog: number
+  bySeverity: CountRow[]
+  topSources: CountRow[]
+  eventTypes: string[]
+  scoreTimeline: ScorePoint[]
+  modelHealth: ModelHealth[]
+}
+
+// ---- Monitor: LLM analysis -------------------------------------------------
+
+export type LlmDocType = 'session' | 'payload' | 'report'
+
+export interface LlmAnalysis extends Record<string, unknown> {
+  id: string
+  timestamp: string
+  docType: LlmDocType
+  severity: Severity
+  confidence?: 'low' | 'medium' | 'high'
+  intent: string
+  summary: string
+  sessionId?: string
+  payloadSha256?: string
+  srcIp?: string
+  model: string
+  behaviors: string[]
+  error?: string
+}
+
+export interface SemanticHit extends Record<string, unknown> {
+  id: string
+  score: number
+  severity: Severity
+  summary: string
+  sessionId?: string
+}
+
+export type SemanticSearchResult = { available: true; hits: SemanticHit[] } | { available: false; reason: string }
+
+// ---- Monitor: agent campaigns ----------------------------------------------
+
+export interface DecodeStep {
+  transform: string
+  inputSha256: string
+  outputSha256: string
+  outputLen: number
+}
+
+export interface MatchedRule {
+  rule: string
+  reason: string
+  trustBoundary: string
+  decodeChain: DecodeStep[]
+}
+
+export interface CampaignEvent {
+  eventId: string
+  sourceIndex: string
+  timestamp: string
+  matchedRules: MatchedRule[]
+}
+
+export interface AgentCampaign extends Record<string, unknown> {
+  id: string
+  timestamp: string
+  start: string
+  end: string
+  severity: Severity
+  categories: string[]
+  identifiers: string[]
+  eventCount: number
+  events: CampaignEvent[]
+}
+
+// ---- Monitor: auth-failure events ------------------------------------------
+
+export interface AuthFailure extends Record<string, unknown> {
+  id: string
+  timestamp: string
+  type: string
+  ip?: string
+  error: string
+  username?: string
+  clientId: string
+  realm: string
+  redirectUri?: string
+  userId?: string
+}
+
+export interface AuthEventsData {
+  events: AuthFailure[]
+  failed24h: number
+  byClient: CountRow[]
+  topSources: CountRow[]
+}

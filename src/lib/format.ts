@@ -16,6 +16,8 @@ const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
 export const formatNumber = (value: number) => numberFormat.format(value)
 export const formatCompact = (value: number) => compactFormat.format(value)
 export const formatTime = (iso: string) => `${timeFormat.format(new Date(iso))} UTC`
+/** HH:MM only, for table cells whose header already says UTC. */
+export const formatClock = (iso: string) => timeFormat.format(new Date(iso))
 export const formatDateTime = (iso: string) => `${dateTimeFormat.format(new Date(iso))} UTC`
 
 /** Signed percentage change, e.g. "+12.4%". */

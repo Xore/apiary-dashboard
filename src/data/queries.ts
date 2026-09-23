@@ -2,9 +2,16 @@
 // they resolve mock fixtures, later each becomes a createServerFn call to the
 // backend with the same signature.
 import { EVENTS, MOCK_USER, PASSWORDS, SENSORS, SOURCES, USERNAMES } from './mock/fixtures'
+import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALTH, SCORE_TIMELINE } from './mock/monitor'
 import { MOCK_NOW, createRng } from './mock/random'
 import type {
+  AgentCampaign,
+  AuthEventsData,
   CountRow,
+  Disposition,
+  LlmAnalysis,
+  MlAnomaliesData,
+  SemanticSearchResult,
   HoneypotEvent,
   Kpi,
   OverviewData,
@@ -91,5 +98,94 @@ export async function getOverview(): Promise<OverviewData> {
     topPasswords: countBy(EVENTS.map((e) => e.password), PASSWORDS.length).slice(0, 8),
     recentEvents: EVENTS.slice(0, 12),
     sensors: SENSORS,
+  }
+}
+
+// ---- Monitor ---------------------------------------------------------------
+
+const DAY = 24 * HOUR
+const within24h = (timestamp: string) => MOCK_NOW - Date.parse(timestamp) < DAY
+
+export async function getMlAnomalies(): Promise<MlAnomaliesData> {
+  await mockDelay()
+  const recent = ML_ANOMALIES.filter((a) => within24h(a.timestamp))
+  return {
+    anomalies: ML_ANOMALIES.map((a) => ({ ...a })),
+    total24h: recent.reduce((sum, a) => sum + a.folded, 0),
+    openBacklog: ML_ANOMALIES.filter((a) => a.status === 'open').reduce((sum, a) => sum + a.folded, 0),
+    // Folded rows stand for several anomalies, so every breakdown counts them
+    // at full weight and the tiles add up to the 24h total.
+    bySeverity: countBy(recent.flatMap((a) => Array<string>(a.folded).fill(a.severity)), 5),
+    topSources: countBy(recent.flatMap((a) => (a.srcIp ? Array<string>(a.folded).fill(a.srcIp) : [])), 10),
+    eventTypes: [...new Set(ML_ANOMALIES.map((a) => a.eventType))].sort(),
+    scoreTimeline: SCORE_TIMELINE,
+    modelHealth: MODEL_HEALTH,
+  }
+}
+
+/** Mock write: marks anomalies acknowledged ("seen, no verdict"). */
+export async function acknowledgeAnomalies(ids: string[]): Promise<number> {
+  await mockDelay()
+  let changed = 0
+  for (const anomaly of ML_ANOMALIES) {
+    if (ids.includes(anomaly.id) && anomaly.status === 'open') {
+      anomaly.status = 'acknowledged'
+      changed += 1
+    }
+  }
+  return changed
+}
+
+export async function acknowledgeAllAnomalies(): Promise<number> {
+  return acknowledgeAnomalies(ML_ANOMALIES.filter((a) => a.status === 'open').map((a) => a.id))
+}
+
+/** Mock write: records (or with 'open', retracts) an operator verdict. */
+export async function setAnomalyDisposition(ids: string[], status: Disposition | 'open', reason: string): Promise<void> {
+  await mockDelay()
+  for (const anomaly of ML_ANOMALIES) {
+    if (!ids.includes(anomaly.id)) continue
+    anomaly.status = status
+    anomaly.dispositionReason = status === 'open' ? undefined : reason || undefined
+  }
+}
+
+export async function getLlmAnalyses(): Promise<LlmAnalysis[]> {
+  await mockDelay()
+  return LLM_ANALYSES
+}
+
+/** Mock semantic search: ranks session summaries by word overlap. */
+export async function semanticSearch(query: string): Promise<SemanticSearchResult> {
+  await mockDelay()
+  const words = new Set(query.toLowerCase().split(/\W+/).filter((w) => w.length > 2))
+  if (words.size === 0) return { available: true, hits: [] }
+  const hits = LLM_ANALYSES.filter((a) => a.docType === 'session' && a.summary)
+    .map((a) => {
+      // Summary hits count double; intent/behavior tags count once.
+      const summary = a.summary.toLowerCase()
+      const tags = `${a.intent} ${a.behaviors.join(' ')}`.toLowerCase()
+      const points = [...words].reduce((sum, w) => sum + (summary.includes(w) ? 2 : 0) + (tags.includes(w) ? 1 : 0), 0)
+      return { id: a.id, score: points / (3 * words.size), severity: a.severity, summary: a.summary, sessionId: a.sessionId }
+    })
+    .filter((hit) => hit.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+  return { available: true, hits }
+}
+
+export async function getAgentCampaigns(): Promise<AgentCampaign[]> {
+  await mockDelay()
+  return AGENT_CAMPAIGNS
+}
+
+export async function getAuthEvents(): Promise<AuthEventsData> {
+  await mockDelay()
+  const recent = AUTH_FAILURES.filter((e) => within24h(e.timestamp))
+  return {
+    events: AUTH_FAILURES,
+    failed24h: recent.length,
+    byClient: countBy(recent.map((e) => e.clientId), 10),
+    topSources: countBy(recent.map((e) => e.ip), 10),
   }
 }

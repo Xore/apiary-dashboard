@@ -143,3 +143,91 @@ export function Sparkline({ data }: { data: number[] }) {
     </ResponsiveContainer>
   )
 }
+
+export type LineSeries = { key: string; label: string }
+
+// First slots of the validated categorical order; lines never exceed three.
+const LINE_COLORS = [
+  'var(--color-data-categorical-blue)',
+  'var(--color-data-categorical-orange)',
+  'var(--color-data-categorical-teal)',
+]
+
+function LinesTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean
+  payload?: Array<{ name: string; value: number; color: string }>
+  label?: string
+}) {
+  if (!active || !payload?.length || !label) return null
+  return (
+    <Card padding={3}>
+      <VStack gap={1}>
+        <Text type="supporting">{formatTime(label)}</Text>
+        {payload.map((entry) => (
+          <HStack key={entry.name} gap={2} vAlign="center">
+            <Swatch color={entry.color} />
+            <Text type="supporting" color="primary">
+              {entry.name}: {entry.value.toFixed(2)}
+            </Text>
+          </HStack>
+        ))}
+      </VStack>
+    </Card>
+  )
+}
+
+/** Up to three series over hourly time buckets on one shared 0–1 axis. */
+export function TimeLines<T extends { time: string }>({
+  data,
+  series,
+  domain = [0, 1],
+}: {
+  data: T[]
+  series: LineSeries[]
+  domain?: [number, number]
+}) {
+  return (
+    <VStack gap={3}>
+      <ResponsiveContainer width="100%" height={220}>
+        <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+          <CartesianGrid vertical={false} stroke={GRID_STROKE} />
+          <XAxis
+            dataKey="time"
+            tickFormatter={(value: string) => formatTime(value).slice(0, 5)}
+            tick={AXIS_TICK}
+            axisLine={false}
+            tickLine={false}
+            interval={3}
+          />
+          <YAxis domain={domain} tick={AXIS_TICK} axisLine={false} tickLine={false} width={36} />
+          <Tooltip content={<LinesTooltip />} cursor={{ stroke: GRID_STROKE }} />
+          {series.map((s, index) => (
+            <Line
+              key={s.key}
+              type="monotone"
+              dataKey={s.key}
+              name={s.label}
+              stroke={LINE_COLORS[index]}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--color-background-card)' }}
+              isAnimationActive={false}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+      <HStack gap={4} wrap="wrap">
+        {series.map((s, index) => (
+          <HStack key={s.key} gap={1.5} vAlign="center">
+            <Swatch color={LINE_COLORS[index]} />
+            <Text type="supporting">{s.label}</Text>
+          </HStack>
+        ))}
+      </HStack>
+    </VStack>
+  )
+}
