@@ -967,3 +967,65 @@ export interface SourceNetwork {
   neighbours: SourceProfile[]
   campaign?: NetworkCampaign
 }
+
+// ---- Entity groups (epic #25, Phase C) --------------------------------------
+
+/** Any set of source IPs seen as one thing: a network, an ASN, a campaign, a
+ * cluster, or an attacker identity. Every group page is built from this. */
+export interface SourceGroup {
+  members: SourceProfile[]
+  events: HoneypotEvent[]
+  /** Matches across honeypot, Suricata, and portbridge tunnel records. */
+  totalMatches: number
+  tunnelConnections: number
+  first?: string
+  last?: string
+  sensors: CountRow[]
+  countries: CountRow[]
+  networks: CountRow[]
+  ports: CountRow[]
+  credentials: CountRow[]
+  commands: CountRow[]
+  payloads: CountRow[]
+}
+
+/** A signal several members share: the reason they are grouped. */
+export interface SharedSignal extends Record<string, unknown> {
+  id: string
+  kind: 'credential' | 'fingerprint' | 'payload' | 'network' | 'asn'
+  value: string
+  members: string[]
+}
+
+export interface NetworkEntity {
+  cidr: string
+  asn: string
+  org: string
+  country: string
+  group: SourceGroup
+  campaign?: NetworkCampaign
+}
+
+export interface AsnEntity {
+  asn: string
+  orgs: string[]
+  group: SourceGroup
+}
+
+export interface CampaignEntity {
+  campaign: NetworkCampaign
+  group: SourceGroup
+  shared: SharedSignal[]
+}
+
+export interface ClusterEntity {
+  kind: ClusterKind
+  value: string
+  group: SourceGroup
+}
+
+export interface IdentityEntity {
+  identity: AttackerEntity
+  group: SourceGroup
+  shared: SharedSignal[]
+}

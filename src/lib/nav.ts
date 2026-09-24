@@ -110,8 +110,13 @@ const PAGE_PREFIXES: Array<[string, string]> = [
   ['/sessions/', 'Session'],
   ['/event/', 'Event'],
   ['/investigate/ip/', 'Source IP'],
-  ['/investigate/cidr/', 'CIDR investigation'],
-  ['/investigate/cluster', 'Cluster investigation'],
+  ['/networks/', 'Network'],
+  ['/asn/', 'Autonomous system'],
+  ['/campaigns/', 'Campaign'],
+  ['/clusters/', 'Cluster'],
+  ['/identities/', 'Attacker identity'],
+  ['/investigate/cidr/', 'Network'],
+  ['/investigate/cluster', 'Cluster'],
   ['/tty-replay/', 'Session recording'],
 ]
 
@@ -143,9 +148,13 @@ export function navHrefFor(pathname: string): string {
   if (pathname.startsWith('/sessions/') || pathname.startsWith('/event/') || pathname.startsWith('/events/')) return '/events'
   if (pathname.startsWith('/sensors/')) return '/sensors'
   if (pathname.startsWith('/investigate/ip/') || pathname.startsWith('/sources/')) return '/ips'
-  if (pathname.startsWith('/investigate/cidr/') || pathname.startsWith('/investigate/cluster')) {
+  if (pathname.startsWith('/investigate/cidr/') || pathname.startsWith('/networks/') || pathname.startsWith('/campaigns/')) {
     return '/campaigns'
   }
+  if (pathname.startsWith('/investigate/cluster') || pathname.startsWith('/clusters/') || pathname.startsWith('/asn/')) {
+    return '/clusters'
+  }
+  if (pathname.startsWith('/identities/')) return '/attackers'
   if (pathname.startsWith('/tty-replay/')) return '/recordings'
   return pathname
 }
@@ -176,7 +185,7 @@ export function pageFor(pathname: string): string {
   }
   if (PAGE_LABELS[pathname]) return PAGE_LABELS[pathname]
   // A sensor page is named after its sensor.
-  if (pathname.startsWith('/sensors/')) return decodeURIComponent(pathname.slice('/sensors/'.length))
+  if (pathname.startsWith('/sensors/')) return decodeURIComponent(pathname.split('/')[2])
   for (const [prefix, label] of PAGE_PREFIXES) {
     if (pathname.startsWith(prefix)) return label
   }

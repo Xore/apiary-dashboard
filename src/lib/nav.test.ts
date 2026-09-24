@@ -26,7 +26,12 @@ describe('navHrefFor', () => {
     ['/sessions/abc', '/events'],
     ['/investigate/ip/192.0.2.1', '/ips'],
     ['/investigate/cidr/192.0.2.0%2F26', '/campaigns'],
-    ['/investigate/cluster', '/campaigns'],
+    ['/investigate/cluster', '/clusters'],
+    ['/networks/192.0.2.0%2F26/sources', '/campaigns'],
+    ['/campaigns/192.0.2.0%2F26', '/campaigns'],
+    ['/clusters/fingerprint/abc', '/clusters'],
+    ['/asn/AS64500', '/clusters'],
+    ['/identities/abc/why', '/attackers'],
     ['/sensors/cowrie-vps-01', '/sensors'],
     ['/tty-replay/abc', '/recordings'],
     ['/payload-analysis/abc', '/payloads'],
@@ -68,6 +73,7 @@ describe('breadcrumb labels', () => {
 
   it('names a sensor page after its sensor', () => {
     expect(pageFor('/sensors/cowrie-vps-01')).toBe('cowrie-vps-01')
+    expect(pageFor('/sensors/cowrie-vps-01/exposure')).toBe('cowrie-vps-01')
   })
 
   it('labels unlisted pages and falls back for unknown ones', () => {

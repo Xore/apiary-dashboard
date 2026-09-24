@@ -57,11 +57,30 @@ describe('link integrity', () => {
     for (const run of await q.getRevDeckRuns()) expect(await q.getGhidraAnalysis(run.sha), run.sha).not.toBeNull()
   })
 
-  it('every campaign, cluster, and source resolves to its investigation page', async () => {
-    const [{ campaigns }, clusters, { sources }] = await Promise.all([q.getNetworkCampaigns(), q.getInfraClusters(), q.getSourceProfiles()])
-    for (const c of campaigns) expect(await q.getCidrCorrelation(c.cidr), c.cidr).not.toBeNull()
-    for (const c of clusters) expect(await q.getClusterCorrelation(c.kind, c.value), c.id).not.toBeNull()
-    for (const s of sources.slice(0, 20)) expect(await q.getIpProfile(s.ip), s.ip).not.toBeNull()
+  it('every campaign, network, cluster, identity, and source resolves to its entity page', async () => {
+    const [{ campaigns }, clusters, { sources }, identities] = await Promise.all([q.getNetworkCampaigns(), q.getInfraClusters(), q.getSourceProfiles(), q.getAttackers()])
+    for (const c of campaigns) {
+      expect(await q.getCampaign(c.cidr), c.cidr).not.toBeNull()
+      expect(await q.getNetwork(c.cidr), c.cidr).not.toBeNull()
+    }
+    for (const c of clusters) expect(await (c.kind === 'asn' ? q.getAsn(c.value) : q.getCluster(c.kind, c.value)), c.id).not.toBeNull()
+    for (const a of identities) {
+      const identity = await q.getIdentity(a.id)
+      expect(identity?.group.members.length, a.id).toBe(a.ips.length)
+    }
+    for (const s of sources.slice(0, 20)) {
+      expect(await q.getIpProfile(s.ip), s.ip).not.toBeNull()
+      expect(await q.getAsn((await q.getIpProfile(s.ip))!.source.asn), s.ip).not.toBeNull()
+    }
+  })
+
+  it('identity payloads and download hashes are real captured payloads', async () => {
+    const identities = await q.getAttackers()
+    for (const hash of identities.flatMap((a) => a.payloads)) expect(await q.getPayloadAnalysis(hash), hash).not.toBeNull()
+    for (const fp of identities.flatMap((a) => a.fingerprints)) expect(await q.getCluster('fingerprint', fp), fp).not.toBeNull()
+    const { payloads } = await q.getPayloads()
+    const delivered = await Promise.all(payloads.map((p) => q.getPayloadDelivery(p.hash)))
+    expect(delivered.some((d) => d.events.length > 0)).toBe(true)
   })
 
   it('sessions, events, and recordings referenced elsewhere resolve', async () => {
@@ -75,7 +94,10 @@ describe('link integrity', () => {
     expect(await q.getEventDetail('evt-nope')).toBeNull()
     expect(await q.getIpProfile('10.0.0.1')).toBeNull()
     expect(await q.getPayloadAnalysis('deadbeef')).toBeNull()
-    expect(await q.getCidrCorrelation('not-a-cidr')).toBeNull()
+    expect(await q.getNetwork('not-a-cidr')).toBeNull()
+    expect(await q.getCampaign('10.0.0.0/26')).toBeNull()
+    expect(await q.getIdentity('nope')).toBeNull()
+    expect(await q.getAsn('AS0')).toBeNull()
   })
 })
 

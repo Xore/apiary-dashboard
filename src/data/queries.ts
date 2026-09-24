@@ -55,6 +55,7 @@ import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALT
 import { OVERVIEW_VIEWS } from './mock/overview'
 import { sensorReading } from './mock/sensors'
 import { MOCK_NOW, createRng } from './mock/random'
+import { clusterHref } from '#/lib/entities'
 import type {
   AgentCampaign,
   CapeRun,
@@ -63,7 +64,6 @@ import type {
   PayloadAnalysis,
   RevDeckRun,
   SandboxRun,
-  Correlation,
   DeadLetter,
   EventDetail,
   IpProfile,
@@ -120,6 +120,13 @@ import type {
   Protocol,
   SessionUser,
   TimeBucket,
+  AsnEntity,
+  CampaignEntity,
+  ClusterEntity,
+  IdentityEntity,
+  NetworkEntity,
+  SharedSignal,
+  SourceGroup,
 } from './types'
 
 const HOUR = 3_600_000
@@ -764,51 +771,6 @@ export async function setIpBlocked(ip: string, blocked: boolean): Promise<void> 
   else BLOCKED_IPS.delete(ip)
 }
 
-function correlate(title: string, members: string[]): Correlation {
-  const events = EVENTS.filter((e) => members.includes(e.srcIp))
-  return {
-    title,
-    members,
-    totalMatches: events.length + Math.round(events.length * 0.35),
-    tunnelConnections: Math.round(events.length * 0.28),
-    sensors: countBy(events.map((e) => e.sensor), 10),
-    events: events.slice(0, 100),
-  }
-}
-
-export async function getCidrCorrelation(cidr: string): Promise<Correlation | null> {
-  await mockDelay()
-  const match = cidr.match(/^(\d+\.\d+\.\d+)\.(\d+)\/(\d+)$/)
-  if (!match) return null
-  const size = 2 ** (32 - Number(match[3]))
-  const start = Number(match[2])
-  const members = SOURCES.filter((s) => {
-    const [a, b, c, d] = s.ip.split('.')
-    return `${a}.${b}.${c}` === match[1] && Number(d) >= start && Number(d) < start + size
-  }).map((s) => s.ip)
-  return members.length ? correlate(cidr, members) : null
-}
-
-export async function getClusterCorrelation(kind: string, value: string): Promise<Correlation | null> {
-  await mockDelay()
-  const cluster = INFRA_CLUSTERS.find((c) => c.kind === kind && c.value === value)
-  if (cluster) {
-    const members =
-      kind === 'asn'
-        ? SOURCES.filter((s) => s.asn === value).map((s) => s.ip)
-        : kind === 'provider'
-          ? SOURCES.filter((s) => s.org === value).map((s) => s.ip)
-          : kind === 'credential'
-            ? [...new Set(EVENTS.filter((e) => `${e.username}:${e.password}` === value).map((e) => e.srcIp))]
-            : SOURCES.slice(0, cluster.sources).map((s) => s.ip)
-    return correlate(`${kind}: ${value}`, members)
-  }
-  // ASNs/providers with a single member are not clusters, but the lookup
-  // page can still route to them.
-  const members = SOURCES.filter((s) => (kind === 'asn' && s.asn === value) || (kind === 'provider' && s.org === value)).map((s) => s.ip)
-  return members.length ? correlate(`${kind}: ${value}`, members) : null
-}
-
 export async function getReplayDetail(shasum: string): Promise<ReplayDetail | null> {
   await mockDelay()
   const replay = REPLAYS.get(shasum)
@@ -845,9 +807,9 @@ export async function searchAll(query: string): Promise<SearchGroup[]> {
   add('sources', 'Source IPs', SOURCES.filter((s) => s.ip.includes(q) || s.org.toLowerCase().includes(q) || s.asn.toLowerCase() === q).map((s) => ({ label: s.ip, detail: `${s.org} · ${s.country} · ${s.events} events`, href: `/sources/${s.ip}` })))
   add('sessions', 'Sessions', [...new Set(EVENTS.filter((e) => e.sessionId.includes(q)).map((e) => e.sessionId))].map((id) => ({ label: id, detail: 'session', href: `/sessions/${id}` })))
   add('commands', 'Commands', [...new Set(EVENTS.filter((e) => e.command?.toLowerCase().includes(q)).map((e) => e.command!))].map((c) => ({ label: c, detail: 'executed command', href: `/history?q=${encodeURIComponent(q)}` })))
-  add('credentials', 'Credentials', [...new Set(EVENTS.filter((e) => e.username && `${e.username}:${e.password}`.toLowerCase().includes(q)).map((e) => `${e.username}:${e.password}`))].map((c) => ({ label: c, detail: 'credential pair', href: `/investigate/cluster?kind=credential&value=${encodeURIComponent(c)}` })))
+  add('credentials', 'Credentials', [...new Set(EVENTS.filter((e) => e.username && `${e.username}:${e.password}`.toLowerCase().includes(q)).map((e) => `${e.username}:${e.password}`))].map((c) => ({ label: c, detail: 'credential pair', href: clusterHref('credential', c) })))
   add('payloads', 'Payloads', PAYLOADS.filter((p) => p.hash.includes(q) || p.verdict?.family?.toLowerCase().includes(q)).map((p) => ({ label: p.hash.slice(0, 24), detail: `${p.kind}${p.verdict?.family ? ` · ${p.verdict.family}` : ''}`, href: `/payloads/${p.hash}` })))
-  add('fingerprints', 'Fingerprints', INFRA_CLUSTERS.filter((c) => c.kind === 'fingerprint' && c.value.includes(q)).map((c) => ({ label: c.value, detail: `${c.sources} sources`, href: `/investigate/cluster?kind=fingerprint&value=${encodeURIComponent(c.value)}` })))
+  add('fingerprints', 'Fingerprints', INFRA_CLUSTERS.filter((c) => c.kind === 'fingerprint' && c.value.includes(q)).map((c) => ({ label: c.value, detail: `${c.sources} sources`, href: clusterHref('fingerprint', c.value) })))
   add('signatures', 'IDS signatures', [...new Set(EVENTS.filter((e) => e.type === 'ids.alert' && e.summary.toLowerCase().includes(q)).map((e) => e.summary))].map((s) => ({ label: s, detail: 'Suricata signature', href: `/history?q=${encodeURIComponent(q)}` })))
   return groups
 }
@@ -1009,7 +971,7 @@ export async function getOverviewViews(): Promise<OverviewViews> {
 const RANGE_MS: Record<string, number> = { '1h': HOUR, '6h': 6 * HOUR, '24h': DAY, '7d': 7 * DAY, '30d': 30 * DAY }
 
 /** Keeps items inside the app-wide range (default 24h). */
-function inRange(at: string, range?: string): boolean {
+export function inRange(at: string, range?: string): boolean {
   return MOCK_NOW - Date.parse(at) <= (RANGE_MS[range ?? '24h'] ?? DAY)
 }
 
@@ -1102,4 +1064,124 @@ export async function getPayloadDelivery(hash: string): Promise<{ events: Honeyp
     sessions: summarizeSessions(EVENTS.filter((e) => sessionIds.has(e.sessionId))),
     sources: countBy(events.map((e) => e.srcIp), 50),
   }
+}
+
+// ---- Entity groups (epic #25, Phase C) --------------------------------------
+
+const cidr26 = (ip: string) => {
+  const [a, b, c, d] = ip.split('.')
+  return `${a}.${b}.${c}.${Math.floor(Number(d) / 64) * 64}/26`
+}
+
+function groupOf(ips: string[]): SourceGroup {
+  const set = new Set(ips)
+  const events = EVENTS.filter((e) => set.has(e.srcIp))
+  return {
+    members: SOURCE_PROFILES.filter((p) => set.has(p.ip)).sort((a, b) => b.events - a.events),
+    events,
+    totalMatches: events.length + Math.round(events.length * 0.35),
+    tunnelConnections: Math.round(events.length * 0.28),
+    first: events.at(-1)?.timestamp,
+    last: events[0]?.timestamp,
+    sensors: countBy(events.map((e) => e.sensor), 20),
+    countries: countBy(events.map((e) => e.country), 20),
+    networks: countBy(events.map((e) => cidr26(e.srcIp)), 50),
+    ports: countBy(events.map((e) => String(e.dstPort)), 20),
+    credentials: countBy(events.map((e) => (e.username ? `${e.username}:${e.password}` : undefined)), 50),
+    commands: countBy(events.map((e) => e.command), 50),
+    payloads: countBy(events.map((e) => DOWNLOAD_HASH.get(e.id)), 50),
+  }
+}
+
+type Signal = { kind: SharedSignal['kind']; value: string; members: string[] }
+
+/** Credentials and networks used by two or more members: why they belong
+ * together. Fingerprints and payloads come from the grouping record. */
+function sharedSignals(group: SourceGroup, extra: Signal[] = []): SharedSignal[] {
+  const byValue = new Map<string, Set<string>>()
+  for (const e of group.events) {
+    if (!e.username) continue
+    const key = `credential\u0000${e.username}:${e.password}`
+    if (!byValue.has(key)) byValue.set(key, new Set())
+    byValue.get(key)!.add(e.srcIp)
+  }
+  const creds: Signal[] = [...byValue]
+    .filter(([, ips]) => ips.size > 1)
+    .map(([key, ips]) => ({ kind: 'credential', value: key.split('\u0000')[1], members: [...ips] }))
+  return [...extra, ...creds]
+    .sort((a, b) => b.members.length - a.members.length)
+    .map((signal, i) => ({ ...signal, id: `${signal.kind}-${i}` }))
+}
+
+const membersOfCidr = (cidr: string): string[] | null => {
+  const match = cidr.match(/^(\d+\.\d+\.\d+)\.(\d+)\/(\d+)$/)
+  if (!match) return null
+  const size = 2 ** (32 - Number(match[3]))
+  const start = Number(match[2])
+  return SOURCES.filter((s) => {
+    const [a, b, c, d] = s.ip.split('.')
+    return `${a}.${b}.${c}` === match[1] && Number(d) >= start && Number(d) < start + size
+  }).map((s) => s.ip)
+}
+
+export async function getNetwork(cidr: string): Promise<NetworkEntity | null> {
+  await mockDelay()
+  const members = membersOfCidr(cidr)
+  if (!members?.length) return null
+  const first = SOURCES.find((s) => s.ip === members[0])!
+  return { cidr, asn: first.asn, org: first.org, country: first.country, group: groupOf(members), campaign: NETWORK_CAMPAIGNS.find((c) => c.cidr === cidr) }
+}
+
+export async function getAsn(asn: string): Promise<AsnEntity | null> {
+  await mockDelay()
+  const sources = SOURCES.filter((s) => s.asn === asn)
+  if (!sources.length) return null
+  return { asn, orgs: [...new Set(sources.map((s) => s.org))], group: groupOf(sources.map((s) => s.ip)) }
+}
+
+export async function getCampaign(cidr: string): Promise<CampaignEntity | null> {
+  await mockDelay()
+  const campaign = NETWORK_CAMPAIGNS.find((c) => c.cidr === cidr)
+  if (!campaign) return null
+  const group = groupOf(membersOfCidr(cidr) ?? [])
+  return { campaign, group, shared: sharedSignals(group) }
+}
+
+/** Addresses behind a fingerprint or payload: identities carrying it (and,
+ * for payloads, whoever downloaded it); the cluster record's size otherwise. */
+function sharedBy(kind: string, value: string, clusterSize: number): string[] {
+  const fromIdentities = ATTACKERS.filter((a) => (kind === 'fingerprint' ? a.fingerprints : kind === 'payload' ? a.payloads : []).includes(value)).flatMap((a) => a.ips)
+  const fromDownloads = kind === 'payload' ? EVENTS.filter((e) => DOWNLOAD_HASH.get(e.id) === value).map((e) => e.srcIp) : []
+  const found = [...new Set([...fromIdentities, ...fromDownloads])]
+  return found.length ? found : SOURCE_PROFILES.slice(0, clusterSize).map((s) => s.ip)
+}
+
+export async function getCluster(kind: string, value: string): Promise<ClusterEntity | null> {
+  await mockDelay()
+  const cluster = INFRA_CLUSTERS.find((c) => c.kind === kind && c.value === value)
+  const members =
+    kind === 'asn'
+      ? SOURCES.filter((s) => s.asn === value).map((s) => s.ip)
+      : kind === 'provider'
+        ? SOURCES.filter((s) => s.org === value).map((s) => s.ip)
+        : kind === 'credential'
+          ? [...new Set(EVENTS.filter((e) => `${e.username}:${e.password}` === value).map((e) => e.srcIp))]
+          : sharedBy(kind, value, cluster?.sources ?? 0)
+  if (!members.length) return null
+  return { kind: kind as ClusterKind, value, group: groupOf(members) }
+}
+
+export async function getIdentity(id: string): Promise<IdentityEntity | null> {
+  await mockDelay()
+  const identity = ATTACKERS.find((a) => a.id === id)
+  if (!identity) return null
+  const group = groupOf(identity.ips)
+  const all = identity.ips.length > 1 ? identity.ips : []
+  const extra: Signal[] = all.length
+    ? [
+        ...identity.fingerprints.map((value) => ({ kind: 'fingerprint' as const, value, members: all })),
+        ...identity.payloads.map((value) => ({ kind: 'payload' as const, value, members: all })),
+      ]
+    : []
+  return { identity, group, shared: sharedSignals(group, extra) }
 }

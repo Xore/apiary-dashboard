@@ -16,12 +16,12 @@ import type { CredEdge, NetworkCampaign } from '#/data/types'
 import { downloadCsv } from '#/lib/export'
 import { formatNumber, formatTime } from '#/lib/format'
 
-export const Route = createFileRoute('/_layout/campaigns')({
+export const Route = createFileRoute('/_layout/campaigns/')({
   loader: () => getNetworkCampaigns(),
   component: CampaignsPage,
 })
 
-const cidrHref = (cidr: string) => `/investigate/cidr/${encodeURIComponent(cidr)}`
+const cidrHref = (cidr: string) => `/campaigns/${encodeURIComponent(cidr)}`
 
 const columns: TableColumn<NetworkCampaign>[] = [
   { key: 'score', header: 'Score', width: pixel(64), align: 'end', renderCell: (row) => <Text weight="semibold">{row.score}</Text> },
@@ -86,7 +86,7 @@ function CampaignsPage() {
       }
       rows={campaigns}
       columns={columns}
-      getHref={(row) => entityHref('network', row.cidr)!}
+      getHref={(row) => entityHref('campaign', row.cidr)!}
       getId={(row) => row.cidr}
       emptyState={{
         title: 'No active campaigns in this window',

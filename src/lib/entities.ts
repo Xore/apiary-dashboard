@@ -50,10 +50,10 @@ export const ENTITIES: Record<EntityKind, EntityDef> = {
   event: { noun: 'event', href: (id) => `/events/${q(id)}`, isCode: true },
   session: { noun: 'session', href: (id) => `/sessions/${q(id)}`, events: (id) => history(`session:${id}`), isCode: true },
   source: { noun: 'source IP', href: (id) => `/sources/${q(id)}`, events: (id) => `/events?ip=${q(id)}` },
-  network: { noun: 'network', href: (id) => `/investigate/cidr/${q(id)}` },
-  asn: { noun: 'autonomous system', href: (id) => `/investigate/cluster?kind=asn&value=${q(id)}` },
-  identity: { noun: 'attacker identity', href: () => '/attackers', isCode: true },
-  campaign: { noun: 'campaign', href: (id) => `/investigate/cidr/${q(id)}` },
+  network: { noun: 'network', href: (id) => `/networks/${q(id)}` },
+  asn: { noun: 'autonomous system', href: (id) => `/asn/${q(id)}` },
+  identity: { noun: 'attacker identity', href: (id) => `/identities/${q(id)}`, isCode: true },
+  campaign: { noun: 'campaign', href: (id) => `/campaigns/${q(id)}` },
   'agent-campaign': { noun: 'agent campaign', href: () => '/agent-campaigns', isCode: true },
   cluster: { noun: 'cluster' },
   payload: { noun: 'payload', href: (id) => `/payloads/${q(id)}`, isCode: true },
@@ -65,17 +65,21 @@ export const ENTITIES: Record<EntityKind, EntityDef> = {
   url: { noun: 'URL', events: (id) => history(id), isCode: true },
   credential: {
     noun: 'credential pair',
-    href: (id) => `/investigate/cluster?kind=credential&value=${q(id)}`,
+    href: (id) => clusterHref('credential', id),
     events: (id) => history(`username:${id.split(':')[0]}`),
     isCode: true,
   },
   command: { noun: 'command', events: (id) => history(id), isCode: true },
   username: { noun: 'username', events: (id) => history(`username:${id}`), isCode: true },
   password: { noun: 'password', events: (id) => history(id), isCode: true },
-  fingerprint: { noun: 'fingerprint', href: (id) => `/investigate/cluster?kind=fingerprint&value=${q(id)}`, isCode: true },
+  fingerprint: { noun: 'fingerprint', href: (id) => clusterHref('fingerprint', id), isCode: true },
   'user-agent': { noun: 'user agent', events: (id) => history(id), isCode: true },
   cve: { noun: 'CVE', events: (id) => history(id) },
   signature: { noun: 'IDS signature', events: (id) => history(id) },
 }
+
+/** Infrastructure clusters live at /clusters/$kind/$value; an ASN cluster is
+ * just the ASN's own page. */
+export const clusterHref = (kind: string, value: string) => (kind === 'asn' ? `/asn/${q(value)}` : `/clusters/${kind}/${q(value)}`)
 
 export const entityHref = (kind: EntityKind, id: string) => ENTITIES[kind].href?.(id)

@@ -2,6 +2,7 @@ import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Link } from '@astryxdesign/core/Link'
 import { pixel, proportional } from '@astryxdesign/core/Table'
+import { clusterHref } from '#/lib/entities'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
@@ -13,13 +14,12 @@ import type { InfraCluster } from '#/data/types'
 import { downloadCsv } from '#/lib/export'
 import { formatNumber } from '#/lib/format'
 
-export const Route = createFileRoute('/_layout/clusters')({
+export const Route = createFileRoute('/_layout/clusters/')({
   loader: () => getInfraClusters(),
   component: ClustersPage,
 })
 
-const clusterHref = (row: InfraCluster) =>
-  `/investigate/cluster?kind=${row.kind}&value=${encodeURIComponent(row.value)}`
+const rowHref = (row: InfraCluster) => clusterHref(row.kind, row.value)
 
 const columns: TableColumn<InfraCluster>[] = [
   { key: 'kind', header: 'Cluster type', width: pixel(120), renderCell: (row) => <Token label={row.kind} size="sm" /> },
@@ -28,7 +28,7 @@ const columns: TableColumn<InfraCluster>[] = [
     header: 'Shared value',
     width: proportional(3),
     renderCell: (row) => (
-      <Link href={clusterHref(row)}>
+      <Link href={rowHref(row)}>
         <Text type="code">{row.value}</Text>
       </Link>
     ),
@@ -59,7 +59,7 @@ function ClustersPage() {
       }
       rows={clusters}
       columns={columns}
-      getHref={clusterHref}
+      getHref={rowHref}
       getId={(row) => row.id}
       emptyState={{
         title: 'No shared pivots in the current window',
