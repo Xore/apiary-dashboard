@@ -19,6 +19,7 @@
     "theme:build": "bunx --bun astryx theme build src/themes/neutral/neutralTheme.ts",
     "theme:check": "bunx --bun astryx theme build src/themes/neutral/neutralTheme.ts --check",
     "smoke": "scripts/smoke.sh",
+    "crawl": "bun scripts/crawl.ts",
     "lint": "eslint",
     "format": "prettier",
     "check": "prettier --write . && eslint --fix"
