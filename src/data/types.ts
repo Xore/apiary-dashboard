@@ -643,12 +643,28 @@ export interface GpuJob extends Record<string, unknown> {
   vramMib: number
 }
 
+export type AnalyzerId = 'static' | 'yara' | 'sandbox' | 'cape' | 'ghidra' | 'revdeck'
+
+/** Everything one analysis run can be told, per analyzer. Only the options of
+ * the analyzers in `analyzers` apply. */
+export interface AnalysisRunConfig {
+  hash: string
+  analyzers: AnalyzerId[]
+  static: { minStringLength: number; extractIocs: boolean; decodeCandidates: boolean; sectionEntropy: boolean }
+  yara: { rulesets: string[]; stopAtFirstMatch: boolean; timeoutSeconds: number }
+  sandbox: { image: string; durationSeconds: number; network: 'none' | 'simulated' | 'tor'; capturePcap: boolean; memoryDump: boolean; liveView: boolean }
+  cape: { image: string; durationSeconds: number; package: 'auto' | 'exe' | 'dll'; network: 'none' | 'simulated' | 'tor'; humanInteraction: boolean }
+  ghidra: { depth: 'standard' | 'aggressive'; maxFunctions: number; model: string; capa: boolean; floss: boolean }
+  revdeck: { model: string; maxSteps: number; requireCitations: boolean }
+  run: { priority: 'normal' | 'high'; label: string; notify: boolean; force: boolean }
+}
+
 export interface AnalysisResultsData {
   results: AnalysisResult[]
   gpuQueue: GpuJob[]
   /** Latest retrain outcome per approved local model. */
   modelHealth: ModelHealth[]
-  analyzers: Array<{ id: string; label: string; description: string; gpu: boolean }>
+  analyzers: Array<{ id: AnalyzerId; label: string; description: string; gpu: boolean }>
 }
 
 // ---- Detail pages ----------------------------------------------------------

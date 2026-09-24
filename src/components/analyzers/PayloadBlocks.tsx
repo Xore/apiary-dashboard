@@ -11,6 +11,7 @@ import { queuePayloadAction } from '#/data/queries'
 import type { PayloadAction } from '#/data/queries'
 import type { Ioc, PayloadAnalysis } from '#/data/types'
 import { Panel } from '../DashboardBlocks'
+import { AnalysisRunDialog } from '../dialogs/AnalysisRunDialog'
 import { EntityLink } from '../EntityLink'
 
 export const VERDICT_COLOR = { malicious: 'red', suspicious: 'orange', clean: 'green' } as const
@@ -30,6 +31,7 @@ export function OperatorActions({ a }: { a: PayloadAnalysis }) {
   const [busy, setBusy] = useState<PayloadAction | null>(null)
   const [done, setDone] = useState<string | null>(null)
   const [confirmPublish, setConfirmPublish] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
   const run = async (action: PayloadAction) => {
     setBusy(action)
     try {
@@ -42,12 +44,11 @@ export function OperatorActions({ a }: { a: PayloadAnalysis }) {
     <Panel title="Operator actions">
       <Text color="secondary">Queue more analysis of this sample. Nothing runs on this host; every job goes to an isolated worker.</Text>
       <HStack gap={2} wrap="wrap">
-        <Button label="Detonate in sandbox" variant="secondary" isDisabled={!a.payload.dynamic} isLoading={busy === 'sandbox'} onClick={() => run('sandbox')} />
-        <Button label="Decompile with Ghidra" variant="secondary" isDisabled={a.payload.kind === 'shell script'} isLoading={busy === 'ghidra'} onClick={() => run('ghidra')} />
+        <Button label="New analysis run" onClick={() => setAnalyzing(true)} />
         <Button label="Generate PDF report" variant="secondary" isLoading={busy === 'pdf'} onClick={() => run('pdf')} />
         <Button label="Publish to GitHub…" variant="secondary" isLoading={busy === 'github'} onClick={() => setConfirmPublish(true)} />
       </HStack>
-      {!a.payload.dynamic && <Text type="supporting">This sample has no dynamic route (static-only), so it cannot be detonated.</Text>}
+      <AnalysisRunDialog isOpen={analyzing} onOpenChange={setAnalyzing} initialHash={a.payload.hash} onQueued={(queued) => setDone(`Analysis run ${queued.id} queued (${queued.recipe ?? ''}).`)} />
       {done && <Banner status="success" title={done} description="Mock: nothing was actually queued." isDismissable onDismiss={() => setDone(null)} />}
       <AlertDialog
         isOpen={confirmPublish}
