@@ -1,28 +1,18 @@
 import { Grid } from '@astryxdesign/core/Grid'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { VStack } from '@astryxdesign/core/Stack'
-import { Table, pixel, proportional } from '@astryxdesign/core/Table'
-import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
+import { SourcesTable } from '#/components/EntityBlocks'
 import { EntityLink } from '#/components/EntityLink'
 import { getSourceNetwork } from '#/data/queries'
-import type { SourceProfile } from '#/data/types'
-import { formatDateTime, formatNumber } from '#/lib/format'
+import { formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/sources/$ip/network')({
   loader: ({ params }) => getSourceNetwork(params.ip),
   component: SourceNetworkTab,
 })
-
-const neighbourColumns: TableColumn<SourceProfile>[] = [
-  { key: 'ip', header: 'Address', width: pixel(152), renderCell: (row) => <EntityLink kind="source" id={row.ip} /> },
-  { key: 'events', header: 'Events', width: pixel(80), align: 'end' },
-  { key: 'sessions', header: 'Sessions', width: pixel(88), align: 'end' },
-  { key: 'sensors', header: 'Sensors', width: proportional(2), renderCell: (row) => row.sensors.join(' ') },
-  { key: 'last', header: 'Last seen', width: pixel(184), renderCell: (row) => <Text type="supporting">{formatDateTime(row.last)}</Text> },
-]
 
 function SourceNetworkTab() {
   const net = Route.useLoaderData()
@@ -58,11 +48,7 @@ function SourceNetworkTab() {
         </Panel>
       </Grid>
       <Panel title={`Neighbours in ${net.cidr} (${net.neighbours.length})`}>
-        {net.neighbours.length ? (
-          <Table data={net.neighbours} columns={neighbourColumns} idKey="ip" density="compact" />
-        ) : (
-          <Text type="supporting">No other address in this prefix reached a sensor.</Text>
-        )}
+        <SourcesTable sources={net.neighbours} empty="No other address in this prefix reached a sensor." />
       </Panel>
     </VStack>
   )

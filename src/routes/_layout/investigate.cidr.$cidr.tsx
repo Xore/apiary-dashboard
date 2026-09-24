@@ -1,28 +1,8 @@
-import { createFileRoute, notFound } from '@tanstack/react-router'
-import { CorrelationView } from '#/components/CorrelationView'
-import { NotFound } from '#/components/NotFound'
-import { getCidrCorrelation } from '#/data/queries'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
-// {cidr} carries a literal "/", so every link percent-encodes it.
+// Moved to the Network entity page (epic #25).
 export const Route = createFileRoute('/_layout/investigate/cidr/$cidr')({
-  loader: async ({ params }) => {
-    const correlation = await getCidrCorrelation(params.cidr)
-    if (!correlation) throw notFound()
-    return correlation
+  beforeLoad: ({ params }) => {
+    throw redirect({ href: `/networks/${encodeURIComponent(params.cidr)}`, statusCode: 301 })
   },
-  notFoundComponent: () => (
-    <NotFound title="CIDR investigation" description="This network could not be correlated: invalid range, or no source in it was seen." />
-  ),
-  component: CidrPage,
 })
-
-function CidrPage() {
-  const correlation = Route.useLoaderData()
-  return (
-    <CorrelationView
-      title={correlation.title}
-      description="Everything correlated for this network across honeypot, Suricata, and portbridge tunnel records."
-      correlation={correlation}
-    />
-  )
-}

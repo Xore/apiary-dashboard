@@ -207,7 +207,7 @@ const payloadColumns: TableColumn<CapturedPayload>[] = [
 
 const campaignColumns: TableColumn<NetworkCampaign>[] = [
   { key: 'score', header: 'Score', width: pixel(64), align: 'end' },
-  { key: 'cidr', header: 'Network', width: proportional(2), renderCell: (row) => <Link href={`/investigate/cidr/${encodeURIComponent(row.cidr)}`}>{row.cidr}</Link> },
+  { key: 'cidr', header: 'Network', width: proportional(2), renderCell: (row) => <EntityLink kind="campaign" id={row.cidr} /> },
   { key: 'events', header: 'Events', width: pixel(80), align: 'end', renderCell: (row) => formatNumber(row.events) },
   { key: 'uniqueIps', header: 'IPs', width: pixel(56), align: 'end' },
   { key: 'sensors', header: 'Sensors', width: proportional(2), renderCell: (row) => row.sensors.join(' ') },

@@ -9,6 +9,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
 import { getInfraClusters, getNetworkCampaigns, getSourceProfiles, resolveHash } from '#/data/queries'
+import { clusterHref } from '#/lib/entities'
 import { EntityLink } from '#/components/EntityLink'
 
 const IPV4 = /^(\d{1,3}\.){3}\d{1,3}$/
@@ -65,14 +66,14 @@ function LookupPage() {
       case 'ip':
         return go(`/sources/${encodeURIComponent(shape.value)}`)
       case 'cidr':
-        return go(`/investigate/cidr/${encodeURIComponent(shape.value)}`)
+        return go(`/networks/${encodeURIComponent(shape.value)}`)
       case 'asn':
       case 'provider':
-        return go(`/investigate/cluster?kind=${shape.kind}&value=${encodeURIComponent(shape.value)}`)
+        return go(clusterHref(shape.kind, shape.value))
       case 'hash': {
         const target = await resolveHash(shape.value)
         if (target.kind === 'cluster') {
-          return go(`/investigate/cluster?kind=${target.clusterKind}&value=${encodeURIComponent(target.value)}`)
+          return go(clusterHref(target.clusterKind, target.value))
         }
         setLastHash(shape.value)
         setStatus('not-found')
