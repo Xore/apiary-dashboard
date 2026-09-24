@@ -13,12 +13,13 @@ import { CountTable, MiniTable, Panel, StatTile } from '#/components/DashboardBl
 import { FeedStateLabel } from '#/components/FeedState'
 import { PageFrame } from '#/components/PageFrame'
 import { SeverityToken } from '#/components/SeverityToken'
-import { useViewTabs } from '#/components/ViewTabs'
+import { searchTabs } from '#/components/ViewTabs'
 import { WorldMap } from '#/components/WorldMap'
 import { getOverview, getOverviewViews } from '#/data/queries'
 import type { CapturedPayload, HoneypotEvent, NetworkCampaign, OverviewViews, SensorFeed } from '#/data/types'
 import { formatClock, formatDateTime, formatNumber, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
+import { SectionSwitch, sectionOf } from '#/components/SectionSwitch'
 
 const VIEWS = [
   { id: 'live', label: 'Live operations' },
@@ -30,8 +31,10 @@ const VIEWS = [
 type View = (typeof VIEWS)[number]['id']
 
 export const Route = createFileRoute('/_layout/')({
-  validateSearch: (search: Record<string, unknown>): { view?: View } => ({
+  staticData: { viewTabs: searchTabs({ label: 'Dashboard views', param: 'view', tabs: () => [...VIEWS] }) },
+  validateSearch: (search: Record<string, unknown>): { view?: View; section?: string } => ({
     view: VIEWS.some((v) => v.id === search.view) && search.view !== 'live' ? (search.view as View) : undefined,
+    section: typeof search.section === 'string' && search.section ? search.section : undefined,
   }),
   loader: async () => {
     const [overview, views] = await Promise.all([getOverview(), getOverviewViews()])
@@ -128,69 +131,113 @@ function HealthView({ views }: { views: OverviewViews }) {
 
 // ---- Threat landscape --------------------------------------------------------
 
-function ThreatsView({ views }: { views: OverviewViews }) {
+const THREAT_SECTIONS = [
+  { id: 'who', label: 'Who' },
+  { id: 'traffic', label: 'Traffic' },
+  { id: 'exploits', label: 'Exploits' },
+] as const
+
+function ThreatsView({ views, section }: { views: OverviewViews; section?: string }) {
+  const current = sectionOf(THREAT_SECTIONS, section)
   return (
     <VStack gap={4}>
-      <Grid columns={{ minWidth: 300, repeat: 'fit' }} gap={4}>
-        <MiniTable title="Top source IPs" header="Source" rows={views.topIps} linkTo={ipLink} />
-        <MiniTable title="Top targeted ports" header="Port" rows={views.topPorts} linkTo={(p) => `/events?port=${p}`} />
-        <MiniTable title="Top countries" header="Country" rows={views.countries} linkTo={(c) => `/events?country=${c}`} />
-        <MiniTable title="Top autonomous systems" header="ASN" rows={views.asns} />
-        <MiniTable title="Network/provider classes" header="Class" rows={views.providers} />
-      </Grid>
-      <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
-        <Panel title="Traffic volume, bytes/hour, last 7 days">
-          <SeriesLines data={views.netflowBytes} series={[{ key: 'bytes', label: 'Bytes' }]} format={formatBytes} dayTicks />
+      <SectionSwitch label="Threat landscape sections" sections={THREAT_SECTIONS} value={section} />
+      {current === 'who' && (
+        <Grid columns={{ minWidth: 300, repeat: 'fit' }} gap={4}>
+          <MiniTable title="Top source IPs" header="Source" rows={views.topIps} linkTo={ipLink} />
+          <MiniTable title="Top targeted ports" header="Port" rows={views.topPorts} linkTo={(p) => `/events?port=${p}`} />
+          <MiniTable title="Top countries" header="Country" rows={views.countries} linkTo={(c) => `/events?country=${c}`} />
+          <MiniTable title="Top autonomous systems" header="ASN" rows={views.asns} />
+          <MiniTable title="Network/provider classes" header="Class" rows={views.providers} />
+        </Grid>
+      )}
+      {current === 'traffic' && (
+        <VStack gap={4}>
+          <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
+            <Panel title="Traffic volume, bytes/hour, last 7 days">
+              <SeriesLines data={views.netflowBytes} series={[{ key: 'bytes', label: 'Bytes' }]} format={formatBytes} dayTicks />
+            </Panel>
+            <Panel title="Traffic volume, packets/hour, last 7 days">
+              <SeriesLines data={views.netflowPackets} series={[{ key: 'packets', label: 'Packets' }]} dayTicks />
+            </Panel>
+          </Grid>
+          <Panel title="Protocol-conformance violations by protocol">
+            <SeriesLines data={views.conformance} series={[{ key: 'http', label: 'HTTP' }, { key: 'smb', label: 'SMB' }, { key: 'sip', label: 'SIP' }]} dayTicks />
+          </Panel>
+        </VStack>
+      )}
+      {current === 'exploits' && (
+        <Panel title="Top exploited CVEs / named incidents, last 7 days" action={<Link href="/iocs?kind=cve">All CVEs</Link>}>
+          <RankBars rows={views.cves} />
         </Panel>
-        <Panel title="Traffic volume, packets/hour, last 7 days">
-          <SeriesLines data={views.netflowPackets} series={[{ key: 'packets', label: 'Packets' }]} dayTicks />
-        </Panel>
-      </Grid>
-      <Panel title="Protocol-conformance violations by protocol">
-        <SeriesLines data={views.conformance} series={[{ key: 'http', label: 'HTTP' }, { key: 'smb', label: 'SMB' }, { key: 'sip', label: 'SIP' }]} dayTicks />
-      </Panel>
-      <Panel title="Top exploited CVEs / named incidents, last 7 days">
-        <RankBars rows={views.cves} />
-      </Panel>
+      )}
     </VStack>
   )
 }
 
 // ---- Attacker behavior -------------------------------------------------------
 
-function BehaviorView({ views }: { views: OverviewViews }) {
-  const bars: Array<[string, keyof OverviewViews]> = [
-    ['Attacker OS distribution', 'osDistribution'],
-    ['Attacker TCP-stack clusters (JA4T)', 'tcpClusters'],
-    ['ICS function codes: what they asked the PLCs to do', 'icsFunctions'],
-    ['Decoy requests (TLS-terminated), last 7 days', 'decoyRequests'],
-    ['Who reached the decoys (JA4)', 'decoyClients'],
-    ['HTTP client fingerprints (JA4H), last 7 days', 'ja4h'],
-    ['Connection-latency fingerprints (JA4L), last 7 days', 'ja4l'],
-    ['Certificate construction fingerprints (JA4X), last 7 days', 'ja4x'],
-    ['TLS scanner fingerprints (JA4), wire-level, last 7 days', 'tls'],
-    ['SSH client software, wire-level, last 7 days', 'ssh'],
-  ]
+const BEHAVIOR_SECTIONS = [
+  { id: 'input', label: 'Credentials & commands' },
+  { id: 'fingerprints', label: 'Fingerprints' },
+  { id: 'decoys', label: 'Decoys & ICS' },
+] as const
+
+const FINGERPRINT_BARS: Array<[string, keyof OverviewViews]> = [
+  ['Attacker OS distribution', 'osDistribution'],
+  ['Attacker TCP-stack clusters (JA4T)', 'tcpClusters'],
+  ['TLS scanner fingerprints (JA4), wire-level, last 7 days', 'tls'],
+  ['SSH client software, wire-level, last 7 days', 'ssh'],
+  ['HTTP client fingerprints (JA4H), last 7 days', 'ja4h'],
+  ['Connection-latency fingerprints (JA4L), last 7 days', 'ja4l'],
+  ['Certificate construction fingerprints (JA4X), last 7 days', 'ja4x'],
+]
+const DECOY_BARS: Array<[string, keyof OverviewViews]> = [
+  ['Decoy requests (TLS-terminated), last 7 days', 'decoyRequests'],
+  ['Who reached the decoys (JA4)', 'decoyClients'],
+  ['ICS function codes: what they asked the PLCs to do', 'icsFunctions'],
+]
+
+function Bars({ views, bars }: { views: OverviewViews; bars: Array<[string, keyof OverviewViews]> }) {
+  return (
+    <Grid columns={{ minWidth: 520, repeat: 'fit' }} gap={4}>
+      {bars.map(([title, key]) => (
+        <Panel key={key} title={title}>
+          <RankBars rows={views[key] as OverviewViews['cves']} />
+        </Panel>
+      ))}
+    </Grid>
+  )
+}
+
+function BehaviorView({ views, section }: { views: OverviewViews; section?: string }) {
+  const current = sectionOf(BEHAVIOR_SECTIONS, section)
   return (
     <VStack gap={4}>
-      <Grid columns={{ minWidth: 340, repeat: 'fit' }} gap={4}>
-        <MiniTable title="Top credentials (user / pass)" header="Pair" rows={views.credentials} isCode />
-        <MiniTable title="Top commands" header="Command" rows={views.commands} isCode />
-        <MiniTable title="SSH/telnet clients" header="Banner" rows={views.clients} isCode />
-        <MiniTable title="Top fingerprints (HASSH / JA3 / JA4 / User-Agent)" header="Fingerprint" rows={views.fingerprints} isCode />
-        <MiniTable title="Top HTTP paths" header="Path" rows={views.paths} isCode />
-      </Grid>
-      <Grid columns={{ minWidth: 520, repeat: 'fit' }} gap={4}>
-        {bars.map(([title, key]) => (
-          <Panel key={key} title={title}>
-            <RankBars rows={views[key] as OverviewViews['cves']} />
+      <SectionSwitch label="Attacker behavior sections" sections={BEHAVIOR_SECTIONS} value={section} />
+      {current === 'input' && (
+        <Grid columns={{ minWidth: 340, repeat: 'fit' }} gap={4}>
+          <MiniTable title="Top credentials (user / pass)" header="Pair" rows={views.credentials} isCode />
+          <MiniTable title="Top commands" header="Command" rows={views.commands} isCode />
+          <MiniTable title="Top HTTP paths" header="Path" rows={views.paths} isCode />
+          <MiniTable title="SSH/telnet clients" header="Banner" rows={views.clients} isCode />
+        </Grid>
+      )}
+      {current === 'fingerprints' && (
+        <VStack gap={4}>
+          <MiniTable title="Top fingerprints (HASSH / JA3 / JA4 / User-Agent)" header="Fingerprint" rows={views.fingerprints} isCode />
+          <Bars views={views} bars={FINGERPRINT_BARS} />
+        </VStack>
+      )}
+      {current === 'decoys' && (
+        <VStack gap={4}>
+          <Bars views={views} bars={DECOY_BARS} />
+          <Panel title="Attacker time wasted (endlessh tarpit)">
+            <Text type="supporting">How long each tarpitted connection stayed before giving up.</Text>
+            <Histogram rows={views.endlessh} />
           </Panel>
-        ))}
-      </Grid>
-      <Panel title="Attacker time wasted (endlessh tarpit)">
-        <Text type="supporting">How long each tarpitted connection stayed before giving up.</Text>
-        <Histogram rows={views.endlessh} />
-      </Panel>
+        </VStack>
+      )}
     </VStack>
   )
 }
@@ -234,27 +281,23 @@ function EvidenceView({ views }: { views: OverviewViews }) {
 
 function OverviewPage() {
   const { overview, views } = Route.useLoaderData()
-  const { view = 'live' } = Route.useSearch()
-  const navigate = Route.useNavigate()
-  useViewTabs({
-    label: 'Dashboard views',
-    tabs: [...VIEWS],
-    value: view,
-    onChange: (id) => void navigate({ search: { view: id === 'live' ? undefined : (id as View) } }),
-  })
-
+  const { view = 'live', section } = Route.useSearch()
   return (
     <PageFrame title="Overview" description={`Last 24 hours · generated ${formatDateTime(overview.generatedAt)}`}>
       <VStack gap={5}>
-        <Grid columns={{ minWidth: 200, repeat: 'fit' }} gap={4}>
-          {overview.kpis.map((kpi) => (
-            <StatTile key={kpi.id} {...kpi} caption="Last 24h vs. previous 24h" />
-          ))}
-        </Grid>
+        {/* The headline numbers belong to the at-a-glance view; the other
+            views are deep dives and start with their own content. */}
+        {view === 'live' && (
+          <Grid columns={{ minWidth: 200, repeat: 'fit' }} gap={4}>
+            {overview.kpis.map((kpi) => (
+              <StatTile key={kpi.id} {...kpi} caption="Last 24h vs. previous 24h" />
+            ))}
+          </Grid>
+        )}
         {view === 'live' && <LiveView views={views} recent={overview.recentEvents} timeline={overview.timeline} start={overview.timeline[0].time} />}
         {view === 'health' && <HealthView views={views} />}
-        {view === 'threats' && <ThreatsView views={views} />}
-        {view === 'behavior' && <BehaviorView views={views} />}
+        {view === 'threats' && <ThreatsView views={views} section={section} />}
+        {view === 'behavior' && <BehaviorView views={views} section={section} />}
         {view === 'evidence' && <EvidenceView views={views} />}
       </VStack>
     </PageFrame>

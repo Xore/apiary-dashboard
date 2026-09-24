@@ -1,12 +1,15 @@
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
+import { entityTabs } from '#/components/ViewTabs'
+import type { ViewTab } from '#/components/ViewTabs'
 import { EntityLink } from '#/components/EntityLink'
 import { NotFound } from '#/components/NotFound'
 import { getSessionDetail } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/sessions/$id')({
+  staticData: { viewTabs: entityTabs({ label: 'Session views', basePath: (params) => `/sessions/${encodeURIComponent(params.id)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const detail = await getSessionDetail(params.id)
     if (!detail) throw notFound()
@@ -37,17 +40,24 @@ function SessionLayout() {
         { label: 'Events', value: formatNumber(s.events.length) },
         { label: 'Sensors', value: s.sensors.map((r) => r.label).join(', ') },
       ]}
-      tabs={[
-        { id: 'timeline', label: 'Timeline', count: s.events.length },
-        { id: 'commands', label: 'Commands', count: s.commands.length },
-        { id: 'credentials', label: 'Credentials', count: s.credentials.length },
-        { id: 'downloads', label: 'Downloads', count: s.payloads.length },
-        { id: 'recording', label: 'Recording' },
-        { id: 'attck', label: 'ATT&CK', count: s.techniques.length },
-        { id: 'raw', label: 'Raw' },
-      ]}
     >
       <Outlet />
     </EntityFrame>
   )
+}
+
+/** The top-bar tabs: static until the loader data arrives, then with counts. */
+function tabsFor(loaded: unknown): ViewTab[] {
+  if (!loaded) return [{ id: 'timeline', label: 'Timeline' }, { id: 'commands', label: 'Commands' }, { id: 'credentials', label: 'Credentials' }, { id: 'downloads', label: 'Downloads' }, { id: 'recording', label: 'Recording' }, { id: 'attck', label: 'ATT&CK' }, { id: 'raw', label: 'Raw' }]
+  const data = loaded as ReturnType<typeof Route.useLoaderData>
+  const s = data
+  return [
+    { id: 'timeline', label: 'Timeline', count: s.events.length },
+    { id: 'commands', label: 'Commands', count: s.commands.length },
+    { id: 'credentials', label: 'Credentials', count: s.credentials.length },
+    { id: 'downloads', label: 'Downloads', count: s.payloads.length },
+    { id: 'recording', label: 'Recording' },
+    { id: 'attck', label: 'ATT&CK', count: s.techniques.length },
+    { id: 'raw', label: 'Raw' },
+  ]
 }

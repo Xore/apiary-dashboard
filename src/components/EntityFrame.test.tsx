@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-// The frame every entity page shares (epic #25): tabs as route segments in
-// the top bar, prev/next through the list it was opened from, and pinning.
+// The frame every entity page shares (epic #25): tabs declared on the route
+// and shown in the top bar, prev/next through the list it was opened from,
+// and pinning.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -12,7 +13,7 @@ import { getPins } from '#/lib/watchlist'
 import { neutralTheme } from '#/themes/neutral/neutral'
 import { EntityFrame } from './EntityFrame'
 import { RouterLink } from './RouterLink'
-import { ViewTabsBar } from './ViewTabs'
+import { ViewTabsBar, entityTabs } from './ViewTabs'
 
 function Thing() {
   const { id } = thing.useParams()
@@ -22,10 +23,6 @@ function Thing() {
       title={`Thing ${id}`}
       basePath={`/things/${encodeURIComponent(id)}`}
       facts={[{ label: 'Colour', value: 'teal' }]}
-      tabs={[
-        { id: 'overview', label: 'Overview' },
-        { id: 'detail', label: 'Detail', count: 3 },
-      ]}
     >
       <Outlet />
     </EntityFrame>
@@ -42,7 +39,22 @@ const root = createRootRoute({
     </>
   ),
 })
-const thing = createRoute({ getParentRoute: () => root, path: '/things/$id', component: Thing })
+const thing = createRoute({
+  getParentRoute: () => root,
+  path: '/things/$id',
+  staticData: {
+    viewTabs: entityTabs({
+      label: 'Thing views',
+      basePath: (params) => `/things/${encodeURIComponent(params.id)}`,
+      tabs: (loaded) => [
+        { id: 'overview', label: 'Overview' },
+        { id: 'detail', label: 'Detail', count: loaded ? 3 : undefined },
+      ],
+    }),
+  },
+  loader: () => ({ ready: true }),
+  component: Thing,
+})
 const overview = createRoute({ getParentRoute: () => thing, path: '/', component: () => <p>overview body</p> })
 const detail = createRoute({ getParentRoute: () => thing, path: '/detail', component: () => <p>detail body</p> })
 const list = createRoute({ getParentRoute: () => root, path: '/things', component: () => <p>the list</p> })

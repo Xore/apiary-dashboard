@@ -1,9 +1,8 @@
-import { createFileRoute, getRouteApi } from '@tanstack/react-router'
-import { MiniTable } from '#/components/DashboardBlocks'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
-const parent = getRouteApi('/_layout/sources/$ip')
-
+// Folded into the Breakdown tab.
 export const Route = createFileRoute('/_layout/sources/$ip/alerts')({
-  component: () => <MiniTable title="IDS alerts" header="Signature" rows={parent.useLoaderData().alerts} entity="signature" />,
+  beforeLoad: ({ params }) => {
+    throw redirect({ href: `/sources/${encodeURIComponent(params.ip)}/breakdown`, statusCode: 301 })
+  },
 })
-

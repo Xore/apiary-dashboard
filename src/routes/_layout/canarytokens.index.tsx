@@ -10,7 +10,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { useViewTabs } from '#/components/ViewTabs'
+import { searchTabs } from '#/components/ViewTabs'
 import { Panel } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { createCanarytoken, getCanarytokens } from '#/data/queries'
@@ -21,6 +21,7 @@ import { EntityLink } from '#/components/EntityLink'
 type View = 'deployed' | 'fired'
 
 export const Route = createFileRoute('/_layout/canarytokens/')({
+  staticData: { viewTabs: searchTabs({ label: 'Canarytoken views', param: 'view', tabs: (loaded) => { const d = loaded as { tokens: unknown[]; triggers: unknown[] } | undefined; return [{ id: 'deployed', label: 'Deployed', count: d?.tokens.length }, { id: 'fired', label: 'Fired', count: d?.triggers.length }] } }) },
   validateSearch: (search: Record<string, unknown>): { view?: View } => ({
     view: search.view === 'fired' ? 'fired' : undefined,
   }),
@@ -110,18 +111,7 @@ const triggerColumns: TableColumn<CanaryTrigger>[] = [
 function CanarytokensPage() {
   const { types, tokens, triggers } = Route.useLoaderData()
   const { view = 'deployed' } = Route.useSearch()
-  const navigate = Route.useNavigate()
   const [minted, setMinted] = useState<CanaryToken | null>(null)
-
-  useViewTabs({
-    label: 'Canarytoken views',
-    tabs: [
-      { id: 'deployed', label: `Deployed (${tokens.length})` },
-      { id: 'fired', label: `Fired (${triggers.length})` },
-    ],
-    value: view,
-    onChange: (value) => void navigate({ search: { view: value === 'fired' ? 'fired' : undefined } }),
-  })
 
   return view === 'deployed' ? (
     <RecordList

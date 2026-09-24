@@ -33,7 +33,6 @@ function BaitCredentialPage() {
         { label: 'Path', value: d.path },
         { label: 'Template', value: d.template },
       ]}
-      tabs={[{ id: 'overview', label: 'Overview' }]}
     >
       <CredentialInspector key={d.id} credential={d} tokens={d.tokens} />
     </EntityFrame>

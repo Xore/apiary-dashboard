@@ -10,6 +10,7 @@ import type { TableColumn } from '@astryxdesign/core/Table'
 import { Heading, Text } from '@astryxdesign/core/Text'
 import { InboxIcon } from '@heroicons/react/24/outline'
 import { useLocation, useNavigate } from '@tanstack/react-router'
+import { formatNumber } from '#/lib/format'
 import { saveListContext } from '#/lib/listContext'
 import { useRowActivation } from './useRowActivation'
 
@@ -110,6 +111,12 @@ export function RecordList<T extends Record<string, unknown>>({
               <EmptyState icon={<Icon icon={InboxIcon} size="lg" />} {...emptyState} />
             ) : (
               <VStack gap={3}>
+                {/* Also keeps the table from being the content's first child,
+                    which Astryx bleeds up under the page header. */}
+                <Text type="supporting">
+                  {formatNumber(rows.length)} {rows.length === 1 ? 'record' : 'records'}
+                  {pageCount > 1 ? ` · page ${currentPage} of ${pageCount}` : ''}
+                </Text>
                 <Table
                   data={visible}
                   columns={columns}

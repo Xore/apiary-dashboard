@@ -196,7 +196,8 @@ export function SharedSignalsTable({ signals }: { signals: SharedSignal[] }) {
   )
 }
 
-/** The numbers and leaderboards every group page opens with. `sourcesTab` and
+/** What a group page opens with: the headline numbers and its newest
+ * events. The leaderboards live on the Breakdown tab. `sourcesTab` and
  * `eventsTab` name this entity's tabs for those lists, when it has them. */
 export function GroupOverview({ group, base, sourcesTab, eventsTab }: { group: SourceGroup; base: string; sourcesTab?: string; eventsTab?: string }) {
   return (
@@ -206,16 +207,23 @@ export function GroupOverview({ group, base, sourcesTab, eventsTab }: { group: S
         <StatTile label="Events" value={group.events.length} href={eventsTab && `${base}/${eventsTab}`} />
         <StatTile label="Total matches" value={group.totalMatches} caption="honeypot, Suricata, portbridge" />
         <StatTile label="Tunnel connections" value={group.tunnelConnections} />
-        <StatTile label="Sensors reached" value={group.sensors.length} />
+        <StatTile label="Sensors reached" value={group.sensors.length} href={`${base}/breakdown`} />
       </Grid>
-      <Grid columns={{ minWidth: 300, repeat: 'fit' }} gap={4}>
-        <MiniTable title="Sensors" header="Sensor" rows={group.sensors} entity="sensor" />
-        <MiniTable title="Targeted ports" header="Port" rows={group.ports} entity="port" />
-        <MiniTable title="Credentials tried" header="user:password" rows={group.credentials.slice(0, 10)} entity="credential" />
-        <MiniTable title="Commands" header="Command" rows={group.commands.slice(0, 10)} entity="command" />
-        <MiniTable title="Networks" header="Prefix" rows={group.networks.slice(0, 10)} entity="network" />
-        <MiniTable title="Countries" header="Country" rows={group.countries} entity="country" />
-      </Grid>
+      <EventsPanel title="Newest events" events={group.events.slice(0, 5)} showSource action={eventsTab && <Link href={`${base}/${eventsTab}`}>All events</Link>} empty="No events." />
     </VStack>
+  )
+}
+
+/** Where the group's traffic went and what it tried, as leaderboards. */
+export function GroupBreakdown({ group }: { group: SourceGroup }) {
+  return (
+    <Grid columns={{ minWidth: 300, repeat: 'fit' }} gap={4}>
+      <MiniTable title="Sensors" header="Sensor" rows={group.sensors} entity="sensor" />
+      <MiniTable title="Targeted ports" header="Port" rows={group.ports} entity="port" />
+      <MiniTable title="Credentials tried" header="user:password" rows={group.credentials.slice(0, 10)} entity="credential" />
+      <MiniTable title="Commands" header="Command" rows={group.commands.slice(0, 10)} entity="command" />
+      <MiniTable title="Networks" header="Prefix" rows={group.networks.slice(0, 10)} entity="network" />
+      <MiniTable title="Countries" header="Country" rows={group.countries} entity="country" />
+    </Grid>
   )
 }

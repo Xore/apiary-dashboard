@@ -3,12 +3,15 @@ import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { BlockControl } from '#/components/BlockControl'
 import { EntityFrame } from '#/components/EntityFrame'
+import { entityTabs } from '#/components/ViewTabs'
+import type { ViewTab } from '#/components/ViewTabs'
 import { EntityLink } from '#/components/EntityLink'
 import { NotFound } from '#/components/NotFound'
 import { getIpProfile } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/sources/$ip')({
+  staticData: { viewTabs: entityTabs({ label: 'Source IP views', basePath: (params) => `/sources/${encodeURIComponent(params.ip)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const profile = await getIpProfile(params.ip)
     if (!profile) throw notFound()
@@ -51,20 +54,24 @@ function SourceLayout() {
           <BlockControl ip={ip} blocked={p.blocked} />
         </>
       }
-      tabs={[
-        { id: 'overview', label: 'Overview' },
-        { id: 'timeline', label: 'Timeline' },
-        { id: 'events', label: 'Events', count: p.source.events },
-        { id: 'sessions', label: 'Sessions', count: p.source.sessions },
-        { id: 'credentials', label: 'Credentials', count: p.credentials.length },
-        { id: 'commands', label: 'Commands', count: p.commands.length },
-        { id: 'payloads', label: 'Payloads', count: p.payloads.length },
-        { id: 'alerts', label: 'Alerts', count: p.alerts.length },
-        { id: 'network', label: 'Network' },
-        { id: 'identity', label: 'Identity' },
-      ]}
     >
       <Outlet />
     </EntityFrame>
   )
+}
+
+/** The top-bar tabs: static until the loader data arrives, then with counts. */
+function tabsFor(loaded: unknown): ViewTab[] {
+  const p = loaded as ReturnType<typeof Route.useLoaderData> | undefined
+  return [
+    { id: 'overview', label: 'Overview' },
+    { id: 'behavior', label: 'Behavior', count: p?.techniques.length },
+    { id: 'breakdown', label: 'Breakdown' },
+    { id: 'timeline', label: 'Timeline' },
+    { id: 'events', label: 'Events', count: p?.source.events },
+    { id: 'sessions', label: 'Sessions', count: p?.source.sessions },
+    { id: 'payloads', label: 'Payloads', count: p?.payloads.length },
+    { id: 'network', label: 'Network' },
+    { id: 'identity', label: 'Identity' },
+  ]
 }

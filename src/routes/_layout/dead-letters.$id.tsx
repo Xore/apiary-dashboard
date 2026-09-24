@@ -31,7 +31,6 @@ function DeadLetterPage() {
         { label: 'Rejected', value: formatDateTime(d.timestamp) },
         { label: 'Source', value: d.source },
       ]}
-      tabs={[{ id: 'overview', label: 'Overview' }]}
     >
       <DeadLetterDetail row={d} />
     </EntityFrame>

@@ -32,7 +32,6 @@ function ProblemReportPage() {
         { label: 'By', value: d.submittedBy },
         { label: 'Status', value: d.status },
       ]}
-      tabs={[{ id: 'overview', label: 'Overview' }]}
     >
       <ReportInspector key={d.id} report={d} />
     </EntityFrame>

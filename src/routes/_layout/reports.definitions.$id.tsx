@@ -84,7 +84,6 @@ function DefinitionPage() {
         { label: 'Created', value: formatDateTime(d.created) },
         { label: 'PDFs produced', value: String(generated.length) },
       ]}
-      tabs={[{ id: 'overview', label: 'Overview' }]}
     >
       <VStack gap={4}>
         <Panel title="What it produces">

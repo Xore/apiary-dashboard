@@ -29,7 +29,6 @@ function AuthFailurePage() {
         { label: 'Client', value: d.clientId },
         { label: 'Realm', value: d.realm },
       ]}
-      tabs={[{ id: 'overview', label: 'Overview' }]}
     >
       <AuthInspector event={d} />
     </EntityFrame>

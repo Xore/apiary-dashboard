@@ -1,100 +1,62 @@
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
-import { Card } from '@astryxdesign/core/Card'
-import { Divider } from '@astryxdesign/core/Divider'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Icon } from '@astryxdesign/core/Icon'
-import { Link } from '@astryxdesign/core/Link'
-import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
-import { Heading, Text } from '@astryxdesign/core/Text'
+import { VStack } from '@astryxdesign/core/Stack'
+import { pixel, proportional } from '@astryxdesign/core/Table'
+import type { TableColumn } from '@astryxdesign/core/Table'
+import { Text } from '@astryxdesign/core/Text'
+import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { createFileRoute } from '@tanstack/react-router'
 import { CountTable, Panel, StatTile } from '#/components/DashboardBlocks'
-import { PageFrame } from '#/components/PageFrame'
+import { RecordList } from '#/components/RecordList'
 import { WorldMap } from '#/components/WorldMap'
 import { getSourceProfiles } from '#/data/queries'
 import type { SourceProfile } from '#/data/types'
+import { entityHref } from '#/lib/entities'
 import { downloadCsv } from '#/lib/export'
-import { formatDateTime, formatNumber } from '#/lib/format'
-import { EntityLink } from '#/components/EntityLink'
-
-const PAGE = 24
+import { formatNumber, formatTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/ips')({
   loader: () => getSourceProfiles(),
   component: SourcesPage,
 })
 
-function Stat({ value, label, href }: { value: number; label: string; href: string }) {
-  return (
-    <StackItem size="fill">
-      <Link href={href}>
-        <VStack gap={0}>
-          <Text weight="semibold">{formatNumber(value)}</Text>
-          <Text type="supporting">{label}</Text>
-        </VStack>
-      </Link>
-    </StackItem>
-  )
-}
+const columns: TableColumn<SourceProfile>[] = [
+  { key: 'ip', header: 'Source IP', width: pixel(152), renderCell: (row) => <Text weight="semibold">{row.ip}</Text> },
+  { key: 'country', header: 'Country', width: pixel(88), renderCell: (row) => <Token size="sm" color="blue" label={row.country} /> },
+  { key: 'org', header: 'Provider', width: proportional(2) },
+  { key: 'events', header: 'Events', width: pixel(80), align: 'end', renderCell: (row) => formatNumber(row.events) },
+  { key: 'logins', header: 'Logins', width: pixel(72), align: 'end' },
+  { key: 'sessions', header: 'Sessions', width: pixel(88), align: 'end' },
+  { key: 'sensors', header: 'Sensors', width: pixel(80), align: 'end', renderCell: (row) => row.sensors.length },
+  { key: 'last', header: 'Last seen', width: pixel(104), renderCell: (row) => <Text type="supporting">{formatTime(row.last)}</Text> },
+]
 
-/** One source address: where it is, what it did, and a way into each. */
-function SourceCard({ source }: { source: SourceProfile }) {
-  const ip = encodeURIComponent(source.ip)
-  return (
-    <Card>
-      <VStack gap={3}>
-        <HStack hAlign="between" vAlign="center" gap={2}>
-          <EntityLink kind="source" id={ip}>
-            <Text weight="semibold">{source.ip}</Text>
-          </EntityLink>
-          <Token label={source.country} size="sm" color="blue" href={`/events?country=${source.country}`} />
-        </HStack>
-        <Text type="supporting">{source.org}</Text>
-        <HStack gap={2}>
-          <Stat value={source.events} label="events" href={`/events?ip=${ip}`} />
-          <Stat value={source.logins} label="logins" href={`/events?ip=${ip}&kind=login`} />
-          <Stat value={source.sessions} label="sessions" href={`/sources/${ip}`} />
-        </HStack>
-        <Divider />
-        <HStack gap={1} wrap="wrap">
-          {source.sensors.map((sensor) => (
-            <Token key={sensor} label={sensor} size="sm" href={`/events?ip=${ip}&sensor=${sensor}`} />
-          ))}
-        </HStack>
-        <Text type="supporting">
-          {formatDateTime(source.first)} → {formatDateTime(source.last)}
-        </Text>
-      </VStack>
-    </Card>
-  )
-}
-
+/** Where attacks come from, then every source as one scannable row that
+ * opens its page. */
 function SourcesPage() {
   const { sources, mapPoints } = Route.useLoaderData()
-  const [shown, setShown] = useState(PAGE)
+  const [filter, setFilter] = useState('')
+  const needle = filter.trim().toLowerCase()
+  const rows = sources.filter((s) => !needle || s.ip.includes(needle) || s.org.toLowerCase().includes(needle) || s.country.toLowerCase() === needle)
 
   return (
-    <PageFrame
+    <RecordList
       title="Attack sources"
       description="Every source address the sensors observed, with event volume, location, and activity window."
       actions={
-        <>
-          <Text type="supporting">{formatNumber(sources.length)} unique IPs</Text>
-          <Button
-            label="CSV"
-            size="sm"
-            variant="secondary"
-            icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-            onClick={() =>
-              downloadCsv('ips.csv', sources, ['ip', 'country', 'org', 'events', 'logins', 'sessions', 'sensors', 'first', 'last'])
-            }
-          />
-        </>
+        <Button
+          label="CSV"
+          size="sm"
+          variant="secondary"
+          icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
+          onClick={() => downloadCsv('ips.csv', sources, ['ip', 'country', 'org', 'events', 'logins', 'sessions', 'sensors', 'first', 'last'])}
+        />
       }
-    >
-      <VStack gap={6}>
+      summary={
         <Grid columns={{ minWidth: 460, repeat: 'fit' }} gap={4}>
           <Panel title="Attack origins" action={<Text type="supporting">Click a country to see its events</Text>}>
             <WorldMap points={mapPoints} />
@@ -116,23 +78,13 @@ function SourcesPage() {
             </Panel>
           </VStack>
         </Grid>
-        <VStack gap={4}>
-          <Heading level={2}>Sources</Heading>
-          <Grid columns={{ minWidth: 260, repeat: 'fill' }} gap={4}>
-            {sources.slice(0, shown).map((source) => (
-              <SourceCard key={source.ip} source={source} />
-            ))}
-          </Grid>
-          {shown < sources.length && (
-            <HStack gap={3} hAlign="center" vAlign="center">
-              <Text type="supporting">
-                {formatNumber(shown)} of {formatNumber(sources.length)}
-              </Text>
-              <Button label="View more" variant="secondary" size="sm" onClick={() => setShown((n) => n + PAGE)} />
-            </HStack>
-          )}
-        </VStack>
-      </VStack>
-    </PageFrame>
+      }
+      toolbar={<TextInput label="Filter sources" isLabelHidden size="sm" width={320} placeholder="Filter by IP, provider, or country code" value={filter} onChange={setFilter} />}
+      rows={rows}
+      columns={columns}
+      getId={(row) => row.ip}
+      getHref={(row) => entityHref('source', row.ip)!}
+      emptyState={{ title: 'No sources match', description: 'Clear the filter to see every source address.' }}
+    />
   )
 }

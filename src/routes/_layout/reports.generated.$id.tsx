@@ -59,7 +59,6 @@ function GeneratedReportPage() {
           ),
         },
       ]}
-      tabs={[{ id: 'overview', label: 'Overview' }]}
     >
       <Panel title="Document">
         <EmptyState

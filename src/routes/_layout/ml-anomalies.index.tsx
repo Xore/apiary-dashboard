@@ -11,7 +11,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { TimeLines } from '#/components/charts'
-import { CountTable, Panel, StatTile } from '#/components/DashboardBlocks'
+import { Panel, StatTile, MiniTable } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { SeverityToken } from '#/components/SeverityToken'
 import { acknowledgeAllAnomalies, getMlAnomalies } from '#/data/queries'
@@ -20,14 +20,27 @@ import type { AnomalyStatus, MlAnomaly, ModelHealth, Severity } from '#/data/typ
 import { formatClock, formatNumber, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { StatusToken, statusLabel } from '#/components/details/Anomaly'
+import { PageFrame } from '#/components/PageFrame'
+import { searchTabs } from '#/components/ViewTabs'
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
 const STATUSES: AnomalyStatus[] = ['open', 'acknowledged', ...DISPOSITIONS]
 
-type Search = { severity?: Severity; eventType?: string; status?: AnomalyStatus }
+type Search = { view?: 'models'; severity?: Severity; eventType?: string; status?: AnomalyStatus }
 
 export const Route = createFileRoute('/_layout/ml-anomalies/')({
+  staticData: {
+    viewTabs: searchTabs({
+      label: 'ML anomaly views',
+      param: 'view',
+      tabs: (loaded) => [
+        { id: 'anomalies', label: 'Anomalies', count: (loaded as { anomalies: unknown[] } | undefined)?.anomalies.length },
+        { id: 'models', label: 'Model health' },
+      ],
+    }),
+  },
   validateSearch: (search: Record<string, unknown>): Search => ({
+    view: search.view === 'models' ? 'models' : undefined,
     severity: SEVERITIES.includes(search.severity as Severity) ? (search.severity as Severity) : undefined,
     eventType: typeof search.eventType === 'string' && search.eventType ? search.eventType : undefined,
     status: STATUSES.includes(search.status as AnomalyStatus) ? (search.status as AnomalyStatus) : undefined,
@@ -104,6 +117,32 @@ const healthColumns: TableColumn<ModelHealth>[] = [
   { key: 'reason', header: 'Reason', width: proportional(2) },
 ]
 
+/** How the detectors are doing, apart from the anomaly list itself. */
+function ModelHealthView({ data }: { data: ReturnType<typeof Route.useLoaderData> }) {
+  return (
+    <PageFrame title="ML anomalies" description="How the three detectors score traffic, and whether their latest retrain was accepted.">
+      <VStack gap={4}>
+        <Panel title="Model health">
+          <Table data={data.modelHealth} columns={healthColumns} idKey="model" density="compact" />
+        </Panel>
+        <Grid columns={{ minWidth: 380, repeat: 'fit' }} gap={4}>
+          <Panel title="Model scores over time">
+            <TimeLines
+              data={data.scoreTimeline}
+              series={[
+                { key: 'isolationForest', label: 'Isolation forest' },
+                { key: 'lstmAe', label: 'LSTM autoencoder' },
+                { key: 'hbos', label: 'HBOS' },
+              ]}
+            />
+          </Panel>
+          <MiniTable title="Top source IPs by anomalies, 24h" header="Source IP" rows={data.topSources} entity="source" />
+        </Grid>
+      </VStack>
+    </PageFrame>
+  )
+}
+
 function MlAnomaliesPage() {
   const data = Route.useLoaderData()
   const search = Route.useSearch()
@@ -121,6 +160,8 @@ function MlAnomaliesPage() {
   const setFilter = (patch: Search) => void navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true })
   const severityCount = (severity: Severity) => data.bySeverity.find((row) => row.label === severity)?.count ?? 0
 
+  if (search.view === 'models') return <ModelHealthView data={data} />
+
   return (
     <>
       <RecordList
@@ -136,8 +177,7 @@ function MlAnomaliesPage() {
           />
         }
         summary={
-          <VStack gap={4}>
-            <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
+          <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
               <StatTile label="Anomalies, 24h" value={data.total24h} />
               <StatTile label="Open (all time)" value={data.openBacklog} href="/ml-anomalies?status=open" />
               {SEVERITIES.map((severity) => (
@@ -149,26 +189,7 @@ function MlAnomaliesPage() {
                   href={`/ml-anomalies?severity=${severity}`}
                 />
               ))}
-            </Grid>
-            <Grid columns={{ minWidth: 380, repeat: 'fit' }} gap={4}>
-              <Panel title="Model scores over time">
-                <TimeLines
-                  data={data.scoreTimeline}
-                  series={[
-                    { key: 'isolationForest', label: 'Isolation forest' },
-                    { key: 'lstmAe', label: 'LSTM autoencoder' },
-                    { key: 'hbos', label: 'HBOS' },
-                  ]}
-                />
-              </Panel>
-              <Panel title="Top source IPs, 24h">
-                <CountTable header="Source IP" rows={data.topSources} countHeader="Anomalies" />
-              </Panel>
-            </Grid>
-            <Panel title="Model health">
-              <Table data={data.modelHealth} columns={healthColumns} idKey="model" density="compact" />
-            </Panel>
-          </VStack>
+          </Grid>
         }
         toolbar={
           <HStack gap={3} wrap="wrap">

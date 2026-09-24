@@ -1,11 +1,14 @@
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
+import { entityTabs } from '#/components/ViewTabs'
+import type { ViewTab } from '#/components/ViewTabs'
 import { NotFound } from '#/components/NotFound'
 import { getIoc } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/ioc/$kind/$value')({
+  staticData: { viewTabs: entityTabs({ label: 'Indicator views', basePath: (params) => `/ioc/${params.kind}/${encodeURIComponent(params.value)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const ioc = await getIoc(params.kind, params.value)
     if (!ioc) throw notFound()
@@ -44,16 +47,24 @@ function IocLayout() {
         { label: 'First seen', value: formatDateTime(ioc.events.at(-1)!.timestamp) },
         { label: 'Last seen', value: formatDateTime(ioc.events[0].timestamp) },
       ]}
-      tabs={[
-        { id: 'overview', label: 'Overview' },
-        { id: 'sources', label: 'Sources', count: ioc.group.members.length },
-        { id: 'sessions', label: 'Sessions', count: ioc.sessions.length },
-        { id: 'events', label: 'Events', count: ioc.events.length },
-        { id: 'payloads', label: 'Payloads', count: ioc.payloads.length },
-        { id: 'timeline', label: 'Timeline' },
-      ]}
     >
       <Outlet />
     </EntityFrame>
   )
+}
+
+/** The top-bar tabs: static until the loader data arrives, then with counts. */
+function tabsFor(loaded: unknown): ViewTab[] {
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'breakdown', label: 'Breakdown' }, { id: 'sources', label: 'Sources' }, { id: 'sessions', label: 'Sessions' }, { id: 'events', label: 'Events' }, { id: 'payloads', label: 'Payloads' }, { id: 'timeline', label: 'Timeline' }]
+  const data = loaded as ReturnType<typeof Route.useLoaderData>
+  const ioc = data
+  return [
+    { id: 'overview', label: 'Overview' },
+    { id: 'breakdown', label: 'Breakdown' },
+    { id: 'sources', label: 'Sources', count: ioc.group.members.length },
+    { id: 'sessions', label: 'Sessions', count: ioc.sessions.length },
+    { id: 'events', label: 'Events', count: ioc.events.length },
+    { id: 'payloads', label: 'Payloads', count: ioc.payloads.length },
+    { id: 'timeline', label: 'Timeline' },
+  ]
 }
