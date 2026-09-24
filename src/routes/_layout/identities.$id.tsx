@@ -49,12 +49,13 @@ function IdentityLayout() {
 
 /** The top-bar tabs: static until the loader data arrives, then with counts. */
 function tabsFor(loaded: unknown): ViewTab[] {
-  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'members', label: 'Member IPs' }, { id: 'indicators', label: 'Indicators' }, { id: 'why', label: 'Why merged' }, { id: 'timeline', label: 'Timeline' }]
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'breakdown', label: 'Breakdown' }, { id: 'members', label: 'Member IPs' }, { id: 'indicators', label: 'Indicators' }, { id: 'why', label: 'Why merged' }, { id: 'timeline', label: 'Timeline' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const { identity: a, group, shared } = data
   const indicators = a.fingerprints.length + a.payloads.length + a.credentials.length
   return [
     { id: 'overview', label: 'Overview' },
+    { id: 'breakdown', label: 'Breakdown' },
     { id: 'members', label: 'Member IPs', count: group.members.length },
     { id: 'indicators', label: 'Indicators', count: indicators },
     { id: 'why', label: 'Why merged', count: shared.length },

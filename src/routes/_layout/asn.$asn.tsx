@@ -40,11 +40,12 @@ function AsnLayout() {
 
 /** The top-bar tabs: static until the loader data arrives, then with counts. */
 function tabsFor(loaded: unknown): ViewTab[] {
-  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'sources', label: 'Sources' }, { id: 'networks', label: 'Networks' }, { id: 'events', label: 'Events' }, { id: 'timeline', label: 'Timeline' }]
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'breakdown', label: 'Breakdown' }, { id: 'sources', label: 'Sources' }, { id: 'networks', label: 'Networks' }, { id: 'events', label: 'Events' }, { id: 'timeline', label: 'Timeline' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const a = data
   return [
     { id: 'overview', label: 'Overview' },
+    { id: 'breakdown', label: 'Breakdown' },
     { id: 'sources', label: 'Sources', count: a.group.members.length },
     { id: 'networks', label: 'Networks', count: a.group.networks.length },
     { id: 'events', label: 'Events', count: a.group.events.length },

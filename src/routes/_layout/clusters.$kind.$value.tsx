@@ -41,11 +41,12 @@ function ClusterLayout() {
 
 /** The top-bar tabs: static until the loader data arrives, then with counts. */
 function tabsFor(loaded: unknown): ViewTab[] {
-  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'members', label: 'Member IPs' }, { id: 'events', label: 'Events' }, { id: 'timeline', label: 'Timeline' }]
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'breakdown', label: 'Breakdown' }, { id: 'members', label: 'Member IPs' }, { id: 'events', label: 'Events' }, { id: 'timeline', label: 'Timeline' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const c = data
   return [
     { id: 'overview', label: 'Overview' },
+    { id: 'breakdown', label: 'Breakdown' },
     { id: 'members', label: 'Member IPs', count: c.group.members.length },
     { id: 'events', label: 'Events', count: c.group.events.length },
     { id: 'timeline', label: 'Timeline' },

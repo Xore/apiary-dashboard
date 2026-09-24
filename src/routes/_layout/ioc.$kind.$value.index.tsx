@@ -1,9 +1,11 @@
 import { Grid } from '@astryxdesign/core/Grid'
+import { Link } from '@astryxdesign/core/Link'
 import { VStack } from '@astryxdesign/core/Stack'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
-import { MiniTable, StatTile } from '#/components/DashboardBlocks'
+import { StatTile } from '#/components/DashboardBlocks'
+import { EventsPanel } from '#/components/DetailBlocks'
 
 const parent = getRouteApi('/_layout/ioc/$kind/$value')
 
@@ -23,12 +25,7 @@ function IocOverview() {
         <StatTile label="Sessions" value={ioc.sessions.length} href={`${base}/sessions`} />
         <StatTile label="Payloads after it" value={ioc.payloads.length} href={`${base}/payloads`} />
       </Grid>
-      <Grid columns={{ minWidth: 300, repeat: 'fit' }} gap={4}>
-        <MiniTable title="Sensors" header="Sensor" rows={ioc.group.sensors} entity="sensor" />
-        <MiniTable title="Networks" header="Prefix" rows={ioc.group.networks.slice(0, 10)} entity="network" />
-        <MiniTable title="Countries" header="Country" rows={ioc.group.countries} entity="country" />
-        <MiniTable title="Commands in the same sessions" header="Command" rows={ioc.group.commands.slice(0, 10)} entity="command" />
-      </Grid>
+      <EventsPanel title="Newest events" events={ioc.events.slice(0, 5)} showSource action={<Link href={`${base}/events`}>All events</Link>} />
       <RelatedPanel center={ioc.value} groups={Route.useLoaderData()} />
     </VStack>
   )

@@ -55,11 +55,12 @@ function IocLayout() {
 
 /** The top-bar tabs: static until the loader data arrives, then with counts. */
 function tabsFor(loaded: unknown): ViewTab[] {
-  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'sources', label: 'Sources' }, { id: 'sessions', label: 'Sessions' }, { id: 'events', label: 'Events' }, { id: 'payloads', label: 'Payloads' }, { id: 'timeline', label: 'Timeline' }]
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'breakdown', label: 'Breakdown' }, { id: 'sources', label: 'Sources' }, { id: 'sessions', label: 'Sessions' }, { id: 'events', label: 'Events' }, { id: 'payloads', label: 'Payloads' }, { id: 'timeline', label: 'Timeline' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const ioc = data
   return [
     { id: 'overview', label: 'Overview' },
+    { id: 'breakdown', label: 'Breakdown' },
     { id: 'sources', label: 'Sources', count: ioc.group.members.length },
     { id: 'sessions', label: 'Sessions', count: ioc.sessions.length },
     { id: 'events', label: 'Events', count: ioc.events.length },

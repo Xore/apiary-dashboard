@@ -48,11 +48,12 @@ function CampaignLayout() {
 
 /** The top-bar tabs: static until the loader data arrives, then with counts. */
 function tabsFor(loaded: unknown): ViewTab[] {
-  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'why', label: 'Why correlated' }, { id: 'sources', label: 'Sources' }, { id: 'credentials', label: 'Credentials reused' }, { id: 'timeline', label: 'Timeline' }]
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'breakdown', label: 'Breakdown' }, { id: 'why', label: 'Why correlated' }, { id: 'sources', label: 'Sources' }, { id: 'credentials', label: 'Credentials reused' }, { id: 'timeline', label: 'Timeline' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const { group, shared } = data
   return [
     { id: 'overview', label: 'Overview' },
+    { id: 'breakdown', label: 'Breakdown' },
     { id: 'why', label: 'Why correlated', count: shared.length },
     { id: 'sources', label: 'Sources', count: group.members.length },
     { id: 'credentials', label: 'Credentials reused', count: group.credentials.length },

@@ -50,11 +50,12 @@ function NetworkLayout() {
 
 /** The top-bar tabs: static until the loader data arrives, then with counts. */
 function tabsFor(loaded: unknown): ViewTab[] {
-  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'sources', label: 'Sources' }, { id: 'events', label: 'Events' }, { id: 'campaign', label: 'Campaign' }, { id: 'timeline', label: 'Timeline' }]
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'breakdown', label: 'Breakdown' }, { id: 'sources', label: 'Sources' }, { id: 'events', label: 'Events' }, { id: 'campaign', label: 'Campaign' }, { id: 'timeline', label: 'Timeline' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const n = data
   return [
     { id: 'overview', label: 'Overview' },
+    { id: 'breakdown', label: 'Breakdown' },
     { id: 'sources', label: 'Sources', count: n.group.members.length },
     { id: 'events', label: 'Events', count: n.group.events.length },
     { id: 'campaign', label: 'Campaign' },

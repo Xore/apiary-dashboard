@@ -62,18 +62,15 @@ function SourceLayout() {
 
 /** The top-bar tabs: static until the loader data arrives, then with counts. */
 function tabsFor(loaded: unknown): ViewTab[] {
-  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'timeline', label: 'Timeline' }, { id: 'events', label: 'Events' }, { id: 'sessions', label: 'Sessions' }, { id: 'credentials', label: 'Credentials' }, { id: 'commands', label: 'Commands' }, { id: 'payloads', label: 'Payloads' }, { id: 'alerts', label: 'Alerts' }, { id: 'network', label: 'Network' }, { id: 'identity', label: 'Identity' }]
-  const data = loaded as ReturnType<typeof Route.useLoaderData>
-  const p = data
+  const p = loaded as ReturnType<typeof Route.useLoaderData> | undefined
   return [
     { id: 'overview', label: 'Overview' },
+    { id: 'behavior', label: 'Behavior', count: p?.techniques.length },
+    { id: 'breakdown', label: 'Breakdown' },
     { id: 'timeline', label: 'Timeline' },
-    { id: 'events', label: 'Events', count: p.source.events },
-    { id: 'sessions', label: 'Sessions', count: p.source.sessions },
-    { id: 'credentials', label: 'Credentials', count: p.credentials.length },
-    { id: 'commands', label: 'Commands', count: p.commands.length },
-    { id: 'payloads', label: 'Payloads', count: p.payloads.length },
-    { id: 'alerts', label: 'Alerts', count: p.alerts.length },
+    { id: 'events', label: 'Events', count: p?.source.events },
+    { id: 'sessions', label: 'Sessions', count: p?.source.sessions },
+    { id: 'payloads', label: 'Payloads', count: p?.payloads.length },
     { id: 'network', label: 'Network' },
     { id: 'identity', label: 'Identity' },
   ]

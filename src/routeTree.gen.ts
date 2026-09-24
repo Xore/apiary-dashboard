@@ -80,11 +80,13 @@ import { Route as LayoutAlertsKeyIndexRouteImport } from './routes/_layout/alert
 import { Route as LayoutAlertsKeyEvidenceRouteImport } from './routes/_layout/alerts.$key.evidence'
 import { Route as LayoutAlertsKeyMembersRouteImport } from './routes/_layout/alerts.$key.members'
 import { Route as LayoutAsnAsnIndexRouteImport } from './routes/_layout/asn.$asn.index'
+import { Route as LayoutAsnAsnBreakdownRouteImport } from './routes/_layout/asn.$asn.breakdown'
 import { Route as LayoutAsnAsnEventsRouteImport } from './routes/_layout/asn.$asn.events'
 import { Route as LayoutAsnAsnNetworksRouteImport } from './routes/_layout/asn.$asn.networks'
 import { Route as LayoutAsnAsnSourcesRouteImport } from './routes/_layout/asn.$asn.sources'
 import { Route as LayoutAsnAsnTimelineRouteImport } from './routes/_layout/asn.$asn.timeline'
 import { Route as LayoutCampaignsCidrIndexRouteImport } from './routes/_layout/campaigns.$cidr.index'
+import { Route as LayoutCampaignsCidrBreakdownRouteImport } from './routes/_layout/campaigns.$cidr.breakdown'
 import { Route as LayoutCampaignsCidrCredentialsRouteImport } from './routes/_layout/campaigns.$cidr.credentials'
 import { Route as LayoutCampaignsCidrSourcesRouteImport } from './routes/_layout/campaigns.$cidr.sources'
 import { Route as LayoutCampaignsCidrTimelineRouteImport } from './routes/_layout/campaigns.$cidr.timeline'
@@ -98,6 +100,7 @@ import { Route as LayoutEventsIdRawRouteImport } from './routes/_layout/events.$
 import { Route as LayoutEventsIdSessionRouteImport } from './routes/_layout/events.$id.session'
 import { Route as LayoutEventsIdSourceRouteImport } from './routes/_layout/events.$id.source'
 import { Route as LayoutIdentitiesIdIndexRouteImport } from './routes/_layout/identities.$id.index'
+import { Route as LayoutIdentitiesIdBreakdownRouteImport } from './routes/_layout/identities.$id.breakdown'
 import { Route as LayoutIdentitiesIdIndicatorsRouteImport } from './routes/_layout/identities.$id.indicators'
 import { Route as LayoutIdentitiesIdMembersRouteImport } from './routes/_layout/identities.$id.members'
 import { Route as LayoutIdentitiesIdTimelineRouteImport } from './routes/_layout/identities.$id.timeline'
@@ -114,6 +117,7 @@ import { Route as LayoutMlAnomaliesIdEventRouteImport } from './routes/_layout/m
 import { Route as LayoutMlAnomaliesIdScoresRouteImport } from './routes/_layout/ml-anomalies.$id.scores'
 import { Route as LayoutMlAnomaliesIdTriageRouteImport } from './routes/_layout/ml-anomalies.$id.triage'
 import { Route as LayoutNetworksCidrIndexRouteImport } from './routes/_layout/networks.$cidr.index'
+import { Route as LayoutNetworksCidrBreakdownRouteImport } from './routes/_layout/networks.$cidr.breakdown'
 import { Route as LayoutNetworksCidrCampaignRouteImport } from './routes/_layout/networks.$cidr.campaign'
 import { Route as LayoutNetworksCidrEventsRouteImport } from './routes/_layout/networks.$cidr.events'
 import { Route as LayoutNetworksCidrSourcesRouteImport } from './routes/_layout/networks.$cidr.sources'
@@ -149,6 +153,8 @@ import { Route as LayoutSessionsIdRawRouteImport } from './routes/_layout/sessio
 import { Route as LayoutSessionsIdRecordingRouteImport } from './routes/_layout/sessions.$id.recording'
 import { Route as LayoutSourcesIpIndexRouteImport } from './routes/_layout/sources.$ip.index'
 import { Route as LayoutSourcesIpAlertsRouteImport } from './routes/_layout/sources.$ip.alerts'
+import { Route as LayoutSourcesIpBehaviorRouteImport } from './routes/_layout/sources.$ip.behavior'
+import { Route as LayoutSourcesIpBreakdownRouteImport } from './routes/_layout/sources.$ip.breakdown'
 import { Route as LayoutSourcesIpCommandsRouteImport } from './routes/_layout/sources.$ip.commands'
 import { Route as LayoutSourcesIpCredentialsRouteImport } from './routes/_layout/sources.$ip.credentials'
 import { Route as LayoutSourcesIpEventsRouteImport } from './routes/_layout/sources.$ip.events'
@@ -158,10 +164,12 @@ import { Route as LayoutSourcesIpPayloadsRouteImport } from './routes/_layout/so
 import { Route as LayoutSourcesIpSessionsRouteImport } from './routes/_layout/sources.$ip.sessions'
 import { Route as LayoutSourcesIpTimelineRouteImport } from './routes/_layout/sources.$ip.timeline'
 import { Route as LayoutClustersKindValueIndexRouteImport } from './routes/_layout/clusters.$kind.$value.index'
+import { Route as LayoutClustersKindValueBreakdownRouteImport } from './routes/_layout/clusters.$kind.$value.breakdown'
 import { Route as LayoutClustersKindValueEventsRouteImport } from './routes/_layout/clusters.$kind.$value.events'
 import { Route as LayoutClustersKindValueMembersRouteImport } from './routes/_layout/clusters.$kind.$value.members'
 import { Route as LayoutClustersKindValueTimelineRouteImport } from './routes/_layout/clusters.$kind.$value.timeline'
 import { Route as LayoutIocKindValueIndexRouteImport } from './routes/_layout/ioc.$kind.$value.index'
+import { Route as LayoutIocKindValueBreakdownRouteImport } from './routes/_layout/ioc.$kind.$value.breakdown'
 import { Route as LayoutIocKindValueEventsRouteImport } from './routes/_layout/ioc.$kind.$value.events'
 import { Route as LayoutIocKindValuePayloadsRouteImport } from './routes/_layout/ioc.$kind.$value.payloads'
 import { Route as LayoutIocKindValueSessionsRouteImport } from './routes/_layout/ioc.$kind.$value.sessions'
@@ -532,6 +540,11 @@ const LayoutAsnAsnIndexRoute = LayoutAsnAsnIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutAsnAsnRoute,
 } as any)
+const LayoutAsnAsnBreakdownRoute = LayoutAsnAsnBreakdownRouteImport.update({
+  id: '/breakdown',
+  path: '/breakdown',
+  getParentRoute: () => LayoutAsnAsnRoute,
+} as any)
 const LayoutAsnAsnEventsRoute = LayoutAsnAsnEventsRouteImport.update({
   id: '/events',
   path: '/events',
@@ -556,6 +569,12 @@ const LayoutCampaignsCidrIndexRoute =
   LayoutCampaignsCidrIndexRouteImport.update({
     id: '/',
     path: '/',
+    getParentRoute: () => LayoutCampaignsCidrRoute,
+  } as any)
+const LayoutCampaignsCidrBreakdownRoute =
+  LayoutCampaignsCidrBreakdownRouteImport.update({
+    id: '/breakdown',
+    path: '/breakdown',
     getParentRoute: () => LayoutCampaignsCidrRoute,
   } as any)
 const LayoutCampaignsCidrCredentialsRoute =
@@ -628,6 +647,12 @@ const LayoutIdentitiesIdIndexRoute = LayoutIdentitiesIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutIdentitiesIdRoute,
 } as any)
+const LayoutIdentitiesIdBreakdownRoute =
+  LayoutIdentitiesIdBreakdownRouteImport.update({
+    id: '/breakdown',
+    path: '/breakdown',
+    getParentRoute: () => LayoutIdentitiesIdRoute,
+  } as any)
 const LayoutIdentitiesIdIndicatorsRoute =
   LayoutIdentitiesIdIndicatorsRouteImport.update({
     id: '/indicators',
@@ -719,6 +744,12 @@ const LayoutNetworksCidrIndexRoute = LayoutNetworksCidrIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutNetworksCidrRoute,
 } as any)
+const LayoutNetworksCidrBreakdownRoute =
+  LayoutNetworksCidrBreakdownRouteImport.update({
+    id: '/breakdown',
+    path: '/breakdown',
+    getParentRoute: () => LayoutNetworksCidrRoute,
+  } as any)
 const LayoutNetworksCidrCampaignRoute =
   LayoutNetworksCidrCampaignRouteImport.update({
     id: '/campaign',
@@ -922,6 +953,17 @@ const LayoutSourcesIpAlertsRoute = LayoutSourcesIpAlertsRouteImport.update({
   path: '/alerts',
   getParentRoute: () => LayoutSourcesIpRoute,
 } as any)
+const LayoutSourcesIpBehaviorRoute = LayoutSourcesIpBehaviorRouteImport.update({
+  id: '/behavior',
+  path: '/behavior',
+  getParentRoute: () => LayoutSourcesIpRoute,
+} as any)
+const LayoutSourcesIpBreakdownRoute =
+  LayoutSourcesIpBreakdownRouteImport.update({
+    id: '/breakdown',
+    path: '/breakdown',
+    getParentRoute: () => LayoutSourcesIpRoute,
+  } as any)
 const LayoutSourcesIpCommandsRoute = LayoutSourcesIpCommandsRouteImport.update({
   id: '/commands',
   path: '/commands',
@@ -969,6 +1011,12 @@ const LayoutClustersKindValueIndexRoute =
     path: '/',
     getParentRoute: () => LayoutClustersKindValueRoute,
   } as any)
+const LayoutClustersKindValueBreakdownRoute =
+  LayoutClustersKindValueBreakdownRouteImport.update({
+    id: '/breakdown',
+    path: '/breakdown',
+    getParentRoute: () => LayoutClustersKindValueRoute,
+  } as any)
 const LayoutClustersKindValueEventsRoute =
   LayoutClustersKindValueEventsRouteImport.update({
     id: '/events',
@@ -992,6 +1040,12 @@ const LayoutIocKindValueIndexRoute = LayoutIocKindValueIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutIocKindValueRoute,
 } as any)
+const LayoutIocKindValueBreakdownRoute =
+  LayoutIocKindValueBreakdownRouteImport.update({
+    id: '/breakdown',
+    path: '/breakdown',
+    getParentRoute: () => LayoutIocKindValueRoute,
+  } as any)
 const LayoutIocKindValueEventsRoute =
   LayoutIocKindValueEventsRouteImport.update({
     id: '/events',
@@ -1091,10 +1145,12 @@ export interface FileRoutesByFullPath {
   '/agent-campaigns/$id/rules': typeof LayoutAgentCampaignsIdRulesRoute
   '/alerts/$key/evidence': typeof LayoutAlertsKeyEvidenceRoute
   '/alerts/$key/members': typeof LayoutAlertsKeyMembersRoute
+  '/asn/$asn/breakdown': typeof LayoutAsnAsnBreakdownRoute
   '/asn/$asn/events': typeof LayoutAsnAsnEventsRoute
   '/asn/$asn/networks': typeof LayoutAsnAsnNetworksRoute
   '/asn/$asn/sources': typeof LayoutAsnAsnSourcesRoute
   '/asn/$asn/timeline': typeof LayoutAsnAsnTimelineRoute
+  '/campaigns/$cidr/breakdown': typeof LayoutCampaignsCidrBreakdownRoute
   '/campaigns/$cidr/credentials': typeof LayoutCampaignsCidrCredentialsRoute
   '/campaigns/$cidr/sources': typeof LayoutCampaignsCidrSourcesRoute
   '/campaigns/$cidr/timeline': typeof LayoutCampaignsCidrTimelineRoute
@@ -1106,6 +1162,7 @@ export interface FileRoutesByFullPath {
   '/events/$id/raw': typeof LayoutEventsIdRawRoute
   '/events/$id/session': typeof LayoutEventsIdSessionRoute
   '/events/$id/source': typeof LayoutEventsIdSourceRoute
+  '/identities/$id/breakdown': typeof LayoutIdentitiesIdBreakdownRoute
   '/identities/$id/indicators': typeof LayoutIdentitiesIdIndicatorsRoute
   '/identities/$id/members': typeof LayoutIdentitiesIdMembersRoute
   '/identities/$id/timeline': typeof LayoutIdentitiesIdTimelineRoute
@@ -1119,6 +1176,7 @@ export interface FileRoutesByFullPath {
   '/ml-anomalies/$id/event': typeof LayoutMlAnomaliesIdEventRoute
   '/ml-anomalies/$id/scores': typeof LayoutMlAnomaliesIdScoresRoute
   '/ml-anomalies/$id/triage': typeof LayoutMlAnomaliesIdTriageRoute
+  '/networks/$cidr/breakdown': typeof LayoutNetworksCidrBreakdownRoute
   '/networks/$cidr/campaign': typeof LayoutNetworksCidrCampaignRoute
   '/networks/$cidr/events': typeof LayoutNetworksCidrEventsRoute
   '/networks/$cidr/sources': typeof LayoutNetworksCidrSourcesRoute
@@ -1149,6 +1207,8 @@ export interface FileRoutesByFullPath {
   '/sessions/$id/raw': typeof LayoutSessionsIdRawRoute
   '/sessions/$id/recording': typeof LayoutSessionsIdRecordingRoute
   '/sources/$ip/alerts': typeof LayoutSourcesIpAlertsRoute
+  '/sources/$ip/behavior': typeof LayoutSourcesIpBehaviorRoute
+  '/sources/$ip/breakdown': typeof LayoutSourcesIpBreakdownRoute
   '/sources/$ip/commands': typeof LayoutSourcesIpCommandsRoute
   '/sources/$ip/credentials': typeof LayoutSourcesIpCredentialsRoute
   '/sources/$ip/events': typeof LayoutSourcesIpEventsRoute
@@ -1171,9 +1231,11 @@ export interface FileRoutesByFullPath {
   '/sensors/$sensor/': typeof LayoutSensorsSensorIndexRoute
   '/sessions/$id/': typeof LayoutSessionsIdIndexRoute
   '/sources/$ip/': typeof LayoutSourcesIpIndexRoute
+  '/clusters/$kind/$value/breakdown': typeof LayoutClustersKindValueBreakdownRoute
   '/clusters/$kind/$value/events': typeof LayoutClustersKindValueEventsRoute
   '/clusters/$kind/$value/members': typeof LayoutClustersKindValueMembersRoute
   '/clusters/$kind/$value/timeline': typeof LayoutClustersKindValueTimelineRoute
+  '/ioc/$kind/$value/breakdown': typeof LayoutIocKindValueBreakdownRoute
   '/ioc/$kind/$value/events': typeof LayoutIocKindValueEventsRoute
   '/ioc/$kind/$value/payloads': typeof LayoutIocKindValuePayloadsRoute
   '/ioc/$kind/$value/sessions': typeof LayoutIocKindValueSessionsRoute
@@ -1236,10 +1298,12 @@ export interface FileRoutesByTo {
   '/agent-campaigns/$id/rules': typeof LayoutAgentCampaignsIdRulesRoute
   '/alerts/$key/evidence': typeof LayoutAlertsKeyEvidenceRoute
   '/alerts/$key/members': typeof LayoutAlertsKeyMembersRoute
+  '/asn/$asn/breakdown': typeof LayoutAsnAsnBreakdownRoute
   '/asn/$asn/events': typeof LayoutAsnAsnEventsRoute
   '/asn/$asn/networks': typeof LayoutAsnAsnNetworksRoute
   '/asn/$asn/sources': typeof LayoutAsnAsnSourcesRoute
   '/asn/$asn/timeline': typeof LayoutAsnAsnTimelineRoute
+  '/campaigns/$cidr/breakdown': typeof LayoutCampaignsCidrBreakdownRoute
   '/campaigns/$cidr/credentials': typeof LayoutCampaignsCidrCredentialsRoute
   '/campaigns/$cidr/sources': typeof LayoutCampaignsCidrSourcesRoute
   '/campaigns/$cidr/timeline': typeof LayoutCampaignsCidrTimelineRoute
@@ -1250,6 +1314,7 @@ export interface FileRoutesByTo {
   '/events/$id/raw': typeof LayoutEventsIdRawRoute
   '/events/$id/session': typeof LayoutEventsIdSessionRoute
   '/events/$id/source': typeof LayoutEventsIdSourceRoute
+  '/identities/$id/breakdown': typeof LayoutIdentitiesIdBreakdownRoute
   '/identities/$id/indicators': typeof LayoutIdentitiesIdIndicatorsRoute
   '/identities/$id/members': typeof LayoutIdentitiesIdMembersRoute
   '/identities/$id/timeline': typeof LayoutIdentitiesIdTimelineRoute
@@ -1262,6 +1327,7 @@ export interface FileRoutesByTo {
   '/ml-anomalies/$id/event': typeof LayoutMlAnomaliesIdEventRoute
   '/ml-anomalies/$id/scores': typeof LayoutMlAnomaliesIdScoresRoute
   '/ml-anomalies/$id/triage': typeof LayoutMlAnomaliesIdTriageRoute
+  '/networks/$cidr/breakdown': typeof LayoutNetworksCidrBreakdownRoute
   '/networks/$cidr/campaign': typeof LayoutNetworksCidrCampaignRoute
   '/networks/$cidr/events': typeof LayoutNetworksCidrEventsRoute
   '/networks/$cidr/sources': typeof LayoutNetworksCidrSourcesRoute
@@ -1292,6 +1358,8 @@ export interface FileRoutesByTo {
   '/sessions/$id/raw': typeof LayoutSessionsIdRawRoute
   '/sessions/$id/recording': typeof LayoutSessionsIdRecordingRoute
   '/sources/$ip/alerts': typeof LayoutSourcesIpAlertsRoute
+  '/sources/$ip/behavior': typeof LayoutSourcesIpBehaviorRoute
+  '/sources/$ip/breakdown': typeof LayoutSourcesIpBreakdownRoute
   '/sources/$ip/commands': typeof LayoutSourcesIpCommandsRoute
   '/sources/$ip/credentials': typeof LayoutSourcesIpCredentialsRoute
   '/sources/$ip/events': typeof LayoutSourcesIpEventsRoute
@@ -1314,9 +1382,11 @@ export interface FileRoutesByTo {
   '/sensors/$sensor': typeof LayoutSensorsSensorIndexRoute
   '/sessions/$id': typeof LayoutSessionsIdIndexRoute
   '/sources/$ip': typeof LayoutSourcesIpIndexRoute
+  '/clusters/$kind/$value/breakdown': typeof LayoutClustersKindValueBreakdownRoute
   '/clusters/$kind/$value/events': typeof LayoutClustersKindValueEventsRoute
   '/clusters/$kind/$value/members': typeof LayoutClustersKindValueMembersRoute
   '/clusters/$kind/$value/timeline': typeof LayoutClustersKindValueTimelineRoute
+  '/ioc/$kind/$value/breakdown': typeof LayoutIocKindValueBreakdownRoute
   '/ioc/$kind/$value/events': typeof LayoutIocKindValueEventsRoute
   '/ioc/$kind/$value/payloads': typeof LayoutIocKindValuePayloadsRoute
   '/ioc/$kind/$value/sessions': typeof LayoutIocKindValueSessionsRoute
@@ -1395,10 +1465,12 @@ export interface FileRoutesById {
   '/_layout/agent-campaigns/$id/rules': typeof LayoutAgentCampaignsIdRulesRoute
   '/_layout/alerts/$key/evidence': typeof LayoutAlertsKeyEvidenceRoute
   '/_layout/alerts/$key/members': typeof LayoutAlertsKeyMembersRoute
+  '/_layout/asn/$asn/breakdown': typeof LayoutAsnAsnBreakdownRoute
   '/_layout/asn/$asn/events': typeof LayoutAsnAsnEventsRoute
   '/_layout/asn/$asn/networks': typeof LayoutAsnAsnNetworksRoute
   '/_layout/asn/$asn/sources': typeof LayoutAsnAsnSourcesRoute
   '/_layout/asn/$asn/timeline': typeof LayoutAsnAsnTimelineRoute
+  '/_layout/campaigns/$cidr/breakdown': typeof LayoutCampaignsCidrBreakdownRoute
   '/_layout/campaigns/$cidr/credentials': typeof LayoutCampaignsCidrCredentialsRoute
   '/_layout/campaigns/$cidr/sources': typeof LayoutCampaignsCidrSourcesRoute
   '/_layout/campaigns/$cidr/timeline': typeof LayoutCampaignsCidrTimelineRoute
@@ -1410,6 +1482,7 @@ export interface FileRoutesById {
   '/_layout/events/$id/raw': typeof LayoutEventsIdRawRoute
   '/_layout/events/$id/session': typeof LayoutEventsIdSessionRoute
   '/_layout/events/$id/source': typeof LayoutEventsIdSourceRoute
+  '/_layout/identities/$id/breakdown': typeof LayoutIdentitiesIdBreakdownRoute
   '/_layout/identities/$id/indicators': typeof LayoutIdentitiesIdIndicatorsRoute
   '/_layout/identities/$id/members': typeof LayoutIdentitiesIdMembersRoute
   '/_layout/identities/$id/timeline': typeof LayoutIdentitiesIdTimelineRoute
@@ -1423,6 +1496,7 @@ export interface FileRoutesById {
   '/_layout/ml-anomalies/$id/event': typeof LayoutMlAnomaliesIdEventRoute
   '/_layout/ml-anomalies/$id/scores': typeof LayoutMlAnomaliesIdScoresRoute
   '/_layout/ml-anomalies/$id/triage': typeof LayoutMlAnomaliesIdTriageRoute
+  '/_layout/networks/$cidr/breakdown': typeof LayoutNetworksCidrBreakdownRoute
   '/_layout/networks/$cidr/campaign': typeof LayoutNetworksCidrCampaignRoute
   '/_layout/networks/$cidr/events': typeof LayoutNetworksCidrEventsRoute
   '/_layout/networks/$cidr/sources': typeof LayoutNetworksCidrSourcesRoute
@@ -1453,6 +1527,8 @@ export interface FileRoutesById {
   '/_layout/sessions/$id/raw': typeof LayoutSessionsIdRawRoute
   '/_layout/sessions/$id/recording': typeof LayoutSessionsIdRecordingRoute
   '/_layout/sources/$ip/alerts': typeof LayoutSourcesIpAlertsRoute
+  '/_layout/sources/$ip/behavior': typeof LayoutSourcesIpBehaviorRoute
+  '/_layout/sources/$ip/breakdown': typeof LayoutSourcesIpBreakdownRoute
   '/_layout/sources/$ip/commands': typeof LayoutSourcesIpCommandsRoute
   '/_layout/sources/$ip/credentials': typeof LayoutSourcesIpCredentialsRoute
   '/_layout/sources/$ip/events': typeof LayoutSourcesIpEventsRoute
@@ -1475,9 +1551,11 @@ export interface FileRoutesById {
   '/_layout/sensors/$sensor/': typeof LayoutSensorsSensorIndexRoute
   '/_layout/sessions/$id/': typeof LayoutSessionsIdIndexRoute
   '/_layout/sources/$ip/': typeof LayoutSourcesIpIndexRoute
+  '/_layout/clusters/$kind/$value/breakdown': typeof LayoutClustersKindValueBreakdownRoute
   '/_layout/clusters/$kind/$value/events': typeof LayoutClustersKindValueEventsRoute
   '/_layout/clusters/$kind/$value/members': typeof LayoutClustersKindValueMembersRoute
   '/_layout/clusters/$kind/$value/timeline': typeof LayoutClustersKindValueTimelineRoute
+  '/_layout/ioc/$kind/$value/breakdown': typeof LayoutIocKindValueBreakdownRoute
   '/_layout/ioc/$kind/$value/events': typeof LayoutIocKindValueEventsRoute
   '/_layout/ioc/$kind/$value/payloads': typeof LayoutIocKindValuePayloadsRoute
   '/_layout/ioc/$kind/$value/sessions': typeof LayoutIocKindValueSessionsRoute
@@ -1556,10 +1634,12 @@ export interface FileRouteTypes {
     | '/agent-campaigns/$id/rules'
     | '/alerts/$key/evidence'
     | '/alerts/$key/members'
+    | '/asn/$asn/breakdown'
     | '/asn/$asn/events'
     | '/asn/$asn/networks'
     | '/asn/$asn/sources'
     | '/asn/$asn/timeline'
+    | '/campaigns/$cidr/breakdown'
     | '/campaigns/$cidr/credentials'
     | '/campaigns/$cidr/sources'
     | '/campaigns/$cidr/timeline'
@@ -1571,6 +1651,7 @@ export interface FileRouteTypes {
     | '/events/$id/raw'
     | '/events/$id/session'
     | '/events/$id/source'
+    | '/identities/$id/breakdown'
     | '/identities/$id/indicators'
     | '/identities/$id/members'
     | '/identities/$id/timeline'
@@ -1584,6 +1665,7 @@ export interface FileRouteTypes {
     | '/ml-anomalies/$id/event'
     | '/ml-anomalies/$id/scores'
     | '/ml-anomalies/$id/triage'
+    | '/networks/$cidr/breakdown'
     | '/networks/$cidr/campaign'
     | '/networks/$cidr/events'
     | '/networks/$cidr/sources'
@@ -1614,6 +1696,8 @@ export interface FileRouteTypes {
     | '/sessions/$id/raw'
     | '/sessions/$id/recording'
     | '/sources/$ip/alerts'
+    | '/sources/$ip/behavior'
+    | '/sources/$ip/breakdown'
     | '/sources/$ip/commands'
     | '/sources/$ip/credentials'
     | '/sources/$ip/events'
@@ -1636,9 +1720,11 @@ export interface FileRouteTypes {
     | '/sensors/$sensor/'
     | '/sessions/$id/'
     | '/sources/$ip/'
+    | '/clusters/$kind/$value/breakdown'
     | '/clusters/$kind/$value/events'
     | '/clusters/$kind/$value/members'
     | '/clusters/$kind/$value/timeline'
+    | '/ioc/$kind/$value/breakdown'
     | '/ioc/$kind/$value/events'
     | '/ioc/$kind/$value/payloads'
     | '/ioc/$kind/$value/sessions'
@@ -1701,10 +1787,12 @@ export interface FileRouteTypes {
     | '/agent-campaigns/$id/rules'
     | '/alerts/$key/evidence'
     | '/alerts/$key/members'
+    | '/asn/$asn/breakdown'
     | '/asn/$asn/events'
     | '/asn/$asn/networks'
     | '/asn/$asn/sources'
     | '/asn/$asn/timeline'
+    | '/campaigns/$cidr/breakdown'
     | '/campaigns/$cidr/credentials'
     | '/campaigns/$cidr/sources'
     | '/campaigns/$cidr/timeline'
@@ -1715,6 +1803,7 @@ export interface FileRouteTypes {
     | '/events/$id/raw'
     | '/events/$id/session'
     | '/events/$id/source'
+    | '/identities/$id/breakdown'
     | '/identities/$id/indicators'
     | '/identities/$id/members'
     | '/identities/$id/timeline'
@@ -1727,6 +1816,7 @@ export interface FileRouteTypes {
     | '/ml-anomalies/$id/event'
     | '/ml-anomalies/$id/scores'
     | '/ml-anomalies/$id/triage'
+    | '/networks/$cidr/breakdown'
     | '/networks/$cidr/campaign'
     | '/networks/$cidr/events'
     | '/networks/$cidr/sources'
@@ -1757,6 +1847,8 @@ export interface FileRouteTypes {
     | '/sessions/$id/raw'
     | '/sessions/$id/recording'
     | '/sources/$ip/alerts'
+    | '/sources/$ip/behavior'
+    | '/sources/$ip/breakdown'
     | '/sources/$ip/commands'
     | '/sources/$ip/credentials'
     | '/sources/$ip/events'
@@ -1779,9 +1871,11 @@ export interface FileRouteTypes {
     | '/sensors/$sensor'
     | '/sessions/$id'
     | '/sources/$ip'
+    | '/clusters/$kind/$value/breakdown'
     | '/clusters/$kind/$value/events'
     | '/clusters/$kind/$value/members'
     | '/clusters/$kind/$value/timeline'
+    | '/ioc/$kind/$value/breakdown'
     | '/ioc/$kind/$value/events'
     | '/ioc/$kind/$value/payloads'
     | '/ioc/$kind/$value/sessions'
@@ -1859,10 +1953,12 @@ export interface FileRouteTypes {
     | '/_layout/agent-campaigns/$id/rules'
     | '/_layout/alerts/$key/evidence'
     | '/_layout/alerts/$key/members'
+    | '/_layout/asn/$asn/breakdown'
     | '/_layout/asn/$asn/events'
     | '/_layout/asn/$asn/networks'
     | '/_layout/asn/$asn/sources'
     | '/_layout/asn/$asn/timeline'
+    | '/_layout/campaigns/$cidr/breakdown'
     | '/_layout/campaigns/$cidr/credentials'
     | '/_layout/campaigns/$cidr/sources'
     | '/_layout/campaigns/$cidr/timeline'
@@ -1874,6 +1970,7 @@ export interface FileRouteTypes {
     | '/_layout/events/$id/raw'
     | '/_layout/events/$id/session'
     | '/_layout/events/$id/source'
+    | '/_layout/identities/$id/breakdown'
     | '/_layout/identities/$id/indicators'
     | '/_layout/identities/$id/members'
     | '/_layout/identities/$id/timeline'
@@ -1887,6 +1984,7 @@ export interface FileRouteTypes {
     | '/_layout/ml-anomalies/$id/event'
     | '/_layout/ml-anomalies/$id/scores'
     | '/_layout/ml-anomalies/$id/triage'
+    | '/_layout/networks/$cidr/breakdown'
     | '/_layout/networks/$cidr/campaign'
     | '/_layout/networks/$cidr/events'
     | '/_layout/networks/$cidr/sources'
@@ -1917,6 +2015,8 @@ export interface FileRouteTypes {
     | '/_layout/sessions/$id/raw'
     | '/_layout/sessions/$id/recording'
     | '/_layout/sources/$ip/alerts'
+    | '/_layout/sources/$ip/behavior'
+    | '/_layout/sources/$ip/breakdown'
     | '/_layout/sources/$ip/commands'
     | '/_layout/sources/$ip/credentials'
     | '/_layout/sources/$ip/events'
@@ -1939,9 +2039,11 @@ export interface FileRouteTypes {
     | '/_layout/sensors/$sensor/'
     | '/_layout/sessions/$id/'
     | '/_layout/sources/$ip/'
+    | '/_layout/clusters/$kind/$value/breakdown'
     | '/_layout/clusters/$kind/$value/events'
     | '/_layout/clusters/$kind/$value/members'
     | '/_layout/clusters/$kind/$value/timeline'
+    | '/_layout/ioc/$kind/$value/breakdown'
     | '/_layout/ioc/$kind/$value/events'
     | '/_layout/ioc/$kind/$value/payloads'
     | '/_layout/ioc/$kind/$value/sessions'
@@ -2454,6 +2556,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAsnAsnIndexRouteImport
       parentRoute: typeof LayoutAsnAsnRoute
     }
+    '/_layout/asn/$asn/breakdown': {
+      id: '/_layout/asn/$asn/breakdown'
+      path: '/breakdown'
+      fullPath: '/asn/$asn/breakdown'
+      preLoaderRoute: typeof LayoutAsnAsnBreakdownRouteImport
+      parentRoute: typeof LayoutAsnAsnRoute
+    }
     '/_layout/asn/$asn/events': {
       id: '/_layout/asn/$asn/events'
       path: '/events'
@@ -2487,6 +2596,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/campaigns/$cidr/'
       preLoaderRoute: typeof LayoutCampaignsCidrIndexRouteImport
+      parentRoute: typeof LayoutCampaignsCidrRoute
+    }
+    '/_layout/campaigns/$cidr/breakdown': {
+      id: '/_layout/campaigns/$cidr/breakdown'
+      path: '/breakdown'
+      fullPath: '/campaigns/$cidr/breakdown'
+      preLoaderRoute: typeof LayoutCampaignsCidrBreakdownRouteImport
       parentRoute: typeof LayoutCampaignsCidrRoute
     }
     '/_layout/campaigns/$cidr/credentials': {
@@ -2578,6 +2694,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/identities/$id/'
       preLoaderRoute: typeof LayoutIdentitiesIdIndexRouteImport
+      parentRoute: typeof LayoutIdentitiesIdRoute
+    }
+    '/_layout/identities/$id/breakdown': {
+      id: '/_layout/identities/$id/breakdown'
+      path: '/breakdown'
+      fullPath: '/identities/$id/breakdown'
+      preLoaderRoute: typeof LayoutIdentitiesIdBreakdownRouteImport
       parentRoute: typeof LayoutIdentitiesIdRoute
     }
     '/_layout/identities/$id/indicators': {
@@ -2690,6 +2813,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/networks/$cidr/'
       preLoaderRoute: typeof LayoutNetworksCidrIndexRouteImport
+      parentRoute: typeof LayoutNetworksCidrRoute
+    }
+    '/_layout/networks/$cidr/breakdown': {
+      id: '/_layout/networks/$cidr/breakdown'
+      path: '/breakdown'
+      fullPath: '/networks/$cidr/breakdown'
+      preLoaderRoute: typeof LayoutNetworksCidrBreakdownRouteImport
       parentRoute: typeof LayoutNetworksCidrRoute
     }
     '/_layout/networks/$cidr/campaign': {
@@ -2937,6 +3067,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSourcesIpAlertsRouteImport
       parentRoute: typeof LayoutSourcesIpRoute
     }
+    '/_layout/sources/$ip/behavior': {
+      id: '/_layout/sources/$ip/behavior'
+      path: '/behavior'
+      fullPath: '/sources/$ip/behavior'
+      preLoaderRoute: typeof LayoutSourcesIpBehaviorRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
+    '/_layout/sources/$ip/breakdown': {
+      id: '/_layout/sources/$ip/breakdown'
+      path: '/breakdown'
+      fullPath: '/sources/$ip/breakdown'
+      preLoaderRoute: typeof LayoutSourcesIpBreakdownRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
     '/_layout/sources/$ip/commands': {
       id: '/_layout/sources/$ip/commands'
       path: '/commands'
@@ -3000,6 +3144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutClustersKindValueIndexRouteImport
       parentRoute: typeof LayoutClustersKindValueRoute
     }
+    '/_layout/clusters/$kind/$value/breakdown': {
+      id: '/_layout/clusters/$kind/$value/breakdown'
+      path: '/breakdown'
+      fullPath: '/clusters/$kind/$value/breakdown'
+      preLoaderRoute: typeof LayoutClustersKindValueBreakdownRouteImport
+      parentRoute: typeof LayoutClustersKindValueRoute
+    }
     '/_layout/clusters/$kind/$value/events': {
       id: '/_layout/clusters/$kind/$value/events'
       path: '/events'
@@ -3026,6 +3177,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/ioc/$kind/$value/'
       preLoaderRoute: typeof LayoutIocKindValueIndexRouteImport
+      parentRoute: typeof LayoutIocKindValueRoute
+    }
+    '/_layout/ioc/$kind/$value/breakdown': {
+      id: '/_layout/ioc/$kind/$value/breakdown'
+      path: '/breakdown'
+      fullPath: '/ioc/$kind/$value/breakdown'
+      preLoaderRoute: typeof LayoutIocKindValueBreakdownRouteImport
       parentRoute: typeof LayoutIocKindValueRoute
     }
     '/_layout/ioc/$kind/$value/events': {
@@ -3103,6 +3261,7 @@ const LayoutAlertsKeyRouteWithChildren = LayoutAlertsKeyRoute._addFileChildren(
 )
 
 interface LayoutAsnAsnRouteChildren {
+  LayoutAsnAsnBreakdownRoute: typeof LayoutAsnAsnBreakdownRoute
   LayoutAsnAsnEventsRoute: typeof LayoutAsnAsnEventsRoute
   LayoutAsnAsnNetworksRoute: typeof LayoutAsnAsnNetworksRoute
   LayoutAsnAsnSourcesRoute: typeof LayoutAsnAsnSourcesRoute
@@ -3111,6 +3270,7 @@ interface LayoutAsnAsnRouteChildren {
 }
 
 const LayoutAsnAsnRouteChildren: LayoutAsnAsnRouteChildren = {
+  LayoutAsnAsnBreakdownRoute: LayoutAsnAsnBreakdownRoute,
   LayoutAsnAsnEventsRoute: LayoutAsnAsnEventsRoute,
   LayoutAsnAsnNetworksRoute: LayoutAsnAsnNetworksRoute,
   LayoutAsnAsnSourcesRoute: LayoutAsnAsnSourcesRoute,
@@ -3123,6 +3283,7 @@ const LayoutAsnAsnRouteWithChildren = LayoutAsnAsnRoute._addFileChildren(
 )
 
 interface LayoutCampaignsCidrRouteChildren {
+  LayoutCampaignsCidrBreakdownRoute: typeof LayoutCampaignsCidrBreakdownRoute
   LayoutCampaignsCidrCredentialsRoute: typeof LayoutCampaignsCidrCredentialsRoute
   LayoutCampaignsCidrSourcesRoute: typeof LayoutCampaignsCidrSourcesRoute
   LayoutCampaignsCidrTimelineRoute: typeof LayoutCampaignsCidrTimelineRoute
@@ -3131,6 +3292,7 @@ interface LayoutCampaignsCidrRouteChildren {
 }
 
 const LayoutCampaignsCidrRouteChildren: LayoutCampaignsCidrRouteChildren = {
+  LayoutCampaignsCidrBreakdownRoute: LayoutCampaignsCidrBreakdownRoute,
   LayoutCampaignsCidrCredentialsRoute: LayoutCampaignsCidrCredentialsRoute,
   LayoutCampaignsCidrSourcesRoute: LayoutCampaignsCidrSourcesRoute,
   LayoutCampaignsCidrTimelineRoute: LayoutCampaignsCidrTimelineRoute,
@@ -3164,6 +3326,7 @@ const LayoutEventsIdRouteWithChildren = LayoutEventsIdRoute._addFileChildren(
 )
 
 interface LayoutIdentitiesIdRouteChildren {
+  LayoutIdentitiesIdBreakdownRoute: typeof LayoutIdentitiesIdBreakdownRoute
   LayoutIdentitiesIdIndicatorsRoute: typeof LayoutIdentitiesIdIndicatorsRoute
   LayoutIdentitiesIdMembersRoute: typeof LayoutIdentitiesIdMembersRoute
   LayoutIdentitiesIdTimelineRoute: typeof LayoutIdentitiesIdTimelineRoute
@@ -3172,6 +3335,7 @@ interface LayoutIdentitiesIdRouteChildren {
 }
 
 const LayoutIdentitiesIdRouteChildren: LayoutIdentitiesIdRouteChildren = {
+  LayoutIdentitiesIdBreakdownRoute: LayoutIdentitiesIdBreakdownRoute,
   LayoutIdentitiesIdIndicatorsRoute: LayoutIdentitiesIdIndicatorsRoute,
   LayoutIdentitiesIdMembersRoute: LayoutIdentitiesIdMembersRoute,
   LayoutIdentitiesIdTimelineRoute: LayoutIdentitiesIdTimelineRoute,
@@ -3217,6 +3381,7 @@ const LayoutMlAnomaliesIdRouteWithChildren =
   LayoutMlAnomaliesIdRoute._addFileChildren(LayoutMlAnomaliesIdRouteChildren)
 
 interface LayoutNetworksCidrRouteChildren {
+  LayoutNetworksCidrBreakdownRoute: typeof LayoutNetworksCidrBreakdownRoute
   LayoutNetworksCidrCampaignRoute: typeof LayoutNetworksCidrCampaignRoute
   LayoutNetworksCidrEventsRoute: typeof LayoutNetworksCidrEventsRoute
   LayoutNetworksCidrSourcesRoute: typeof LayoutNetworksCidrSourcesRoute
@@ -3225,6 +3390,7 @@ interface LayoutNetworksCidrRouteChildren {
 }
 
 const LayoutNetworksCidrRouteChildren: LayoutNetworksCidrRouteChildren = {
+  LayoutNetworksCidrBreakdownRoute: LayoutNetworksCidrBreakdownRoute,
   LayoutNetworksCidrCampaignRoute: LayoutNetworksCidrCampaignRoute,
   LayoutNetworksCidrEventsRoute: LayoutNetworksCidrEventsRoute,
   LayoutNetworksCidrSourcesRoute: LayoutNetworksCidrSourcesRoute,
@@ -3330,6 +3496,8 @@ const LayoutSessionsIdRouteWithChildren =
 
 interface LayoutSourcesIpRouteChildren {
   LayoutSourcesIpAlertsRoute: typeof LayoutSourcesIpAlertsRoute
+  LayoutSourcesIpBehaviorRoute: typeof LayoutSourcesIpBehaviorRoute
+  LayoutSourcesIpBreakdownRoute: typeof LayoutSourcesIpBreakdownRoute
   LayoutSourcesIpCommandsRoute: typeof LayoutSourcesIpCommandsRoute
   LayoutSourcesIpCredentialsRoute: typeof LayoutSourcesIpCredentialsRoute
   LayoutSourcesIpEventsRoute: typeof LayoutSourcesIpEventsRoute
@@ -3343,6 +3511,8 @@ interface LayoutSourcesIpRouteChildren {
 
 const LayoutSourcesIpRouteChildren: LayoutSourcesIpRouteChildren = {
   LayoutSourcesIpAlertsRoute: LayoutSourcesIpAlertsRoute,
+  LayoutSourcesIpBehaviorRoute: LayoutSourcesIpBehaviorRoute,
+  LayoutSourcesIpBreakdownRoute: LayoutSourcesIpBreakdownRoute,
   LayoutSourcesIpCommandsRoute: LayoutSourcesIpCommandsRoute,
   LayoutSourcesIpCredentialsRoute: LayoutSourcesIpCredentialsRoute,
   LayoutSourcesIpEventsRoute: LayoutSourcesIpEventsRoute,
@@ -3359,6 +3529,7 @@ const LayoutSourcesIpRouteWithChildren = LayoutSourcesIpRoute._addFileChildren(
 )
 
 interface LayoutClustersKindValueRouteChildren {
+  LayoutClustersKindValueBreakdownRoute: typeof LayoutClustersKindValueBreakdownRoute
   LayoutClustersKindValueEventsRoute: typeof LayoutClustersKindValueEventsRoute
   LayoutClustersKindValueMembersRoute: typeof LayoutClustersKindValueMembersRoute
   LayoutClustersKindValueTimelineRoute: typeof LayoutClustersKindValueTimelineRoute
@@ -3367,6 +3538,8 @@ interface LayoutClustersKindValueRouteChildren {
 
 const LayoutClustersKindValueRouteChildren: LayoutClustersKindValueRouteChildren =
   {
+    LayoutClustersKindValueBreakdownRoute:
+      LayoutClustersKindValueBreakdownRoute,
     LayoutClustersKindValueEventsRoute: LayoutClustersKindValueEventsRoute,
     LayoutClustersKindValueMembersRoute: LayoutClustersKindValueMembersRoute,
     LayoutClustersKindValueTimelineRoute: LayoutClustersKindValueTimelineRoute,
@@ -3379,6 +3552,7 @@ const LayoutClustersKindValueRouteWithChildren =
   )
 
 interface LayoutIocKindValueRouteChildren {
+  LayoutIocKindValueBreakdownRoute: typeof LayoutIocKindValueBreakdownRoute
   LayoutIocKindValueEventsRoute: typeof LayoutIocKindValueEventsRoute
   LayoutIocKindValuePayloadsRoute: typeof LayoutIocKindValuePayloadsRoute
   LayoutIocKindValueSessionsRoute: typeof LayoutIocKindValueSessionsRoute
@@ -3388,6 +3562,7 @@ interface LayoutIocKindValueRouteChildren {
 }
 
 const LayoutIocKindValueRouteChildren: LayoutIocKindValueRouteChildren = {
+  LayoutIocKindValueBreakdownRoute: LayoutIocKindValueBreakdownRoute,
   LayoutIocKindValueEventsRoute: LayoutIocKindValueEventsRoute,
   LayoutIocKindValuePayloadsRoute: LayoutIocKindValuePayloadsRoute,
   LayoutIocKindValueSessionsRoute: LayoutIocKindValueSessionsRoute,
