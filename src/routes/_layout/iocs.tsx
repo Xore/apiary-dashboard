@@ -8,7 +8,7 @@ import { TextInput } from '@astryxdesign/core/TextInput'
 import { createFileRoute } from '@tanstack/react-router'
 import { IocLookup } from '#/components/IocLookup'
 import { RecordList } from '#/components/RecordList'
-import { useViewTabs } from '#/components/ViewTabs'
+import { searchTabs } from '#/components/ViewTabs'
 import { getIocCatalog, getNetworkCampaigns, getSourceProfiles } from '#/data/queries'
 import type { IocHubKind, IocRow } from '#/data/types'
 import { iocHref } from '#/lib/entities'
@@ -27,6 +27,7 @@ const KINDS: Array<{ id: IocHubKind; label: string; lede: string }> = [
 const isKind = (value: unknown): value is IocHubKind => KINDS.some((k) => k.id === value)
 
 export const Route = createFileRoute('/_layout/iocs')({
+  staticData: { viewTabs: searchTabs({ label: 'Indicator kinds', param: 'kind', tabs: (loaded) => KINDS.map((k) => ({ id: k.id, label: k.label, count: (loaded as { catalog?: Record<string, unknown[]> } | undefined)?.catalog?.[k.id].length })) }) },
   validateSearch: (search: Record<string, unknown>): { kind?: IocHubKind } => ({
     kind: isKind(search.kind) && search.kind !== 'hash' ? search.kind : undefined,
   }),
@@ -49,14 +50,7 @@ const columns: TableColumn<IocRow>[] = [
 function IocsPage() {
   const { catalog, examples } = Route.useLoaderData()
   const { kind = 'hash' } = Route.useSearch()
-  const navigate = Route.useNavigate()
   const [filter, setFilter] = useState('')
-  useViewTabs({
-    label: 'Indicator kinds',
-    tabs: KINDS.map((k) => ({ id: k.id, label: `${k.label} (${formatNumber(catalog[k.id].length)})` })),
-    value: kind,
-    onChange: (value) => void navigate({ search: (prev) => ({ ...prev, kind: value === 'hash' ? undefined : (value as IocHubKind) }) }),
-  })
   const current = KINDS.find((k) => k.id === kind)!
   const needle = filter.trim().toLowerCase()
   const rows = catalog[kind].filter((row) => !needle || row.value.toLowerCase().includes(needle))

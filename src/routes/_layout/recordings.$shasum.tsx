@@ -1,6 +1,8 @@
 import { Button } from '@astryxdesign/core/Button'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
+import { entityTabs } from '#/components/ViewTabs'
+import type { ViewTab } from '#/components/ViewTabs'
 import { EntityLink } from '#/components/EntityLink'
 import { NotFound } from '#/components/NotFound'
 import { getReplayDetail } from '#/data/queries'
@@ -8,6 +10,7 @@ import { downloadJson } from '#/lib/export'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/recordings/$shasum')({
+  staticData: { viewTabs: entityTabs({ label: 'Session recording views', basePath: (params) => `/recordings/${params.shasum}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const detail = await getReplayDetail(params.shasum)
     if (!detail) throw notFound()
@@ -65,13 +68,20 @@ function RecordingLayout() {
           ),
         },
       ]}
-      tabs={[
-        { id: 'playback', label: 'Playback' },
-        { id: 'sessions', label: 'Sessions', count: sessions.length },
-        { id: 'attacker', label: 'Attacker' },
-      ]}
     >
       <Outlet />
     </EntityFrame>
   )
+}
+
+/** The top-bar tabs: static until the loader data arrives, then with counts. */
+function tabsFor(loaded: unknown): ViewTab[] {
+  if (!loaded) return [{ id: 'playback', label: 'Playback' }, { id: 'sessions', label: 'Sessions' }, { id: 'attacker', label: 'Attacker' }]
+  const data = loaded as ReturnType<typeof Route.useLoaderData>
+  const { sessions } = data
+  return [
+    { id: 'playback', label: 'Playback' },
+    { id: 'sessions', label: 'Sessions', count: sessions.length },
+    { id: 'attacker', label: 'Attacker' },
+  ]
 }

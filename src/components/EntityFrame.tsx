@@ -14,7 +14,6 @@ import { basePathOf, readListContext } from '#/lib/listContext'
 import type { ListContext } from '#/lib/listContext'
 import { formatNumber } from '#/lib/format'
 import { getPins, getServerPins, subscribe, togglePin } from '#/lib/watchlist'
-import { useViewTabs } from './ViewTabs'
 
 function safeDecode(path: string): string {
   try {
@@ -22,14 +21,6 @@ function safeDecode(path: string): string {
   } catch {
     return path
   }
-}
-
-export type EntityTab = {
-  /** Path segment under the entity's base path; the first tab is the index. */
-  id: string
-  label: string
-  /** Shown in the tab label, e.g. "Sessions (6)". */
-  count?: number
 }
 
 type EntityFrameProps = {
@@ -42,9 +33,9 @@ type EntityFrameProps = {
   /** Key facts in one scannable strip. */
   facts?: Array<{ label: string; value: ReactNode }>
   actions?: ReactNode
-  /** The entity's base path, e.g. /sources/198.51.100.13 (encoded). */
+  /** The entity's base path, e.g. /sources/198.51.100.13 (encoded). Its tabs
+   * are declared on the route (`entityTabs` in ViewTabs). */
   basePath: string
-  tabs: EntityTab[]
   /** The active tab's content (the child route's Outlet). */
   children: ReactNode
 }
@@ -125,20 +116,11 @@ function PinButton({ href, kind, title }: { href: string; kind: string; title: s
 
 /** The frame every entity page shares (epic #25): identity header, key-fact
  * strip, actions, and tabs as route segments shown in the top bar. */
-export function EntityFrame({ kind, title, description, tokens, facts, actions, basePath, tabs, children }: EntityFrameProps) {
-  const navigate = useNavigate()
+export function EntityFrame({ kind, title, description, tokens, facts, actions, basePath, children }: EntityFrameProps) {
   // The router may hand back a partly decoded pathname, so compare both sides decoded.
   const pathname = safeDecode(useLocation({ select: (location) => location.pathname }))
   const base = safeDecode(basePath)
-  const rest = pathname.startsWith(base) ? pathname.slice(base.length).replace(/^\//, '') : ''
-  const active = tabs.find((tab) => tab.id === rest.split('/')[0])?.id ?? tabs[0].id
-
-  useViewTabs({
-    label: `${kind} views`,
-    tabs: tabs.map((tab) => ({ id: tab.id, label: tab.count === undefined ? tab.label : `${tab.label} (${formatNumber(tab.count)})` })),
-    value: active,
-    onChange: (id) => void navigate({ href: id === tabs[0].id ? basePath : `${basePath}/${id}` }),
-  })
+  const tab = pathname.startsWith(`${base}/`) ? pathname.slice(base.length + 1).split('/')[0] : ''
 
   return (
     <Layout
@@ -163,7 +145,7 @@ export function EntityFrame({ kind, title, description, tokens, facts, actions, 
                   {actions}
                   <PinButton href={basePath} kind={kind} title={typeof title === 'string' ? title : safeDecode(basePath.split('/').pop() ?? basePath)} />
                 </HStack>
-                <ListStepper basePath={basePath} tab={active === tabs[0].id ? '' : active} />
+                <ListStepper basePath={basePath} tab={tab} />
               </VStack>
             </HStack>
             {facts && facts.length > 0 && (

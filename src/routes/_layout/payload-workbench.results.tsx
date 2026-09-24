@@ -10,7 +10,7 @@ import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
-import { useViewTabs } from '#/components/ViewTabs'
+import { searchTabs } from '#/components/ViewTabs'
 import { entityHref } from '#/lib/entities'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
@@ -28,6 +28,13 @@ const TABS: Array<{ id: AnalyzerTab; label: string }> = [
 ]
 
 export const Route = createFileRoute('/_layout/payload-workbench/results')({
+  staticData: {
+    viewTabs: searchTabs({
+      label: 'Analysis results views',
+      param: 'tab',
+      tabs: (loaded) => TABS.map((t) => ({ id: t.id, label: t.label, count: (loaded as AnalysisResultsData | undefined)?.results.filter((r) => r.analyzer === t.id).length })),
+    }),
+  },
   validateSearch: (search: Record<string, unknown>): { tab?: AnalyzerTab; hash?: string } => ({
     tab: TABS.some((t) => t.id === search.tab) ? (search.tab as AnalyzerTab) : undefined,
     hash: typeof search.hash === 'string' && search.hash ? search.hash : undefined,
@@ -177,18 +184,10 @@ function GpuQueue({ jobs }: { jobs: GpuJob[] }) {
 function AnalysisResultsPage() {
   const data = Route.useLoaderData()
   const { tab = 'workbench', hash } = Route.useSearch()
-  const navigate = Route.useNavigate()
   const [query, setQuery] = useState('')
   const needle = query.trim().toLowerCase()
   const rows = data.results.filter((r) => r.analyzer === tab && (!needle || JSON.stringify(r).toLowerCase().includes(needle)))
   const myRuns = data.results.filter((r) => r.analyzer === 'workbench' && r.owner).slice(0, 5)
-  const count = (id: AnalyzerTab) => data.results.filter((r) => r.analyzer === id).length
-  useViewTabs({
-    label: 'Analysis results views',
-    tabs: TABS.map((t) => ({ id: t.id, label: `${t.label} (${count(t.id)})` })),
-    value: tab,
-    onChange: (value) => void navigate({ search: { tab: value as AnalyzerTab } }),
-  })
 
   return (
     <RecordList

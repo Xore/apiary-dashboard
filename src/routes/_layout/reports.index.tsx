@@ -17,7 +17,7 @@ import type { TableColumn } from '@astryxdesign/core/Table'
 import { Heading, Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
-import { useViewTabs } from '#/components/ViewTabs'
+import { searchTabs } from '#/components/ViewTabs'
 import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
@@ -45,6 +45,7 @@ const PRESETS: Array<{ id: string; name: string; description: string; schedule: 
 ]
 
 export const Route = createFileRoute('/_layout/reports/')({
+  staticData: { viewTabs: searchTabs({ label: 'Reports studio steps', param: 'step', tabs: () => STEPS.map((s, i) => ({ id: s.id, label: s.id === 'library' ? s.label : `${i + 1}. ${s.label}` })) }) },
   validateSearch: (search: Record<string, unknown>): { step?: Step } => ({
     step: STEPS.some((s) => s.id === search.step) ? (search.step as Step) : undefined,
   }),
@@ -280,12 +281,6 @@ function ReportsPage() {
   const [saving, setSaving] = useState(false)
 
   const go = (next: Step) => void navigate({ search: { step: next === 'design' ? undefined : next } })
-  useViewTabs({
-    label: 'Reports studio steps',
-    tabs: STEPS.map((s, i) => ({ id: s.id, label: s.id === 'library' ? s.label : `${i + 1}. ${s.label}` })),
-    value: step,
-    onChange: (value) => go(value as Step),
-  })
   const update = (patch: Partial<ReportDefinition>) => setDraft((d) => ({ ...d, ...patch }))
   const current = STEPS.find((s) => s.id === step)!
   const index = BUILD_STEPS.findIndex((s) => s.id === step)

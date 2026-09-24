@@ -34,7 +34,6 @@ function CanaryTriggerPage() {
         { label: 'From', value: d.srcIp },
         { label: 'Location', value: d.location },
       ]}
-      tabs={[{ id: 'overview', label: 'Overview' }]}
     >
       <TriggerInspector trigger={d} />
     </EntityFrame>

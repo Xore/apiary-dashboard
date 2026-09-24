@@ -35,7 +35,7 @@ const columns: TableColumn<InfraCluster>[] = [
   },
   { key: 'sources', header: 'Source IPs', width: pixel(96), align: 'end' },
   { key: 'events', header: 'Events', width: pixel(88), align: 'end', renderCell: (row) => formatNumber(row.events) },
-  { key: 'sensors', header: 'Sensors', width: pixel(80), align: 'end', renderCell: (row) => row.sensors.length },
+  { key: 'sensors', header: 'Sensors', width: pixel(96), align: 'end', renderCell: (row) => row.sensors.length },
 ]
 
 

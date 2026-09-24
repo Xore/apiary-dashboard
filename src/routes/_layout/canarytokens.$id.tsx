@@ -30,7 +30,6 @@ function CanaryTokenPage() {
         { label: 'Created', value: formatDateTime(d.createdAt) },
         { label: 'By', value: d.createdBy },
       ]}
-      tabs={[{ id: 'overview', label: 'Overview' }]}
     >
       <TokenInspector token={d} triggers={d.triggers} />
     </EntityFrame>

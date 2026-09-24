@@ -4,12 +4,15 @@ import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Text } from '@astryxdesign/core/Text'
 import { Outlet, createFileRoute, notFound, useLocation, useNavigate } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
+import { entityTabs } from '#/components/ViewTabs'
+import type { ViewTab } from '#/components/ViewTabs'
 import { NotFound } from '#/components/NotFound'
 import { getSensorCatalog, getSensorDetail, getSourceHealth, getTopology } from '#/data/queries'
 import type { SensorStatus } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/sensors/$sensor')({
+  staticData: { viewTabs: entityTabs({ label: 'Sensor views', basePath: (params) => `/sensors/${encodeURIComponent(params.sensor)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const [detail, catalog, health, topology] = await Promise.all([getSensorDetail(params.sensor), getSensorCatalog(), getSourceHealth(), getTopology()])
     if (!detail) throw notFound()
@@ -44,7 +47,7 @@ function SensorPicker({ current, sensors }: { current: string; sensors: string[]
 }
 
 function SensorLayout() {
-  const { detail, catalog, feed, exposure } = Route.useLoaderData()
+  const { detail, catalog } = Route.useLoaderData()
   const { sensor } = detail
 
   return (
@@ -66,16 +69,23 @@ function SensorLayout() {
         { label: 'First seen', value: formatDateTime(detail.firstSeen) },
         { label: 'Last event', value: formatDateTime(sensor.lastSeen) },
       ]}
-      tabs={[
-        { id: 'overview', label: 'Overview' },
-        { id: 'events', label: detail.requests ? 'Requests' : 'Events' },
-        { id: 'sources', label: 'Sources', count: detail.topSources.length },
-        { id: 'leaderboards', label: 'Leaderboards', count: detail.topLists.length },
-        { id: 'health', label: feed ? `Health · ${feed.state}` : 'Health' },
-        { id: 'exposure', label: 'Exposure', count: exposure?.ports.length },
-      ]}
     >
       <Outlet />
     </EntityFrame>
   )
+}
+
+/** The top-bar tabs: static until the loader data arrives, then with counts. */
+function tabsFor(loaded: unknown): ViewTab[] {
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'events', label: 'Events' }, { id: 'sources', label: 'Sources' }, { id: 'leaderboards', label: 'Leaderboards' }, { id: 'health', label: 'Health' }, { id: 'exposure', label: 'Exposure' }]
+  const data = loaded as ReturnType<typeof Route.useLoaderData>
+  const { detail, feed, exposure } = data
+  return [
+    { id: 'overview', label: 'Overview' },
+    { id: 'events', label: detail.requests ? 'Requests' : 'Events' },
+    { id: 'sources', label: 'Sources', count: detail.topSources.length },
+    { id: 'leaderboards', label: 'Leaderboards', count: detail.topLists.length },
+    { id: 'health', label: feed ? `Health · ${feed.state}` : 'Health' },
+    { id: 'exposure', label: 'Exposure', count: exposure?.ports.length },
+  ]
 }

@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 // Shell composition (#4): one shell, one content region, navigation metadata
 // driving active item and breadcrumbs, and the palette's keyboard contract.
-import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -13,17 +12,17 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  useLocation,
 } from '@tanstack/react-router'
 import { NAV_SECTIONS } from '#/lib/nav'
 import { neutralTheme } from '#/themes/neutral/neutral'
 import { RouterLink } from './RouterLink'
 import { ShellAppShell } from './ShellAppShell'
-import { useViewTabs } from './ViewTabs'
+import { searchTabs } from './ViewTabs'
 
 function TabbedPage() {
-  const [view, setView] = useState('one')
-  useViewTabs({ label: 'Test views', tabs: [{ id: 'one', label: 'View one' }, { id: 'two', label: 'View two' }], value: view, onChange: setView })
-  return <p>{view === 'one' ? 'first view' : 'second view'}</p>
+  const second = useLocation({ select: (location) => location.searchStr.includes('view=two') })
+  return <p>{second ? 'second view' : 'first view'}</p>
 }
 
 const user = { name: 'Test Operator', email: 'op@example.test', roles: ['admin'] }
@@ -39,7 +38,21 @@ function renderShell(path: string) {
       page('/events/$id', 'event detail content'),
       page('/alerts', 'alerts content'),
       page('/settings', 'settings content'),
-      createRoute({ getParentRoute: () => root, path: '/tabbed', component: TabbedPage }),
+      createRoute({
+        getParentRoute: () => root,
+        path: '/tabbed',
+        staticData: {
+          viewTabs: searchTabs({
+            label: 'Test views',
+            param: 'view',
+            tabs: () => [
+              { id: 'one', label: 'View one' },
+              { id: 'two', label: 'View two' },
+            ],
+          }),
+        },
+        component: TabbedPage,
+      }),
     ]),
     history: createMemoryHistory({ initialEntries: [path] }),
   })
