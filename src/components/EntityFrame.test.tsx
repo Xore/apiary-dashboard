@@ -7,6 +7,7 @@ import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LinkProvider } from '@astryxdesign/core/Link'
 import { Theme } from '@astryxdesign/core/theme'
+import { TopNav } from '@astryxdesign/core/TopNav'
 import { Outlet, RouterProvider, createMemoryHistory, createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
 import { saveListContext } from '#/lib/listContext'
 import { getPins } from '#/lib/watchlist'
@@ -32,9 +33,7 @@ function Thing() {
 const root = createRootRoute({
   component: () => (
     <>
-      <nav aria-label="Page header">
-        <ViewTabsBar />
-      </nav>
+      <TopNav label="Page header" startContent={<ViewTabsBar />} />
       <Outlet />
     </>
   ),
@@ -74,10 +73,9 @@ function renderAt(path: string) {
   return router
 }
 
-// Tabs render as Astryx tab buttons carrying data-tab-value; the active one
-// has the selected class.
-const tab = async (name: RegExp) => (await screen.findAllByText(name))[0].closest<HTMLElement>('[data-tab-value]')!
-const isSelected = (element: HTMLElement) => element.classList.contains('selected')
+// Tabs render as top-bar nav links; the active one is aria-current="page".
+const tab = async (name: RegExp) => screen.findByRole('link', { name })
+const isSelected = (element: HTMLElement) => element.getAttribute('aria-current') === 'page'
 
 beforeEach(() => {
   sessionStorage.clear()
