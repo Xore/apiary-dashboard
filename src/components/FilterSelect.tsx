@@ -51,7 +51,7 @@ const MAX_ROWS = 200
 
 const labelOf = (options: FilterOption[], value: string) => options.find((o) => o.value === value)?.label ?? value
 
-/** "cowrie-vps-01, dionaea-vps-01" or "cowrie-vps-01, +2". */
+/** "cowrie, dionaea" or "cowrie, +2". */
 function summary(options: FilterOption[], value: string[]): string | undefined {
   if (value.length === 0) return undefined
   const labels = value.map((v) => labelOf(options, v))

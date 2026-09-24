@@ -1,103 +1,41 @@
-// Per-sensor readings: each sensor type reports the quantities it exists to
-// produce and its own leaderboards, rather than the same five for every
-// sensor. Derived from the sensor's events plus seeded detail.
-import type { CountRow, HoneypotEvent, Sensor, SensorMeasure, SensorRequest } from '../types'
-import { createRng, int, pick } from './random'
+// Per-sensor readings: each sensor reports the quantities it exists to
+// produce and leaderboards over its own fields, rather than the same five
+// for every sensor. Driven by the sensor's spec in ./fleet, so a sensor
+// added there is readable here without another hand-written case.
+import type { CountRow, HoneypotEvent, Sensor, SensorMeasure, SensorReading } from '../types'
+import { fieldText, readField } from '#/lib/sensorFields'
+import { specOf } from './fleet'
 
-function countBy(values: Array<string | undefined>, limit = 8): CountRow[] {
+function countBy(values: string[], limit = 8): CountRow[] {
   const counts = new Map<string, number>()
-  for (const v of values) if (v !== undefined) counts.set(v, (counts.get(v) ?? 0) + 1)
+  for (const v of values) if (v !== '') counts.set(v, (counts.get(v) ?? 0) + 1)
   return [...counts]
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit)
     .map(([label, count]) => ({ id: label, label, count }))
 }
 
-const of = (events: HoneypotEvent[], type: HoneypotEvent['type']) => events.filter((e) => e.type === type)
+/** "12 from 198.51.100.7": the busiest single source for a measure. */
+function busiestSource(events: HoneypotEvent[]): string {
+  const top = countBy(events.map((e) => e.srcIp), 1).at(0)
+  return top ? `${top.count} from ${top.label}` : 'none'
+}
 
-const DETECTIONS = ['lfi', 'sqli', 'rfi', 'xss', 'cmd_exec', 'index']
-const AGENTS = ['Mozilla/5.0 zgrab/0.x', 'python-requests/2.31', 'curl/8.4.0', 'Go-http-client/1.1', 'Mozilla/5.0 (Windows NT 10.0) Chrome/120']
-
-export function sensorReading(sensor: Sensor, events: HoneypotEvent[]): {
-  measures: SensorMeasure[]
-  topLists: Array<{ label: string; rows: CountRow[] }>
-  requests?: SensorRequest[]
-} {
-  const rng = createRng(sensor.id.length * 131 + events.length)
-  switch (sensor.kind) {
-    case 'Cowrie':
-      return {
-        measures: [
-          { label: 'login attempts', value: of(events, 'login.failed').length + of(events, 'login.success').length, peak: `${int(rng, 30, 90)} in one session` },
-          { label: 'successful logins', value: of(events, 'login.success').length, peak: 'root / 123456' },
-          { label: 'commands run', value: of(events, 'command.input').length, peak: `${int(rng, 8, 40)} in one session` },
-          { label: 'files downloaded', value: of(events, 'file.download').length, peak: `${int(rng, 1, 4)} in one session` },
-        ],
-        topLists: [
-          { label: 'usernames', rows: countBy(events.map((e) => e.username)) },
-          { label: 'passwords', rows: countBy(events.map((e) => e.password)) },
-          { label: 'commands', rows: countBy(events.map((e) => e.command)) },
-        ],
-      }
-    case 'Dionaea':
-      return {
-        measures: [
-          { label: 'SMB sessions', value: events.filter((e) => e.protocol === 'smb').length, peak: `${int(rng, 3, 12)} per source` },
-          { label: 'MySQL logins', value: events.filter((e) => e.protocol === 'mysql').length, peak: 'sa / (empty)' },
-          { label: 'SIP probes', value: events.filter((e) => e.protocol === 'sip').length, peak: 'OPTIONS sip:100@' },
-          { label: 'binaries captured', value: of(events, 'file.download').length, peak: `${int(rng, 40, 900)} KB largest` },
-        ],
-        topLists: [
-          { label: 'services', rows: countBy(events.map((e) => e.protocol)) },
-          { label: 'ports', rows: countBy(events.map((e) => String(e.dstPort))) },
-          { label: 'IDS alerts', rows: countBy(of(events, 'ids.alert').map((e) => e.summary)) },
-        ],
-      }
-    case 'Snare/Tanner': {
-      const requests: SensorRequest[] = of(events, 'http.request').slice(0, 25).map((e) => ({
-        id: e.id,
-        timestamp: e.timestamp,
-        srcIp: e.srcIp,
-        method: e.summary.split(' ')[0],
-        path: e.summary.split(' ')[1] ?? '/',
-        detection: e.summary.includes('phpunit') ? 'rfi' : e.summary.includes('.env') ? 'lfi' : pick(rng, DETECTIONS),
-        userAgent: pick(rng, AGENTS),
-      }))
-      return {
-        measures: [
-          { label: 'requests', value: of(events, 'http.request').length, peak: `${int(rng, 20, 80)} from one source` },
-          { label: 'attacks detected', value: requests.filter((r) => r.detection !== 'index').length, peak: 'rfi' },
-          { label: 'distinct paths', value: new Set(requests.map((r) => r.path)).size, peak: '/wp-login.php' },
-        ],
-        topLists: [
-          { label: 'paths', rows: countBy(requests.map((r) => r.path)) },
-          { label: 'detections', rows: countBy(requests.map((r) => r.detection)) },
-          { label: 'user agents', rows: countBy(requests.map((r) => r.userAgent)) },
-        ],
-        requests,
-      }
-    }
-    case 'RDPY':
-      return {
-        measures: [
-          { label: 'RDP connections', value: events.length, peak: `${int(rng, 5, 20)} per source` },
-          { label: 'credential attempts', value: Math.round(events.length * 0.6), peak: 'administrator' },
-        ],
-        topLists: [
-          { label: 'RDP cookie usernames', rows: countBy(events.map(() => pick(rng, ['administrator', 'admin', 'user', 'hello', 'test']))) },
-          { label: 'client builds', rows: countBy(events.map(() => pick(rng, ['2600', '7601', '9600', '19041']))) },
-        ],
-      }
-    default:
-      return {
-        measures: [
-          { label: 'alerts', value: of(events, 'ids.alert').length, peak: 'ET SCAN' },
-          { label: 'flows inspected', value: events.length * 37, peak: `${int(rng, 200, 900)} flows/min` },
-        ],
-        topLists: [
-          { label: 'signatures', rows: countBy(of(events, 'ids.alert').map((e) => e.summary)) },
-          { label: 'ports', rows: countBy(events.map((e) => String(e.dstPort))) },
-        ],
-      }
+export function sensorReading(sensor: Sensor, events: HoneypotEvent[]): { measures: SensorMeasure[]; topLists: Array<{ label: string; rows: CountRow[] }>; reading: SensorReading } {
+  const spec = specOf(sensor.id)
+  if (!spec) return { measures: [{ label: 'events', value: events.length, peak: busiestSource(events) }], topLists: [], reading: { what: sensor.what, columns: [], artefacts: [] } }
+  return {
+    measures: spec.measures.map((m) => {
+      const matched = events.filter((e) => m.match(e.fields, e.type))
+      return { label: m.label, value: matched.length, peak: busiestSource(matched) }
+    }),
+    topLists: spec.tops.map((t) => ({ label: t.label, rows: countBy(events.map((e) => fieldText(readField(e.fields, t.field)))) })).filter((t) => t.rows.length > 0),
+    reading: readingOf(sensor.id),
   }
+}
+
+/** How to read one sensor's own fields, for pages that show a single event. */
+export function readingOf(sensor: string): SensorReading {
+  const spec = specOf(sensor)
+  return spec ? { what: spec.what, columns: spec.columns, artefacts: spec.artefacts } : { what: '', columns: [], artefacts: [] }
 }

@@ -63,7 +63,7 @@ export function CanaryTokenDialog({ types, isOpen, onOpenChange, onCreated }: { 
           },
           render: (shown) => (
             <FormLayout defaultOptionality="optional">
-              <TextInput label="Memo" isRequired value={memo} onChange={setMemo} placeholder="AWS keys in home/deploy/.aws/credentials on cowrie-vps-01" description="What the alert says when the token fires, so name the place and the host." status={statusOf(shown, 'memo')} />
+              <TextInput label="Memo" isRequired value={memo} onChange={setMemo} placeholder="AWS keys in home/deploy/.aws/credentials on cowrie" description="What the alert says when the token fires, so name the place and the host." status={statusOf(shown, 'memo')} />
               {field && <TextInput label={field.label} isRequired={field.required} value={text} onChange={setText} placeholder={field.placeholder} status={statusOf(shown, 'text')} />}
             </FormLayout>
           ),

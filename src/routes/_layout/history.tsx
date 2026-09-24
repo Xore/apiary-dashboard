@@ -25,7 +25,7 @@ export const Route = createFileRoute('/_layout/history')({
   component: HistoryPage,
 })
 
-const EXAMPLES = ['honeypot.event:command.input', 'sensor:cowrie-vps-01 AND username:root', 'protocol:smb AND country:CN']
+const EXAMPLES = ['honeypot.event:command.input', 'sensor:cowrie AND username:root', 'protocol:smb AND country:CN']
 
 const columns: TableColumn<HoneypotEvent>[] = [
   { key: 'timestamp', header: 'Time', width: pixel(184), renderCell: (row) => <Text type="supporting">{formatDateTime(row.timestamp)}</Text> },

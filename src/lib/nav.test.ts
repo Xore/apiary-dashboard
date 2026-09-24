@@ -32,7 +32,7 @@ describe('navHrefFor', () => {
     ['/clusters/fingerprint/abc', '/clusters'],
     ['/asn/AS64500', '/clusters'],
     ['/identities/abc/why', '/attackers'],
-    ['/sensors/cowrie-vps-01', '/sensors'],
+    ['/sensors/cowrie', '/sensors'],
     ['/tty-replay/abc', '/recordings'],
     ['/ioc/cve/CVE-2017-0144/sources', '/iocs'],
     ['/commands', '/iocs'],
@@ -85,8 +85,8 @@ describe('breadcrumb labels', () => {
   })
 
   it('names a sensor page after its sensor', () => {
-    expect(pageFor('/sensors/cowrie-vps-01')).toBe('cowrie-vps-01')
-    expect(pageFor('/sensors/cowrie-vps-01/exposure')).toBe('cowrie-vps-01')
+    expect(pageFor('/sensors/cowrie')).toBe('cowrie')
+    expect(pageFor('/sensors/cowrie/exposure')).toBe('cowrie')
   })
 
   it('labels unlisted pages and falls back for unknown ones', () => {

@@ -56,7 +56,7 @@ function SensorLayout() {
     <EntityFrame
       kind="Sensor"
       title={sensor.name}
-      description={`${sensor.kind} · ${sensor.location} · ${sensor.protocols.map((p) => p.toUpperCase()).join(', ')}`}
+      description={`${sensor.kind} · ${sensor.location} · ${sensor.protocols.join(', ')}`}
       basePath={`/sensors/${encodeURIComponent(sensor.id)}`}
       tokens={
         <HStack gap={1.5} vAlign="center">
@@ -70,6 +70,7 @@ function SensorLayout() {
         { label: 'Unique sources', value: formatNumber(detail.uniqueSources) },
         { label: 'First seen', value: formatDateTime(detail.firstSeen) },
         { label: 'Last event', value: formatDateTime(sensor.lastSeen) },
+        { label: 'Listens on', value: sensor.ports.length ? sensor.ports.map((p) => `${p.port}/${p.proto}`).join(', ') : 'no listener' },
       ]}
     >
       <Outlet />
@@ -79,12 +80,12 @@ function SensorLayout() {
 
 /** The top-bar tabs: static until the loader data arrives, then with counts. */
 function tabsFor(loaded: unknown): ViewTab[] {
-  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'events', label: 'Events' }, { id: 'sources', label: 'Sources' }, { id: 'leaderboards', label: 'Leaderboards' }, { id: 'health', label: 'Health' }, { id: 'exposure', label: 'Exposure' }]
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'events', label: 'Captured' }, { id: 'sources', label: 'Sources' }, { id: 'leaderboards', label: 'Leaderboards' }, { id: 'health', label: 'Health' }, { id: 'exposure', label: 'Exposure' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const { detail, feed, exposure } = data
   return [
     { id: 'overview', label: 'Overview' },
-    { id: 'events', label: detail.requests ? 'Requests' : 'Events' },
+    { id: 'events', label: 'Captured' },
     { id: 'sources', label: 'Sources', count: detail.topSources.length },
     { id: 'leaderboards', label: 'Leaderboards', count: detail.topLists.length },
     { id: 'health', label: feed ? `Health · ${feed.state}` : 'Health' },

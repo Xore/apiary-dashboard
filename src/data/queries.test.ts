@@ -2,6 +2,7 @@
 // and every id one page links to resolves on the page it links to. These
 // caught real bugs while the mock pages were built (#12's link crawl).
 import { describe, expect, it } from 'vitest'
+import { fieldText, readField } from '#/lib/sensorFields'
 import * as q from './queries'
 
 describe('cross-page consistency', () => {
@@ -196,9 +197,9 @@ describe('filters and search', () => {
   })
 
   it('applies every term of an AND history query', async () => {
-    const rows = await q.searchHistory('sensor:cowrie-vps-01 AND username:root')
+    const rows = await q.searchHistory('sensor:cowrie AND username:root')
     expect(rows.length).toBeGreaterThan(0)
-    expect(rows.every((e) => e.sensor === 'cowrie-vps-01' && e.username?.includes('root'))).toBe(true)
+    expect(rows.every((e) => e.sensor === 'cowrie' && e.username?.includes('root'))).toBe(true)
     expect(await q.searchHistory('nosuchfield:x')).toEqual([])
   })
 
@@ -238,5 +239,24 @@ describe('mock writes', () => {
     const queued = gpuQueue.find((j) => j.status === 'queued')!
     expect(await q.abortGpuJob(running.jobId)).toBe(false)
     expect(await q.abortGpuJob(queued.jobId)).toBe(true)
+  })
+})
+
+describe('sensor fleet', () => {
+  it('reads every sensor in its own terms', async () => {
+    const catalog = await q.getSensorCatalog()
+    expect(catalog.length).toBeGreaterThanOrEqual(26)
+    for (const { sensor } of catalog) {
+      const detail = await q.getSensorDetail(sensor)
+      expect(detail?.reading.what, sensor).toBeTruthy()
+      // A quiet sensor may have nothing in 24h; one that has events must
+      // fill every column its reading names from at least one of them.
+      const { rows } = await q.getEvents({ sensor })
+      if (!detail || rows.length === 0) continue
+      for (const column of detail.reading.columns) {
+        const filled = rows.some((e) => fieldText(readField(e.fields, column.field)) !== '')
+        expect(filled, `${sensor}: ${column.header}`).toBe(true)
+      }
+    }
   })
 })

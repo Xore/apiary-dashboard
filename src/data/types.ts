@@ -4,7 +4,9 @@
 
 export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info'
 
-export type Protocol = 'ssh' | 'telnet' | 'http' | 'smb' | 'rdp' | 'ftp' | 'mysql' | 'sip'
+/** The application protocol a sensor recorded (`network.protocol`): ssh,
+ * telnet, http, smb, modbus, s7comm, sip, dns, dicom, … as each sensor names it. */
+export type Protocol = string
 
 export type EventType =
   | 'connection'
@@ -14,6 +16,12 @@ export type EventType =
   | 'file.download'
   | 'http.request'
   | 'ids.alert'
+  /** A non-HTTP application request: ICS, SIP, DNS, DICOM, SMTP, IKE. */
+  | 'protocol.request'
+
+/** One value in a sensor's own fields: JSON, as the sensor wrote it. */
+export type FieldValue = string | number | boolean | null | FieldValue[] | { [key: string]: FieldValue }
+export type SensorFields = Record<string, FieldValue>
 
 export type SensorStatus = 'online' | 'degraded' | 'offline'
 
@@ -24,9 +32,15 @@ export interface SessionUser extends Record<string, unknown> {
 }
 
 export interface Sensor extends Record<string, unknown> {
+  /** The sensor name events carry in `event.sensor`, e.g. `cowrie`, `conpot-s7-1200`. */
   id: string
   name: string
+  /** The family, e.g. Cowrie, Conpot. */
   kind: string
+  /** One phrase: what this sensor is and what it captures. */
+  what: string
+  /** Listening ports on the sensor host. */
+  ports: Array<{ proto: 'tcp' | 'udp'; port: number }>
   protocols: Protocol[]
   location: string
   status: SensorStatus
@@ -51,6 +65,10 @@ export interface HoneypotEvent extends Record<string, unknown> {
   password?: string
   command?: string
   summary: string
+  /** The sensor's own event name: `cowrie.login.failed`, `handshake`, `NEW_CONNECTION`, … */
+  eventName: string
+  /** The sensor's own `honeypot.*` object, as that sensor writes it. */
+  fields: SensorFields
 }
 
 export interface AttackSource extends Record<string, unknown> {
@@ -79,7 +97,7 @@ export interface TimeBucket extends Record<string, unknown> {
   /** ISO timestamp of the bucket start. */
   time: string
   total: number
-  byProtocol: Partial<Record<Protocol, number>>
+  byProtocol: Record<Protocol, number>
 }
 
 export interface CountRow extends Record<string, unknown> {
@@ -247,7 +265,7 @@ export interface AuthEventsData {
 
 // ---- Investigate -----------------------------------------------------------
 
-export type EventKind = 'connection' | 'login' | 'command' | 'download' | 'http' | 'alert'
+export type EventKind = 'connection' | 'login' | 'command' | 'download' | 'http' | 'protocol' | 'alert'
 
 /** Each filter is a comma list (?sensor=a,b) and matches any of its values. */
 export interface EventFilters {
@@ -364,18 +382,16 @@ export interface SensorSummary {
 export interface SensorMeasure {
   label: string
   value: number
-  /** Most in a single event, e.g. the longest session. */
+  /** The busiest single source for this measure, e.g. "12 from 198.51.100.7". */
   peak: string
 }
 
-export interface SensorRequest extends Record<string, unknown> {
-  id: string
-  timestamp: string
-  srcIp: string
-  method: string
-  path: string
-  detection: string
-  userAgent: string
+/** How to read one sensor's own fields: a column per field that matters,
+ * and the artefact worth running the sensor for. */
+export interface SensorReading {
+  what: string
+  columns: Array<{ header: string; field: string | string[]; mono?: boolean; badge?: 'danger' | 'warning' | 'success' | 'muted' | 'info' }>
+  artefacts: Array<{ label: string; field: string | string[] }>
 }
 
 export interface SensorDetail {
@@ -391,8 +407,8 @@ export interface SensorDetail {
   topLists: Array<{ label: string; rows: CountRow[] }>
   byType: CountRow[]
   recentEvents: HoneypotEvent[]
-  /** Hand-written reading for web sensors: requests with detections. */
-  requests?: SensorRequest[]
+  /** How to read this sensor's own fields. */
+  reading: SensorReading
 }
 
 export interface Recording extends Record<string, unknown> {
@@ -692,6 +708,8 @@ export interface EventDetail {
   connection: HoneypotEvent[]
   source: HoneypotEvent[]
   hashes: string[]
+  /** How to read the capturing sensor's own fields. */
+  reading: SensorReading
 }
 
 export interface SessionDetail {

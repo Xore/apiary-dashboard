@@ -15,34 +15,55 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { CountRow, HeatmapRow, KillChainData, Protocol, SeriesPoint, TimeBucket } from '#/data/types'
+import type { CountRow, HeatmapRow, KillChainData, SeriesPoint, TimeBucket } from '#/data/types'
 import { formatDateTime, formatDay, formatNumber, formatTime } from '#/lib/format'
 
 // Colors follow the protocol, never its rank, so filtering never repaints a
 // series. Order (blue, orange, teal, purple, pink) is validated with the
 // dataviz palette checker on both surfaces; the theme sets separate dark
 // values (#14). Everything else folds into gray "Other".
-const SERIES = [
+//
+// A chart whose traffic is mostly outside those five (one Conpot device, the
+// SIP or DNS sensor) would be a single gray bar, so it names its own top
+// protocols instead, in the same palette order. Such a chart shows one
+// sensor, so filtering it never repaints a series either.
+type Series = { key: string; label: string; color: string }
+
+const PALETTE = ['blue', 'orange', 'teal', 'purple', 'pink'].map((c) => `var(--color-data-categorical-${c})`)
+const OTHER: Series = { key: 'other', label: 'Other', color: 'var(--color-text-secondary)' }
+
+const SERIES: Series[] = [
   { key: 'ssh', label: 'SSH', color: 'var(--color-data-categorical-blue)' },
   { key: 'telnet', label: 'Telnet', color: 'var(--color-data-categorical-orange)' },
   { key: 'http', label: 'HTTP', color: 'var(--color-data-categorical-teal)' },
   { key: 'smb', label: 'SMB', color: 'var(--color-data-categorical-purple)' },
   { key: 'rdp', label: 'RDP', color: 'var(--color-data-categorical-pink)' },
-  { key: 'other', label: 'Other', color: 'var(--color-text-secondary)' },
-] as const
+  OTHER,
+]
 
-const NAMED: ReadonlySet<string> = new Set(SERIES.map((s) => s.key))
+/** The fixed series, or this chart's own top protocols when those cover
+ * less than half of its events. */
+function seriesFor(buckets: TimeBucket[]): Series[] {
+  const totals = new Map<string, number>()
+  for (const bucket of buckets) for (const [protocol, count] of Object.entries(bucket.byProtocol)) totals.set(protocol, (totals.get(protocol) ?? 0) + count)
+  const all = [...totals.values()].reduce((a, b) => a + b, 0)
+  const named = SERIES.reduce((sum, s) => sum + (totals.get(s.key) ?? 0), 0)
+  if (all === 0 || named * 2 >= all) return SERIES
+  const top = [...totals].sort((a, b) => b[1] - a[1]).slice(0, PALETTE.length)
+  return [...top.map(([key], i) => ({ key, label: key.length <= 4 ? key.toUpperCase() : key, color: PALETTE[i] })), OTHER]
+}
 
 const AXIS_TICK = { fontSize: 12, fill: 'var(--color-text-secondary)' }
 const GRID_STROKE = 'var(--color-border)'
 
 type TimelineRow = { time: string } & Record<string, number | string>
 
-function toRows(buckets: TimeBucket[]): TimelineRow[] {
+function toRows(buckets: TimeBucket[], series: Series[]): TimelineRow[] {
+  const named = new Set(series.map((s) => s.key))
   return buckets.map((bucket) => {
     const row: TimelineRow = { time: bucket.time, other: 0 }
-    for (const [protocol, count] of Object.entries(bucket.byProtocol) as Array<[Protocol, number]>) {
-      if (NAMED.has(protocol)) row[protocol] = count
+    for (const [protocol, count] of Object.entries(bucket.byProtocol)) {
+      if (protocol !== 'other' && named.has(protocol)) row[protocol] = count
       else row.other = (row.other as number) + count
     }
     return row
@@ -85,7 +106,8 @@ function TimelineTooltip({
 
 /** Hourly events stacked by protocol. */
 export function ProtocolTimeline({ buckets }: { buckets: TimeBucket[] }) {
-  const rows = toRows(buckets)
+  const series = seriesFor(buckets)
+  const rows = toRows(buckets, series)
   return (
     <VStack gap={3}>
       <ResponsiveContainer width="100%" height={260}>
@@ -101,26 +123,26 @@ export function ProtocolTimeline({ buckets }: { buckets: TimeBucket[] }) {
           />
           <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={36} />
           <Tooltip content={<TimelineTooltip />} cursor={{ fill: 'var(--color-background-muted)' }} />
-          {SERIES.map((series, index) => (
+          {series.map((s, index) => (
             <Bar
-              key={series.key}
-              dataKey={series.key}
-              name={series.label}
+              key={s.key}
+              dataKey={s.key}
+              name={s.label}
               stackId="protocol"
-              fill={series.color}
+              fill={s.color}
               stroke="var(--color-background-card)"
               strokeWidth={1}
-              radius={index === SERIES.length - 1 ? [4, 4, 0, 0] : 0}
+              radius={index === series.length - 1 ? [4, 4, 0, 0] : 0}
               isAnimationActive={false}
             />
           ))}
         </BarChart>
       </ResponsiveContainer>
       <HStack gap={4} wrap="wrap">
-        {SERIES.map((series) => (
-          <HStack key={series.key} gap={1.5} vAlign="center">
-            <Swatch color={series.color} />
-            <Text type="supporting">{series.label}</Text>
+        {series.map((s) => (
+          <HStack key={s.key} gap={1.5} vAlign="center">
+            <Swatch color={s.color} />
+            <Text type="supporting">{s.label}</Text>
           </HStack>
         ))}
       </HStack>
@@ -258,14 +280,16 @@ export function FlowSankey({ flow, height = 420 }: { flow: KillChainData['flow']
         nodeWidth={12}
         margin={{ top: 24, right: 8, bottom: 8, left: 8 }}
         link={{ stroke: 'var(--color-data-categorical-blue)', strokeOpacity: 0.25 }}
-        node={({ x, y, width, height: nodeHeight, payload }: { x: number; y: number; width: number; height: number; payload: { name: string; value: number; sourceLinks?: unknown[] } }) => (
+        node={({ x, y, width, height: nodeHeight, payload }: { x: number; y: number; width: number; height: number; payload: { name: string; value: number; targetLinks?: unknown[] } }) => (
           <g>
             <rect x={x} y={y} width={width} height={nodeHeight} rx={2} fill="var(--color-data-categorical-blue)" />
-            {/* Terminal nodes sit on the right edge, so their label reads leftwards. */}
+            {/* Terminal nodes sit on the right edge, so their label reads leftwards,
+                under the bar, clear of the previous column's label.
+                Recharts names a node's outgoing links `targetLinks`. */}
             <text
-              x={payload.sourceLinks?.length ? x : x + width}
-              y={y - 8}
-              textAnchor={payload.sourceLinks?.length ? 'start' : 'end'}
+              x={payload.targetLinks?.length ? x : x + width}
+              y={payload.targetLinks?.length ? y - 8 : y + nodeHeight + 16}
+              textAnchor={payload.targetLinks?.length ? 'start' : 'end'}
               fontSize={12}
               fill="var(--color-text-primary)"
             >
