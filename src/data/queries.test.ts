@@ -284,3 +284,33 @@ describe('event fields', () => {
     expect(rows.every((e) => e.fingerprint === agent)).toBe(true)
   })
 })
+
+describe('dashboard configuration', () => {
+  it('validation names every field the store would refuse, and nothing when valid', async () => {
+    const { config } = await q.getSettings()
+    expect(await q.validateConfig('presentation', config.presentation)).toEqual({})
+    const bad = await q.validateConfig('presentation', { ...config.presentation, appName: ' ', helpLinkUrl: 'http://example.test', bannerSeverity: 'warning', bannerText: '' })
+    expect(Object.keys(bad).sort()).toEqual(['appName', 'bannerText', 'helpLinkUrl'])
+    const honeypot = await q.validateConfig('honeypot', { ...config.honeypot, alertCooldown: '10s', mlAlertThreshold: 1.5, yaraMaxBytes: 12 })
+    expect(Object.keys(honeypot).sort()).toEqual(['alertCooldown', 'mlAlertThreshold', 'yaraMaxBytes'])
+    const behavior = await q.validateConfig('behavior', { ...config.behavior, rowsPerPageOptions: [], defaultTimeWindow: '2h', maxExportRows: 5 })
+    expect(Object.keys(behavior).sort()).toEqual(['defaultTimeWindow', 'maxExportRows', 'rowsPerPageOptions'])
+    expect(await q.validateConfig('reportPresets', { nosuch: { name: 'x' } })).toHaveProperty('nosuch')
+  })
+
+  it('a save is validated, recorded as a revision, and rolls back to what it replaced', async () => {
+    const before = (await q.getSettings()).config
+    const refused = await q.saveConfigSection('honeypot', { ...before.honeypot, alertCooldown: 'soon' })
+    expect(refused.ok).toBe(false)
+    expect((await q.getSettings()).config.revision).toBe(before.revision)
+
+    const saved = await q.saveConfigSection('honeypot', { ...before.honeypot, alertCooldown: '2h' })
+    expect(saved).toEqual({ ok: true, revision: before.revision + 1 })
+    const after = await q.getSettings()
+    expect(after.config.honeypot.alertCooldown).toBe('2h')
+    expect(after.history[0]).toMatchObject({ id: `rev-${before.revision + 1}`, section: 'honeypot', summary: 'Changed alertCooldown' })
+
+    await q.rollbackConfig(`rev-${before.revision + 1}`)
+    expect((await q.getSettings()).config.honeypot.alertCooldown).toBe(before.honeypot.alertCooldown)
+  })
+})

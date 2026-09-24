@@ -2,6 +2,9 @@
 // computed from the shared event set; the rest is small seeded data.
 import type {
   AuditEntry,
+  DashboardConfig,
+  EsStorage,
+  ReporterStats,
   ConfigRevision,
   DeadLetter,
   HoneypotEvent,
@@ -118,16 +121,30 @@ export const PROBLEM_REPORTS: ProblemReport[] = [
 
 export const PREFERENCES: Preferences = {
   theme: 'system',
+  palette: 'claude',
   density: 'comfortable',
   motion: 'system',
+  highContrast: false,
+  largeEvidenceText: false,
+  wrapLongValues: false,
+  collapsedSidebar: false,
   landing: '/',
-  rowsPerPage: 25,
+  rowsPerPage: 50,
   openDetailsInNewTab: false,
-  timezone: 'UTC',
+  rememberFilters: false,
+  timezone: 'browser',
   clock: 'h24',
-  timestamps: 'absolute',
+  timestamps: 'relative',
+  autoRefresh: true,
   refreshSeconds: 30,
-  notifyCritical: true,
+  liveToasts: true,
+  liveToastSeconds: 60,
+  mapBasemap: 'osm',
+  mapClustering: true,
+  mapAnimation: true,
+  notifySeverity: 'high',
+  notifySound: false,
+  notifyDesktop: false,
   notifyCanary: true,
   defaultWindow: '24h',
 }
@@ -143,21 +160,87 @@ export const SERVICES: ServiceStatus[] = TOPOLOGY.stacks.flatMap((stack) =>
 )
 
 export const CONFIG_HISTORY: ConfigRevision[] = [
-  { id: 'rev-41', at: isoMinutesAgo(60 * 5), actor: 'operator', section: 'behavior', summary: 'Default window 6h → 24h' },
-  { id: 'rev-40', at: isoMinutesAgo(60 * 30), actor: 'operator', section: 'honeypot', summary: 'Alert cooldown 30 → 60 minutes' },
-  { id: 'rev-39', at: isoMinutesAgo(60 * 24 * 3), actor: 'operator', section: 'branding', summary: 'Notice text updated' },
+  { id: 'rev-41', at: isoMinutesAgo(60 * 5), actor: 'operator', section: 'behavior', summary: 'Changed defaultTimeWindow' },
+  { id: 'rev-40', at: isoMinutesAgo(60 * 30), actor: 'operator', section: 'honeypot', summary: 'Changed alertCooldown' },
+  { id: 'rev-39', at: isoMinutesAgo(60 * 24 * 3), actor: 'operator', section: 'presentation', summary: 'Changed bannerText, bannerSeverity' },
   { id: 'rev-38', at: isoMinutesAgo(60 * 24 * 9), actor: 'analyst', section: 'report-presets', summary: 'Renamed “Ops digest” preset' },
 ]
 
 export const AUDIT_LOG: AuditEntry[] = [
   { id: 'a-7', at: isoMinutesAgo(60 * 5), actor: 'operator', action: 'config.save', fields: ['behavior.default_window'], result: 'ok' },
-  { id: 'a-6', at: isoMinutesAgo(60 * 6), actor: 'analyst', action: 'config.save', fields: ['honeypot.sandbox_concurrency'], result: 'rejected' },
+  { id: 'a-6', at: isoMinutesAgo(60 * 6), actor: 'analyst', action: 'config.save', fields: ['honeypot.mlAlertThreshold'], result: 'rejected' },
   { id: 'a-5', at: isoMinutesAgo(60 * 30), actor: 'operator', action: 'config.save', fields: ['honeypot.alert_cooldown'], result: 'ok' },
   { id: 'a-4', at: isoMinutesAgo(60 * 48), actor: 'operator', action: 'service.restart', fields: ['hp-tanner'], result: 'ok' },
   { id: 'a-3', at: isoMinutesAgo(60 * 24 * 3), actor: 'operator', action: 'config.save', fields: ['branding.notice'], result: 'ok' },
 ]
 
-export const SETTINGS_ADMIN = {
-  branding: { productName: 'APIARY', helpUrl: 'https://example.test/runbook', notice: '', footer: 'APIARY honeypot platform' },
-  honeypot: { alertCooldownMinutes: 60, blocklistTtlHours: 72, sandboxConcurrency: 2, llmDailyReport: false },
+/** The dashboard configuration, at the compiled defaults plus a few edits. */
+export const CONFIG: DashboardConfig = {
+  revision: 14,
+  presentation: {
+    appName: 'APIARY',
+    productLabel: 'Honeypot dashboard',
+    dashboardTitle: 'Overview',
+    dashboardSubtitle: 'What reached the decoys in the selected window',
+    orgName: 'Example Security Operations',
+    overviewIntro: '',
+    helpLinkLabel: 'Runbook',
+    helpLinkUrl: 'https://example.test/runbook',
+    bannerText: '',
+    bannerSeverity: '',
+    bannerExpires: '',
+    footerText: 'APIARY honeypot platform',
+    aiDisclaimer: 'Analysis marked as model-generated can be wrong. Check it against the evidence before acting on it.',
+    privacyNotice: 'Captured traffic can contain personal data of third parties. Handle it under the evidence policy.',
+  },
+  behavior: {
+    defaultLanding: '/',
+    defaultTimeWindow: '24h',
+    rowsPerPageOptions: [25, 50, 100],
+    maxExportRows: 5000,
+    refreshIntervalOptions: [15, 30, 60, 120],
+    sourceStaleMinutes: 15,
+    mapProvider: 'osm',
+    defaultTimezone: 'browser',
+    showMlPanels: true,
+    maintenanceMode: false,
+    readOnly: false,
+    showProblemReportButton: true,
+  },
+  honeypot: {
+    alertCooldown: '30m',
+    alertCampaignScore: 70,
+    sandboxAlertRiskScore: 80,
+    mlAlertThreshold: 0.85,
+    yaraScanIntervalSeconds: 3600,
+    yaraMaxBytes: 64 * 1024 ** 2,
+    payloadDedupeIntervalSeconds: 900,
+  },
+  reportPresets: {
+    executive: { name: 'Board briefing', description: 'One page for the monthly security review.' },
+  },
+}
+
+/** The report sender's counters since its last restart. */
+export const REPORTER_STATS: ReporterStats = {
+  available: true,
+  stats: { attempted: 1842, sent: 1206, suppressedCooldown: 598, dryRun: 0, failed: 38, updatedAt: isoMinutesAgo(4) },
+}
+
+/** Storage shaped like the real single-node cluster: close to its shard
+ * ceiling, and the dead-letter index the largest family. */
+export const ES_STORAGE: EsStorage = {
+  clusterStatus: 'yellow',
+  indexCount: 991,
+  docCount: 1_958_402_117,
+  storeBytes: 5.9 * 1024 ** 4,
+  families: [
+    { family: 'dead-letter-honeypot', indices: 1, docs: 1_726_478_817, bytes: 600 * 1024 ** 3 },
+    { family: 'honeypot-v2 (data stream)', indices: 28, docs: 151_204_550, bytes: 2.1 * 1024 ** 4 },
+    { family: 'arkime_sessions3-*', indices: 9, docs: 1_819_321, bytes: 1.4 * 1024 ** 4 },
+    { family: 'zeek-proxy-v1-*', indices: 412, docs: 5_342_871, bytes: 380 * 1024 ** 3 },
+    { family: 'huginn-v1-*', indices: 11, docs: 9_374_020, bytes: 210 * 1024 ** 3 },
+    { family: 'ml-anomalies', indices: 1, docs: 7_453_123, bytes: 96 * 1024 ** 3 },
+    { family: 'dashboard-backend-v1-*', indices: 13, docs: 148_159, bytes: 1.2 * 1024 ** 3 },
+  ],
 }

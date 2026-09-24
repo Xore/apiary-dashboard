@@ -38,7 +38,7 @@ export const ADMIN_WRITES: ReadonlySet<string> = new Set([
   'setIpBlocked',
   'runServiceAction',
   'rollbackConfig',
-  'saveAdminSection',
+  'saveConfigSection',
   'purgeDeadLetters',
   'setProblemStatus',
   'createCanarytoken',
@@ -50,7 +50,7 @@ export const ADMIN_WRITES: ReadonlySet<string> = new Set([
   'queuePayloadAction',
 ])
 
-const isRead = (name: string) => /^(get|search|semanticSearch|preview|resolve)/.test(name)
+const isRead = (name: string) => /^(get|search|semanticSearch|preview|resolve|validate)/.test(name)
 
 /** Catalogs are code, not data: an empty backend still ships them. */
 const KEEP_WHEN_EMPTY: Record<string, readonly string[]> = {
