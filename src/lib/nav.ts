@@ -1,18 +1,20 @@
 // Sidebar information architecture. Sections, order, labels, and routes match
 // the canonical frontend-next src/lib/nav.ts @62ee45d, except where epic #25
 // reshaped them: Indicators replaces Hash / IOC lookup and Executed commands,
-// Watchlist is new, and Credentials reads Bait credentials. Icons are
+// Watchlist is new, Credentials reads Bait credentials, and Reports studio
+// became Generate, History, Templates and Library. Icons are
 // heroicons equivalents of its inline feather paths.
 import {
   BellAlertIcon,
   BellIcon,
+  BookOpenIcon,
   BookmarkIcon,
   ChartBarSquareIcon,
   ChatBubbleLeftRightIcon,
   ClockIcon,
   CpuChipIcon,
   DocumentIcon,
-  DocumentTextIcon,
+  DocumentPlusIcon,
   FingerPrintIcon,
   GlobeAltIcon,
   HomeIcon,
@@ -22,6 +24,7 @@ import {
   MagnifyingGlassIcon,
   PlayCircleIcon,
   PresentationChartLineIcon,
+  RectangleStackIcon,
   ServerStackIcon,
   ShareIcon,
   SignalIcon,
@@ -79,7 +82,12 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     label: 'Reports',
-    items: [{ label: 'Reports studio', to: '/reports', icon: DocumentTextIcon }],
+    items: [
+      { label: 'Generate', to: '/reports/generate', icon: DocumentPlusIcon },
+      { label: 'History', to: '/reports/history', icon: ClockIcon },
+      { label: 'Templates', to: '/reports/templates', icon: RectangleStackIcon },
+      { label: 'Library', to: '/reports/library', icon: BookOpenIcon },
+    ],
   },
   {
     label: 'Tools',
@@ -177,6 +185,10 @@ export function navHrefFor(pathname: string): string {
   }
   if (pathname.startsWith('/identities/')) return '/attackers'
   if (pathname.startsWith('/tty-replay/')) return '/recordings'
+  // A report belongs to History, a saved definition to the Library.
+  if (pathname.startsWith('/reports/generated/')) return '/reports/history'
+  if (pathname.startsWith('/reports/definitions/')) return '/reports/library'
+  if (pathname === '/reports') return '/reports/generate'
   // Indicator pages and the per-execution command list belong to the hub.
   if (pathname.startsWith('/ioc/') || pathname === '/commands' || pathname === '/investigate/lookup') return '/iocs'
   // Any other detail page rolls up to the list it lives under.

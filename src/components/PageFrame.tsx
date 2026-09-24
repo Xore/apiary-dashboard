@@ -7,15 +7,18 @@ type PageFrameProps = {
   title: string
   description?: string
   actions?: ReactNode
+  /** Caps the readable width, e.g. 800 for a single-column form. */
+  contentWidth?: number
   children: ReactNode
 }
 
 /** Standard page frame: pinned title row over a scrolling, full-width body. */
-export function PageFrame({ title, description, actions, children }: PageFrameProps) {
+export function PageFrame({ title, description, actions, contentWidth, children }: PageFrameProps) {
   return (
     <Layout
       height="fill"
       padding={6}
+      contentWidth={contentWidth}
       header={
         <LayoutHeader>
           <HStack hAlign="between" vAlign="center" gap={4}>

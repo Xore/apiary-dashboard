@@ -39,6 +39,8 @@ describe('old URLs redirect to entity pages', () => {
     expect(await land(`/tty-replay/${shasum}`)).toBe(`/recordings/${shasum}`)
     expect(await land(`/tty-replay/${shasum}?tab=attacker`)).toBe(`/recordings/${shasum}/attacker`)
     expect(await land('/investigate/lookup')).toBe('/iocs')
+    expect(await land('/reports')).toBe('/reports/generate')
+    expect(await land('/reports?step=library')).toBe('/reports/library')
     expect(await land('/settings?pane=services')).toBe('/')
   })
 })

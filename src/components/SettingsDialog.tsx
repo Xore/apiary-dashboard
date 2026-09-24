@@ -350,7 +350,7 @@ function SettingsBody({ data, reload, pane, onPane, onDirtyChange }: BodyProps) 
       />
     ),
     services: <ServicesPane services={data.services} />,
-    'report-presets': <LinkPane href="/reports?step=library" label="Open the reports library" />,
+    'report-presets': <LinkPane href="/reports/library" label="Open the reports library" />,
     canarytokens: <LinkPane href="/canarytokens" label="Open canarytokens" />,
     elasticsearch: <LinkPane href="/history" label="Open event history search" />,
     'dead-letters': <LinkPane href="/dead-letters" label="Open ingest dead letters" />,

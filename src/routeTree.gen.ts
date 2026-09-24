@@ -63,6 +63,10 @@ import { Route as LayoutProblemReportsIdRouteImport } from './routes/_layout/pro
 import { Route as LayoutRecordingsIndexRouteImport } from './routes/_layout/recordings.index'
 import { Route as LayoutRecordingsShasumRouteImport } from './routes/_layout/recordings.$shasum'
 import { Route as LayoutReportsIndexRouteImport } from './routes/_layout/reports.index'
+import { Route as LayoutReportsGenerateRouteImport } from './routes/_layout/reports.generate'
+import { Route as LayoutReportsHistoryRouteImport } from './routes/_layout/reports.history'
+import { Route as LayoutReportsLibraryRouteImport } from './routes/_layout/reports.library'
+import { Route as LayoutReportsTemplatesRouteImport } from './routes/_layout/reports.templates'
 import { Route as LayoutRevdeckIndexRouteImport } from './routes/_layout/revdeck.index'
 import { Route as LayoutRevdeckShaRouteImport } from './routes/_layout/revdeck.$sha'
 import { Route as LayoutSandboxJobRouteImport } from './routes/_layout/sandbox.$job'
@@ -449,6 +453,26 @@ const LayoutRecordingsShasumRoute = LayoutRecordingsShasumRouteImport.update({
 const LayoutReportsIndexRoute = LayoutReportsIndexRouteImport.update({
   id: '/reports/',
   path: '/reports/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutReportsGenerateRoute = LayoutReportsGenerateRouteImport.update({
+  id: '/reports/generate',
+  path: '/reports/generate',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutReportsHistoryRoute = LayoutReportsHistoryRouteImport.update({
+  id: '/reports/history',
+  path: '/reports/history',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutReportsLibraryRoute = LayoutReportsLibraryRouteImport.update({
+  id: '/reports/library',
+  path: '/reports/library',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutReportsTemplatesRoute = LayoutReportsTemplatesRouteImport.update({
+  id: '/reports/templates',
+  path: '/reports/templates',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutRevdeckIndexRoute = LayoutRevdeckIndexRouteImport.update({
@@ -1114,6 +1138,10 @@ export interface FileRoutesByFullPath {
   '/payloads/$hash': typeof LayoutPayloadsHashRouteWithChildren
   '/problem-reports/$id': typeof LayoutProblemReportsIdRoute
   '/recordings/$shasum': typeof LayoutRecordingsShasumRouteWithChildren
+  '/reports/generate': typeof LayoutReportsGenerateRoute
+  '/reports/history': typeof LayoutReportsHistoryRoute
+  '/reports/library': typeof LayoutReportsLibraryRoute
+  '/reports/templates': typeof LayoutReportsTemplatesRoute
   '/revdeck/$sha': typeof LayoutRevdeckShaRoute
   '/sandbox/$job': typeof LayoutSandboxJobRoute
   '/sandbox/vnc': typeof LayoutSandboxVncRoute
@@ -1270,6 +1298,10 @@ export interface FileRoutesByTo {
   '/payload-analysis/$hash': typeof LayoutPayloadAnalysisHashRoute
   '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
   '/problem-reports/$id': typeof LayoutProblemReportsIdRoute
+  '/reports/generate': typeof LayoutReportsGenerateRoute
+  '/reports/history': typeof LayoutReportsHistoryRoute
+  '/reports/library': typeof LayoutReportsLibraryRoute
+  '/reports/templates': typeof LayoutReportsTemplatesRoute
   '/revdeck/$sha': typeof LayoutRevdeckShaRoute
   '/sandbox/$job': typeof LayoutSandboxJobRoute
   '/sandbox/vnc': typeof LayoutSandboxVncRoute
@@ -1434,6 +1466,10 @@ export interface FileRoutesById {
   '/_layout/payloads/$hash': typeof LayoutPayloadsHashRouteWithChildren
   '/_layout/problem-reports/$id': typeof LayoutProblemReportsIdRoute
   '/_layout/recordings/$shasum': typeof LayoutRecordingsShasumRouteWithChildren
+  '/_layout/reports/generate': typeof LayoutReportsGenerateRoute
+  '/_layout/reports/history': typeof LayoutReportsHistoryRoute
+  '/_layout/reports/library': typeof LayoutReportsLibraryRoute
+  '/_layout/reports/templates': typeof LayoutReportsTemplatesRoute
   '/_layout/revdeck/$sha': typeof LayoutRevdeckShaRoute
   '/_layout/sandbox/$job': typeof LayoutSandboxJobRoute
   '/_layout/sandbox/vnc': typeof LayoutSandboxVncRoute
@@ -1603,6 +1639,10 @@ export interface FileRouteTypes {
     | '/payloads/$hash'
     | '/problem-reports/$id'
     | '/recordings/$shasum'
+    | '/reports/generate'
+    | '/reports/history'
+    | '/reports/library'
+    | '/reports/templates'
     | '/revdeck/$sha'
     | '/sandbox/$job'
     | '/sandbox/vnc'
@@ -1759,6 +1799,10 @@ export interface FileRouteTypes {
     | '/payload-analysis/$hash'
     | '/payload-workbench/results'
     | '/problem-reports/$id'
+    | '/reports/generate'
+    | '/reports/history'
+    | '/reports/library'
+    | '/reports/templates'
     | '/revdeck/$sha'
     | '/sandbox/$job'
     | '/sandbox/vnc'
@@ -1922,6 +1966,10 @@ export interface FileRouteTypes {
     | '/_layout/payloads/$hash'
     | '/_layout/problem-reports/$id'
     | '/_layout/recordings/$shasum'
+    | '/_layout/reports/generate'
+    | '/_layout/reports/history'
+    | '/_layout/reports/library'
+    | '/_layout/reports/templates'
     | '/_layout/revdeck/$sha'
     | '/_layout/sandbox/$job'
     | '/_layout/sandbox/vnc'
@@ -2435,6 +2483,34 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports/'
       preLoaderRoute: typeof LayoutReportsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/reports/generate': {
+      id: '/_layout/reports/generate'
+      path: '/reports/generate'
+      fullPath: '/reports/generate'
+      preLoaderRoute: typeof LayoutReportsGenerateRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/reports/history': {
+      id: '/_layout/reports/history'
+      path: '/reports/history'
+      fullPath: '/reports/history'
+      preLoaderRoute: typeof LayoutReportsHistoryRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/reports/library': {
+      id: '/_layout/reports/library'
+      path: '/reports/library'
+      fullPath: '/reports/library'
+      preLoaderRoute: typeof LayoutReportsLibraryRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/reports/templates': {
+      id: '/_layout/reports/templates'
+      path: '/reports/templates'
+      fullPath: '/reports/templates'
+      preLoaderRoute: typeof LayoutReportsTemplatesRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/revdeck/': {
@@ -3611,6 +3687,10 @@ interface LayoutRouteChildren {
   LayoutPayloadsHashRoute: typeof LayoutPayloadsHashRouteWithChildren
   LayoutProblemReportsIdRoute: typeof LayoutProblemReportsIdRoute
   LayoutRecordingsShasumRoute: typeof LayoutRecordingsShasumRouteWithChildren
+  LayoutReportsGenerateRoute: typeof LayoutReportsGenerateRoute
+  LayoutReportsHistoryRoute: typeof LayoutReportsHistoryRoute
+  LayoutReportsLibraryRoute: typeof LayoutReportsLibraryRoute
+  LayoutReportsTemplatesRoute: typeof LayoutReportsTemplatesRoute
   LayoutRevdeckShaRoute: typeof LayoutRevdeckShaRoute
   LayoutSandboxJobRoute: typeof LayoutSandboxJobRoute
   LayoutSandboxVncRoute: typeof LayoutSandboxVncRoute
@@ -3683,6 +3763,10 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutPayloadsHashRoute: LayoutPayloadsHashRouteWithChildren,
   LayoutProblemReportsIdRoute: LayoutProblemReportsIdRoute,
   LayoutRecordingsShasumRoute: LayoutRecordingsShasumRouteWithChildren,
+  LayoutReportsGenerateRoute: LayoutReportsGenerateRoute,
+  LayoutReportsHistoryRoute: LayoutReportsHistoryRoute,
+  LayoutReportsLibraryRoute: LayoutReportsLibraryRoute,
+  LayoutReportsTemplatesRoute: LayoutReportsTemplatesRoute,
   LayoutRevdeckShaRoute: LayoutRevdeckShaRoute,
   LayoutSandboxJobRoute: LayoutSandboxJobRoute,
   LayoutSandboxVncRoute: LayoutSandboxVncRoute,
