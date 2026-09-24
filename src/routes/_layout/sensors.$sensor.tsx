@@ -3,6 +3,7 @@ import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Text } from '@astryxdesign/core/Text'
 import { Outlet, createFileRoute, notFound, useLocation, useNavigate } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
+import { EntityLink } from '#/components/EntityLink'
 import { FilterSelect } from '#/components/FilterSelect'
 import { entityTabs } from '#/components/ViewTabs'
 import type { ViewTab } from '#/components/ViewTabs'
@@ -70,6 +71,7 @@ function SensorLayout() {
         { label: 'Unique sources', value: formatNumber(detail.uniqueSources) },
         { label: 'First seen', value: formatDateTime(detail.firstSeen) },
         { label: 'Last event', value: formatDateTime(sensor.lastSeen) },
+        { label: 'Decoy', value: sensor.persona ? <EntityLink kind="persona" id={sensor.persona.id}>{`${sensor.persona.id} · ${sensor.persona.organization}`}</EntityLink> : 'none' },
         { label: 'Listens on', value: sensor.ports.length ? sensor.ports.map((p) => `${p.port}/${p.proto}`).join(', ') : 'no listener' },
       ]}
     >

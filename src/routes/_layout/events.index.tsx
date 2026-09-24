@@ -21,12 +21,17 @@ import { EntityLink } from '#/components/EntityLink'
 
 const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http', 'protocol', 'alert']
 const SINCE = ['1h', '6h', '24h']
-const FILTER_KEYS = ['ip', 'sensor', 'country', 'proto', 'port', 'kind', 'since'] as const
+const FILTER_KEYS = ['ip', 'sensor', 'persona', 'provider', 'country', 'proto', 'port', 'kind', 'since', 'site', 'asset', 'fingerprint', 'org', 'city'] as const
+
+/** Chip labels for filters that arrive by link rather than a control. */
+const FILTER_LABEL: Partial<Record<(typeof FILTER_KEYS)[number], string>> = { site: 'decoy site', asset: 'decoy asset', fingerprint: 'fingerprint', org: 'network', city: 'city' }
 
 // Each value filter lists every value seen, with counts, under the field.
-const FILTERS: Array<{ key: 'ip' | 'sensor' | 'country' | 'proto' | 'port' | 'kind'; label: string; width: number; options: (f: Facets) => FilterOption[] }> = [
+const FILTERS: Array<{ key: 'ip' | 'sensor' | 'persona' | 'provider' | 'country' | 'proto' | 'port' | 'kind'; label: string; width: number; options: (f: Facets) => FilterOption[] }> = [
   { key: 'ip', label: 'Source IP', width: 170, options: (f) => f.sources },
   { key: 'sensor', label: 'Sensor', width: 170, options: (f) => f.sensors },
+  { key: 'persona', label: 'Decoy persona', width: 190, options: (f) => f.personas },
+  { key: 'provider', label: 'Provider', width: 130, options: (f) => f.providers },
   { key: 'country', label: 'Country', width: 130, options: (f) => f.countries },
   { key: 'proto', label: 'Protocol', width: 130, options: (f) => f.protocols },
   { key: 'port', label: 'Port', width: 110, options: (f) => f.ports },
@@ -42,6 +47,14 @@ export const Route = createFileRoute('/_layout/events/')({
     return {
       ip: list('ip'),
       sensor: list('sensor'),
+      persona: list('persona'),
+      site: list('site'),
+      asset: list('asset'),
+      provider: list('provider'),
+      org: list('org'),
+      city: list('city'),
+      // Matched whole: a User-Agent fingerprint can itself contain commas.
+      fingerprint: typeof search.fingerprint === 'string' && search.fingerprint !== '' ? search.fingerprint : undefined,
       country: list('country'),
       proto: list('proto'),
       port: toNumericParam(listParam(search.port)),
@@ -61,7 +74,18 @@ export const Route = createFileRoute('/_layout/events/')({
 const columns: TableColumn<HoneypotEvent>[] = [
   { key: 'timestamp', header: 'Time (UTC)', width: pixel(104), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
   { key: 'severity', header: 'Severity', width: pixel(96), renderCell: (row) => <SeverityToken severity={row.severity} /> },
-  { key: 'sensor', header: 'Sensor', width: pixel(136) },
+  {
+    key: 'sensor',
+    header: 'Sensor',
+    width: pixel(168),
+    // The sensor, and the decoy asset it was wearing when hit.
+    renderCell: (row) => (
+      <VStack gap={0}>
+        <Text>{row.sensor}</Text>
+        {row.asset && <Text type="supporting">{row.asset}</Text>}
+      </VStack>
+    ),
+  },
   {
     key: 'srcIp',
     header: 'Source',
@@ -99,7 +123,7 @@ function EventsPage() {
             variant="secondary"
             icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
             onClick={() =>
-              downloadCsv('events.csv', data.rows, ['timestamp', 'sensor', 'srcIp', 'country', 'protocol', 'dstPort', 'type', 'severity', 'summary', 'sessionId'])
+              downloadCsv('events.csv', data.rows, ['timestamp', 'sensor', 'persona', 'asset', 'srcIp', 'country', 'city', 'org', 'provider', 'protocol', 'dstPort', 'type', 'severity', 'summary', 'fingerprint', 'sessionId'])
             }
           />
           <Button
@@ -147,7 +171,7 @@ function EventsPage() {
                   key={key}
                   size="sm"
                   color="blue"
-                  label={`${key}: ${search[key]}`}
+                  label={`${FILTER_LABEL[key] ?? key}: ${search[key]}`}
                   onRemove={() => setFilter({ [key]: undefined })}
                 />
               ))}
