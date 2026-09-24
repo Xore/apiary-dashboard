@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Button } from '@astryxdesign/core/Button'
-import { CodeBlock } from '@astryxdesign/core/CodeBlock'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
-import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
+import { HStack, StackItem } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -15,7 +13,7 @@ import { getDeadLetters, purgeDeadLetters } from '#/data/queries'
 import type { DeadLetter } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 
-export const Route = createFileRoute('/_layout/dead-letters')({
+export const Route = createFileRoute('/_layout/dead-letters/')({
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
     q: typeof search.q === 'string' && search.q ? search.q : undefined,
   }),
@@ -56,19 +54,7 @@ function DeadLettersPage() {
         rows={rows}
         columns={columns}
         getId={(row) => row.id}
-        inspectorTitle="Rejected document"
-        renderInspector={(row) => (
-          <VStack gap={4}>
-            <Text type="code">{row.reason}</Text>
-            <MetadataList label={{ position: 'start', width: 80 }}>
-              <MetadataListItem label="Time">{formatDateTime(row.timestamp)}</MetadataListItem>
-              <MetadataListItem label="Index">
-                <Text type="code">{row.index}</Text>
-              </MetadataListItem>
-            </MetadataList>
-            <CodeBlock code={JSON.stringify(row.document, null, 2)} language="json" title="Original document" />
-          </VStack>
-        )}
+        getHref={(row) => `/dead-letters/${encodeURIComponent(row.id)}`}
         emptyState={{ title: 'No dead letters', description: 'Every document was accepted. This is the healthy state.' }}
       />
       <AlertDialog

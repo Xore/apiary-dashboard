@@ -9,7 +9,7 @@ import { getRecordings } from '#/data/queries'
 import type { Recording } from '#/data/types'
 import { formatClock, formatNumber } from '#/lib/format'
 
-export const Route = createFileRoute('/_layout/recordings')({
+export const Route = createFileRoute('/_layout/recordings/')({
   validateSearch: (search: Record<string, unknown>): { ip?: string } => ({
     ip: typeof search.ip === 'string' && search.ip ? search.ip : undefined,
   }),

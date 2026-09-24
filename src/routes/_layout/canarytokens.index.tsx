@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Grid } from '@astryxdesign/core/Grid'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { SelectableCard } from '@astryxdesign/core/SelectableCard'
 import { Selector } from '@astryxdesign/core/Selector'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
@@ -16,13 +15,12 @@ import { Panel } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { createCanarytoken, getCanarytokens } from '#/data/queries'
 import type { CanaryToken, CanaryTokenType, CanaryTrigger } from '#/data/types'
-import { downloadJson } from '#/lib/export'
 import { formatDateTime, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 
 type View = 'deployed' | 'fired'
 
-export const Route = createFileRoute('/_layout/canarytokens')({
+export const Route = createFileRoute('/_layout/canarytokens/')({
   validateSearch: (search: Record<string, unknown>): { view?: View } => ({
     view: search.view === 'fired' ? 'fired' : undefined,
   }),
@@ -109,57 +107,6 @@ const triggerColumns: TableColumn<CanaryTrigger>[] = [
   { key: 'location', header: 'Location', width: pixel(144) },
 ]
 
-function TokenInspector({ token, triggers }: { token: CanaryToken; triggers: CanaryTrigger[] }) {
-  const fired = triggers.filter((t) => t.tokenId === token.id)
-  return (
-    <VStack gap={4}>
-      <HStack gap={2} vAlign="center">
-        <Token size="sm" label={token.type} />
-        {fired.length > 0 ? <Token size="sm" color="red" label={`fired ${fired.length}×`} /> : <Token size="sm" label="never fired" />}
-      </HStack>
-      <Text>{token.memo}</Text>
-      <MetadataList label={{ position: 'start', width: 96 }}>
-        <MetadataListItem label="URL">
-          <Text type="code">{token.url}</Text>
-        </MetadataListItem>
-        <MetadataListItem label="Hostname">
-          <Text type="code">{token.hostname}</Text>
-        </MetadataListItem>
-        <MetadataListItem label="Created">{formatDateTime(token.createdAt)}</MetadataListItem>
-        <MetadataListItem label="Created by">{token.createdBy}</MetadataListItem>
-        <MetadataListItem label="ID">
-          <Text type="code">{token.id}</Text>
-        </MetadataListItem>
-      </MetadataList>
-      <HStack gap={2}>
-        <Button label="Copy URL" size="sm" variant="secondary" onClick={() => void navigator.clipboard.writeText(token.url)} />
-        {token.artifact && (
-          <Button label="Download artifact" size="sm" variant="secondary" onClick={() => downloadJson(`${token.artifact}.json`, { mock: true, token })} />
-        )}
-      </HStack>
-    </VStack>
-  )
-}
-
-function TriggerInspector({ trigger }: { trigger: CanaryTrigger }) {
-  return (
-    <VStack gap={4}>
-      <Token size="sm" color="red" label={trigger.type} />
-      <Text>{trigger.memo}</Text>
-      <MetadataList label={{ position: 'start', width: 96 }}>
-        <MetadataListItem label="Fired">{formatDateTime(trigger.triggeredAt)}</MetadataListItem>
-        <MetadataListItem label="Source">
-          <EntityLink kind="source" id={trigger.srcIp} />
-        </MetadataListItem>
-        <MetadataListItem label="Location">{trigger.location}</MetadataListItem>
-        <MetadataListItem label="User agent">
-          <Text type="code">{trigger.userAgent}</Text>
-        </MetadataListItem>
-      </MetadataList>
-    </VStack>
-  )
-}
-
 function CanarytokensPage() {
   const { types, tokens, triggers } = Route.useLoaderData()
   const { view = 'deployed' } = Route.useSearch()
@@ -194,8 +141,7 @@ function CanarytokensPage() {
       rows={tokens}
       columns={tokenColumns}
       getId={(row) => row.id}
-      inspectorTitle="Token details"
-      renderInspector={(row) => <TokenInspector token={row} triggers={triggers} />}
+      getHref={(row) => `/canarytokens/${encodeURIComponent(row.id)}`}
       emptyState={{ title: 'No tokens deployed yet', description: 'Pick a common type above to plant your first one.' }}
     />
   ) : (
@@ -205,8 +151,7 @@ function CanarytokensPage() {
       rows={triggers}
       columns={triggerColumns}
       getId={(row) => row.id}
-      inspectorTitle="Trigger details"
-      renderInspector={(row) => <TriggerInspector trigger={row} />}
+      getHref={(row) => `/canarytokens/triggers/${encodeURIComponent(row.id)}`}
       emptyState={{ title: 'Nothing has fired', description: 'No planted token has been touched yet.' }}
     />
   )

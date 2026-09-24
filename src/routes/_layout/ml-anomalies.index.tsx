@@ -1,39 +1,32 @@
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Button } from '@astryxdesign/core/Button'
-import { Divider } from '@astryxdesign/core/Divider'
 import { Grid } from '@astryxdesign/core/Grid'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Selector } from '@astryxdesign/core/Selector'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
-import { Heading, Text } from '@astryxdesign/core/Text'
-import { TextInput } from '@astryxdesign/core/TextInput'
+import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { TimeLines } from '#/components/charts'
 import { CountTable, Panel, StatTile } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { SeverityToken } from '#/components/SeverityToken'
-import {
-  acknowledgeAllAnomalies,
-  acknowledgeAnomalies,
-  getMlAnomalies,
-  setAnomalyDisposition,
-} from '#/data/queries'
+import { acknowledgeAllAnomalies, getMlAnomalies } from '#/data/queries'
 import { DISPOSITIONS } from '#/data/types'
-import type { AnomalyStatus, Disposition, MlAnomaly, ModelHealth, Severity } from '#/data/types'
-import { formatClock, formatDateTime, formatNumber, formatTime } from '#/lib/format'
+import type { AnomalyStatus, MlAnomaly, ModelHealth, Severity } from '#/data/types'
+import { formatClock, formatNumber, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
+import { StatusToken, statusLabel } from '#/components/details/Anomaly'
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
 const STATUSES: AnomalyStatus[] = ['open', 'acknowledged', ...DISPOSITIONS]
 
 type Search = { severity?: Severity; eventType?: string; status?: AnomalyStatus }
 
-export const Route = createFileRoute('/_layout/ml-anomalies')({
+export const Route = createFileRoute('/_layout/ml-anomalies/')({
   validateSearch: (search: Record<string, unknown>): Search => ({
     severity: SEVERITIES.includes(search.severity as Severity) ? (search.severity as Severity) : undefined,
     eventType: typeof search.eventType === 'string' && search.eventType ? search.eventType : undefined,
@@ -42,20 +35,6 @@ export const Route = createFileRoute('/_layout/ml-anomalies')({
   loader: () => getMlAnomalies(),
   component: MlAnomaliesPage,
 })
-
-const statusLabel = (status: AnomalyStatus) => status.replace('_', ' ')
-
-const STATUS_COLOR = {
-  open: 'orange',
-  acknowledged: 'gray',
-  false_positive: 'green',
-  true_positive: 'red',
-  benign_known: 'blue',
-} as const satisfies Record<AnomalyStatus, string>
-
-function StatusToken({ status }: { status: AnomalyStatus }) {
-  return <Token label={statusLabel(status)} size="sm" color={STATUS_COLOR[status]} />
-}
 
 const columns: TableColumn<MlAnomaly>[] = [
   {
@@ -124,88 +103,6 @@ const healthColumns: TableColumn<ModelHealth>[] = [
   { key: 'trainSamples', header: 'Samples', width: pixel(96), align: 'end', renderCell: (row) => formatNumber(row.trainSamples) },
   { key: 'reason', header: 'Reason', width: proportional(2) },
 ]
-
-function AnomalyInspector({ anomaly }: { anomaly: MlAnomaly }) {
-  const router = useRouter()
-  const [busy, setBusy] = useState(false)
-  const [verdict, setVerdict] = useState<Disposition>('true_positive')
-  const [reason, setReason] = useState('')
-  const isDisposed = (DISPOSITIONS as readonly string[]).includes(anomaly.status)
-  const run = async (write: () => Promise<unknown>) => {
-    setBusy(true)
-    try {
-      await write()
-      await router.invalidate()
-    } finally {
-      setBusy(false)
-    }
-  }
-  // A folded row stands for several anomalies; the mock keeps them as one.
-  const ids = [anomaly.id]
-
-  return (
-    <VStack gap={4}>
-      <HStack gap={2} vAlign="center" wrap="wrap">
-        <SeverityToken severity={anomaly.severity} />
-        <StatusToken status={anomaly.status} />
-        <Text type="supporting">score {anomaly.compositeScore.toFixed(2)}</Text>
-      </HStack>
-      <Text>{anomaly.explanation}</Text>
-
-      <MetadataList label={{ position: 'start', width: 128 }}>
-        <MetadataListItem label="Time">{formatDateTime(anomaly.timestamp)}</MetadataListItem>
-        <MetadataListItem label="Source">{anomaly.srcIp ?? 'unattributed'}</MetadataListItem>
-        <MetadataListItem label="Event type">{anomaly.eventType}</MetadataListItem>
-        <MetadataListItem label="Dst port / proto">{`${anomaly.dstPort} / ${anomaly.proto}`}</MetadataListItem>
-        <MetadataListItem label="Sensor">{anomaly.sensor}</MetadataListItem>
-        <MetadataListItem label="Source index">
-          <Text type="code">{anomaly.sourceIndex}</Text>
-        </MetadataListItem>
-        <MetadataListItem label="Source event">
-          <EntityLink kind="event" id={anomaly.sourceEventId} />
-        </MetadataListItem>
-        <MetadataListItem label="Threshold">{anomaly.thresholdAtScoring.toFixed(2)}</MetadataListItem>
-        <MetadataListItem label="Model state">{anomaly.modelState ?? 'no full detector trio promoted'}</MetadataListItem>
-        {anomaly.folded > 1 && (
-          <MetadataListItem label="Folded">{`${anomaly.folded} anomalies from this address in the same second`}</MetadataListItem>
-        )}
-        {anomaly.dispositionReason && <MetadataListItem label="Verdict reason">{anomaly.dispositionReason}</MetadataListItem>}
-      </MetadataList>
-
-      <Divider />
-
-      <VStack gap={3}>
-        <Heading level={3}>Triage</Heading>
-        {anomaly.status === 'open' && (
-          <Button label="Acknowledge" variant="secondary" size="sm" isLoading={busy} onClick={() => run(() => acknowledgeAnomalies(ids))} />
-        )}
-        <Selector
-          label="Disposition"
-          value={verdict}
-          onChange={(value) => setVerdict(value as Disposition)}
-          options={DISPOSITIONS.map((value) => ({ value, label: statusLabel(value) }))}
-        />
-        <TextInput
-          label="Reason"
-          description="Kept next to the score for the labelled training corpus."
-          value={reason}
-          onChange={setReason}
-        />
-        <HStack gap={2}>
-          <Button
-            label={isDisposed ? `Change to ${statusLabel(verdict)}` : 'Record disposition'}
-            size="sm"
-            isLoading={busy}
-            onClick={() => run(() => setAnomalyDisposition(ids, verdict, reason))}
-          />
-          {isDisposed && (
-            <Button label="Retract" variant="secondary" size="sm" isDisabled={busy} onClick={() => run(() => setAnomalyDisposition(ids, 'open', ''))} />
-          )}
-        </HStack>
-      </VStack>
-    </VStack>
-  )
-}
 
 function MlAnomaliesPage() {
   const data = Route.useLoaderData()
@@ -313,8 +210,7 @@ function MlAnomaliesPage() {
         rows={rows}
         columns={columns}
         getId={(row) => row.id}
-        inspectorTitle="Anomaly details"
-        renderInspector={(row) => <AnomalyInspector anomaly={row} />}
+        getHref={(row) => `/ml-anomalies/${encodeURIComponent(row.id)}`}
         emptyState={{
           title: 'No anomalies match',
           description: 'Clear a filter, or wait for ml-worker to score new traffic.',

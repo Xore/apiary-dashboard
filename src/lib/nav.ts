@@ -83,7 +83,7 @@ export const NAV_SECTIONS: NavSection[] = [
     label: 'Tools',
     items: [
       { label: 'Canarytokens', to: '/canarytokens', icon: StarIcon },
-      { label: 'Credentials', to: '/credentials', icon: KeyIcon },
+      { label: 'Bait credentials', to: '/credentials', icon: KeyIcon },
     ],
   },
   {
@@ -118,6 +118,19 @@ const PAGE_PREFIXES: Array<[string, string]> = [
   ['/investigate/cidr/', 'Network'],
   ['/investigate/cluster', 'Cluster'],
   ['/tty-replay/', 'Session recording'],
+  ['/recordings/', 'Session recording'],
+  ['/alerts/', 'Alert'],
+  ['/ml-anomalies/', 'ML anomaly'],
+  ['/llm-analysis/', 'LLM analysis'],
+  ['/agent-campaigns/', 'Agent campaign'],
+  ['/auth-events/', 'Auth failure'],
+  ['/canarytokens/triggers/', 'Canarytoken trigger'],
+  ['/canarytokens/', 'Canarytoken'],
+  ['/credentials/', 'Bait credential'],
+  ['/dead-letters/', 'Dead letter'],
+  ['/problem-reports/', 'Problem report'],
+  ['/reports/definitions/', 'Report definition'],
+  ['/reports/generated/', 'Generated report'],
 ]
 
 // Routes without a nav item that still deserve a proper label.
@@ -131,6 +144,10 @@ const PAGE_LABELS: Record<string, string> = {
   '/cape': 'CAPE',
   '/github-analysis': 'GitHub analysis',
 }
+
+const ALL_ITEMS = NAV_SECTIONS.flatMap((section) => section.items)
+// List pages reached from settings rather than the sidebar.
+const UNLISTED_LISTS = ['/dead-letters', '/problem-reports']
 
 /** The sidebar entry a pathname rolls up to: detail pages highlight (and
  * breadcrumb under) their parent. */
@@ -156,7 +173,11 @@ export function navHrefFor(pathname: string): string {
   }
   if (pathname.startsWith('/identities/')) return '/attackers'
   if (pathname.startsWith('/tty-replay/')) return '/recordings'
-  return pathname
+  // Any other detail page rolls up to the list it lives under.
+  const list = [...ALL_ITEMS.map((item) => item.to), ...UNLISTED_LISTS]
+    .filter((to) => to !== '/' && pathname.startsWith(`${to}/`))
+    .sort((a, b) => b.length - a.length)
+  return list.length ? list[0] : pathname
 }
 
 export function navItemFor(pathname: string): NavItem | undefined {
