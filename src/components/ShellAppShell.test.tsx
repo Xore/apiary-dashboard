@@ -36,7 +36,7 @@ function renderShell(path: string) {
     routeTree: root.addChildren([
       page('/', 'overview content'),
       page('/events', 'events content'),
-      page('/event/$id', 'event detail content'),
+      page('/events/$id', 'event detail content'),
       page('/alerts', 'alerts content'),
       page('/settings', 'settings content'),
       createRoute({ getParentRoute: () => root, path: '/tabbed', component: TabbedPage }),
@@ -78,7 +78,7 @@ describe('ShellAppShell', () => {
   })
 
   it('marks the parent nav item and breadcrumbs for a drill-down route', async () => {
-    renderShell('/event/evt-123')
+    renderShell('/events/evt-123')
     await screen.findByText('event detail content')
     const sidebar = screen.getByRole('navigation', { name: 'Side navigation' })
     const active = within(sidebar).getByRole('link', { name: 'Event explorer' })
@@ -86,7 +86,7 @@ describe('ShellAppShell', () => {
     const crumbs = screen.getByRole('navigation', { name: 'Current page' })
     expect(crumbs.textContent).toContain('Investigate')
     expect(crumbs.textContent).toContain('Event explorer')
-    expect(crumbs.textContent).toContain('Event detail')
+    expect(crumbs.textContent).toMatch(/Event explorer.*Event$/)
   })
 
   it('shows the signed-in user in the account menu', async () => {

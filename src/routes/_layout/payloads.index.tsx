@@ -18,7 +18,7 @@ import { EntityLink } from '#/components/EntityLink'
 
 const PAGE = 12
 
-export const Route = createFileRoute('/_layout/payloads')({
+export const Route = createFileRoute('/_layout/payloads/')({
   validateSearch: (search: Record<string, unknown>): { source?: string } => ({
     source: typeof search.source === 'string' && search.source ? search.source : undefined,
   }),
@@ -48,7 +48,7 @@ function PayloadCard({ payload, onPublish }: { payload: CapturedPayload; onPubli
             size="sm"
             label="Payload actions"
             items={[
-              { label: 'Static analysis', onClick: () => void navigate({ href: `/payload-analysis/${hash}` }) },
+              { label: 'Static analysis', onClick: () => void navigate({ href: `/payloads/${hash}/static` }) },
               { label: 'Analysis workbench', onClick: () => void navigate({ href: `/payload-workbench/results?tab=workbench&hash=${hash}` }) },
               { label: 'Related events', onClick: () => void navigate({ href: `/events?kind=download` }) },
               { label: 'Publish to GitHub…', onClick: () => onPublish(payload) },

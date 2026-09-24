@@ -49,6 +49,7 @@ import {
   REPORT_TEMPLATES,
   SOURCE_HEALTH,
   TOPOLOGY,
+  DOWNLOAD_HASH,
 } from './mock/operations'
 import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALTH, SCORE_TIMELINE } from './mock/monitor'
 import { OVERVIEW_VIEWS } from './mock/overview'
@@ -113,6 +114,9 @@ import type {
   Kpi,
   OverviewData,
   OverviewViews,
+  SessionSummary,
+  SourceNetwork,
+  TimelineItem,
   Protocol,
   SessionUser,
   TimeBucket,
@@ -700,7 +704,7 @@ export async function getEventDetail(id: string): Promise<EventDetail | null> {
     // Same 5-tuple in spirit: same source address and port on the same sensor.
     connection: EVENTS.filter((e) => e.srcIp === event.srcIp && e.sensor === event.sensor && e.dstPort === event.dstPort && e.id !== id).slice(0, 10),
     source: EVENTS.filter((e) => e.srcIp === event.srcIp && e.sessionId !== event.sessionId).slice(0, 25),
-    hashes: event.type === 'file.download' ? [event.summary.match(/[0-9a-f]{12}/)?.[0] ?? ''].filter(Boolean) : [],
+    hashes: [DOWNLOAD_HASH.get(event.id)].filter((h): h is string => h !== undefined),
   }
 }
 
@@ -718,7 +722,7 @@ export async function getSessionDetail(id: string): Promise<SessionDetail | null
     sensors: countBy(events.map((e) => e.sensor), 10),
     commands: countBy(events.map((e) => e.command), 15),
     credentials: countBy(events.map((e) => (e.username ? `${e.username}:${e.password}` : undefined)), 15),
-    payloads: countBy(events.filter((e) => e.type === 'file.download').map((e) => e.summary), 10),
+    payloads: countBy(events.map((e) => DOWNLOAD_HASH.get(e.id)), 10),
     techniques: techniquesFor(events),
     recordingShasum: RECORDINGS.find((r) => r.session === id)?.shasum,
   }
@@ -741,7 +745,7 @@ export async function getIpProfile(ip: string): Promise<IpProfile | null> {
     ports: countBy(events.map((e) => String(e.dstPort)), 10),
     protocols: countBy(events.map((e) => e.protocol), 10),
     sessions: countBy(events.map((e) => e.sessionId), 10),
-    payloads: countBy(events.filter((e) => e.type === 'file.download').map((e) => e.summary), 10),
+    payloads: countBy(events.map((e) => DOWNLOAD_HASH.get(e.id)), 10),
     alerts: countBy(events.filter((e) => e.type === 'ids.alert').map((e) => e.summary), 10),
     techniques: techniquesFor(events),
     correlation: {
@@ -838,11 +842,11 @@ export async function searchAll(query: string): Promise<SearchGroup[]> {
   const add = (id: string, title: string, items: SearchGroup['items']) => {
     if (items.length) groups.push({ id, title, total: items.length, items: items.slice(0, 8) })
   }
-  add('sources', 'Source IPs', SOURCES.filter((s) => s.ip.includes(q) || s.org.toLowerCase().includes(q) || s.asn.toLowerCase() === q).map((s) => ({ label: s.ip, detail: `${s.org} · ${s.country} · ${s.events} events`, href: `/investigate/ip/${s.ip}` })))
+  add('sources', 'Source IPs', SOURCES.filter((s) => s.ip.includes(q) || s.org.toLowerCase().includes(q) || s.asn.toLowerCase() === q).map((s) => ({ label: s.ip, detail: `${s.org} · ${s.country} · ${s.events} events`, href: `/sources/${s.ip}` })))
   add('sessions', 'Sessions', [...new Set(EVENTS.filter((e) => e.sessionId.includes(q)).map((e) => e.sessionId))].map((id) => ({ label: id, detail: 'session', href: `/sessions/${id}` })))
   add('commands', 'Commands', [...new Set(EVENTS.filter((e) => e.command?.toLowerCase().includes(q)).map((e) => e.command!))].map((c) => ({ label: c, detail: 'executed command', href: `/history?q=${encodeURIComponent(q)}` })))
   add('credentials', 'Credentials', [...new Set(EVENTS.filter((e) => e.username && `${e.username}:${e.password}`.toLowerCase().includes(q)).map((e) => `${e.username}:${e.password}`))].map((c) => ({ label: c, detail: 'credential pair', href: `/investigate/cluster?kind=credential&value=${encodeURIComponent(c)}` })))
-  add('payloads', 'Payloads', PAYLOADS.filter((p) => p.hash.includes(q) || p.verdict?.family?.toLowerCase().includes(q)).map((p) => ({ label: p.hash.slice(0, 24), detail: `${p.kind}${p.verdict?.family ? ` · ${p.verdict.family}` : ''}`, href: `/payload-analysis/${p.hash}` })))
+  add('payloads', 'Payloads', PAYLOADS.filter((p) => p.hash.includes(q) || p.verdict?.family?.toLowerCase().includes(q)).map((p) => ({ label: p.hash.slice(0, 24), detail: `${p.kind}${p.verdict?.family ? ` · ${p.verdict.family}` : ''}`, href: `/payloads/${p.hash}` })))
   add('fingerprints', 'Fingerprints', INFRA_CLUSTERS.filter((c) => c.kind === 'fingerprint' && c.value.includes(q)).map((c) => ({ label: c.value, detail: `${c.sources} sources`, href: `/investigate/cluster?kind=fingerprint&value=${encodeURIComponent(c.value)}` })))
   add('signatures', 'IDS signatures', [...new Set(EVENTS.filter((e) => e.type === 'ids.alert' && e.summary.toLowerCase().includes(q)).map((e) => e.summary))].map((s) => ({ label: s, detail: 'Suricata signature', href: `/history?q=${encodeURIComponent(q)}` })))
   return groups
@@ -998,4 +1002,104 @@ export async function getGithubAnalysis(sha: string): Promise<GithubAnalysis | n
 export async function getOverviewViews(): Promise<OverviewViews> {
   await mockDelay()
   return OVERVIEW_VIEWS
+}
+
+// ---- Entity pages (epic #25) -----------------------------------------------
+
+const RANGE_MS: Record<string, number> = { '1h': HOUR, '6h': 6 * HOUR, '24h': DAY, '7d': 7 * DAY, '30d': 30 * DAY }
+
+/** Keeps items inside the app-wide range (default 24h). */
+function inRange(at: string, range?: string): boolean {
+  return MOCK_NOW - Date.parse(at) <= (RANGE_MS[range ?? '24h'] ?? DAY)
+}
+
+function summarizeSessions(events: HoneypotEvent[]): SessionSummary[] {
+  const bySession = new Map<string, HoneypotEvent[]>()
+  for (const e of events) {
+    if (!bySession.has(e.sessionId)) bySession.set(e.sessionId, [])
+    bySession.get(e.sessionId)!.push(e)
+  }
+  return [...bySession]
+    .map(([id, list]) => ({
+      id,
+      srcIp: list[0].srcIp,
+      sensors: [...new Set(list.map((e) => e.sensor))],
+      first: list.at(-1)!.timestamp,
+      last: list[0].timestamp,
+      events: list.length,
+      logins: list.filter((e) => e.type === 'login.failed' || e.type === 'login.success').length,
+      commands: list.filter((e) => e.type === 'command.input').length,
+      downloads: list.filter((e) => e.type === 'file.download').length,
+      recordingShasum: RECORDINGS.find((r) => r.session === id)?.shasum,
+    }))
+    .sort((a, b) => b.last.localeCompare(a.last))
+}
+
+export async function getSourceEvents(ip: string, range?: string): Promise<HoneypotEvent[]> {
+  await mockDelay()
+  return EVENTS.filter((e) => e.srcIp === ip && inRange(e.timestamp, range))
+}
+
+export async function getSourceSessions(ip: string, range?: string): Promise<SessionSummary[]> {
+  await mockDelay()
+  return summarizeSessions(EVENTS.filter((e) => e.srcIp === ip && inRange(e.timestamp, range)))
+}
+
+/** Everything that happened involving a source, newest first: its events plus
+ * the anomalies, model analyses, canary triggers, and auth failures that
+ * name it. */
+export async function getSourceTimeline(ip: string, range?: string): Promise<TimelineItem[]> {
+  await mockDelay()
+  const items: TimelineItem[] = [
+    ...EVENTS.filter((e) => e.srcIp === ip).map((e) => ({ id: e.id, at: e.timestamp, kind: 'event' as const, title: e.summary, detail: `${e.sensor} · ${e.protocol.toUpperCase()} ${e.dstPort}`, severity: e.severity, href: `/events/${e.id}` })),
+    ...ML_ANOMALIES.filter((a) => a.srcIp === ip).map((a) => ({ id: a.id, at: a.timestamp, kind: 'anomaly' as const, title: a.explanation, detail: `ML score ${a.compositeScore.toFixed(2)} · ${a.status}`, severity: a.severity, href: `/ml-anomalies` })),
+    ...LLM_ANALYSES.filter((a) => a.srcIp === ip).map((a) => ({ id: a.id, at: a.timestamp, kind: 'llm' as const, title: a.summary || '(no summary)', detail: `AI-generated · ${a.intent}`, severity: a.severity, href: '/llm-analysis' })),
+    ...CANARY_TRIGGERS.filter((t) => t.srcIp === ip).map((t) => ({ id: t.id, at: t.triggeredAt, kind: 'canary' as const, title: `Canarytoken fired: ${t.memo}`, detail: t.userAgent, severity: 'critical' as const, href: '/canarytokens?view=fired' })),
+    ...AUTH_FAILURES.filter((f) => f.ip === ip).map((f) => ({ id: f.id, at: f.timestamp, kind: 'auth' as const, title: `Failed login to ${f.clientId}`, detail: `${f.error}${f.username ? ` · ${f.username}` : ''}`, severity: 'medium' as const, href: '/auth-events' })),
+  ]
+  return items.filter((i) => inRange(i.at, range)).sort((a, b) => b.at.localeCompare(a.at))
+}
+
+export async function getSourceNetwork(ip: string): Promise<SourceNetwork | null> {
+  await mockDelay()
+  const source = SOURCES.find((s) => s.ip === ip)
+  if (!source) return null
+  const [a, b, c, d] = ip.split('.')
+  const base = Math.floor(Number(d) / 64) * 64
+  const cidr = `${a}.${b}.${c}.${base}/26`
+  const inNet = (other: string) => {
+    const parts = other.split('.')
+    return `${parts[0]}.${parts[1]}.${parts[2]}` === `${a}.${b}.${c}` && Number(parts[3]) >= base && Number(parts[3]) < base + 64
+  }
+  return {
+    cidr,
+    asn: source.asn,
+    org: source.org,
+    country: source.country,
+    neighbours: SOURCE_PROFILES.filter((p) => p.ip !== ip && inNet(p.ip)),
+    campaign: NETWORK_CAMPAIGNS.find((n) => n.cidr === cidr),
+  }
+}
+
+export async function getSourceIdentity(ip: string): Promise<AttackerEntity | null> {
+  await mockDelay()
+  return ATTACKERS.find((a) => a.ips.includes(ip)) ?? null
+}
+
+export async function getSessionSummary(id: string): Promise<SessionSummary | null> {
+  await mockDelay()
+  return summarizeSessions(EVENTS.filter((e) => e.sessionId === id))[0] ?? null
+}
+
+/** Who delivered a payload: the download events that fetched it, their
+ * sessions, and the addresses behind them. */
+export async function getPayloadDelivery(hash: string): Promise<{ events: HoneypotEvent[]; sessions: SessionSummary[]; sources: CountRow[] }> {
+  await mockDelay()
+  const events = EVENTS.filter((e) => DOWNLOAD_HASH.get(e.id) === hash)
+  const sessionIds = new Set(events.map((e) => e.sessionId))
+  return {
+    events,
+    sessions: summarizeSessions(EVENTS.filter((e) => sessionIds.has(e.sessionId))),
+    sources: countBy(events.map((e) => e.srcIp), 50),
+  }
 }

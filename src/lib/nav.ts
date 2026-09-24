@@ -97,16 +97,19 @@ export const NAV_SECTIONS: NavSection[] = [
 
 // Drill-down routes with no sidebar entry of their own. First match wins.
 const PAGE_PREFIXES: Array<[string, string]> = [
-  ['/payload-analysis/', 'Payload analysis'],
+  ['/payloads/', 'Payload'],
+  ['/sources/', 'Source IP'],
+  ['/events/', 'Event'],
+  ['/payload-analysis/', 'Payload'],
   ['/payload-workbench/', 'Analysis results'],
   ['/sandbox/', 'Sandbox result'],
   ['/ghidra/', 'Ghidra result'],
   ['/revdeck/', 'RevDeck result'],
   ['/cape/', 'CAPE result'],
   ['/github-analysis/', 'GitHub analysis'],
-  ['/sessions/', 'Session replay'],
-  ['/event/', 'Event detail'],
-  ['/investigate/ip/', 'Attacker profile'],
+  ['/sessions/', 'Session'],
+  ['/event/', 'Event'],
+  ['/investigate/ip/', 'Source IP'],
   ['/investigate/cidr/', 'CIDR investigation'],
   ['/investigate/cluster', 'Cluster investigation'],
   ['/tty-replay/', 'Session recording'],
@@ -127,7 +130,7 @@ const PAGE_LABELS: Record<string, string> = {
 /** The sidebar entry a pathname rolls up to: detail pages highlight (and
  * breadcrumb under) their parent. */
 export function navHrefFor(pathname: string): string {
-  if (pathname.startsWith('/payload-analysis')) return '/payloads'
+  if (pathname.startsWith('/payload-analysis') || pathname.startsWith('/payloads/')) return '/payloads'
   // Analyzer lists and their result pages all roll up to Analysis results.
   if (
     pathname.startsWith('/payload-workbench/') ||
@@ -137,9 +140,9 @@ export function navHrefFor(pathname: string): string {
   ) {
     return '/payload-workbench/results'
   }
-  if (pathname.startsWith('/sessions/') || pathname.startsWith('/event/')) return '/events'
+  if (pathname.startsWith('/sessions/') || pathname.startsWith('/event/') || pathname.startsWith('/events/')) return '/events'
   if (pathname.startsWith('/sensors/')) return '/sensors'
-  if (pathname.startsWith('/investigate/ip/')) return '/ips'
+  if (pathname.startsWith('/investigate/ip/') || pathname.startsWith('/sources/')) return '/ips'
   if (pathname.startsWith('/investigate/cidr/') || pathname.startsWith('/investigate/cluster')) {
     return '/campaigns'
   }

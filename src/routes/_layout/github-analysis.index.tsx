@@ -19,7 +19,7 @@ const STATUS_COLOR = { published: 'green', dry_run: 'gray', denylist_blocked: 'o
 
 const columns: TableColumn<GithubAnalysis>[] = [
   { key: 'at', header: 'Analyzed', width: pixel(184), renderCell: (row) => <Text type="supporting">{formatDateTime(row.at)}</Text> },
-  { key: 'sha', header: 'File', width: proportional(2), renderCell: (row) => <Link href={`/github-analysis/${row.sha}`}><Text type="code">{`${row.sha.slice(0, 24)}…`}</Text></Link> },
+  { key: 'sha', header: 'File', width: proportional(2), renderCell: (row) => <Link href={`/payloads/${row.sha}/github`}><Text type="code">{`${row.sha.slice(0, 24)}…`}</Text></Link> },
   { key: 'status', header: 'Status', width: pixel(152), renderCell: (row) => <Token size="sm" color={STATUS_COLOR[row.status]} label={row.status} /> },
   { key: 'detections', header: 'Detections', width: pixel(104), align: 'end', renderCell: (row) => `${row.detections}/${row.engines}` },
   { key: 'family', header: 'Family', width: pixel(112), renderCell: (row) => row.family ?? '—' },
@@ -33,7 +33,7 @@ function GithubIndexPage() {
       description="Multi-engine verdicts for captured payloads published to the analysis repository."
       rows={rows}
       columns={columns}
-      getHref={(row) => `/github-analysis/${row.sha}`}
+      getHref={(row) => `/payloads/${row.sha}/github`}
       getId={(row) => row.sha}
       emptyState={{ title: 'Nothing published yet', description: 'Results appear once a sample is published and scanned.' }}
     />

@@ -86,7 +86,7 @@ export const PROBLEM_REPORTS: ProblemReport[] = [
     submittedAt: isoMinutesAgo(60 * 26),
     submittedBy: 'analyst',
     status: 'triaged',
-    page: '/payload-analysis/…',
+    page: '/payloads/…',
     expected: 'Hex preview renders',
     actual: 'Preview area empty for a 0-byte file',
     consoleErrors: ["TypeError: Cannot read properties of undefined (reading 'slice')"],

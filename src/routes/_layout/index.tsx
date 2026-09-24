@@ -41,7 +41,7 @@ export const Route = createFileRoute('/_layout/')({
 })
 
 const formatBytes = (bytes: number) => (bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${(bytes / 1e6).toFixed(0)} MB`)
-const ipLink = (ip: string) => `/investigate/ip/${ip}`
+const ipLink = (ip: string) => `/sources/${ip}`
 
 // ---- Live operations ---------------------------------------------------------
 

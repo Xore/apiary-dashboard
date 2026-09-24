@@ -931,3 +931,39 @@ export interface OverviewViews {
   payloads: CapturedPayload[]
   campaigns: NetworkCampaign[]
 }
+
+// ---- Entity pages ----------------------------------------------------------
+
+export type TimelineKind = 'event' | 'anomaly' | 'llm' | 'canary' | 'auth' | 'alert'
+
+export interface TimelineItem extends Record<string, unknown> {
+  id: string
+  at: string
+  kind: TimelineKind
+  title: string
+  detail?: string
+  severity?: Severity
+  href?: string
+}
+
+export interface SessionSummary extends Record<string, unknown> {
+  id: string
+  srcIp: string
+  sensors: string[]
+  first: string
+  last: string
+  events: number
+  logins: number
+  commands: number
+  downloads: number
+  recordingShasum?: string
+}
+
+export interface SourceNetwork {
+  cidr: string
+  asn: string
+  org: string
+  country: string
+  neighbours: SourceProfile[]
+  campaign?: NetworkCampaign
+}

@@ -2,7 +2,7 @@ import { BreadcrumbItem, Breadcrumbs } from '@astryxdesign/core/Breadcrumbs'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Kbd } from '@astryxdesign/core/Kbd'
-import { HStack } from '@astryxdesign/core/Stack'
+import { HStack, StackItem } from '@astryxdesign/core/Stack'
 import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
@@ -57,7 +57,11 @@ export function ShellTopNav({ onOpenPalette }: { onOpenPalette: () => void }) {
       startContent={
         <HStack gap={4} vAlign="center">
           <ShellBreadcrumbs />
-          <ViewTabsBar />
+          {/* TopNav sizes its start slot to content, so cap the tabs to what the
+              sidebar, breadcrumbs, and end controls leave; past that they scroll. */}
+          <StackItem size="fill" style={{ maxWidth: 'max(240px, calc(100vw - 820px))' }}>
+            <ViewTabsBar />
+          </StackItem>
         </HStack>
       }
       endContent={

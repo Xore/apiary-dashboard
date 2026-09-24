@@ -10,7 +10,9 @@ import { Heading, Text } from '@astryxdesign/core/Text'
 import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/react/24/outline'
 import type { CountRow } from '#/data/types'
 import { formatChange, formatCompact, formatNumber } from '#/lib/format'
+import type { EntityKind } from '#/lib/entities'
 import { Sparkline } from './charts'
+import { EntityLink } from './EntityLink'
 
 /** A titled widget card with an optional trailing action (usually a Link). */
 export function Panel({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
@@ -62,13 +64,15 @@ export function StatTile({ label, value, previous, caption, trend, href }: StatT
 }
 
 /** Two-column "value, count" table for top-N breakdowns. */
-export function CountTable({ header, rows, countHeader = 'Count', isCode = false, linkTo }: {
+export function CountTable({ header, rows, countHeader = 'Count', isCode = false, linkTo, entity }: {
   header: string
   rows: CountRow[]
   countHeader?: string
   isCode?: boolean
   /** Makes each value a link, e.g. to its own detail page. */
   linkTo?: (label: string) => string
+  /** Renders each value as an EntityLink of this kind (page + value menu). */
+  entity?: EntityKind
 }) {
   const columns: TableColumn<CountRow>[] = [
     {
@@ -76,6 +80,7 @@ export function CountTable({ header, rows, countHeader = 'Count', isCode = false
       header,
       width: proportional(1),
       renderCell: (row) => {
+        if (entity) return <EntityLink kind={entity} id={row.label} />
         const text = isCode ? <Text type="code">{row.label}</Text> : row.label
         return linkTo ? <Link href={linkTo(row.label)}>{text}</Link> : text
       },
@@ -86,10 +91,11 @@ export function CountTable({ header, rows, countHeader = 'Count', isCode = false
 }
 
 /** A titled top-N breakdown; renders a short note instead of an empty table. */
-export function MiniTable({ title, header = 'Value', countHeader, rows, isCode, linkTo }: {
+export function MiniTable({ title, header = 'Value', countHeader, rows, isCode, linkTo, entity }: {
   title: string
   header?: string
   countHeader?: string
+  entity?: EntityKind
   rows: CountRow[]
   isCode?: boolean
   linkTo?: (label: string) => string
@@ -97,7 +103,7 @@ export function MiniTable({ title, header = 'Value', countHeader, rows, isCode, 
   return (
     <Panel title={title}>
       {rows.length ? (
-        <CountTable header={header} countHeader={countHeader} rows={rows} isCode={isCode} linkTo={linkTo} />
+        <CountTable header={header} countHeader={countHeader} rows={rows} isCode={isCode} linkTo={linkTo} entity={entity} />
       ) : (
         <Text type="supporting">Nothing recorded.</Text>
       )}
