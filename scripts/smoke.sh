@@ -89,6 +89,9 @@ for check in "${CHECKS[@]}"; do
   fi
 done
 
+step "SSR link crawl, every entity tab"
+bun scripts/crawl.ts "http://localhost:$PORT" 2 || failed=1
+
 if [[ "$failed" -ne 0 ]]; then
   echo; echo "server log:"; tail -20 "$WORK/server.log"
   exit 1
