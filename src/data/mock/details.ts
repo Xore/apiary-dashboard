@@ -48,17 +48,18 @@ export const DEAD_LETTERS: DeadLetter[] = (() => {
     ['mapper_parsing_exception', "failed to parse field [source.port] of type [long]: For input string: \"-\""],
     ['illegal_argument_exception', 'mapper [honeypot.data] cannot be changed from type [text] to [object]'],
     ['document_parsing_exception', "[1:318] failed to parse field [event.created] of type [date]"],
+    ['validation_exception', 'Validation Failed: 1: this action would add [1] shards, but this cluster currently has [1000]/[1000] maximum normal shards open'],
   ]
   return Array.from({ length: 12 }, (_, i) => {
     const [kind, message] = pick(rng, reasons)
-    const logset = pick(rng, ['dionaea', 'tanner', 'cowrie', 'suricata'])
+    const logset = pick(rng, ['dionaea', 'tanner', 'cowrie', 'multipot', 'conpot-s7-1200', 'hellpot'])
     return {
       id: `dl-${hex(rng, 10)}`,
       timestamp: isoMinutesAgo(i * 110 + int(rng, 0, 90)),
       reason: `${kind}: ${message}`,
       source: logset,
-      index: `honeypot-${logset}-2026.09.23`,
-      document: { '@timestamp': isoMinutesAgo(i * 110), 'source.port': '-', 'honeypot.sensor': `${logset}-vps-01`, message: 'raw line kept for remediation' },
+      index: logset === 'dionaea' ? 'dionaea-incidents-v1-2026.09.23' : '.ds-honeypot-v2-2026.09.23-000001',
+      document: { '@timestamp': isoMinutesAgo(i * 110), 'source.port': '-', 'honeypot.sensor': logset, message: 'raw line kept for remediation' },
     }
   })
 })()
@@ -77,7 +78,7 @@ export const PROBLEM_REPORTS: ProblemReport[] = [
     consoleErrors: [],
     networkFailures: [],
     apiCalls: [{ method: 'GET', path: '/api/v1/events?country=CN', status: 200 }],
-    actionTrail: ['select sensor cowrie-vps-01', 'select country CN', 'observe table'],
+    actionTrail: ['select sensor cowrie', 'select country CN', 'observe table'],
     userAgent: 'Mozilla/5.0 (X11; Linux x86_64) Chrome/140',
     hasSnapshot: true,
   },

@@ -10,9 +10,9 @@ import { neutralTheme } from '#/themes/neutral/neutral'
 import { FilterSelect, listParam, toParam } from './FilterSelect'
 
 const OPTIONS = [
-  { value: 'cowrie-vps-01', count: 299 },
-  { value: 'cowrie-home-01', count: 334 },
-  { value: 'dionaea-vps-01', count: 473 },
+  { value: 'conpot-s7-1200', count: 299 },
+  { value: 'conpot-iec104', count: 334 },
+  { value: 'dionaea', count: 473 },
 ]
 
 let last: string[] = []
@@ -47,10 +47,10 @@ describe('FilterSelect', () => {
     const user = userEvent.setup()
     render(<Harness />)
     await user.click(screen.getByRole('button', { name: /Sensor/ }))
-    expect(await screen.findByRole('checkbox', { name: 'dionaea-vps-01' })).toBeTruthy()
+    expect(await screen.findByRole('checkbox', { name: 'dionaea' })).toBeTruthy()
     expect(screen.getByText('473')).toBeTruthy()
-    await user.type(await search(), 'cowrie')
-    expect(screen.queryByRole('checkbox', { name: 'dionaea-vps-01' })).toBeNull()
+    await user.type(await search(), 'conpot')
+    expect(screen.queryByRole('checkbox', { name: 'dionaea' })).toBeNull()
     expect(screen.getByText('2 of 3 match')).toBeTruthy()
   })
 
@@ -58,11 +58,11 @@ describe('FilterSelect', () => {
     const user = userEvent.setup()
     render(<Harness />)
     await user.click(screen.getByRole('button', { name: /Sensor/ }))
-    await user.click(await screen.findByRole('checkbox', { name: 'dionaea-vps-01' }))
-    expect(last).toEqual(['dionaea-vps-01'])
-    await user.type(await search(), 'cowrie')
+    await user.click(await screen.findByRole('checkbox', { name: 'dionaea' }))
+    expect(last).toEqual(['dionaea'])
+    await user.type(await search(), 'conpot')
     await user.click(screen.getByRole('button', { name: 'Select matches' }))
-    expect(new Set(last)).toEqual(new Set(['dionaea-vps-01', 'cowrie-vps-01', 'cowrie-home-01']))
+    expect(new Set(last)).toEqual(new Set(['dionaea', 'conpot-s7-1200', 'conpot-iec104']))
   })
 
   it('adds typed text as a value of its own when allowed', async () => {
@@ -78,10 +78,10 @@ describe('FilterSelect', () => {
     const user = userEvent.setup()
     render(<Harness mode="single" />)
     await user.click(screen.getByRole('button', { name: /Sensor/ }))
-    await user.click(await screen.findByRole('checkbox', { name: 'cowrie-home-01' }))
+    await user.click(await screen.findByRole('checkbox', { name: 'conpot-iec104' }))
     await user.click(screen.getByRole('button', { name: /Sensor/ }))
-    await user.click(await screen.findByRole('checkbox', { name: 'dionaea-vps-01' }))
-    expect(last).toEqual(['dionaea-vps-01'])
+    await user.click(await screen.findByRole('checkbox', { name: 'dionaea' }))
+    expect(last).toEqual(['dionaea'])
   })
 
   it('opens with the typed key already searched', async () => {

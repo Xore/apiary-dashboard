@@ -53,7 +53,7 @@ import {
 } from './mock/operations'
 import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALTH, SCORE_TIMELINE } from './mock/monitor'
 import { OVERVIEW_VIEWS } from './mock/overview'
-import { sensorReading } from './mock/sensors'
+import { readingOf, sensorReading } from './mock/sensors'
 import { MOCK_NOW, createRng } from './mock/random'
 import { clusterHref } from '#/lib/entities'
 import type {
@@ -121,7 +121,6 @@ import type {
   SessionSummary,
   SourceNetwork,
   TimelineItem,
-  Protocol,
   SessionUser,
   TimeBucket,
   AsnEntity,
@@ -191,7 +190,7 @@ export async function getOverview(): Promise<OverviewData> {
   const firstPerSession = [...new Map(EVENTS.map((e) => [e.sessionId, e])).values()]
 
   const protocolTotals = countBy(EVENTS.map((e) => e.protocol), 8)
-  const topProtocols = protocolTotals.slice(0, 5).map((row) => row.label as Protocol)
+  const topProtocols = protocolTotals.slice(0, 5).map((row) => row.label)
   const timeline: TimeBucket[] = Array.from({ length: 24 }, (_, i) => ({
     time: new Date(MOCK_NOW - (24 - i) * HOUR).toISOString(),
     total: 0,
@@ -320,6 +319,7 @@ const KIND_TYPES: Record<EventKind, EventType[]> = {
   command: ['command.input'],
   download: ['file.download'],
   http: ['http.request'],
+  protocol: ['protocol.request'],
   alert: ['ids.alert'],
 }
 
@@ -425,7 +425,7 @@ export async function getSensorDetail(id: string): Promise<SensorDetail | null> 
     topLists: reading.topLists,
     byType: countBy(events.map((e) => e.type), 10),
     recentEvents: events.slice(0, 15),
-    requests: reading.requests,
+    reading: reading.reading,
   }
 }
 
@@ -857,6 +857,7 @@ export async function getEventDetail(id: string): Promise<EventDetail | null> {
     connection: EVENTS.filter((e) => e.srcIp === event.srcIp && e.sensor === event.sensor && e.dstPort === event.dstPort && e.id !== id).slice(0, 10),
     source: EVENTS.filter((e) => e.srcIp === event.srcIp && e.sessionId !== event.sessionId).slice(0, 25),
     hashes: [DOWNLOAD_HASH.get(event.id)].filter((h): h is string => h !== undefined),
+    reading: readingOf(event.sensor),
   }
 }
 

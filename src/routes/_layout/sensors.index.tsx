@@ -7,6 +7,6 @@ import { getSensorCatalog } from '#/data/queries'
 export const Route = createFileRoute('/_layout/sensors/')({
   beforeLoad: async () => {
     const catalog = await getSensorCatalog()
-    throw redirect({ to: '/sensors/$sensor', params: { sensor: catalog[0]?.sensor ?? 'cowrie-vps-01' } })
+    throw redirect({ to: '/sensors/$sensor', params: { sensor: catalog[0]?.sensor ?? 'cowrie' } })
   },
 })

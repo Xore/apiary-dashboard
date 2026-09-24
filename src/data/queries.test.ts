@@ -196,9 +196,9 @@ describe('filters and search', () => {
   })
 
   it('applies every term of an AND history query', async () => {
-    const rows = await q.searchHistory('sensor:cowrie-vps-01 AND username:root')
+    const rows = await q.searchHistory('sensor:cowrie AND username:root')
     expect(rows.length).toBeGreaterThan(0)
-    expect(rows.every((e) => e.sensor === 'cowrie-vps-01' && e.username?.includes('root'))).toBe(true)
+    expect(rows.every((e) => e.sensor === 'cowrie' && e.username?.includes('root'))).toBe(true)
     expect(await q.searchHistory('nosuchfield:x')).toEqual([])
   })
 

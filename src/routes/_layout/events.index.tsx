@@ -19,7 +19,7 @@ import { downloadCsv, downloadJson } from '#/lib/export'
 import { formatClock, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 
-const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http', 'alert']
+const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http', 'protocol', 'alert']
 const SINCE = ['1h', '6h', '24h']
 const FILTER_KEYS = ['ip', 'sensor', 'country', 'proto', 'port', 'kind', 'since'] as const
 

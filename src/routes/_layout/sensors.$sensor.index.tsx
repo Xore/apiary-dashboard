@@ -18,7 +18,7 @@ function SensorOverview() {
   return (
     <VStack gap={5}>
       <Panel title="What this sensor did">
-        <Text color="secondary">The quantities this sensor exists to produce, not an event count, which says the same thing about every sensor.</Text>
+        <Text color="secondary">{`${detail.reading.what}. The quantities this sensor exists to produce, not an event count, which says the same thing about every sensor.`}</Text>
         <Grid columns={{ minWidth: 180, repeat: 'fit' }} gap={3}>
           {detail.measures.map((m) => (
             <Card key={m.label} variant="muted">
@@ -27,7 +27,7 @@ function SensorOverview() {
                 <Text type="label" color="secondary">
                   {m.label}
                 </Text>
-                <Text type="supporting">most in one event: {m.peak}</Text>
+                <Text type="supporting">busiest source: {m.peak}</Text>
               </VStack>
             </Card>
           ))}

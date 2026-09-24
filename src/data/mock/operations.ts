@@ -18,6 +18,7 @@ import type {
   AnalyzerId,
 } from '../types'
 import { EVENTS, SENSORS, SOURCES } from './fixtures'
+import { FLEET } from './fleet'
 import { MOCK_NOW, createRng, hex, int, isoMinutesAgo, pick, pickSkewed } from './random'
 
 // ---- Alerts ----------------------------------------------------------------
@@ -51,8 +52,8 @@ function buildAlerts(): AlertRecord[] {
   for (const source of SOURCES.slice(0, 6)) {
     add('campaign', `New campaign: ${source.ip} joined a correlated network (${source.org})`, 'medium', `/events?ip=${source.ip}`)
   }
-  add('sensor', 'Sensor suricata-vps-01 silent for 3h 10m', 'critical', '/source-health')
-  add('sensor', 'Sensor tanner-vps-01 delayed: newest event 14m old', 'medium', '/source-health')
+  add('sensor', 'Sensor suricata silent for 3h 10m', 'critical', '/source-health')
+  add('sensor', 'Sensor tanner delayed: newest event 14m old', 'medium', '/source-health')
   add('ml', 'ML anomaly burst: 34 high-severity anomalies in 10 minutes', 'high', '/ml-anomalies?severity=high')
   add('canary', 'Canarytoken fired: AWS keys in home/deploy/.aws/credentials', 'critical', '/canarytokens')
   add('auth', 'Failed-login spike on apiary-dashboard (19 in 1h)', 'medium', '/auth-events')
@@ -86,49 +87,75 @@ export const SOURCE_HEALTH: SourceHealth = {
 
 // ---- Topology --------------------------------------------------------------
 
-const FLOW_NODES = [
-  'Internet', 'VPS portbridge', 'Traefik', 'cowrie', 'dionaea', 'tanner', 'rdpy', 'suricata',
-  'Filebeat', 'raw indices', 'ml-worker', 'correlator', 'llm-worker', 'derived indices', 'Dashboard',
-]
+/** Flow nodes: sensors grouped by family (six Conpot devices are one Conpot),
+ * the biggest eight by volume, the long tail as one "Other sensors" node. */
+const FAMILY_VOLUME = new Map<string, number>()
+for (const s of FLEET) if (s.id !== 'suricata') FAMILY_VOLUME.set(s.kind, (FAMILY_VOLUME.get(s.kind) ?? 0) + s.perDay)
+const FAMILIES = [...FAMILY_VOLUME].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([kind]) => kind)
+const familyNode = (kind: string) => (FAMILIES.includes(kind) ? kind : 'Other sensors')
+const FLOW_NODES = ['Internet', 'VPS portbridge', 'Traefik', 'Suricata IDS', ...FAMILIES, 'Other sensors', 'Filebeat', 'raw indices', 'ml-worker', 'correlator', 'llm-worker', 'derived indices', 'Dashboard']
 const n = (name: string) => FLOW_NODES.indexOf(name)
 
+function buildFlow(): Topology['flow'] {
+  const links: Topology['flow']['links'] = []
+  const add = (source: string, target: string, value: number) => {
+    const existing = links.find((l) => l.source === n(source) && l.target === n(target))
+    if (existing) existing.value += value
+    else if (value > 0) links.push({ source: n(source), target: n(target), value })
+  }
+  let total = 0
+  for (const spec of FLEET) {
+    if (spec.id === 'suricata') continue
+    const edge = spec.ingress.includes('traefik') ? 'Traefik' : 'VPS portbridge'
+    add('Internet', edge, spec.perDay)
+    add(edge, familyNode(spec.kind), spec.perDay)
+    add(familyNode(spec.kind), 'Filebeat', spec.perDay)
+    total += spec.perDay
+  }
+  const ids = FLEET.find((s) => s.id === 'suricata')!.perDay
+  add('VPS portbridge', 'Suricata IDS', ids)
+  add('Suricata IDS', 'Filebeat', ids)
+  total += ids
+  add('Filebeat', 'raw indices', total)
+  add('raw indices', 'ml-worker', Math.round(total * 0.35))
+  add('raw indices', 'correlator', Math.round(total * 0.45))
+  add('raw indices', 'llm-worker', Math.round(total * 0.2))
+  add('ml-worker', 'derived indices', Math.round(total * 0.35))
+  add('correlator', 'derived indices', Math.round(total * 0.45))
+  add('llm-worker', 'derived indices', Math.round(total * 0.2))
+  add('derived indices', 'Dashboard', total)
+  return { nodes: FLOW_NODES.map((name) => ({ name })), links }
+}
+
+/** Public port on the edge → port on the sensor host; only cowrie is remapped. */
+const PUBLIC_PORT: Partial<Record<string, Partial<Record<number, number>>>> = { cowrie: { 2222: 22, 2223: 23 } }
+const WEB_HOSTNAMES: Record<string, string[]> = {
+  'http-honeypot': ['shop.example.test', 'portal.example.test'],
+  tanner: ['wp.example.test'],
+  hellpot: ['old.example.test'],
+  'api-honeypot': ['api.example.test'],
+  canarytokens: ['tokens.example.test'],
+}
+/** Container names where they differ from `hp-<sensor>`. */
+const CONTAINER: Record<string, string> = { 'http-honeypot': 'hp-http', canarytokens: 'hp-canarytokens-switchboard' }
+const CONTAINER_STATE = { online: 'running', degraded: 'restarting', offline: 'exited' } as const
+
 export const TOPOLOGY: Topology = {
-  flow: {
-    nodes: FLOW_NODES.map((name) => ({ name })),
-    links: [
-      { source: n('Internet'), target: n('VPS portbridge'), value: 70 },
-      { source: n('Internet'), target: n('Traefik'), value: 18 },
-      { source: n('VPS portbridge'), target: n('cowrie'), value: 34 },
-      { source: n('VPS portbridge'), target: n('dionaea'), value: 22 },
-      { source: n('VPS portbridge'), target: n('rdpy'), value: 8 },
-      { source: n('VPS portbridge'), target: n('suricata'), value: 6 },
-      { source: n('Traefik'), target: n('tanner'), value: 18 },
-      { source: n('cowrie'), target: n('Filebeat'), value: 34 },
-      { source: n('dionaea'), target: n('Filebeat'), value: 22 },
-      { source: n('tanner'), target: n('Filebeat'), value: 18 },
-      { source: n('rdpy'), target: n('Filebeat'), value: 8 },
-      { source: n('suricata'), target: n('Filebeat'), value: 6 },
-      { source: n('Filebeat'), target: n('raw indices'), value: 88 },
-      { source: n('raw indices'), target: n('ml-worker'), value: 30 },
-      { source: n('raw indices'), target: n('correlator'), value: 40 },
-      { source: n('raw indices'), target: n('llm-worker'), value: 18 },
-      { source: n('ml-worker'), target: n('derived indices'), value: 30 },
-      { source: n('correlator'), target: n('derived indices'), value: 40 },
-      { source: n('llm-worker'), target: n('derived indices'), value: 18 },
-      { source: n('derived indices'), target: n('Dashboard'), value: 88 },
-    ],
-  },
-  sensors: [
-    { sensor: 'cowrie-vps-01', ingress: ['portbridge', 'proxy'], hostnames: [], ports: [{ proto: 'tcp', public: 22, host: 2222 }, { proto: 'tcp', public: 23, host: 2223 }], rawIndex: 'honeypot-cowrie-*', feed: 'fresh' },
-    { sensor: 'cowrie-home-01', ingress: ['portbridge'], hostnames: [], ports: [{ proto: 'tcp', public: 2022, host: 22 }], rawIndex: 'honeypot-cowrie-*', feed: 'fresh' },
-    { sensor: 'dionaea-vps-01', ingress: ['portbridge'], hostnames: [], ports: [{ proto: 'tcp', public: 445, host: 445 }, { proto: 'tcp', public: 21, host: 21 }, { proto: 'tcp', public: 3306, host: 3306 }, { proto: 'udp', public: 5060, host: 5060 }], rawIndex: 'honeypot-dionaea-*', feed: 'fresh' },
-    { sensor: 'tanner-vps-01', ingress: ['traefik'], hostnames: ['shop.example.test', 'wp.example.test'], ports: [], rawIndex: 'honeypot-tanner-*', feed: 'delayed' },
-    { sensor: 'rdpy-home-01', ingress: ['portbridge'], hostnames: [], ports: [{ proto: 'tcp', public: 3389, host: 3389 }], rawIndex: 'honeypot-rdpy-*', feed: 'fresh' },
-    { sensor: 'suricata-vps-01', ingress: ['direct'], hostnames: [], ports: [], rawIndex: 'suricata-*', feed: 'silent' },
-  ],
+  flow: buildFlow(),
+  sensors: SENSORS.map((sensor) => {
+    const spec = FLEET.find((s) => s.id === sensor.id)!
+    return {
+      sensor: sensor.id,
+      ingress: spec.ingress,
+      hostnames: WEB_HOSTNAMES[sensor.id] ?? [],
+      ports: spec.ingress.includes('traefik') ? [] : spec.ports.map((p) => ({ proto: p.proto, public: PUBLIC_PORT[sensor.id]?.[p.port] ?? p.port, host: p.port })),
+      rawIndex: sensor.id === 'dionaea' ? 'dionaea-incidents-v1-*' : sensor.id === 'suricata' ? 'suricata-*' : 'honeypot-v2-*',
+      feed: feedFor(sensor.lastSeen),
+    }
+  }),
   stacks: [
-    { stack: 'honeypot-vps', containers: [{ name: 'hp-portbridge', state: 'running' }, { name: 'hp-traefik', state: 'running' }, { name: 'hp-suricata', state: 'exited' }, { name: 'hp-cowrie', state: 'running' }, { name: 'hp-dionaea', state: 'running' }] },
-    { stack: 'honeypot-home', containers: [{ name: 'hp-cowrie-home', state: 'running' }, { name: 'hp-rdpy', state: 'running' }, { name: 'hp-tanner', state: 'restarting' }] },
+    { stack: 'honeypot-vps', containers: [{ name: 'hp-portbridge', state: 'running' }, { name: 'hp-traefik', state: 'running' }, { name: 'hp-suricata', state: 'exited' }] },
+    { stack: 'honeypot-sensors', containers: SENSORS.filter((s) => s.id !== 'suricata').map((s) => ({ name: CONTAINER[s.id] ?? `hp-${s.id}`, state: CONTAINER_STATE[s.status] })) },
     { stack: 'honeypot-elk', containers: [{ name: 'hp-elasticsearch', state: 'running' }, { name: 'hp-filebeat', state: 'running' }, { name: 'hp-kibana', state: 'running' }] },
     { stack: 'honeypot-dashboard', containers: [{ name: 'hp-dashboard-next', state: 'running' }, { name: 'hp-apiary-backend', state: 'running' }, { name: 'hp-apiary-ml-worker', state: 'running' }, { name: 'hp-apiary-correlator', state: 'running' }, { name: 'hp-apiary-llm-worker', state: 'unknown' }] },
   ],
@@ -161,7 +188,7 @@ const emptyScope = { window: '24h', ip: [] as string[], sensor: [] as string[], 
 export const REPORT_DEFINITIONS: ReportDefinition[] = [
   { id: 'def-weekly', name: 'Weekly board briefing', template: 'executive', theme: 'light', elements: ['summary', 'timeline', 'campaigns'], scope: { ...emptyScope, window: '7d' }, branding: defaultBranding, schedule: { frequency: 'weekly', hour: 6, minute: 0, weekday: 1, monthDay: 1 }, created: isoMinutesAgo(60 * 24 * 21) },
   { id: 'def-daily', name: 'Daily ops digest', template: 'operations', theme: 'dark', elements: REPORT_TEMPLATES[1].elements, scope: emptyScope, branding: defaultBranding, schedule: { frequency: 'daily', hour: 6, minute: 30, weekday: 1, monthDay: 1 }, created: isoMinutesAgo(60 * 24 * 40) },
-  { id: 'def-cowrie', name: 'Cowrie deep dive', template: 'incident', theme: 'dark', elements: REPORT_TEMPLATES[3].elements, scope: { ...emptyScope, sensor: ['cowrie-vps-01'], window: '7d' }, branding: defaultBranding, schedule: null, created: isoMinutesAgo(60 * 24 * 3) },
+  { id: 'def-cowrie', name: 'Cowrie deep dive', template: 'incident', theme: 'dark', elements: REPORT_TEMPLATES[3].elements, scope: { ...emptyScope, sensor: ['cowrie'], window: '7d' }, branding: defaultBranding, schedule: null, created: isoMinutesAgo(60 * 24 * 3) },
 ]
 
 export const GENERATED_REPORTS: GeneratedReport[] = (() => {
@@ -232,9 +259,9 @@ export const CANARY_TRIGGERS: CanaryTrigger[] = (() => {
 // ---- Bait credentials ------------------------------------------------------
 
 export const BAIT_CREDENTIALS: BaitCredential[] = [
-  { id: 'cred-1', path: 'home/deploy/.aws/credentials', target: 'cowrie-vps-01', username: 'AKIAEXAMPLE7QK2M4Z', password: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLE', memo: 'AWS bait next to the deploy key', template: '[default]\naws_access_key_id={{username}}\naws_secret_access_key={{password}}', linkedTokenId: CANARY_TOKENS[0].id, createdAt: isoMinutesAgo(60 * 24 * 12), createdBy: 'operator' },
-  { id: 'cred-2', path: 'root/.my.cnf', target: 'cowrie-vps-01', username: 'root', password: 'Tr0ub4dor&3x', memo: 'MySQL root in a dotfile', template: '[client]\nuser={{username}}\npassword={{password}}', createdAt: isoMinutesAgo(60 * 24 * 9), createdBy: 'operator', rotatedAt: isoMinutesAgo(60 * 24 * 2), rotatedBy: 'operator' },
-  { id: 'cred-3', path: 'home/mwagner/notes.txt', target: 'cowrie-home-01', username: 'mwagner', password: 'Summer2026!', memo: 'Plain-text note a user left behind', template: 'username={{username}}\npassword={{password}}', createdAt: isoMinutesAgo(60 * 24 * 4), createdBy: 'operator' },
+  { id: 'cred-1', path: 'home/deploy/.aws/credentials', target: 'cowrie', username: 'AKIAEXAMPLE7QK2M4Z', password: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLE', memo: 'AWS bait next to the deploy key', template: '[default]\naws_access_key_id={{username}}\naws_secret_access_key={{password}}', linkedTokenId: CANARY_TOKENS[0].id, createdAt: isoMinutesAgo(60 * 24 * 12), createdBy: 'operator' },
+  { id: 'cred-2', path: 'root/.my.cnf', target: 'cowrie', username: 'root', password: 'Tr0ub4dor&3x', memo: 'MySQL root in a dotfile', template: '[client]\nuser={{username}}\npassword={{password}}', createdAt: isoMinutesAgo(60 * 24 * 9), createdBy: 'operator', rotatedAt: isoMinutesAgo(60 * 24 * 2), rotatedBy: 'operator' },
+  { id: 'cred-3', path: 'home/mwagner/notes.txt', target: 'cowrie', username: 'mwagner', password: 'Summer2026!', memo: 'Plain-text note a user left behind', template: 'username={{username}}\npassword={{password}}', createdAt: isoMinutesAgo(60 * 24 * 4), createdBy: 'operator' },
 ]
 
 // ---- Captured payloads -----------------------------------------------------
