@@ -85,6 +85,7 @@ import type {
   CapturedPayload,
   GeneratedReport,
   ReportDefinition,
+  ReportPreview,
   ReportsData,
   SourceHealth,
   Topology,
@@ -576,7 +577,7 @@ export async function generateReport(definitionId: string): Promise<GeneratedRep
   if (!definition) return null
   const report: GeneratedReport = {
     id: `rpt-${Date.now().toString(36)}`,
-    title: definition.branding.title || definition.name,
+    title: definition.name || definition.branding.title,
     template: definition.template,
     origin: 'manual',
     createdAt: new Date(MOCK_NOW).toISOString(),
@@ -591,6 +592,72 @@ export async function deleteGeneratedReport(id: string): Promise<void> {
   await mockDelay()
   const index = GENERATED_REPORTS.findIndex((r) => r.id === id)
   if (index >= 0) GENERATED_REPORTS.splice(index, 1)
+}
+
+/** What a draft definition would cover. The first scope filter that leaves
+ * nothing to report is named, so the wizard can send the operator back to
+ * that field rather than render an empty PDF. */
+export async function previewReport(definition: ReportDefinition): Promise<ReportPreview> {
+  await mockDelay()
+  const { window, ip, sensor, port, signature } = definition.scope
+  const filters: Array<[NonNullable<ReportPreview['emptyFilter']>['field'], string, (e: HoneypotEvent) => boolean]> = [
+    ['window', `No events in the last ${window}.`, (e) => inRange(e.timestamp, window)],
+    ['ip', `${ip} sent nothing in this window.`, (e) => !ip || e.srcIp === ip.trim()],
+    ['sensor', `Sensor ${sensor} recorded nothing in this window.`, (e) => !sensor || e.sensor === sensor.trim()],
+    ['port', `Nothing reached port ${port} in this window.`, (e) => !port || String(e.dstPort) === port.trim()],
+    ['signature', `No IDS alert matching “${signature}” in this window.`, (e) => !signature || (e.type === 'ids.alert' && e.summary.toLowerCase().includes(signature.trim().toLowerCase()))],
+  ]
+  let events = EVENTS
+  let emptyFilter: ReportPreview['emptyFilter']
+  for (const [field, message, keep] of filters) {
+    const next = events.filter(keep)
+    if (next.length === 0 && !emptyFilter) emptyFilter = { field, message }
+    events = next
+  }
+  const sources = new Set(events.map((e) => e.srcIp))
+  const rowsFor: Record<string, number> = {
+    summary: 6,
+    timeline: new Set(events.map((e) => e.timestamp.slice(0, 13))).size,
+    sources: sources.size,
+    credentials: new Set(events.filter((e) => e.username).map((e) => `${e.username}:${e.password}`)).size,
+    commands: new Set(events.map((e) => e.command).filter(Boolean)).size,
+    payloads: events.filter((e) => DOWNLOAD_HASH.has(e.id)).length,
+    campaigns: NETWORK_CAMPAIGNS.filter((c) => [...sources].some((x) => membersOfCidr(c.cidr)?.includes(x))).length,
+    attck: techniquesFor(events).length,
+    appendix: Math.min(events.length, 500),
+  }
+  const sections = definition.elements.map((id) => {
+    const rows = rowsFor[id] ?? 0
+    return { id, label: REPORT_ELEMENTS.find((e) => e.id === id)?.label ?? id, rows, pages: Math.max(1, Math.ceil(rows / 40)) }
+  })
+  return {
+    events: events.length,
+    sources: sources.size,
+    sensors: new Set(events.map((e) => e.sensor)).size,
+    sessions: new Set(events.map((e) => e.sessionId)).size,
+    sections,
+    pages: 1 + sections.reduce((n, s) => n + s.pages, 0),
+    emptyFilter,
+  }
+}
+
+/** Generates a PDF from a draft, saving the draft as a reusable definition
+ * first when asked to (a one-off report keeps no definition). */
+export async function generateReportFrom(definition: ReportDefinition, keep: boolean): Promise<{ report: GeneratedReport; definition?: ReportDefinition }> {
+  await mockDelay()
+  const saved = keep ? await saveReportDefinition(definition) : undefined
+  const preview = await previewReport(definition)
+  const report: GeneratedReport = {
+    id: `rpt-${Date.now().toString(36)}`,
+    title: definition.name || definition.branding.title,
+    template: definition.template,
+    origin: 'manual',
+    createdAt: new Date(MOCK_NOW).toISOString(),
+    sizeBytes: 120 * 1024 + preview.pages * 60 * 1024,
+    definitionId: saved?.id ?? '',
+  }
+  GENERATED_REPORTS.unshift(report)
+  return { report, definition: saved }
 }
 
 // ---- Tools -----------------------------------------------------------------

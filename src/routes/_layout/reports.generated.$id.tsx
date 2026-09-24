@@ -54,8 +54,10 @@ function GeneratedReportPage() {
             <Link href={`/reports/definitions/${definition.id}`}>
               {definition.name}
             </Link>
-          ) : (
+          ) : r.definitionId ? (
             'deleted'
+          ) : (
+            'one-off'
           ),
         },
       ]}

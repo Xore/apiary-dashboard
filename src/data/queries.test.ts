@@ -123,6 +123,24 @@ describe('link integrity', () => {
     }
   })
 
+  it('report previews name the scope filter that leaves nothing, and generating keeps or skips the definition', async () => {
+    const data = await q.getReports()
+    const draft = { ...structuredClone(data.definitions[1]), id: '', name: 'Preview test' }
+    const full = await q.previewReport(draft)
+    expect(full.emptyFilter).toBeUndefined()
+    expect(full.events).toBeGreaterThan(0)
+    expect(full.sections.map((s) => s.id)).toEqual(draft.elements)
+    const empty = await q.previewReport({ ...draft, scope: { ...draft.scope, ip: '10.9.9.9' } })
+    expect(empty.emptyFilter?.field).toBe('ip')
+    expect(empty.events).toBe(0)
+    const oneOff = await q.generateReportFrom(draft, false)
+    expect(oneOff.definition).toBeUndefined()
+    expect(oneOff.report).toMatchObject({ title: 'Preview test', definitionId: '' })
+    const kept = await q.generateReportFrom(draft, true)
+    expect(kept.report.definitionId).toBe(kept.definition?.id)
+    expect((await q.getReports()).definitions.some((d) => d.id === kept.definition?.id)).toBe(true)
+  })
+
   it('unknown ids resolve to null (rendered as 404)', async () => {
     expect(await q.getEventDetail('evt-nope')).toBeNull()
     expect(await q.getIpProfile('10.0.0.1')).toBeNull()

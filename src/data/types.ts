@@ -511,6 +511,19 @@ export interface GeneratedReport extends Record<string, unknown> {
   definitionId: string
 }
 
+/** What a draft definition would cover, checked before rendering. */
+export interface ReportPreview {
+  events: number
+  sources: number
+  sensors: number
+  sessions: number
+  /** Rows each selected section would carry, and its approximate pages. */
+  sections: Array<{ id: string; label: string; rows: number; pages: number }>
+  pages: number
+  /** The scope filter that matched nothing, when one did. */
+  emptyFilter?: { field: 'ip' | 'sensor' | 'port' | 'signature' | 'window'; message: string }
+}
+
 export interface ReportsData {
   templates: ReportTemplate[]
   elements: Array<{ id: string; label: string; description: string }>

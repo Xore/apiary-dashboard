@@ -78,7 +78,7 @@ function DefinitionPage() {
       kind="Report definition"
       title={d.name}
       basePath={`/reports/definitions/${d.id}`}
-      actions={<Link href="/reports?step=library">Report library</Link>}
+      actions={<Link href="/reports/library">Report library</Link>}
       facts={[
         { label: 'Schedule', value: describeSchedule(d.schedule) },
         { label: 'Created', value: formatDateTime(d.created) },
