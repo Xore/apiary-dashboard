@@ -41,13 +41,19 @@ type EntityFrameProps = {
 
 /** Prev/next through the list this entity was opened from (J/K), plus a way
  * back to that list with its filters. */
-function ListStepper({ basePath }: { basePath: string }) {
+function ListStepper({ basePath, tab }: { basePath: string; tab: string }) {
   const navigate = useNavigate()
   const [context, setContext] = useState<ListContext | null>(null)
   useEffect(() => setContext(readListContext()), [basePath])
   const index = context ? context.hrefs.findIndex((href) => basePathOf(href, basePath)) : -1
-  const prev = context && index > 0 ? context.hrefs[index - 1] : undefined
-  const next = context && index >= 0 && index < context.hrefs.length - 1 ? context.hrefs[index + 1] : undefined
+  // Stepping keeps the tab you are on, so you can compare e.g. raw records.
+  const onTab = (href: string | undefined) => {
+    if (!href || !tab) return href
+    const [path, query] = href.split('?')
+    return `${path}/${tab}${query ? `?${query}` : ''}`
+  }
+  const prev = onTab(context && index > 0 ? context.hrefs[index - 1] : undefined)
+  const next = onTab(context && index >= 0 && index < context.hrefs.length - 1 ? context.hrefs[index + 1] : undefined)
 
   useEffect(() => {
     if (index < 0) return
@@ -130,7 +136,7 @@ export function EntityFrame({ kind, title, description, tokens, facts, actions, 
                     {actions}
                   </HStack>
                 )}
-                <ListStepper basePath={basePath} />
+                <ListStepper basePath={basePath} tab={active === tabs[0].id ? '' : active} />
               </VStack>
             </HStack>
             {facts && facts.length > 0 && (

@@ -96,7 +96,7 @@ function SensorPage() {
 
         <Panel title="Who reached it">
           <Grid columns={{ minWidth: 300, repeat: 'fit' }} gap={4}>
-            <CountTable header="Source address" rows={detail.topSources} countHeader="Events" linkTo={(ip) => `/investigate/ip/${ip}`} />
+            <CountTable header="Source address" rows={detail.topSources} countHeader="Events" linkTo={(ip) => `/sources/${ip}`} />
             <CountTable header="Country" rows={detail.topCountries} countHeader="Events" linkTo={(c) => `/events?sensor=${sensor.id}&country=${c}`} />
           </Grid>
         </Panel>

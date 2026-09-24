@@ -17,6 +17,12 @@ describe('navHrefFor', () => {
   it.each([
     ['/events', '/events'],
     ['/event/evt-1', '/events'],
+    ['/events/evt-1', '/events'],
+    ['/events/evt-1/raw', '/events'],
+    ['/sources/192.0.2.1', '/ips'],
+    ['/sources/192.0.2.1/sessions', '/ips'],
+    ['/payloads/abc', '/payloads'],
+    ['/payloads/abc/ghidra', '/payloads'],
     ['/sessions/abc', '/events'],
     ['/investigate/ip/192.0.2.1', '/ips'],
     ['/investigate/cidr/192.0.2.0%2F26', '/campaigns'],
@@ -48,7 +54,11 @@ describe('breadcrumb labels', () => {
   })
 
   it('names drill-downs by their prefix and parent section', () => {
-    expect(pageFor('/event/evt-1')).toBe('Event detail')
+    expect(pageFor('/events/evt-1')).toBe('Event')
+    expect(sectionFor('/events/evt-1')).toBe('Investigate')
+    expect(pageFor('/sources/192.0.2.1/timeline')).toBe('Source IP')
+    expect(pageFor('/payloads/abc/sandbox')).toBe('Payload')
+    expect(pageFor('/event/evt-1')).toBe('Event')
     expect(sectionFor('/event/evt-1')).toBe('Investigate')
     expect(navItemFor('/event/evt-1')?.label).toBe('Event explorer')
     expect(pageFor('/revdeck/abc')).toBe('RevDeck result')

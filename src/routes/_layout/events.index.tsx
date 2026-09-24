@@ -23,7 +23,7 @@ const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http'
 const SINCE = ['1h', '6h', '24h']
 const FILTER_KEYS = ['ip', 'sensor', 'country', 'proto', 'port', 'kind', 'since'] as const
 
-export const Route = createFileRoute('/_layout/events')({
+export const Route = createFileRoute('/_layout/events/')({
   // Deep links from other pages arrive here pre-scoped, e.g.
   // /events?ip=…, ?kind=login, ?country=CN, ?since=24h.
   validateSearch: (search: Record<string, unknown>): EventFilters => {

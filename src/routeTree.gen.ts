@@ -21,13 +21,11 @@ import { Route as LayoutClustersRouteImport } from './routes/_layout/clusters'
 import { Route as LayoutCommandsRouteImport } from './routes/_layout/commands'
 import { Route as LayoutCredentialsRouteImport } from './routes/_layout/credentials'
 import { Route as LayoutDeadLettersRouteImport } from './routes/_layout/dead-letters'
-import { Route as LayoutEventsRouteImport } from './routes/_layout/events'
 import { Route as LayoutHistoryRouteImport } from './routes/_layout/history'
 import { Route as LayoutIpsRouteImport } from './routes/_layout/ips'
 import { Route as LayoutKillChainRouteImport } from './routes/_layout/kill-chain'
 import { Route as LayoutLlmAnalysisRouteImport } from './routes/_layout/llm-analysis'
 import { Route as LayoutMlAnomaliesRouteImport } from './routes/_layout/ml-anomalies'
-import { Route as LayoutPayloadsRouteImport } from './routes/_layout/payloads'
 import { Route as LayoutProblemReportsRouteImport } from './routes/_layout/problem-reports'
 import { Route as LayoutRecordingsRouteImport } from './routes/_layout/recordings'
 import { Route as LayoutReportsRouteImport } from './routes/_layout/reports'
@@ -38,6 +36,8 @@ import { Route as LayoutTopologyRouteImport } from './routes/_layout/topology'
 import { Route as LayoutCapeIndexRouteImport } from './routes/_layout/cape.index'
 import { Route as LayoutCapeShaRouteImport } from './routes/_layout/cape.$sha'
 import { Route as LayoutEventIdRouteImport } from './routes/_layout/event.$id'
+import { Route as LayoutEventsIndexRouteImport } from './routes/_layout/events.index'
+import { Route as LayoutEventsIdRouteImport } from './routes/_layout/events.$id'
 import { Route as LayoutGhidraShaRouteImport } from './routes/_layout/ghidra.$sha'
 import { Route as LayoutGithubAnalysisIndexRouteImport } from './routes/_layout/github-analysis.index'
 import { Route as LayoutGithubAnalysisShaRouteImport } from './routes/_layout/github-analysis.$sha'
@@ -45,6 +45,8 @@ import { Route as LayoutInvestigateClusterRouteImport } from './routes/_layout/i
 import { Route as LayoutInvestigateLookupRouteImport } from './routes/_layout/investigate.lookup'
 import { Route as LayoutPayloadAnalysisHashRouteImport } from './routes/_layout/payload-analysis.$hash'
 import { Route as LayoutPayloadWorkbenchResultsRouteImport } from './routes/_layout/payload-workbench.results'
+import { Route as LayoutPayloadsIndexRouteImport } from './routes/_layout/payloads.index'
+import { Route as LayoutPayloadsHashRouteImport } from './routes/_layout/payloads.$hash'
 import { Route as LayoutRevdeckIndexRouteImport } from './routes/_layout/revdeck.index'
 import { Route as LayoutRevdeckShaRouteImport } from './routes/_layout/revdeck.$sha'
 import { Route as LayoutSandboxJobRouteImport } from './routes/_layout/sandbox.$job'
@@ -52,9 +54,43 @@ import { Route as LayoutSandboxVncRouteImport } from './routes/_layout/sandbox.v
 import { Route as LayoutSensorsIndexRouteImport } from './routes/_layout/sensors.index'
 import { Route as LayoutSensorsSensorRouteImport } from './routes/_layout/sensors.$sensor'
 import { Route as LayoutSessionsIdRouteImport } from './routes/_layout/sessions.$id'
+import { Route as LayoutSourcesIpRouteImport } from './routes/_layout/sources.$ip'
 import { Route as LayoutTtyReplayShasumRouteImport } from './routes/_layout/tty-replay.$shasum'
+import { Route as LayoutEventsIdIndexRouteImport } from './routes/_layout/events.$id.index'
+import { Route as LayoutEventsIdConnectionRouteImport } from './routes/_layout/events.$id.connection'
+import { Route as LayoutEventsIdIocsRouteImport } from './routes/_layout/events.$id.iocs'
+import { Route as LayoutEventsIdRawRouteImport } from './routes/_layout/events.$id.raw'
+import { Route as LayoutEventsIdSessionRouteImport } from './routes/_layout/events.$id.session'
+import { Route as LayoutEventsIdSourceRouteImport } from './routes/_layout/events.$id.source'
 import { Route as LayoutInvestigateCidrCidrRouteImport } from './routes/_layout/investigate.cidr.$cidr'
 import { Route as LayoutInvestigateIpIpRouteImport } from './routes/_layout/investigate.ip.$ip'
+import { Route as LayoutPayloadsHashIndexRouteImport } from './routes/_layout/payloads.$hash.index'
+import { Route as LayoutPayloadsHashCapeRouteImport } from './routes/_layout/payloads.$hash.cape'
+import { Route as LayoutPayloadsHashDeliveredByRouteImport } from './routes/_layout/payloads.$hash.delivered-by'
+import { Route as LayoutPayloadsHashGhidraRouteImport } from './routes/_layout/payloads.$hash.ghidra'
+import { Route as LayoutPayloadsHashGithubRouteImport } from './routes/_layout/payloads.$hash.github'
+import { Route as LayoutPayloadsHashIndicatorsRouteImport } from './routes/_layout/payloads.$hash.indicators'
+import { Route as LayoutPayloadsHashRevdeckRouteImport } from './routes/_layout/payloads.$hash.revdeck'
+import { Route as LayoutPayloadsHashSandboxRouteImport } from './routes/_layout/payloads.$hash.sandbox'
+import { Route as LayoutPayloadsHashSessionsRouteImport } from './routes/_layout/payloads.$hash.sessions'
+import { Route as LayoutPayloadsHashStaticRouteImport } from './routes/_layout/payloads.$hash.static'
+import { Route as LayoutSessionsIdIndexRouteImport } from './routes/_layout/sessions.$id.index'
+import { Route as LayoutSessionsIdAttckRouteImport } from './routes/_layout/sessions.$id.attck'
+import { Route as LayoutSessionsIdCommandsRouteImport } from './routes/_layout/sessions.$id.commands'
+import { Route as LayoutSessionsIdCredentialsRouteImport } from './routes/_layout/sessions.$id.credentials'
+import { Route as LayoutSessionsIdDownloadsRouteImport } from './routes/_layout/sessions.$id.downloads'
+import { Route as LayoutSessionsIdRawRouteImport } from './routes/_layout/sessions.$id.raw'
+import { Route as LayoutSessionsIdRecordingRouteImport } from './routes/_layout/sessions.$id.recording'
+import { Route as LayoutSourcesIpIndexRouteImport } from './routes/_layout/sources.$ip.index'
+import { Route as LayoutSourcesIpAlertsRouteImport } from './routes/_layout/sources.$ip.alerts'
+import { Route as LayoutSourcesIpCommandsRouteImport } from './routes/_layout/sources.$ip.commands'
+import { Route as LayoutSourcesIpCredentialsRouteImport } from './routes/_layout/sources.$ip.credentials'
+import { Route as LayoutSourcesIpEventsRouteImport } from './routes/_layout/sources.$ip.events'
+import { Route as LayoutSourcesIpIdentityRouteImport } from './routes/_layout/sources.$ip.identity'
+import { Route as LayoutSourcesIpNetworkRouteImport } from './routes/_layout/sources.$ip.network'
+import { Route as LayoutSourcesIpPayloadsRouteImport } from './routes/_layout/sources.$ip.payloads'
+import { Route as LayoutSourcesIpSessionsRouteImport } from './routes/_layout/sources.$ip.sessions'
+import { Route as LayoutSourcesIpTimelineRouteImport } from './routes/_layout/sources.$ip.timeline'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -115,11 +151,6 @@ const LayoutDeadLettersRoute = LayoutDeadLettersRouteImport.update({
   path: '/dead-letters',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutEventsRoute = LayoutEventsRouteImport.update({
-  id: '/events',
-  path: '/events',
-  getParentRoute: () => LayoutRoute,
-} as any)
 const LayoutHistoryRoute = LayoutHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -143,11 +174,6 @@ const LayoutLlmAnalysisRoute = LayoutLlmAnalysisRouteImport.update({
 const LayoutMlAnomaliesRoute = LayoutMlAnomaliesRouteImport.update({
   id: '/ml-anomalies',
   path: '/ml-anomalies',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutPayloadsRoute = LayoutPayloadsRouteImport.update({
-  id: '/payloads',
-  path: '/payloads',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutProblemReportsRoute = LayoutProblemReportsRouteImport.update({
@@ -200,6 +226,16 @@ const LayoutEventIdRoute = LayoutEventIdRouteImport.update({
   path: '/event/$id',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutEventsIndexRoute = LayoutEventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutEventsIdRoute = LayoutEventsIdRouteImport.update({
+  id: '/events/$id',
+  path: '/events/$id',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutGhidraShaRoute = LayoutGhidraShaRouteImport.update({
   id: '/ghidra/$sha',
   path: '/ghidra/$sha',
@@ -239,6 +275,16 @@ const LayoutPayloadWorkbenchResultsRoute =
     path: '/payload-workbench/results',
     getParentRoute: () => LayoutRoute,
   } as any)
+const LayoutPayloadsIndexRoute = LayoutPayloadsIndexRouteImport.update({
+  id: '/payloads/',
+  path: '/payloads/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutPayloadsHashRoute = LayoutPayloadsHashRouteImport.update({
+  id: '/payloads/$hash',
+  path: '/payloads/$hash',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutRevdeckIndexRoute = LayoutRevdeckIndexRouteImport.update({
   id: '/revdeck/',
   path: '/revdeck/',
@@ -274,10 +320,46 @@ const LayoutSessionsIdRoute = LayoutSessionsIdRouteImport.update({
   path: '/sessions/$id',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutSourcesIpRoute = LayoutSourcesIpRouteImport.update({
+  id: '/sources/$ip',
+  path: '/sources/$ip',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutTtyReplayShasumRoute = LayoutTtyReplayShasumRouteImport.update({
   id: '/tty-replay/$shasum',
   path: '/tty-replay/$shasum',
   getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutEventsIdIndexRoute = LayoutEventsIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutEventsIdRoute,
+} as any)
+const LayoutEventsIdConnectionRoute =
+  LayoutEventsIdConnectionRouteImport.update({
+    id: '/connection',
+    path: '/connection',
+    getParentRoute: () => LayoutEventsIdRoute,
+  } as any)
+const LayoutEventsIdIocsRoute = LayoutEventsIdIocsRouteImport.update({
+  id: '/iocs',
+  path: '/iocs',
+  getParentRoute: () => LayoutEventsIdRoute,
+} as any)
+const LayoutEventsIdRawRoute = LayoutEventsIdRawRouteImport.update({
+  id: '/raw',
+  path: '/raw',
+  getParentRoute: () => LayoutEventsIdRoute,
+} as any)
+const LayoutEventsIdSessionRoute = LayoutEventsIdSessionRouteImport.update({
+  id: '/session',
+  path: '/session',
+  getParentRoute: () => LayoutEventsIdRoute,
+} as any)
+const LayoutEventsIdSourceRoute = LayoutEventsIdSourceRouteImport.update({
+  id: '/source',
+  path: '/source',
+  getParentRoute: () => LayoutEventsIdRoute,
 } as any)
 const LayoutInvestigateCidrCidrRoute =
   LayoutInvestigateCidrCidrRouteImport.update({
@@ -289,6 +371,154 @@ const LayoutInvestigateIpIpRoute = LayoutInvestigateIpIpRouteImport.update({
   id: '/investigate/ip/$ip',
   path: '/investigate/ip/$ip',
   getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutPayloadsHashIndexRoute = LayoutPayloadsHashIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutPayloadsHashRoute,
+} as any)
+const LayoutPayloadsHashCapeRoute = LayoutPayloadsHashCapeRouteImport.update({
+  id: '/cape',
+  path: '/cape',
+  getParentRoute: () => LayoutPayloadsHashRoute,
+} as any)
+const LayoutPayloadsHashDeliveredByRoute =
+  LayoutPayloadsHashDeliveredByRouteImport.update({
+    id: '/delivered-by',
+    path: '/delivered-by',
+    getParentRoute: () => LayoutPayloadsHashRoute,
+  } as any)
+const LayoutPayloadsHashGhidraRoute =
+  LayoutPayloadsHashGhidraRouteImport.update({
+    id: '/ghidra',
+    path: '/ghidra',
+    getParentRoute: () => LayoutPayloadsHashRoute,
+  } as any)
+const LayoutPayloadsHashGithubRoute =
+  LayoutPayloadsHashGithubRouteImport.update({
+    id: '/github',
+    path: '/github',
+    getParentRoute: () => LayoutPayloadsHashRoute,
+  } as any)
+const LayoutPayloadsHashIndicatorsRoute =
+  LayoutPayloadsHashIndicatorsRouteImport.update({
+    id: '/indicators',
+    path: '/indicators',
+    getParentRoute: () => LayoutPayloadsHashRoute,
+  } as any)
+const LayoutPayloadsHashRevdeckRoute =
+  LayoutPayloadsHashRevdeckRouteImport.update({
+    id: '/revdeck',
+    path: '/revdeck',
+    getParentRoute: () => LayoutPayloadsHashRoute,
+  } as any)
+const LayoutPayloadsHashSandboxRoute =
+  LayoutPayloadsHashSandboxRouteImport.update({
+    id: '/sandbox',
+    path: '/sandbox',
+    getParentRoute: () => LayoutPayloadsHashRoute,
+  } as any)
+const LayoutPayloadsHashSessionsRoute =
+  LayoutPayloadsHashSessionsRouteImport.update({
+    id: '/sessions',
+    path: '/sessions',
+    getParentRoute: () => LayoutPayloadsHashRoute,
+  } as any)
+const LayoutPayloadsHashStaticRoute =
+  LayoutPayloadsHashStaticRouteImport.update({
+    id: '/static',
+    path: '/static',
+    getParentRoute: () => LayoutPayloadsHashRoute,
+  } as any)
+const LayoutSessionsIdIndexRoute = LayoutSessionsIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutSessionsIdRoute,
+} as any)
+const LayoutSessionsIdAttckRoute = LayoutSessionsIdAttckRouteImport.update({
+  id: '/attck',
+  path: '/attck',
+  getParentRoute: () => LayoutSessionsIdRoute,
+} as any)
+const LayoutSessionsIdCommandsRoute =
+  LayoutSessionsIdCommandsRouteImport.update({
+    id: '/commands',
+    path: '/commands',
+    getParentRoute: () => LayoutSessionsIdRoute,
+  } as any)
+const LayoutSessionsIdCredentialsRoute =
+  LayoutSessionsIdCredentialsRouteImport.update({
+    id: '/credentials',
+    path: '/credentials',
+    getParentRoute: () => LayoutSessionsIdRoute,
+  } as any)
+const LayoutSessionsIdDownloadsRoute =
+  LayoutSessionsIdDownloadsRouteImport.update({
+    id: '/downloads',
+    path: '/downloads',
+    getParentRoute: () => LayoutSessionsIdRoute,
+  } as any)
+const LayoutSessionsIdRawRoute = LayoutSessionsIdRawRouteImport.update({
+  id: '/raw',
+  path: '/raw',
+  getParentRoute: () => LayoutSessionsIdRoute,
+} as any)
+const LayoutSessionsIdRecordingRoute =
+  LayoutSessionsIdRecordingRouteImport.update({
+    id: '/recording',
+    path: '/recording',
+    getParentRoute: () => LayoutSessionsIdRoute,
+  } as any)
+const LayoutSourcesIpIndexRoute = LayoutSourcesIpIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutSourcesIpRoute,
+} as any)
+const LayoutSourcesIpAlertsRoute = LayoutSourcesIpAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => LayoutSourcesIpRoute,
+} as any)
+const LayoutSourcesIpCommandsRoute = LayoutSourcesIpCommandsRouteImport.update({
+  id: '/commands',
+  path: '/commands',
+  getParentRoute: () => LayoutSourcesIpRoute,
+} as any)
+const LayoutSourcesIpCredentialsRoute =
+  LayoutSourcesIpCredentialsRouteImport.update({
+    id: '/credentials',
+    path: '/credentials',
+    getParentRoute: () => LayoutSourcesIpRoute,
+  } as any)
+const LayoutSourcesIpEventsRoute = LayoutSourcesIpEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => LayoutSourcesIpRoute,
+} as any)
+const LayoutSourcesIpIdentityRoute = LayoutSourcesIpIdentityRouteImport.update({
+  id: '/identity',
+  path: '/identity',
+  getParentRoute: () => LayoutSourcesIpRoute,
+} as any)
+const LayoutSourcesIpNetworkRoute = LayoutSourcesIpNetworkRouteImport.update({
+  id: '/network',
+  path: '/network',
+  getParentRoute: () => LayoutSourcesIpRoute,
+} as any)
+const LayoutSourcesIpPayloadsRoute = LayoutSourcesIpPayloadsRouteImport.update({
+  id: '/payloads',
+  path: '/payloads',
+  getParentRoute: () => LayoutSourcesIpRoute,
+} as any)
+const LayoutSourcesIpSessionsRoute = LayoutSourcesIpSessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => LayoutSourcesIpRoute,
+} as any)
+const LayoutSourcesIpTimelineRoute = LayoutSourcesIpTimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => LayoutSourcesIpRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -303,13 +533,11 @@ export interface FileRoutesByFullPath {
   '/commands': typeof LayoutCommandsRoute
   '/credentials': typeof LayoutCredentialsRoute
   '/dead-letters': typeof LayoutDeadLettersRoute
-  '/events': typeof LayoutEventsRoute
   '/history': typeof LayoutHistoryRoute
   '/ips': typeof LayoutIpsRoute
   '/kill-chain': typeof LayoutKillChainRoute
   '/llm-analysis': typeof LayoutLlmAnalysisRoute
   '/ml-anomalies': typeof LayoutMlAnomaliesRoute
-  '/payloads': typeof LayoutPayloadsRoute
   '/problem-reports': typeof LayoutProblemReportsRoute
   '/recordings': typeof LayoutRecordingsRoute
   '/reports': typeof LayoutReportsRoute
@@ -319,24 +547,62 @@ export interface FileRoutesByFullPath {
   '/topology': typeof LayoutTopologyRoute
   '/cape/$sha': typeof LayoutCapeShaRoute
   '/event/$id': typeof LayoutEventIdRoute
+  '/events/$id': typeof LayoutEventsIdRouteWithChildren
   '/ghidra/$sha': typeof LayoutGhidraShaRoute
   '/github-analysis/$sha': typeof LayoutGithubAnalysisShaRoute
   '/investigate/cluster': typeof LayoutInvestigateClusterRoute
   '/investigate/lookup': typeof LayoutInvestigateLookupRoute
   '/payload-analysis/$hash': typeof LayoutPayloadAnalysisHashRoute
   '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
+  '/payloads/$hash': typeof LayoutPayloadsHashRouteWithChildren
   '/revdeck/$sha': typeof LayoutRevdeckShaRoute
   '/sandbox/$job': typeof LayoutSandboxJobRoute
   '/sandbox/vnc': typeof LayoutSandboxVncRoute
   '/sensors/$sensor': typeof LayoutSensorsSensorRoute
-  '/sessions/$id': typeof LayoutSessionsIdRoute
+  '/sessions/$id': typeof LayoutSessionsIdRouteWithChildren
+  '/sources/$ip': typeof LayoutSourcesIpRouteWithChildren
   '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
   '/cape/': typeof LayoutCapeIndexRoute
+  '/events/': typeof LayoutEventsIndexRoute
   '/github-analysis/': typeof LayoutGithubAnalysisIndexRoute
+  '/payloads/': typeof LayoutPayloadsIndexRoute
   '/revdeck/': typeof LayoutRevdeckIndexRoute
   '/sensors/': typeof LayoutSensorsIndexRoute
+  '/events/$id/connection': typeof LayoutEventsIdConnectionRoute
+  '/events/$id/iocs': typeof LayoutEventsIdIocsRoute
+  '/events/$id/raw': typeof LayoutEventsIdRawRoute
+  '/events/$id/session': typeof LayoutEventsIdSessionRoute
+  '/events/$id/source': typeof LayoutEventsIdSourceRoute
   '/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
+  '/payloads/$hash/cape': typeof LayoutPayloadsHashCapeRoute
+  '/payloads/$hash/delivered-by': typeof LayoutPayloadsHashDeliveredByRoute
+  '/payloads/$hash/ghidra': typeof LayoutPayloadsHashGhidraRoute
+  '/payloads/$hash/github': typeof LayoutPayloadsHashGithubRoute
+  '/payloads/$hash/indicators': typeof LayoutPayloadsHashIndicatorsRoute
+  '/payloads/$hash/revdeck': typeof LayoutPayloadsHashRevdeckRoute
+  '/payloads/$hash/sandbox': typeof LayoutPayloadsHashSandboxRoute
+  '/payloads/$hash/sessions': typeof LayoutPayloadsHashSessionsRoute
+  '/payloads/$hash/static': typeof LayoutPayloadsHashStaticRoute
+  '/sessions/$id/attck': typeof LayoutSessionsIdAttckRoute
+  '/sessions/$id/commands': typeof LayoutSessionsIdCommandsRoute
+  '/sessions/$id/credentials': typeof LayoutSessionsIdCredentialsRoute
+  '/sessions/$id/downloads': typeof LayoutSessionsIdDownloadsRoute
+  '/sessions/$id/raw': typeof LayoutSessionsIdRawRoute
+  '/sessions/$id/recording': typeof LayoutSessionsIdRecordingRoute
+  '/sources/$ip/alerts': typeof LayoutSourcesIpAlertsRoute
+  '/sources/$ip/commands': typeof LayoutSourcesIpCommandsRoute
+  '/sources/$ip/credentials': typeof LayoutSourcesIpCredentialsRoute
+  '/sources/$ip/events': typeof LayoutSourcesIpEventsRoute
+  '/sources/$ip/identity': typeof LayoutSourcesIpIdentityRoute
+  '/sources/$ip/network': typeof LayoutSourcesIpNetworkRoute
+  '/sources/$ip/payloads': typeof LayoutSourcesIpPayloadsRoute
+  '/sources/$ip/sessions': typeof LayoutSourcesIpSessionsRoute
+  '/sources/$ip/timeline': typeof LayoutSourcesIpTimelineRoute
+  '/events/$id/': typeof LayoutEventsIdIndexRoute
+  '/payloads/$hash/': typeof LayoutPayloadsHashIndexRoute
+  '/sessions/$id/': typeof LayoutSessionsIdIndexRoute
+  '/sources/$ip/': typeof LayoutSourcesIpIndexRoute
 }
 export interface FileRoutesByTo {
   '/agent-campaigns': typeof LayoutAgentCampaignsRoute
@@ -349,13 +615,11 @@ export interface FileRoutesByTo {
   '/commands': typeof LayoutCommandsRoute
   '/credentials': typeof LayoutCredentialsRoute
   '/dead-letters': typeof LayoutDeadLettersRoute
-  '/events': typeof LayoutEventsRoute
   '/history': typeof LayoutHistoryRoute
   '/ips': typeof LayoutIpsRoute
   '/kill-chain': typeof LayoutKillChainRoute
   '/llm-analysis': typeof LayoutLlmAnalysisRoute
   '/ml-anomalies': typeof LayoutMlAnomaliesRoute
-  '/payloads': typeof LayoutPayloadsRoute
   '/problem-reports': typeof LayoutProblemReportsRoute
   '/recordings': typeof LayoutRecordingsRoute
   '/reports': typeof LayoutReportsRoute
@@ -376,14 +640,48 @@ export interface FileRoutesByTo {
   '/sandbox/$job': typeof LayoutSandboxJobRoute
   '/sandbox/vnc': typeof LayoutSandboxVncRoute
   '/sensors/$sensor': typeof LayoutSensorsSensorRoute
-  '/sessions/$id': typeof LayoutSessionsIdRoute
   '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
   '/cape': typeof LayoutCapeIndexRoute
+  '/events': typeof LayoutEventsIndexRoute
   '/github-analysis': typeof LayoutGithubAnalysisIndexRoute
+  '/payloads': typeof LayoutPayloadsIndexRoute
   '/revdeck': typeof LayoutRevdeckIndexRoute
   '/sensors': typeof LayoutSensorsIndexRoute
+  '/events/$id/connection': typeof LayoutEventsIdConnectionRoute
+  '/events/$id/iocs': typeof LayoutEventsIdIocsRoute
+  '/events/$id/raw': typeof LayoutEventsIdRawRoute
+  '/events/$id/session': typeof LayoutEventsIdSessionRoute
+  '/events/$id/source': typeof LayoutEventsIdSourceRoute
   '/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
+  '/payloads/$hash/cape': typeof LayoutPayloadsHashCapeRoute
+  '/payloads/$hash/delivered-by': typeof LayoutPayloadsHashDeliveredByRoute
+  '/payloads/$hash/ghidra': typeof LayoutPayloadsHashGhidraRoute
+  '/payloads/$hash/github': typeof LayoutPayloadsHashGithubRoute
+  '/payloads/$hash/indicators': typeof LayoutPayloadsHashIndicatorsRoute
+  '/payloads/$hash/revdeck': typeof LayoutPayloadsHashRevdeckRoute
+  '/payloads/$hash/sandbox': typeof LayoutPayloadsHashSandboxRoute
+  '/payloads/$hash/sessions': typeof LayoutPayloadsHashSessionsRoute
+  '/payloads/$hash/static': typeof LayoutPayloadsHashStaticRoute
+  '/sessions/$id/attck': typeof LayoutSessionsIdAttckRoute
+  '/sessions/$id/commands': typeof LayoutSessionsIdCommandsRoute
+  '/sessions/$id/credentials': typeof LayoutSessionsIdCredentialsRoute
+  '/sessions/$id/downloads': typeof LayoutSessionsIdDownloadsRoute
+  '/sessions/$id/raw': typeof LayoutSessionsIdRawRoute
+  '/sessions/$id/recording': typeof LayoutSessionsIdRecordingRoute
+  '/sources/$ip/alerts': typeof LayoutSourcesIpAlertsRoute
+  '/sources/$ip/commands': typeof LayoutSourcesIpCommandsRoute
+  '/sources/$ip/credentials': typeof LayoutSourcesIpCredentialsRoute
+  '/sources/$ip/events': typeof LayoutSourcesIpEventsRoute
+  '/sources/$ip/identity': typeof LayoutSourcesIpIdentityRoute
+  '/sources/$ip/network': typeof LayoutSourcesIpNetworkRoute
+  '/sources/$ip/payloads': typeof LayoutSourcesIpPayloadsRoute
+  '/sources/$ip/sessions': typeof LayoutSourcesIpSessionsRoute
+  '/sources/$ip/timeline': typeof LayoutSourcesIpTimelineRoute
+  '/events/$id': typeof LayoutEventsIdIndexRoute
+  '/payloads/$hash': typeof LayoutPayloadsHashIndexRoute
+  '/sessions/$id': typeof LayoutSessionsIdIndexRoute
+  '/sources/$ip': typeof LayoutSourcesIpIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -398,13 +696,11 @@ export interface FileRoutesById {
   '/_layout/commands': typeof LayoutCommandsRoute
   '/_layout/credentials': typeof LayoutCredentialsRoute
   '/_layout/dead-letters': typeof LayoutDeadLettersRoute
-  '/_layout/events': typeof LayoutEventsRoute
   '/_layout/history': typeof LayoutHistoryRoute
   '/_layout/ips': typeof LayoutIpsRoute
   '/_layout/kill-chain': typeof LayoutKillChainRoute
   '/_layout/llm-analysis': typeof LayoutLlmAnalysisRoute
   '/_layout/ml-anomalies': typeof LayoutMlAnomaliesRoute
-  '/_layout/payloads': typeof LayoutPayloadsRoute
   '/_layout/problem-reports': typeof LayoutProblemReportsRoute
   '/_layout/recordings': typeof LayoutRecordingsRoute
   '/_layout/reports': typeof LayoutReportsRoute
@@ -415,24 +711,62 @@ export interface FileRoutesById {
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/cape/$sha': typeof LayoutCapeShaRoute
   '/_layout/event/$id': typeof LayoutEventIdRoute
+  '/_layout/events/$id': typeof LayoutEventsIdRouteWithChildren
   '/_layout/ghidra/$sha': typeof LayoutGhidraShaRoute
   '/_layout/github-analysis/$sha': typeof LayoutGithubAnalysisShaRoute
   '/_layout/investigate/cluster': typeof LayoutInvestigateClusterRoute
   '/_layout/investigate/lookup': typeof LayoutInvestigateLookupRoute
   '/_layout/payload-analysis/$hash': typeof LayoutPayloadAnalysisHashRoute
   '/_layout/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
+  '/_layout/payloads/$hash': typeof LayoutPayloadsHashRouteWithChildren
   '/_layout/revdeck/$sha': typeof LayoutRevdeckShaRoute
   '/_layout/sandbox/$job': typeof LayoutSandboxJobRoute
   '/_layout/sandbox/vnc': typeof LayoutSandboxVncRoute
   '/_layout/sensors/$sensor': typeof LayoutSensorsSensorRoute
-  '/_layout/sessions/$id': typeof LayoutSessionsIdRoute
+  '/_layout/sessions/$id': typeof LayoutSessionsIdRouteWithChildren
+  '/_layout/sources/$ip': typeof LayoutSourcesIpRouteWithChildren
   '/_layout/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
   '/_layout/cape/': typeof LayoutCapeIndexRoute
+  '/_layout/events/': typeof LayoutEventsIndexRoute
   '/_layout/github-analysis/': typeof LayoutGithubAnalysisIndexRoute
+  '/_layout/payloads/': typeof LayoutPayloadsIndexRoute
   '/_layout/revdeck/': typeof LayoutRevdeckIndexRoute
   '/_layout/sensors/': typeof LayoutSensorsIndexRoute
+  '/_layout/events/$id/connection': typeof LayoutEventsIdConnectionRoute
+  '/_layout/events/$id/iocs': typeof LayoutEventsIdIocsRoute
+  '/_layout/events/$id/raw': typeof LayoutEventsIdRawRoute
+  '/_layout/events/$id/session': typeof LayoutEventsIdSessionRoute
+  '/_layout/events/$id/source': typeof LayoutEventsIdSourceRoute
   '/_layout/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/_layout/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
+  '/_layout/payloads/$hash/cape': typeof LayoutPayloadsHashCapeRoute
+  '/_layout/payloads/$hash/delivered-by': typeof LayoutPayloadsHashDeliveredByRoute
+  '/_layout/payloads/$hash/ghidra': typeof LayoutPayloadsHashGhidraRoute
+  '/_layout/payloads/$hash/github': typeof LayoutPayloadsHashGithubRoute
+  '/_layout/payloads/$hash/indicators': typeof LayoutPayloadsHashIndicatorsRoute
+  '/_layout/payloads/$hash/revdeck': typeof LayoutPayloadsHashRevdeckRoute
+  '/_layout/payloads/$hash/sandbox': typeof LayoutPayloadsHashSandboxRoute
+  '/_layout/payloads/$hash/sessions': typeof LayoutPayloadsHashSessionsRoute
+  '/_layout/payloads/$hash/static': typeof LayoutPayloadsHashStaticRoute
+  '/_layout/sessions/$id/attck': typeof LayoutSessionsIdAttckRoute
+  '/_layout/sessions/$id/commands': typeof LayoutSessionsIdCommandsRoute
+  '/_layout/sessions/$id/credentials': typeof LayoutSessionsIdCredentialsRoute
+  '/_layout/sessions/$id/downloads': typeof LayoutSessionsIdDownloadsRoute
+  '/_layout/sessions/$id/raw': typeof LayoutSessionsIdRawRoute
+  '/_layout/sessions/$id/recording': typeof LayoutSessionsIdRecordingRoute
+  '/_layout/sources/$ip/alerts': typeof LayoutSourcesIpAlertsRoute
+  '/_layout/sources/$ip/commands': typeof LayoutSourcesIpCommandsRoute
+  '/_layout/sources/$ip/credentials': typeof LayoutSourcesIpCredentialsRoute
+  '/_layout/sources/$ip/events': typeof LayoutSourcesIpEventsRoute
+  '/_layout/sources/$ip/identity': typeof LayoutSourcesIpIdentityRoute
+  '/_layout/sources/$ip/network': typeof LayoutSourcesIpNetworkRoute
+  '/_layout/sources/$ip/payloads': typeof LayoutSourcesIpPayloadsRoute
+  '/_layout/sources/$ip/sessions': typeof LayoutSourcesIpSessionsRoute
+  '/_layout/sources/$ip/timeline': typeof LayoutSourcesIpTimelineRoute
+  '/_layout/events/$id/': typeof LayoutEventsIdIndexRoute
+  '/_layout/payloads/$hash/': typeof LayoutPayloadsHashIndexRoute
+  '/_layout/sessions/$id/': typeof LayoutSessionsIdIndexRoute
+  '/_layout/sources/$ip/': typeof LayoutSourcesIpIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -448,13 +782,11 @@ export interface FileRouteTypes {
     | '/commands'
     | '/credentials'
     | '/dead-letters'
-    | '/events'
     | '/history'
     | '/ips'
     | '/kill-chain'
     | '/llm-analysis'
     | '/ml-anomalies'
-    | '/payloads'
     | '/problem-reports'
     | '/recordings'
     | '/reports'
@@ -464,24 +796,62 @@ export interface FileRouteTypes {
     | '/topology'
     | '/cape/$sha'
     | '/event/$id'
+    | '/events/$id'
     | '/ghidra/$sha'
     | '/github-analysis/$sha'
     | '/investigate/cluster'
     | '/investigate/lookup'
     | '/payload-analysis/$hash'
     | '/payload-workbench/results'
+    | '/payloads/$hash'
     | '/revdeck/$sha'
     | '/sandbox/$job'
     | '/sandbox/vnc'
     | '/sensors/$sensor'
     | '/sessions/$id'
+    | '/sources/$ip'
     | '/tty-replay/$shasum'
     | '/cape/'
+    | '/events/'
     | '/github-analysis/'
+    | '/payloads/'
     | '/revdeck/'
     | '/sensors/'
+    | '/events/$id/connection'
+    | '/events/$id/iocs'
+    | '/events/$id/raw'
+    | '/events/$id/session'
+    | '/events/$id/source'
     | '/investigate/cidr/$cidr'
     | '/investigate/ip/$ip'
+    | '/payloads/$hash/cape'
+    | '/payloads/$hash/delivered-by'
+    | '/payloads/$hash/ghidra'
+    | '/payloads/$hash/github'
+    | '/payloads/$hash/indicators'
+    | '/payloads/$hash/revdeck'
+    | '/payloads/$hash/sandbox'
+    | '/payloads/$hash/sessions'
+    | '/payloads/$hash/static'
+    | '/sessions/$id/attck'
+    | '/sessions/$id/commands'
+    | '/sessions/$id/credentials'
+    | '/sessions/$id/downloads'
+    | '/sessions/$id/raw'
+    | '/sessions/$id/recording'
+    | '/sources/$ip/alerts'
+    | '/sources/$ip/commands'
+    | '/sources/$ip/credentials'
+    | '/sources/$ip/events'
+    | '/sources/$ip/identity'
+    | '/sources/$ip/network'
+    | '/sources/$ip/payloads'
+    | '/sources/$ip/sessions'
+    | '/sources/$ip/timeline'
+    | '/events/$id/'
+    | '/payloads/$hash/'
+    | '/sessions/$id/'
+    | '/sources/$ip/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/agent-campaigns'
@@ -494,13 +864,11 @@ export interface FileRouteTypes {
     | '/commands'
     | '/credentials'
     | '/dead-letters'
-    | '/events'
     | '/history'
     | '/ips'
     | '/kill-chain'
     | '/llm-analysis'
     | '/ml-anomalies'
-    | '/payloads'
     | '/problem-reports'
     | '/recordings'
     | '/reports'
@@ -521,14 +889,48 @@ export interface FileRouteTypes {
     | '/sandbox/$job'
     | '/sandbox/vnc'
     | '/sensors/$sensor'
-    | '/sessions/$id'
     | '/tty-replay/$shasum'
     | '/cape'
+    | '/events'
     | '/github-analysis'
+    | '/payloads'
     | '/revdeck'
     | '/sensors'
+    | '/events/$id/connection'
+    | '/events/$id/iocs'
+    | '/events/$id/raw'
+    | '/events/$id/session'
+    | '/events/$id/source'
     | '/investigate/cidr/$cidr'
     | '/investigate/ip/$ip'
+    | '/payloads/$hash/cape'
+    | '/payloads/$hash/delivered-by'
+    | '/payloads/$hash/ghidra'
+    | '/payloads/$hash/github'
+    | '/payloads/$hash/indicators'
+    | '/payloads/$hash/revdeck'
+    | '/payloads/$hash/sandbox'
+    | '/payloads/$hash/sessions'
+    | '/payloads/$hash/static'
+    | '/sessions/$id/attck'
+    | '/sessions/$id/commands'
+    | '/sessions/$id/credentials'
+    | '/sessions/$id/downloads'
+    | '/sessions/$id/raw'
+    | '/sessions/$id/recording'
+    | '/sources/$ip/alerts'
+    | '/sources/$ip/commands'
+    | '/sources/$ip/credentials'
+    | '/sources/$ip/events'
+    | '/sources/$ip/identity'
+    | '/sources/$ip/network'
+    | '/sources/$ip/payloads'
+    | '/sources/$ip/sessions'
+    | '/sources/$ip/timeline'
+    | '/events/$id'
+    | '/payloads/$hash'
+    | '/sessions/$id'
+    | '/sources/$ip'
   id:
     | '__root__'
     | '/_layout'
@@ -542,13 +944,11 @@ export interface FileRouteTypes {
     | '/_layout/commands'
     | '/_layout/credentials'
     | '/_layout/dead-letters'
-    | '/_layout/events'
     | '/_layout/history'
     | '/_layout/ips'
     | '/_layout/kill-chain'
     | '/_layout/llm-analysis'
     | '/_layout/ml-anomalies'
-    | '/_layout/payloads'
     | '/_layout/problem-reports'
     | '/_layout/recordings'
     | '/_layout/reports'
@@ -559,24 +959,62 @@ export interface FileRouteTypes {
     | '/_layout/'
     | '/_layout/cape/$sha'
     | '/_layout/event/$id'
+    | '/_layout/events/$id'
     | '/_layout/ghidra/$sha'
     | '/_layout/github-analysis/$sha'
     | '/_layout/investigate/cluster'
     | '/_layout/investigate/lookup'
     | '/_layout/payload-analysis/$hash'
     | '/_layout/payload-workbench/results'
+    | '/_layout/payloads/$hash'
     | '/_layout/revdeck/$sha'
     | '/_layout/sandbox/$job'
     | '/_layout/sandbox/vnc'
     | '/_layout/sensors/$sensor'
     | '/_layout/sessions/$id'
+    | '/_layout/sources/$ip'
     | '/_layout/tty-replay/$shasum'
     | '/_layout/cape/'
+    | '/_layout/events/'
     | '/_layout/github-analysis/'
+    | '/_layout/payloads/'
     | '/_layout/revdeck/'
     | '/_layout/sensors/'
+    | '/_layout/events/$id/connection'
+    | '/_layout/events/$id/iocs'
+    | '/_layout/events/$id/raw'
+    | '/_layout/events/$id/session'
+    | '/_layout/events/$id/source'
     | '/_layout/investigate/cidr/$cidr'
     | '/_layout/investigate/ip/$ip'
+    | '/_layout/payloads/$hash/cape'
+    | '/_layout/payloads/$hash/delivered-by'
+    | '/_layout/payloads/$hash/ghidra'
+    | '/_layout/payloads/$hash/github'
+    | '/_layout/payloads/$hash/indicators'
+    | '/_layout/payloads/$hash/revdeck'
+    | '/_layout/payloads/$hash/sandbox'
+    | '/_layout/payloads/$hash/sessions'
+    | '/_layout/payloads/$hash/static'
+    | '/_layout/sessions/$id/attck'
+    | '/_layout/sessions/$id/commands'
+    | '/_layout/sessions/$id/credentials'
+    | '/_layout/sessions/$id/downloads'
+    | '/_layout/sessions/$id/raw'
+    | '/_layout/sessions/$id/recording'
+    | '/_layout/sources/$ip/alerts'
+    | '/_layout/sources/$ip/commands'
+    | '/_layout/sources/$ip/credentials'
+    | '/_layout/sources/$ip/events'
+    | '/_layout/sources/$ip/identity'
+    | '/_layout/sources/$ip/network'
+    | '/_layout/sources/$ip/payloads'
+    | '/_layout/sources/$ip/sessions'
+    | '/_layout/sources/$ip/timeline'
+    | '/_layout/events/$id/'
+    | '/_layout/payloads/$hash/'
+    | '/_layout/sessions/$id/'
+    | '/_layout/sources/$ip/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -669,13 +1107,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutDeadLettersRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/events': {
-      id: '/_layout/events'
-      path: '/events'
-      fullPath: '/events'
-      preLoaderRoute: typeof LayoutEventsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
     '/_layout/history': {
       id: '/_layout/history'
       path: '/history'
@@ -709,13 +1140,6 @@ declare module '@tanstack/react-router' {
       path: '/ml-anomalies'
       fullPath: '/ml-anomalies'
       preLoaderRoute: typeof LayoutMlAnomaliesRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/payloads': {
-      id: '/_layout/payloads'
-      path: '/payloads'
-      fullPath: '/payloads'
-      preLoaderRoute: typeof LayoutPayloadsRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/problem-reports': {
@@ -788,6 +1212,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutEventIdRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/events/': {
+      id: '/_layout/events/'
+      path: '/events'
+      fullPath: '/events/'
+      preLoaderRoute: typeof LayoutEventsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/events/$id': {
+      id: '/_layout/events/$id'
+      path: '/events/$id'
+      fullPath: '/events/$id'
+      preLoaderRoute: typeof LayoutEventsIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/ghidra/$sha': {
       id: '/_layout/ghidra/$sha'
       path: '/ghidra/$sha'
@@ -835,6 +1273,20 @@ declare module '@tanstack/react-router' {
       path: '/payload-workbench/results'
       fullPath: '/payload-workbench/results'
       preLoaderRoute: typeof LayoutPayloadWorkbenchResultsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/payloads/': {
+      id: '/_layout/payloads/'
+      path: '/payloads'
+      fullPath: '/payloads/'
+      preLoaderRoute: typeof LayoutPayloadsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/payloads/$hash': {
+      id: '/_layout/payloads/$hash'
+      path: '/payloads/$hash'
+      fullPath: '/payloads/$hash'
+      preLoaderRoute: typeof LayoutPayloadsHashRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/revdeck/': {
@@ -886,12 +1338,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSessionsIdRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/sources/$ip': {
+      id: '/_layout/sources/$ip'
+      path: '/sources/$ip'
+      fullPath: '/sources/$ip'
+      preLoaderRoute: typeof LayoutSourcesIpRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/tty-replay/$shasum': {
       id: '/_layout/tty-replay/$shasum'
       path: '/tty-replay/$shasum'
       fullPath: '/tty-replay/$shasum'
       preLoaderRoute: typeof LayoutTtyReplayShasumRouteImport
       parentRoute: typeof LayoutRoute
+    }
+    '/_layout/events/$id/': {
+      id: '/_layout/events/$id/'
+      path: '/'
+      fullPath: '/events/$id/'
+      preLoaderRoute: typeof LayoutEventsIdIndexRouteImport
+      parentRoute: typeof LayoutEventsIdRoute
+    }
+    '/_layout/events/$id/connection': {
+      id: '/_layout/events/$id/connection'
+      path: '/connection'
+      fullPath: '/events/$id/connection'
+      preLoaderRoute: typeof LayoutEventsIdConnectionRouteImport
+      parentRoute: typeof LayoutEventsIdRoute
+    }
+    '/_layout/events/$id/iocs': {
+      id: '/_layout/events/$id/iocs'
+      path: '/iocs'
+      fullPath: '/events/$id/iocs'
+      preLoaderRoute: typeof LayoutEventsIdIocsRouteImport
+      parentRoute: typeof LayoutEventsIdRoute
+    }
+    '/_layout/events/$id/raw': {
+      id: '/_layout/events/$id/raw'
+      path: '/raw'
+      fullPath: '/events/$id/raw'
+      preLoaderRoute: typeof LayoutEventsIdRawRouteImport
+      parentRoute: typeof LayoutEventsIdRoute
+    }
+    '/_layout/events/$id/session': {
+      id: '/_layout/events/$id/session'
+      path: '/session'
+      fullPath: '/events/$id/session'
+      preLoaderRoute: typeof LayoutEventsIdSessionRouteImport
+      parentRoute: typeof LayoutEventsIdRoute
+    }
+    '/_layout/events/$id/source': {
+      id: '/_layout/events/$id/source'
+      path: '/source'
+      fullPath: '/events/$id/source'
+      preLoaderRoute: typeof LayoutEventsIdSourceRouteImport
+      parentRoute: typeof LayoutEventsIdRoute
     }
     '/_layout/investigate/cidr/$cidr': {
       id: '/_layout/investigate/cidr/$cidr'
@@ -907,8 +1408,301 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutInvestigateIpIpRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/payloads/$hash/': {
+      id: '/_layout/payloads/$hash/'
+      path: '/'
+      fullPath: '/payloads/$hash/'
+      preLoaderRoute: typeof LayoutPayloadsHashIndexRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/payloads/$hash/cape': {
+      id: '/_layout/payloads/$hash/cape'
+      path: '/cape'
+      fullPath: '/payloads/$hash/cape'
+      preLoaderRoute: typeof LayoutPayloadsHashCapeRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/payloads/$hash/delivered-by': {
+      id: '/_layout/payloads/$hash/delivered-by'
+      path: '/delivered-by'
+      fullPath: '/payloads/$hash/delivered-by'
+      preLoaderRoute: typeof LayoutPayloadsHashDeliveredByRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/payloads/$hash/ghidra': {
+      id: '/_layout/payloads/$hash/ghidra'
+      path: '/ghidra'
+      fullPath: '/payloads/$hash/ghidra'
+      preLoaderRoute: typeof LayoutPayloadsHashGhidraRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/payloads/$hash/github': {
+      id: '/_layout/payloads/$hash/github'
+      path: '/github'
+      fullPath: '/payloads/$hash/github'
+      preLoaderRoute: typeof LayoutPayloadsHashGithubRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/payloads/$hash/indicators': {
+      id: '/_layout/payloads/$hash/indicators'
+      path: '/indicators'
+      fullPath: '/payloads/$hash/indicators'
+      preLoaderRoute: typeof LayoutPayloadsHashIndicatorsRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/payloads/$hash/revdeck': {
+      id: '/_layout/payloads/$hash/revdeck'
+      path: '/revdeck'
+      fullPath: '/payloads/$hash/revdeck'
+      preLoaderRoute: typeof LayoutPayloadsHashRevdeckRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/payloads/$hash/sandbox': {
+      id: '/_layout/payloads/$hash/sandbox'
+      path: '/sandbox'
+      fullPath: '/payloads/$hash/sandbox'
+      preLoaderRoute: typeof LayoutPayloadsHashSandboxRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/payloads/$hash/sessions': {
+      id: '/_layout/payloads/$hash/sessions'
+      path: '/sessions'
+      fullPath: '/payloads/$hash/sessions'
+      preLoaderRoute: typeof LayoutPayloadsHashSessionsRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/payloads/$hash/static': {
+      id: '/_layout/payloads/$hash/static'
+      path: '/static'
+      fullPath: '/payloads/$hash/static'
+      preLoaderRoute: typeof LayoutPayloadsHashStaticRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/sessions/$id/': {
+      id: '/_layout/sessions/$id/'
+      path: '/'
+      fullPath: '/sessions/$id/'
+      preLoaderRoute: typeof LayoutSessionsIdIndexRouteImport
+      parentRoute: typeof LayoutSessionsIdRoute
+    }
+    '/_layout/sessions/$id/attck': {
+      id: '/_layout/sessions/$id/attck'
+      path: '/attck'
+      fullPath: '/sessions/$id/attck'
+      preLoaderRoute: typeof LayoutSessionsIdAttckRouteImport
+      parentRoute: typeof LayoutSessionsIdRoute
+    }
+    '/_layout/sessions/$id/commands': {
+      id: '/_layout/sessions/$id/commands'
+      path: '/commands'
+      fullPath: '/sessions/$id/commands'
+      preLoaderRoute: typeof LayoutSessionsIdCommandsRouteImport
+      parentRoute: typeof LayoutSessionsIdRoute
+    }
+    '/_layout/sessions/$id/credentials': {
+      id: '/_layout/sessions/$id/credentials'
+      path: '/credentials'
+      fullPath: '/sessions/$id/credentials'
+      preLoaderRoute: typeof LayoutSessionsIdCredentialsRouteImport
+      parentRoute: typeof LayoutSessionsIdRoute
+    }
+    '/_layout/sessions/$id/downloads': {
+      id: '/_layout/sessions/$id/downloads'
+      path: '/downloads'
+      fullPath: '/sessions/$id/downloads'
+      preLoaderRoute: typeof LayoutSessionsIdDownloadsRouteImport
+      parentRoute: typeof LayoutSessionsIdRoute
+    }
+    '/_layout/sessions/$id/raw': {
+      id: '/_layout/sessions/$id/raw'
+      path: '/raw'
+      fullPath: '/sessions/$id/raw'
+      preLoaderRoute: typeof LayoutSessionsIdRawRouteImport
+      parentRoute: typeof LayoutSessionsIdRoute
+    }
+    '/_layout/sessions/$id/recording': {
+      id: '/_layout/sessions/$id/recording'
+      path: '/recording'
+      fullPath: '/sessions/$id/recording'
+      preLoaderRoute: typeof LayoutSessionsIdRecordingRouteImport
+      parentRoute: typeof LayoutSessionsIdRoute
+    }
+    '/_layout/sources/$ip/': {
+      id: '/_layout/sources/$ip/'
+      path: '/'
+      fullPath: '/sources/$ip/'
+      preLoaderRoute: typeof LayoutSourcesIpIndexRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
+    '/_layout/sources/$ip/alerts': {
+      id: '/_layout/sources/$ip/alerts'
+      path: '/alerts'
+      fullPath: '/sources/$ip/alerts'
+      preLoaderRoute: typeof LayoutSourcesIpAlertsRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
+    '/_layout/sources/$ip/commands': {
+      id: '/_layout/sources/$ip/commands'
+      path: '/commands'
+      fullPath: '/sources/$ip/commands'
+      preLoaderRoute: typeof LayoutSourcesIpCommandsRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
+    '/_layout/sources/$ip/credentials': {
+      id: '/_layout/sources/$ip/credentials'
+      path: '/credentials'
+      fullPath: '/sources/$ip/credentials'
+      preLoaderRoute: typeof LayoutSourcesIpCredentialsRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
+    '/_layout/sources/$ip/events': {
+      id: '/_layout/sources/$ip/events'
+      path: '/events'
+      fullPath: '/sources/$ip/events'
+      preLoaderRoute: typeof LayoutSourcesIpEventsRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
+    '/_layout/sources/$ip/identity': {
+      id: '/_layout/sources/$ip/identity'
+      path: '/identity'
+      fullPath: '/sources/$ip/identity'
+      preLoaderRoute: typeof LayoutSourcesIpIdentityRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
+    '/_layout/sources/$ip/network': {
+      id: '/_layout/sources/$ip/network'
+      path: '/network'
+      fullPath: '/sources/$ip/network'
+      preLoaderRoute: typeof LayoutSourcesIpNetworkRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
+    '/_layout/sources/$ip/payloads': {
+      id: '/_layout/sources/$ip/payloads'
+      path: '/payloads'
+      fullPath: '/sources/$ip/payloads'
+      preLoaderRoute: typeof LayoutSourcesIpPayloadsRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
+    '/_layout/sources/$ip/sessions': {
+      id: '/_layout/sources/$ip/sessions'
+      path: '/sessions'
+      fullPath: '/sources/$ip/sessions'
+      preLoaderRoute: typeof LayoutSourcesIpSessionsRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
+    '/_layout/sources/$ip/timeline': {
+      id: '/_layout/sources/$ip/timeline'
+      path: '/timeline'
+      fullPath: '/sources/$ip/timeline'
+      preLoaderRoute: typeof LayoutSourcesIpTimelineRouteImport
+      parentRoute: typeof LayoutSourcesIpRoute
+    }
   }
 }
+
+interface LayoutEventsIdRouteChildren {
+  LayoutEventsIdConnectionRoute: typeof LayoutEventsIdConnectionRoute
+  LayoutEventsIdIocsRoute: typeof LayoutEventsIdIocsRoute
+  LayoutEventsIdRawRoute: typeof LayoutEventsIdRawRoute
+  LayoutEventsIdSessionRoute: typeof LayoutEventsIdSessionRoute
+  LayoutEventsIdSourceRoute: typeof LayoutEventsIdSourceRoute
+  LayoutEventsIdIndexRoute: typeof LayoutEventsIdIndexRoute
+}
+
+const LayoutEventsIdRouteChildren: LayoutEventsIdRouteChildren = {
+  LayoutEventsIdConnectionRoute: LayoutEventsIdConnectionRoute,
+  LayoutEventsIdIocsRoute: LayoutEventsIdIocsRoute,
+  LayoutEventsIdRawRoute: LayoutEventsIdRawRoute,
+  LayoutEventsIdSessionRoute: LayoutEventsIdSessionRoute,
+  LayoutEventsIdSourceRoute: LayoutEventsIdSourceRoute,
+  LayoutEventsIdIndexRoute: LayoutEventsIdIndexRoute,
+}
+
+const LayoutEventsIdRouteWithChildren = LayoutEventsIdRoute._addFileChildren(
+  LayoutEventsIdRouteChildren,
+)
+
+interface LayoutPayloadsHashRouteChildren {
+  LayoutPayloadsHashCapeRoute: typeof LayoutPayloadsHashCapeRoute
+  LayoutPayloadsHashDeliveredByRoute: typeof LayoutPayloadsHashDeliveredByRoute
+  LayoutPayloadsHashGhidraRoute: typeof LayoutPayloadsHashGhidraRoute
+  LayoutPayloadsHashGithubRoute: typeof LayoutPayloadsHashGithubRoute
+  LayoutPayloadsHashIndicatorsRoute: typeof LayoutPayloadsHashIndicatorsRoute
+  LayoutPayloadsHashRevdeckRoute: typeof LayoutPayloadsHashRevdeckRoute
+  LayoutPayloadsHashSandboxRoute: typeof LayoutPayloadsHashSandboxRoute
+  LayoutPayloadsHashSessionsRoute: typeof LayoutPayloadsHashSessionsRoute
+  LayoutPayloadsHashStaticRoute: typeof LayoutPayloadsHashStaticRoute
+  LayoutPayloadsHashIndexRoute: typeof LayoutPayloadsHashIndexRoute
+}
+
+const LayoutPayloadsHashRouteChildren: LayoutPayloadsHashRouteChildren = {
+  LayoutPayloadsHashCapeRoute: LayoutPayloadsHashCapeRoute,
+  LayoutPayloadsHashDeliveredByRoute: LayoutPayloadsHashDeliveredByRoute,
+  LayoutPayloadsHashGhidraRoute: LayoutPayloadsHashGhidraRoute,
+  LayoutPayloadsHashGithubRoute: LayoutPayloadsHashGithubRoute,
+  LayoutPayloadsHashIndicatorsRoute: LayoutPayloadsHashIndicatorsRoute,
+  LayoutPayloadsHashRevdeckRoute: LayoutPayloadsHashRevdeckRoute,
+  LayoutPayloadsHashSandboxRoute: LayoutPayloadsHashSandboxRoute,
+  LayoutPayloadsHashSessionsRoute: LayoutPayloadsHashSessionsRoute,
+  LayoutPayloadsHashStaticRoute: LayoutPayloadsHashStaticRoute,
+  LayoutPayloadsHashIndexRoute: LayoutPayloadsHashIndexRoute,
+}
+
+const LayoutPayloadsHashRouteWithChildren =
+  LayoutPayloadsHashRoute._addFileChildren(LayoutPayloadsHashRouteChildren)
+
+interface LayoutSessionsIdRouteChildren {
+  LayoutSessionsIdAttckRoute: typeof LayoutSessionsIdAttckRoute
+  LayoutSessionsIdCommandsRoute: typeof LayoutSessionsIdCommandsRoute
+  LayoutSessionsIdCredentialsRoute: typeof LayoutSessionsIdCredentialsRoute
+  LayoutSessionsIdDownloadsRoute: typeof LayoutSessionsIdDownloadsRoute
+  LayoutSessionsIdRawRoute: typeof LayoutSessionsIdRawRoute
+  LayoutSessionsIdRecordingRoute: typeof LayoutSessionsIdRecordingRoute
+  LayoutSessionsIdIndexRoute: typeof LayoutSessionsIdIndexRoute
+}
+
+const LayoutSessionsIdRouteChildren: LayoutSessionsIdRouteChildren = {
+  LayoutSessionsIdAttckRoute: LayoutSessionsIdAttckRoute,
+  LayoutSessionsIdCommandsRoute: LayoutSessionsIdCommandsRoute,
+  LayoutSessionsIdCredentialsRoute: LayoutSessionsIdCredentialsRoute,
+  LayoutSessionsIdDownloadsRoute: LayoutSessionsIdDownloadsRoute,
+  LayoutSessionsIdRawRoute: LayoutSessionsIdRawRoute,
+  LayoutSessionsIdRecordingRoute: LayoutSessionsIdRecordingRoute,
+  LayoutSessionsIdIndexRoute: LayoutSessionsIdIndexRoute,
+}
+
+const LayoutSessionsIdRouteWithChildren =
+  LayoutSessionsIdRoute._addFileChildren(LayoutSessionsIdRouteChildren)
+
+interface LayoutSourcesIpRouteChildren {
+  LayoutSourcesIpAlertsRoute: typeof LayoutSourcesIpAlertsRoute
+  LayoutSourcesIpCommandsRoute: typeof LayoutSourcesIpCommandsRoute
+  LayoutSourcesIpCredentialsRoute: typeof LayoutSourcesIpCredentialsRoute
+  LayoutSourcesIpEventsRoute: typeof LayoutSourcesIpEventsRoute
+  LayoutSourcesIpIdentityRoute: typeof LayoutSourcesIpIdentityRoute
+  LayoutSourcesIpNetworkRoute: typeof LayoutSourcesIpNetworkRoute
+  LayoutSourcesIpPayloadsRoute: typeof LayoutSourcesIpPayloadsRoute
+  LayoutSourcesIpSessionsRoute: typeof LayoutSourcesIpSessionsRoute
+  LayoutSourcesIpTimelineRoute: typeof LayoutSourcesIpTimelineRoute
+  LayoutSourcesIpIndexRoute: typeof LayoutSourcesIpIndexRoute
+}
+
+const LayoutSourcesIpRouteChildren: LayoutSourcesIpRouteChildren = {
+  LayoutSourcesIpAlertsRoute: LayoutSourcesIpAlertsRoute,
+  LayoutSourcesIpCommandsRoute: LayoutSourcesIpCommandsRoute,
+  LayoutSourcesIpCredentialsRoute: LayoutSourcesIpCredentialsRoute,
+  LayoutSourcesIpEventsRoute: LayoutSourcesIpEventsRoute,
+  LayoutSourcesIpIdentityRoute: LayoutSourcesIpIdentityRoute,
+  LayoutSourcesIpNetworkRoute: LayoutSourcesIpNetworkRoute,
+  LayoutSourcesIpPayloadsRoute: LayoutSourcesIpPayloadsRoute,
+  LayoutSourcesIpSessionsRoute: LayoutSourcesIpSessionsRoute,
+  LayoutSourcesIpTimelineRoute: LayoutSourcesIpTimelineRoute,
+  LayoutSourcesIpIndexRoute: LayoutSourcesIpIndexRoute,
+}
+
+const LayoutSourcesIpRouteWithChildren = LayoutSourcesIpRoute._addFileChildren(
+  LayoutSourcesIpRouteChildren,
+)
 
 interface LayoutRouteChildren {
   LayoutAgentCampaignsRoute: typeof LayoutAgentCampaignsRoute
@@ -921,13 +1715,11 @@ interface LayoutRouteChildren {
   LayoutCommandsRoute: typeof LayoutCommandsRoute
   LayoutCredentialsRoute: typeof LayoutCredentialsRoute
   LayoutDeadLettersRoute: typeof LayoutDeadLettersRoute
-  LayoutEventsRoute: typeof LayoutEventsRoute
   LayoutHistoryRoute: typeof LayoutHistoryRoute
   LayoutIpsRoute: typeof LayoutIpsRoute
   LayoutKillChainRoute: typeof LayoutKillChainRoute
   LayoutLlmAnalysisRoute: typeof LayoutLlmAnalysisRoute
   LayoutMlAnomaliesRoute: typeof LayoutMlAnomaliesRoute
-  LayoutPayloadsRoute: typeof LayoutPayloadsRoute
   LayoutProblemReportsRoute: typeof LayoutProblemReportsRoute
   LayoutRecordingsRoute: typeof LayoutRecordingsRoute
   LayoutReportsRoute: typeof LayoutReportsRoute
@@ -938,20 +1730,25 @@ interface LayoutRouteChildren {
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutCapeShaRoute: typeof LayoutCapeShaRoute
   LayoutEventIdRoute: typeof LayoutEventIdRoute
+  LayoutEventsIdRoute: typeof LayoutEventsIdRouteWithChildren
   LayoutGhidraShaRoute: typeof LayoutGhidraShaRoute
   LayoutGithubAnalysisShaRoute: typeof LayoutGithubAnalysisShaRoute
   LayoutInvestigateClusterRoute: typeof LayoutInvestigateClusterRoute
   LayoutInvestigateLookupRoute: typeof LayoutInvestigateLookupRoute
   LayoutPayloadAnalysisHashRoute: typeof LayoutPayloadAnalysisHashRoute
   LayoutPayloadWorkbenchResultsRoute: typeof LayoutPayloadWorkbenchResultsRoute
+  LayoutPayloadsHashRoute: typeof LayoutPayloadsHashRouteWithChildren
   LayoutRevdeckShaRoute: typeof LayoutRevdeckShaRoute
   LayoutSandboxJobRoute: typeof LayoutSandboxJobRoute
   LayoutSandboxVncRoute: typeof LayoutSandboxVncRoute
   LayoutSensorsSensorRoute: typeof LayoutSensorsSensorRoute
-  LayoutSessionsIdRoute: typeof LayoutSessionsIdRoute
+  LayoutSessionsIdRoute: typeof LayoutSessionsIdRouteWithChildren
+  LayoutSourcesIpRoute: typeof LayoutSourcesIpRouteWithChildren
   LayoutTtyReplayShasumRoute: typeof LayoutTtyReplayShasumRoute
   LayoutCapeIndexRoute: typeof LayoutCapeIndexRoute
+  LayoutEventsIndexRoute: typeof LayoutEventsIndexRoute
   LayoutGithubAnalysisIndexRoute: typeof LayoutGithubAnalysisIndexRoute
+  LayoutPayloadsIndexRoute: typeof LayoutPayloadsIndexRoute
   LayoutRevdeckIndexRoute: typeof LayoutRevdeckIndexRoute
   LayoutSensorsIndexRoute: typeof LayoutSensorsIndexRoute
   LayoutInvestigateCidrCidrRoute: typeof LayoutInvestigateCidrCidrRoute
@@ -969,13 +1766,11 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutCommandsRoute: LayoutCommandsRoute,
   LayoutCredentialsRoute: LayoutCredentialsRoute,
   LayoutDeadLettersRoute: LayoutDeadLettersRoute,
-  LayoutEventsRoute: LayoutEventsRoute,
   LayoutHistoryRoute: LayoutHistoryRoute,
   LayoutIpsRoute: LayoutIpsRoute,
   LayoutKillChainRoute: LayoutKillChainRoute,
   LayoutLlmAnalysisRoute: LayoutLlmAnalysisRoute,
   LayoutMlAnomaliesRoute: LayoutMlAnomaliesRoute,
-  LayoutPayloadsRoute: LayoutPayloadsRoute,
   LayoutProblemReportsRoute: LayoutProblemReportsRoute,
   LayoutRecordingsRoute: LayoutRecordingsRoute,
   LayoutReportsRoute: LayoutReportsRoute,
@@ -986,20 +1781,25 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutCapeShaRoute: LayoutCapeShaRoute,
   LayoutEventIdRoute: LayoutEventIdRoute,
+  LayoutEventsIdRoute: LayoutEventsIdRouteWithChildren,
   LayoutGhidraShaRoute: LayoutGhidraShaRoute,
   LayoutGithubAnalysisShaRoute: LayoutGithubAnalysisShaRoute,
   LayoutInvestigateClusterRoute: LayoutInvestigateClusterRoute,
   LayoutInvestigateLookupRoute: LayoutInvestigateLookupRoute,
   LayoutPayloadAnalysisHashRoute: LayoutPayloadAnalysisHashRoute,
   LayoutPayloadWorkbenchResultsRoute: LayoutPayloadWorkbenchResultsRoute,
+  LayoutPayloadsHashRoute: LayoutPayloadsHashRouteWithChildren,
   LayoutRevdeckShaRoute: LayoutRevdeckShaRoute,
   LayoutSandboxJobRoute: LayoutSandboxJobRoute,
   LayoutSandboxVncRoute: LayoutSandboxVncRoute,
   LayoutSensorsSensorRoute: LayoutSensorsSensorRoute,
-  LayoutSessionsIdRoute: LayoutSessionsIdRoute,
+  LayoutSessionsIdRoute: LayoutSessionsIdRouteWithChildren,
+  LayoutSourcesIpRoute: LayoutSourcesIpRouteWithChildren,
   LayoutTtyReplayShasumRoute: LayoutTtyReplayShasumRoute,
   LayoutCapeIndexRoute: LayoutCapeIndexRoute,
+  LayoutEventsIndexRoute: LayoutEventsIndexRoute,
   LayoutGithubAnalysisIndexRoute: LayoutGithubAnalysisIndexRoute,
+  LayoutPayloadsIndexRoute: LayoutPayloadsIndexRoute,
   LayoutRevdeckIndexRoute: LayoutRevdeckIndexRoute,
   LayoutSensorsIndexRoute: LayoutSensorsIndexRoute,
   LayoutInvestigateCidrCidrRoute: LayoutInvestigateCidrCidrRoute,

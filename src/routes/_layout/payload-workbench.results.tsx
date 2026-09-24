@@ -77,12 +77,11 @@ const COLUMNS: Record<AnalyzerTab, TableColumn<AnalysisResult>[]> = {
   ghidra: [time, file, summary],
 }
 
-/** Sandbox and Ghidra runs have their own pages; everything else opens the
- * payload. (Phase B merges these into /payloads/$hash tabs.) */
+/** Each result opens its analyzer's tab on the payload page. */
+const RESULT_TAB: Record<AnalysisResult['analyzer'], string> = { workbench: '', static: '/static', yara: '/indicators', sandbox: '/sandbox', ghidra: '/ghidra' }
+
 function resultHref(row: AnalysisResult): string {
-  if (row.analyzer === 'sandbox') return `/sandbox/${row.hash}`
-  if (row.analyzer === 'ghidra') return `/ghidra/${row.hash}`
-  return entityHref('payload', row.hash) ?? '/payloads'
+  return `${entityHref('payload', row.hash) ?? '/payloads'}${RESULT_TAB[row.analyzer]}`
 }
 
 

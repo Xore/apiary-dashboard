@@ -23,7 +23,7 @@ export function CorrelationView({ title, description, correlation }: { title: st
           <Panel title="Member IPs">
             <VStack gap={1}>
               {correlation.members.map((ip) => (
-                <Link key={ip} href={`/investigate/ip/${ip}`}>
+                <Link key={ip} href={`/sources/${ip}`}>
                   {ip}
                 </Link>
               ))}

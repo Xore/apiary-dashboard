@@ -63,7 +63,7 @@ function LookupPage() {
     setStatus('busy')
     switch (shape.kind) {
       case 'ip':
-        return go(`/investigate/ip/${encodeURIComponent(shape.value)}`)
+        return go(`/sources/${encodeURIComponent(shape.value)}`)
       case 'cidr':
         return go(`/investigate/cidr/${encodeURIComponent(shape.value)}`)
       case 'asn':

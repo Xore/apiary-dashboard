@@ -55,7 +55,7 @@ function SourceCard({ source }: { source: SourceProfile }) {
         <HStack gap={2}>
           <Stat value={source.events} label="events" href={`/events?ip=${ip}`} />
           <Stat value={source.logins} label="logins" href={`/events?ip=${ip}&kind=login`} />
-          <Stat value={source.sessions} label="sessions" href={`/investigate/ip/${ip}`} />
+          <Stat value={source.sessions} label="sessions" href={`/sources/${ip}`} />
         </HStack>
         <Divider />
         <HStack gap={1} wrap="wrap">

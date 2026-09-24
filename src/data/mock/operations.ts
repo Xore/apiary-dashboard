@@ -282,6 +282,21 @@ export const PAYLOADS: CapturedPayload[] = (() => {
   }).sort((a, b) => b.capturedAt.localeCompare(a.capturedAt))
 })()
 
+/** Which captured payload each download event fetched: download i fetched
+ * payload i (mod the payload count), matching how PAYLOADS was derived. */
+export const DOWNLOAD_HASH: ReadonlyMap<string, string> = (() => {
+  const downloads = EVENTS.filter((e) => e.type === 'file.download')
+  const byCapture = [...PAYLOADS]
+  return new Map(
+    downloads.map((e, i) => {
+      const hash = byCapture[i % byCapture.length].hash
+      // Keep the event's own summary consistent with the payload it links to.
+      e.summary = `Payload fetched (sha256 ${hash.slice(0, 12)}…)`
+      return [e.id, hash]
+    }),
+  )
+})()
+
 // ---- Analysis results ------------------------------------------------------
 
 export const ANALYZERS = [
