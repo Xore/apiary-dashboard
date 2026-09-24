@@ -260,3 +260,27 @@ describe('sensor fleet', () => {
     }
   })
 })
+
+describe('event fields', () => {
+  it('a persona filter returns what its facet count says, all on the sensor that wears it', async () => {
+    const facets = await q.getFacets()
+    expect(facets.personas.length).toBeGreaterThan(10)
+    for (const { value, count } of facets.personas) {
+      const { rows, total } = await q.getEvents({ persona: value })
+      expect(total, value).toBe(count)
+      const sensors = new Set(rows.map((e) => e.sensor))
+      expect(sensors.size, value).toBe(1)
+      const sensor = (await q.getSensorDetail([...sensors][0]))?.sensor
+      expect(rows.every((e) => e.persona === sensor?.persona?.id && e.organization === sensor?.persona?.organization && sensor?.persona?.assets.includes(e.asset ?? '')), value).toBe(true)
+    }
+  })
+
+  it('a fingerprint filter matches whole values, commas included', async () => {
+    const { rows: all } = await q.getEvents({})
+    const agent = all.find((e) => e.fingerprintKind === 'User-Agent' && e.fingerprint?.includes(','))?.fingerprint
+    expect(agent).toBeTruthy()
+    const { rows } = await q.getEvents({ fingerprint: agent })
+    expect(rows.length).toBeGreaterThan(0)
+    expect(rows.every((e) => e.fingerprint === agent)).toBe(true)
+  })
+})

@@ -342,6 +342,14 @@ export async function getEvents(filters: EventFilters): Promise<EventsPage> {
       anyOf(filters.country, e.country) &&
       anyOf(filters.proto, e.protocol) &&
       anyOf(filters.port, String(e.dstPort)) &&
+      anyOf(filters.persona, e.persona ?? '') &&
+      anyOf(filters.site, e.site ?? '') &&
+      anyOf(filters.asset, e.asset ?? '') &&
+      anyOf(filters.org, e.org) &&
+      anyOf(filters.provider, e.provider) &&
+      anyOf(filters.city, e.city) &&
+      // A fingerprint can contain commas (a User-Agent does), so it matches whole.
+      (filters.fingerprint === undefined || e.fingerprint === filters.fingerprint) &&
       (!kinds?.length || kinds.some((kind) => KIND_TYPES[kind].includes(e.type))) &&
       (window === undefined || MOCK_NOW - Date.parse(e.timestamp) <= window),
   )
@@ -526,6 +534,14 @@ const HISTORY_FIELDS: Record<string, (e: HoneypotEvent) => string> = {
   country: (e) => e.country,
   session: (e) => e.sessionId,
   username: (e) => e.username ?? '',
+  'honeypot.persona_id': (e) => e.persona ?? '',
+  persona: (e) => e.persona ?? '',
+  'honeypot.site_id': (e) => e.site ?? '',
+  'honeypot.asset_id': (e) => e.asset ?? '',
+  'honeypot.organization': (e) => e.organization ?? '',
+  'honeypot.canonical_fingerprint': (e) => e.fingerprint ?? '',
+  'source.as.type': (e) => e.provider,
+  'source.geo.city_name': (e) => e.city,
 }
 
 /** Mock of the archive's Lucene passthrough: `field:value` terms and free
@@ -613,6 +629,8 @@ export async function getFacets(): Promise<Facets> {
     ports: facet(EVENTS.map((e) => String(e.dstPort))),
     signatures: facet(EVENTS.filter((e) => e.type === 'ids.alert').map((e) => e.summary)),
     kinds: (Object.keys(KIND_TYPES) as EventKind[]).map((kind) => ({ value: kind, count: EVENTS.filter((e) => KIND_TYPES[kind].includes(e.type)).length })),
+    personas: facet(EVENTS.flatMap((e) => (e.persona ? [e.persona] : []))),
+    providers: facet(EVENTS.map((e) => e.provider)),
   }
 }
 

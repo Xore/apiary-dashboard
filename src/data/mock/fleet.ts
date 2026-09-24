@@ -60,8 +60,26 @@ export type SensorSpec = {
   tops: Array<{ label: string; field: FieldRef }>
   /** The quantities it exists to produce. */
   measures: Array<{ label: string; match: (fields: SensorFields, type: EventType) => boolean }>
+  /** The decoy identity this sensor wears, if it wears one. */
+  persona?: Persona
   generate: (rng: Rng, session: string) => EventDraft
 }
+
+/** A decoy identity: a fictional organization, one of its sites, and the
+ * emulated assets there. `share` is the fraction of the sensor's events
+ * that carry it (dionaea wears one on only part of its services). */
+export type Persona = { id: string; organization: string; site: string; assets: string[]; share?: number; assetFor?: (fields: SensorFields) => string }
+
+// The fictional organizations the fleet impersonates. Invented for the mock;
+// the deployment's own cover identities never appear in this public repo.
+const VOLTARIS = 'Voltaris AI Labs GmbH'
+const KESTREL = 'Kestrel Retail Group Ltd.'
+const AUENWASSER = 'Auenwasser Municipal Water'
+const HAFENRING = 'Hafenring Logistics AG'
+const FERNWAERME = 'Fernwärme Süd'
+const BRUECKENFUEL = 'Brückenfuel Service GmbH'
+const WESERCHEM = 'Weserchem Process AG'
+const MOORLAND = 'Moorland Grid Distribution'
 
 export const USERNAMES = ['root', 'admin', 'ubuntu', 'user', 'test', 'oracle', 'pi', 'postgres', 'git', 'support', 'guest', 'ftpuser'] as const
 export const PASSWORDS = ['123456', 'admin', 'password', 'root', '12345678', 'qwerty', '1234', 'P@ssw0rd', 'raspberry', 'admin123', 'toor', '111111'] as const
@@ -87,6 +105,9 @@ const SCANNER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
   'Mozilla/5.0 (compatible; InternetMeasurement/1.0; +https://internet-measurement.com/)',
 ] as const
+
+const SSH_CLIENTS = ['SSH-2.0-Go', 'SSH-2.0-libssh2_1.10.0', 'SSH-2.0-OpenSSH_8.9p1', 'SSH-2.0-PuTTY_Release_0.81', 'SSH-2.0-paramiko_3.4.0'] as const
+const HASSHES = ['0a07365cc01fa9fc82608ba4019af499', 'b5752e36ba6c5979a575e43178908adf', 'ec7378c1a92f5a8dde7e8b7a1ddf33d1', '92674389fa1e47a27ddd8d9b63ecd42b'] as const
 
 const uuid = (rng: Rng) => `${hex(rng, 8)}-${hex(rng, 4)}-4${hex(rng, 3)}-a${hex(rng, 3)}-${hex(rng, 12)}`
 const is = (type: EventType, ...types: EventType[]) => types.includes(type)
@@ -176,6 +197,7 @@ const CONPOT_SPEC = {
 export const FLEET: SensorSpec[] = [
   {
     id: 'cowrie',
+    persona: { id: 'voltaris-gpu02', organization: VOLTARIS, site: 'voltaris-munich-ml', assets: ['gpu02'] },
     kind: 'Cowrie',
     what: 'SSH and telnet sessions: the credentials tried and the commands run',
     protocols: ['ssh', 'telnet'],
@@ -206,7 +228,8 @@ export const FLEET: SensorSpec[] = [
       { label: 'files downloaded', match: (_, t) => t === 'file.download' },
     ],
     generate: (rng, session): EventDraft => {
-      const protocol = rng() < 0.6 ? 'telnet' : 'ssh'
+      // One protocol per session: telnet for ~60% of sessions, as live.
+      const protocol = parseInt(session.slice(0, 2), 16) < 154 ? 'telnet' : 'ssh'
       const dstPort = protocol === 'telnet' ? 2223 : 2222
       const base = { session, protocol, dst_port: dstPort, src_port: int(rng, 1024, 65535) }
       const roll = rng()
@@ -228,9 +251,14 @@ export const FLEET: SensorSpec[] = [
         const url = pick(rng, ['http://198.51.100.23/bins.sh', 'http://203.0.113.9/x', 'http://192.0.2.44/mips'])
         return { type: 'file.download', severity: 'critical', protocol, dstPort, eventName: 'cowrie.session.file_download', summary: `Payload fetched (sha256 ${shasum.slice(0, 12)}…)`, fields: { ...base, eventid: 'cowrie.session.file_download', url, shasum, outfile: `var/lib/cowrie/downloads/${shasum}`, message: `Downloaded URL (${url}) with SHA-256 ${shasum}`, canonical_attck_techniques: ['T1105'] } }
       }
+      if (protocol === 'ssh' && roll < 0.79) {
+        const version = pickSkewed(rng, SSH_CLIENTS)
+        return { type: 'connection', severity: 'info', protocol, dstPort, eventName: 'cowrie.client.version', summary: `Client ${version}`, fields: { ...base, eventid: 'cowrie.client.version', version, message: `Remote SSH version: ${version}`, canonical_fingerprint: version, canonical_fingerprint_kind: 'SSH client' } }
+      }
       if (protocol === 'ssh' && roll < 0.84) {
-        const version = pickSkewed(rng, ['SSH-2.0-Go', 'SSH-2.0-libssh2_1.10.0', 'SSH-2.0-OpenSSH_8.9p1', 'SSH-2.0-PuTTY_Release_0.81', 'SSH-2.0-paramiko_3.4.0'])
-        return { type: 'connection', severity: 'info', protocol, dstPort, eventName: 'cowrie.client.version', summary: `Client ${version}`, fields: { ...base, eventid: 'cowrie.client.version', version, message: `Remote SSH version: ${version}` } }
+        // One HASSH per client library, so the same tool matches across sources.
+        const hassh = pickSkewed(rng, HASSHES)
+        return { type: 'connection', severity: 'info', protocol, dstPort, eventName: 'cowrie.client.kex', summary: `Key exchange (HASSH ${hassh.slice(0, 12)}…)`, fields: { ...base, eventid: 'cowrie.client.kex', hassh, hasshAlgorithms: 'curve25519-sha256,ecdh-sha2-nistp256;aes128-ctr,aes256-ctr;hmac-sha2-256;none', message: `SSH client hassh fingerprint: ${hassh}` } }
       }
       if (protocol === 'telnet' && roll < 0.84) {
         const option = pick(rng, ['NAWS', 'TTYPE', 'ECHO', 'SGA'])
@@ -241,6 +269,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'multipot',
+    persona: { id: 'voltaris-core', organization: VOLTARIS, site: 'voltaris-munich-core', assets: ['ops-vnc-01', 'mail01', 'build01', 'es-logs-01', 'edge-proxy01'], assetFor: (f) => ({ vnc: 'ops-vnc-01', pop3: 'mail01', imap: 'mail01', docker: 'build01', elasticsearch: 'es-logs-01', socks5: 'edge-proxy01' })[String(f.proto)] ?? 'ops-vnc-01' },
     kind: 'Multipot',
     what: 'Low-interaction catch-all: the bytes a client sent before anything answered',
     protocols: ['vnc', 'pop3', 'imap', 'docker', 'elasticsearch', 'socks5'],
@@ -305,6 +334,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'dionaea',
+    persona: { id: 'kestrel-legacy', organization: KESTREL, site: 'kestrel-leeds-dc1', assets: ['legacy-svc-03'], share: 0.3 },
     kind: 'Dionaea',
     what: 'Service emulation: SMB, FTP, MSSQL, MySQL, SIP and PPTP exchanges, and the malware they drop',
     protocols: ['smb', 'sip', 'ftp', 'mssql', 'pptp', 'msrpc', 'mysql'],
@@ -379,6 +409,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'cisco-asa-honeypot',
+    persona: { id: 'voltaris-asa-vpn', organization: VOLTARIS, site: 'voltaris-eu-edge', assets: ['asagw01'] },
     kind: 'Cisco ASA',
     what: 'HTTP requests against an emulated Cisco ASA VPN portal, plus IKE on UDP 500',
     protocols: ['https', 'ike'],
@@ -424,6 +455,7 @@ export const FLEET: SensorSpec[] = [
   {
     ...CONPOT_SPEC,
     id: 'conpot',
+    persona: { id: 'auenwasser-s7-200', organization: AUENWASSER, site: 'auenwasser-intake', assets: ['plc-intake-01'] },
     protocols: ['snmp', 'modbus', 's7comm', 'enip', 'bacnet', 'ipmi'],
     ports: [
       { proto: 'udp', port: 161 },
@@ -447,6 +479,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'sentrypeer',
+    persona: { id: 'hafenring-pbx', organization: HAFENRING, site: 'hafenring-dispatch', assets: ['pbx-trunk-01'] },
     kind: 'SentryPeer',
     what: 'SIP / VoIP fraud probing: the SIP request exactly as it arrived',
     protocols: ['sip'],
@@ -481,6 +514,7 @@ export const FLEET: SensorSpec[] = [
   {
     ...CONPOT_SPEC,
     id: 'conpot-kamstrup',
+    persona: { id: 'fernwaerme-kamstrup', organization: FERNWAERME, site: 'fernwaerme-loop-ost', assets: ['heatmeter-ost-0117'] },
     what: 'Kamstrup smart-meter emulation: meter register reads and management-protocol commands',
     protocols: ['kamstrup_protocol', 'kamstrup_management_protocol'],
     ports: [
@@ -497,6 +531,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'hellpot',
+    persona: { id: 'kestrel-legacy-web', organization: KESTREL, site: 'kestrel-legacy-infra', assets: ['web-legacy-02'] },
     kind: 'HellPot',
     what: 'Tarpit: how long a crawler stayed and how many bytes it swallowed',
     protocols: ['http'],
@@ -533,6 +568,7 @@ export const FLEET: SensorSpec[] = [
   {
     ...CONPOT_SPEC,
     id: 'conpot-s7-1200',
+    persona: { id: 'auenwasser-s7-1200', organization: AUENWASSER, site: 'auenwasser-treatment', assets: ['plc-filter-01'] },
     what: 'Siemens S7-1200 PLC emulation: S7comm and Modbus against a small controller',
     protocols: ['modbus', 's7comm'],
     ports: [
@@ -546,6 +582,7 @@ export const FLEET: SensorSpec[] = [
   {
     ...CONPOT_SPEC,
     id: 'conpot-guardian',
+    persona: { id: 'brueckenfuel-guardian', organization: BRUECKENFUEL, site: 'brueckenfuel-station-017', assets: ['tankmon-017'] },
     what: 'Guardian AST tank-gauge emulation: the fuel inventory commands a scanner sends',
     protocols: ['guardian_ast'],
     ports: [{ proto: 'tcp', port: 10001 }],
@@ -560,6 +597,7 @@ export const FLEET: SensorSpec[] = [
   {
     ...CONPOT_SPEC,
     id: 'conpot-s7-1500',
+    persona: { id: 'weserchem-s7-1500', organization: WESERCHEM, site: 'weserchem-reactor-2', assets: ['plc-reactor-02'] },
     what: 'Siemens S7-1500 PLC emulation: S7comm and Modbus against a large controller',
     protocols: ['modbus', 's7comm'],
     ports: [
@@ -573,6 +611,7 @@ export const FLEET: SensorSpec[] = [
   {
     ...CONPOT_SPEC,
     id: 'conpot-iec104',
+    persona: { id: 'moorland-iec104', organization: MOORLAND, site: 'moorland-substation-08', assets: ['rtu-sub08-a'] },
     what: 'IEC 60870-5-104 substation emulation: telecontrol start/stop and interrogation commands',
     protocols: ['iec104'],
     ports: [{ proto: 'tcp', port: 2404 }],
@@ -586,6 +625,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'http-honeypot',
+    persona: { id: 'voltaris-edge', organization: VOLTARIS, site: 'voltaris-eu-edge', assets: ['web-edge-01'] },
     kind: 'HTTP honeypot',
     what: 'Web honeypot behind the reverse proxy: landing pages, logins and exploit paths, with tarpitting',
     protocols: ['http'],
@@ -613,13 +653,18 @@ export const FLEET: SensorSpec[] = [
       { label: 'tarpitted', match: (f) => f.tarpitted === true },
     ],
     generate: (rng): EventDraft => {
-      const [path, category, severity] = pickSkewed(rng, [
-        ['/', 'landing', 'info'],
-        ['/wp-login.php', 'login', 'low'],
-        ['/.env', 'scanner', 'medium'],
-        ['/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php', 'exploit', 'high'],
-        ['/cgi-bin/luci/;stok=/locale?form=country', 'exploit', 'high'],
-        ['/boaform/admin/formLogin', 'login', 'medium'],
+      // payload_class: what the request carried, when it carried something.
+      const [path, category, severity, payloadClass] = pickSkewed(rng, [
+        ['/', 'landing', 'info', ''],
+        ['/wp-login.php', 'login', 'low', ''],
+        ['/.env', 'scanner', 'medium', 'secret-read'],
+        ['/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php', 'exploit', 'high', 'php-code'],
+        ['/cgi-bin/luci/;stok=/locale?form=country', 'exploit', 'high', 'command-injection'],
+        ['/boaform/admin/formLogin', 'login', 'medium', ''],
+        ['/index.php?s=/Index/\\think\\app/invokefunction&function=call_user_func_array', 'exploit', 'high', 'thinkphp-rce'],
+        ['/../../../../etc/passwd', 'exploit', 'high', 'path-traversal'],
+        ['/php-cgi/php-cgi.exe?%ADd+allow_url_include%3d1', 'exploit', 'critical', 'php-cgi-argument-injection'],
+        ['/wp-json/wp/v2/users', 'scanner', 'low', 'wordpress-rest-probe'],
       ] as const)
       const method = category === 'login' ? 'POST' : 'GET'
       const agent = pickSkewed(rng, SCANNER_AGENTS)
@@ -635,12 +680,13 @@ export const FLEET: SensorSpec[] = [
         summary: `${method} ${path}`,
         username,
         password,
-        fields: { method, path, host: pick(rng, ['shop.example.test', 'wp.example.test', 'portal.example.test']), status: category === 'exploit' ? 500 : 200, category, user_agent: agent, headers: { 'User-Agent': agent, Accept: '*/*' }, ...(username ? { username, password, auth_type: 'form' } : {}), tarpitted, ...(tarpitted ? { tarpit_bytes: int(rng, 4096, 900_000), tarpit_ms: int(rng, 5_000, 120_000) } : {}), canonical_attck_techniques: severity === 'high' ? ['T1190'] : ['T1595'] },
+        fields: { method, path, host: pick(rng, ['shop.example.test', 'wp.example.test', 'portal.example.test']), status: category === 'exploit' ? 500 : 200, category, user_agent: agent, headers: { 'User-Agent': agent, Accept: '*/*' }, ...(username ? { username, password, auth_type: 'form' } : {}), ...(payloadClass ? { payload_class: payloadClass } : {}), tarpitted, ...(tarpitted ? { tarpit_bytes: int(rng, 4096, 900_000), tarpit_ms: int(rng, 5_000, 120_000) } : {}), canonical_attck_techniques: severity === 'high' ? ['T1190'] : ['T1595'] },
       }
     },
   },
   {
     id: 'beelzebub',
+    persona: { id: 'voltaris-directory', organization: VOLTARIS, site: 'voltaris-munich-core', assets: ['directory-estate'] },
     kind: 'Beelzebub',
     what: 'Multi-protocol deception: what the emulated service was asked for',
     protocols: ['http', 'ssh', 'tcp'],
@@ -680,6 +726,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'endlessh',
+    persona: { id: 'voltaris-ssh-edge', organization: VOLTARIS, site: 'voltaris-eu-edge', assets: ['sshgw01'] },
     kind: 'Endlessh',
     what: 'SSH tarpit: how long a client was held on a banner that never ends',
     protocols: ['ssh'],
@@ -707,6 +754,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'rdp-honeypot',
+    persona: { id: 'voltaris-rdp-jump', organization: VOLTARIS, site: 'voltaris-eu-edge', assets: ['rdpgw01'] },
     kind: 'RDP honeypot',
     what: 'RDP: the credentials offered and the security protocols requested',
     protocols: ['rdp'],
@@ -744,6 +792,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'tanner',
+    persona: { id: 'kestrel-customer-portal', organization: KESTREL, site: 'kestrel-public-web', assets: ['customer-portal-01'] },
     kind: 'Snare/Tanner',
     what: 'Web application honeypot: requests classified by attack type (LFI, RFI, SQLi, XSS, command execution)',
     protocols: ['http'],
@@ -785,6 +834,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'citrix-honeypot',
+    persona: { id: 'voltaris-citrix-gw', organization: VOLTARIS, site: 'voltaris-eu-edge', assets: ['citrixgw01'] },
     kind: 'Citrix ADC',
     what: 'HTTP requests against an emulated Citrix ADC gateway, including CVE-2019-19781 path traversal scans',
     protocols: ['https'],
@@ -826,6 +876,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'api-honeypot',
+    persona: { id: 'voltaris-platform', organization: VOLTARIS, site: 'voltaris-eu-cloud', assets: ['platform-gw-01'] },
     kind: 'API honeypot',
     what: 'Fake API surface: the calls made against it and the status each got',
     protocols: ['http'],
@@ -864,6 +915,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'dnp3',
+    persona: { id: 'moorland-dnp3', organization: MOORLAND, site: 'moorland-substation-11', assets: ['rtu-sub11-b'] },
     kind: 'DNP3',
     what: 'DNP3: the function codes requested against the emulated outstation',
     protocols: ['dnp3'],
@@ -889,15 +941,18 @@ export const FLEET: SensorSpec[] = [
     ],
     generate: (rng): EventDraft => {
       const roll = rng()
-      if (roll < 0.6) return { type: 'protocol.request', severity: 'low', protocol: 'dnp3', dstPort: 20000, eventName: 'malformed_frame', summary: 'DNP3 malformed frame', fields: { event: 'malformed_frame', port: 20000, frame_hex: hex(rng, 24) } }
-      if (roll < 0.7) return { type: 'connection', severity: 'info', protocol: 'dnp3', dstPort: 20000, eventName: 'connect', summary: 'DNP3 connection', fields: { event: 'connect', port: 20000 } }
-      const fn = pick(rng, ['reset_link_states', 'request_link_status', 'unconfirmed_user_data'])
-      const app = fn === 'unconfirmed_user_data' ? pick(rng, ['read', 'direct_operate', 'cold_restart']) : undefined
-      return { type: 'protocol.request', severity: app === 'direct_operate' || app === 'cold_restart' ? 'high' : 'medium', protocol: 'dnp3', dstPort: 20000, eventName: 'frame', summary: `DNP3 ${app ?? fn}`, fields: { event: 'frame', port: 20000, function: fn, ...(app ? { app_function: app } : {}), dnp3_destination: 1, frame_hex: `056405c9${hex(rng, 20)}` } }
+      if (roll < 0.4) return { type: 'protocol.request', severity: 'low', protocol: 'dnp3', dstPort: 20000, eventName: 'malformed_frame', summary: 'DNP3 malformed frame', fields: { event: 'malformed_frame', port: 20000, frame_hex: hex(rng, 24) } }
+      if (roll < 0.5) return { type: 'connection', severity: 'info', protocol: 'dnp3', dstPort: 20000, eventName: 'connect', summary: 'DNP3 connection', fields: { event: 'connect', port: 20000 } }
+      // Real frames mostly carry an application function, and most of those
+      // are DIRECT_OPERATE: command a device with no select-before-operate.
+      const fn = rng() < 0.2 ? pick(rng, ['reset_link_states', 'request_link_status']) : 'unconfirmed_user_data'
+      const app = fn === 'unconfirmed_user_data' ? pickSkewed(rng, ['direct_operate', 'direct_operate', 'read', 'select', 'cold_restart']) : undefined
+      return { type: 'protocol.request', severity: app === 'direct_operate' ? 'critical' : app === 'select' || app === 'cold_restart' ? 'high' : 'medium', protocol: 'dnp3', dstPort: 20000, eventName: 'frame', summary: `DNP3 ${app ?? fn}`, fields: { event: 'frame', port: 20000, function: fn, ...(app ? { app_function: app } : {}), dnp3_destination: 1, frame_hex: `056405c9${hex(rng, 20)}` } }
     },
   },
   {
     id: 'dns-honeypot',
+    persona: { id: 'voltaris-dns', organization: VOLTARIS, site: 'voltaris-eu-edge', assets: ['dns01'] },
     kind: 'DNS honeypot',
     what: 'DNS: the names queried and the record types asked for',
     protocols: ['dns'],
@@ -938,6 +993,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'elasticpot',
+    persona: { id: 'voltaris-analytics-legacy', organization: VOLTARIS, site: 'voltaris-munich-analytics', assets: ['analytics-es-02'] },
     kind: 'Elasticpot',
     what: 'Elasticsearch emulation: the queries and URLs attackers sent',
     protocols: ['http'],
@@ -998,6 +1054,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'dicompot',
+    persona: { id: 'voltaris-imaging', organization: VOLTARIS, site: 'voltaris-radiology-archive', assets: ['pacs01'] },
     kind: 'DICOMpot',
     what: 'DICOM: which application entities tried to talk to the emulated imaging node',
     protocols: ['dicom'],
@@ -1029,6 +1086,7 @@ export const FLEET: SensorSpec[] = [
   },
   {
     id: 'galah',
+    persona: { id: 'kestrel-staff-console', organization: KESTREL, site: 'kestrel-internal-tools', assets: ['staff-console-03'] },
     kind: 'Galah',
     what: 'LLM-generated web responses: the full request received and the response served back',
     protocols: ['http'],

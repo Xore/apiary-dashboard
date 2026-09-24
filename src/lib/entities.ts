@@ -30,6 +30,10 @@ export type EntityKind =
   | 'recording'
   | 'country'
   | 'port'
+  | 'persona'
+  | 'site'
+  | 'asset'
+  | 'provider'
   | IocKind
 
 type EntityDef = {
@@ -61,6 +65,11 @@ export const ENTITIES: Record<EntityKind, EntityDef> = {
   recording: { noun: 'recording', href: (id) => `/recordings/${q(id)}`, isCode: true },
   country: { noun: 'country', events: (id) => `/events?country=${q(id)}` },
   port: { noun: 'port', events: (id) => `/events?port=${q(id)}` },
+  // The decoy side: which fictional identity, site and emulated asset was hit.
+  persona: { noun: 'decoy persona', events: (id) => `/events?persona=${q(id)}` },
+  site: { noun: 'decoy site', events: (id) => `/events?site=${q(id)}` },
+  asset: { noun: 'decoy asset', events: (id) => `/events?asset=${q(id)}` },
+  provider: { noun: 'provider class', events: (id) => `/events?provider=${q(id)}` },
   domain: { noun: 'domain', href: (id) => iocHref('domain', id), events: (id) => history(id), isCode: true },
   url: { noun: 'URL', href: (id) => iocHref('url', id), events: (id) => history(id), isCode: true },
   credential: {

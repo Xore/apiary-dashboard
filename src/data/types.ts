@@ -41,6 +41,8 @@ export interface Sensor extends Record<string, unknown> {
   what: string
   /** Listening ports on the sensor host. */
   ports: Array<{ proto: 'tcp' | 'udp'; port: number }>
+  /** The decoy identity it wears: a fictional organization, site and assets. */
+  persona?: { id: string; organization: string; site: string; assets: string[] }
   protocols: Protocol[]
   location: string
   status: SensorStatus
@@ -69,7 +71,30 @@ export interface HoneypotEvent extends Record<string, unknown> {
   eventName: string
   /** The sensor's own `honeypot.*` object, as that sensor writes it. */
   fields: SensorFields
+  /** The decoy identity that was targeted (`honeypot.persona_id` and
+   * friends); absent on sensors that wear none. */
+  persona?: string
+  site?: string
+  asset?: string
+  organization?: string
+  /** The client fingerprint this event carries, and what kind it is
+   * (HASSH, JA4, User-Agent, SSH client, client banner, SSH pubkey). */
+  fingerprint?: string
+  fingerprintKind?: string
+  /** ATT&CK techniques the pipeline mapped this event to. */
+  techniques: string[]
+  /** The source network: organization, provider class, city. */
+  org: string
+  provider: ProviderClass
+  city: string
+  /** What an HTTP request carried (php-code, path-traversal, …). */
+  payloadClass?: string
+  /** DNP3 control-function severity: an unconfirmed operate is critical. */
+  icsSeverity?: 'critical' | 'high'
 }
+
+/** How the source network is classified (`source.as.type`). */
+export type ProviderClass = 'network' | 'hosting' | 'cloud' | 'scanner' | 'blocklist:spamhaus'
 
 export interface AttackSource extends Record<string, unknown> {
   ip: string
@@ -82,6 +107,8 @@ export interface AttackSource extends Record<string, unknown> {
   lastSeen: string
   riskScore: number
   tags: string[]
+  provider: ProviderClass
+  city: string
 }
 
 export interface Kpi {
@@ -269,6 +296,15 @@ export type EventKind = 'connection' | 'login' | 'command' | 'download' | 'http'
 
 /** Each filter is a comma list (?sensor=a,b) and matches any of its values. */
 export interface EventFilters {
+  /** Decoy pivots: which persona, site or asset was targeted. */
+  persona?: string
+  site?: string
+  asset?: string
+  /** Source pivots. */
+  fingerprint?: string
+  org?: string
+  provider?: string
+  city?: string
   ip?: string
   sensor?: string
   country?: string
@@ -545,6 +581,8 @@ export interface Facets {
   ports: FacetValue[]
   signatures: FacetValue[]
   kinds: FacetValue[]
+  personas: FacetValue[]
+  providers: FacetValue[]
 }
 
 /** What a draft definition would cover, checked before rendering. */

@@ -1,6 +1,6 @@
 // Seeded mock fixtures. Attacker addresses come from the RFC 5737
 // documentation ranges so mock data never names a real host.
-import type { AttackSource, HoneypotEvent, Sensor, SessionUser } from '../types'
+import type { AttackSource, HoneypotEvent, ProviderClass, Sensor, SensorFields, SessionUser } from '../types'
 import { FLEET } from './fleet'
 import { createRng, hex, int, isoMinutesAgo, pick, pickSkewed } from './random'
 
@@ -18,6 +18,7 @@ export const SENSORS: Sensor[] = FLEET.map((spec) => ({
   what: spec.what,
   protocols: spec.protocols,
   ports: spec.ports,
+  ...(spec.persona ? { persona: { id: spec.persona.id, organization: spec.persona.organization, site: spec.persona.site, assets: spec.persona.assets } } : {}),
   location: spec.ingress.includes('direct') ? 'VPS edge' : 'Home lab',
   status: spec.status,
   eventsLast24h: 0,
@@ -38,6 +39,35 @@ const ORGS = [
   ['AS4766', 'Korea Telecom'],
   ['AS63949', 'Akamai Linode'],
 ] as const
+
+/** Provider class by network, as source.as.type classifies it. */
+const PROVIDER_OF: Record<string, ProviderClass> = {
+  Chinanet: 'network',
+  'Korea Telecom': 'network',
+  DigitalOcean: 'hosting',
+  Hetzner: 'hosting',
+  M247: 'hosting',
+  AlexHost: 'hosting',
+  'Akamai Linode': 'hosting',
+  Amazon: 'cloud',
+  'Tencent Cloud': 'cloud',
+  'Alibaba Cloud': 'cloud',
+}
+
+const CITIES: Record<string, string[]> = {
+  CN: ['Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen'],
+  US: ['Ashburn', 'Santa Clara', 'New York', 'Dallas'],
+  RU: ['Moscow', 'Saint Petersburg'],
+  BR: ['São Paulo', 'Rio de Janeiro'],
+  IN: ['Mumbai', 'Bengaluru'],
+  VN: ['Hanoi', 'Ho Chi Minh City'],
+  NL: ['Amsterdam'],
+  DE: ['Frankfurt am Main', 'Nuremberg'],
+  KR: ['Seoul'],
+  ID: ['Jakarta'],
+  IR: ['Tehran'],
+  TW: ['Taipei'],
+}
 
 const TAGS = ['scanner', 'bruteforce', 'mirai-like', 'cryptominer', 'tor-exit', 'botnet', 'recon'] as const
 
@@ -65,13 +95,49 @@ function buildSources(): AttackSource[] {
       lastSeen: isoMinutesAgo(firstSeen),
       riskScore: int(rng, 5, 99),
       tags: rng() < 0.7 ? [pick(rng, TAGS), ...(rng() < 0.3 ? [pick(rng, TAGS)] : [])] : [],
+      provider: 'network',
+      city: '',
     })
+  }
+  // A separate stream, so adding these never reshuffles the fixtures above.
+  const geo = createRng(0xc17e)
+  for (const source of sources) {
+    source.city = pick(geo, CITIES[source.country])
+    source.provider = source.tags.includes('scanner') && geo() < 0.5 ? 'scanner' : geo() < 0.03 ? 'blocklist:spamhaus' : PROVIDER_OF[source.org]
   }
   return sources
 }
 
+/** The pivots the pipeline reads off a sensor's own fields: a fingerprint
+ * (canonical first, then HASSH, SSH pubkey, client banner, User-Agent), the
+ * ATT&CK techniques, the payload class, and DNP3 control severity. */
+function pivotsOf(fields: SensorFields): Pick<HoneypotEvent, 'fingerprint' | 'fingerprintKind' | 'techniques' | 'payloadClass' | 'icsSeverity'> {
+  const text = (key: string) => (typeof fields[key] === 'string' ? (fields[key]) : '')
+  const [fingerprint, fingerprintKind] = text('canonical_fingerprint')
+    ? [text('canonical_fingerprint'), text('canonical_fingerprint_kind') || 'fingerprint']
+    : text('hassh')
+      ? [text('hassh'), 'HASSH']
+      : text('fingerprint')
+        ? [text('fingerprint'), 'SSH pubkey']
+        : text('client')
+          ? [text('client'), 'client banner']
+          : text('user_agent')
+            ? [text('user_agent'), 'User-Agent']
+            : ['', '']
+  const app = text('app_function')
+  const icsSeverity = ['direct_operate', 'direct_operate_no_ack'].includes(app) ? 'critical' : ['select', 'operate', 'cold_restart', 'warm_restart', 'initialize_application', 'save_configuration', 'write'].includes(app) ? 'high' : undefined
+  const techniques = Array.isArray(fields.canonical_attck_techniques) ? fields.canonical_attck_techniques.filter((t): t is string => typeof t === 'string') : []
+  return {
+    ...(fingerprint ? { fingerprint, fingerprintKind } : {}),
+    techniques,
+    ...(text('payload_class') ? { payloadClass: text('payload_class') } : {}),
+    ...(icsSeverity ? { icsSeverity } : {}),
+  }
+}
+
 function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
   const rng = createRng(0xbee5)
+  const decoy = createRng(0xdec0)
   const events: HoneypotEvent[] = []
   // Cowrie-style hex session ids, stable per (source, connection slot).
   const sessionRng = createRng(0x5e55)
@@ -89,7 +155,12 @@ function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
       const minutesAgo = Math.max(spec.lastSeenMinutes, burst || int(rng, 0, 59) + hour * 60)
       const source = pickSkewed(rng, sources)
       const sessionId = sessionIdFor(`${spec.id}#${source.ip}#${int(rng, 1, 6)}`)
-      const { type, severity, protocol, dstPort, eventName, summary, fields, username, password, command } = spec.generate(rng, sessionId)
+      const { type, severity, protocol, dstPort, eventName, summary, fields: own, username, password, command } = spec.generate(rng, sessionId)
+      // The decoy identity rides along in the sensor's own fields, as the
+      // enrichment step writes it.
+      const persona = spec.persona && decoy() < (spec.persona.share ?? 1) ? spec.persona : undefined
+      const asset = persona ? (persona.assetFor?.(own) ?? persona.assets[0]) : undefined
+      const fields: SensorFields = persona && asset ? { ...own, persona_id: persona.id, site_id: persona.site, asset_id: asset, organization: persona.organization } : own
       events.push({
         id: `evt-${hex(rng, 10)}`,
         timestamp: isoMinutesAgo(Math.min(minutesAgo, 24 * 60 - 1)),
@@ -106,6 +177,11 @@ function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
         summary,
         eventName,
         fields,
+        ...(persona && asset ? { persona: persona.id, site: persona.site, asset, organization: persona.organization } : {}),
+        ...pivotsOf(fields),
+        org: source.org,
+        provider: source.provider,
+        city: source.city,
         ...(username !== undefined ? { username } : {}),
         ...(password !== undefined ? { password } : {}),
         ...(command !== undefined ? { command } : {}),
