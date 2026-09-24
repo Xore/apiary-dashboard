@@ -45,12 +45,15 @@ done
 CHECKS=(
   "/ 200"
   "/events?kind=login 200"
-  "/investigate/ip/198.51.100.13 200"
+  "/sources/198.51.100.13 200"
+  "/sources/198.51.100.13/timeline?range=7d 200"
+  "/payloads/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/sandbox 200"
+  "/investigate/ip/198.51.100.13 301"
   "/reports?step=library 200"
   "/payload-workbench/results?tab=ghidra 200"
   "/settings?pane=services 307"
   "/sensors 307"
-  "/investigate/ip/10.0.0.1 404"
+  "/sources/10.0.0.1 404"
   "/no-such-page 404"
 )
 
