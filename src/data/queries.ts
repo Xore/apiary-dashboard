@@ -85,6 +85,8 @@ import type {
   CapturedPayload,
   GeneratedReport,
   ReportDefinition,
+  FacetValue,
+  Facets,
   ReportPreview,
   ReportsData,
   SourceHealth,
@@ -330,14 +332,16 @@ function sinceMs(since?: string): number | undefined {
 export async function getEvents(filters: EventFilters): Promise<EventsPage> {
   await mockDelay()
   const window = sinceMs(filters.since)
+  const anyOf = (list: string | number | undefined, value: string) => list === undefined || String(list).split(',').includes(value)
+  const kinds = filters.kind?.split(',').filter((k): k is EventKind => k in KIND_TYPES)
   const rows = EVENTS.filter(
     (e) =>
-      (!filters.ip || e.srcIp === filters.ip) &&
-      (!filters.sensor || e.sensor === filters.sensor) &&
-      (!filters.country || e.country === filters.country) &&
-      (!filters.proto || e.protocol === filters.proto) &&
-      (!filters.port || e.dstPort === filters.port) &&
-      (!filters.kind || KIND_TYPES[filters.kind].includes(e.type)) &&
+      anyOf(filters.ip, e.srcIp) &&
+      anyOf(filters.sensor, e.sensor) &&
+      anyOf(filters.country, e.country) &&
+      anyOf(filters.proto, e.protocol) &&
+      anyOf(filters.port, String(e.dstPort)) &&
+      (!kinds?.length || kinds.some((kind) => KIND_TYPES[kind].includes(e.type))) &&
       (window === undefined || MOCK_NOW - Date.parse(e.timestamp) <= window),
   )
   return {
@@ -594,18 +598,36 @@ export async function deleteGeneratedReport(id: string): Promise<void> {
   if (index >= 0) GENERATED_REPORTS.splice(index, 1)
 }
 
+const facet = (values: Array<string | undefined>, limit = 500): FacetValue[] => countBy(values, limit).map((r) => ({ value: r.label, count: r.count }))
+
+/** Every value each filter can take, busiest first, for pickers that list
+ * them all under the field. */
+export async function getFacets(): Promise<Facets> {
+  await mockDelay()
+  return {
+    sensors: facet(EVENTS.map((e) => e.sensor)),
+    sources: facet(EVENTS.map((e) => e.srcIp)),
+    countries: facet(EVENTS.map((e) => e.country)),
+    protocols: facet(EVENTS.map((e) => e.protocol)),
+    ports: facet(EVENTS.map((e) => String(e.dstPort))),
+    signatures: facet(EVENTS.filter((e) => e.type === 'ids.alert').map((e) => e.summary)),
+    kinds: (Object.keys(KIND_TYPES) as EventKind[]).map((kind) => ({ value: kind, count: EVENTS.filter((e) => KIND_TYPES[kind].includes(e.type)).length })),
+  }
+}
+
 /** What a draft definition would cover. The first scope filter that leaves
  * nothing to report is named, so the wizard can send the operator back to
  * that field rather than render an empty PDF. */
 export async function previewReport(definition: ReportDefinition): Promise<ReportPreview> {
   await mockDelay()
   const { window, ip, sensor, port, signature } = definition.scope
+  const list = (values: string[]) => values.join(', ')
   const filters: Array<[NonNullable<ReportPreview['emptyFilter']>['field'], string, (e: HoneypotEvent) => boolean]> = [
     ['window', `No events in the last ${window}.`, (e) => inRange(e.timestamp, window)],
-    ['ip', `${ip} sent nothing in this window.`, (e) => !ip || e.srcIp === ip.trim()],
-    ['sensor', `Sensor ${sensor} recorded nothing in this window.`, (e) => !sensor || e.sensor === sensor.trim()],
-    ['port', `Nothing reached port ${port} in this window.`, (e) => !port || String(e.dstPort) === port.trim()],
-    ['signature', `No IDS alert matching “${signature}” in this window.`, (e) => !signature || (e.type === 'ids.alert' && e.summary.toLowerCase().includes(signature.trim().toLowerCase()))],
+    ['ip', `${list(ip)} sent nothing in this window.`, (e) => ip.length === 0 || ip.includes(e.srcIp)],
+    ['sensor', `${sensor.length === 1 ? 'Sensor' : 'Sensors'} ${list(sensor)} recorded nothing in this window.`, (e) => sensor.length === 0 || sensor.includes(e.sensor)],
+    ['port', `Nothing reached port ${list(port)} in this window.`, (e) => port.length === 0 || port.includes(String(e.dstPort))],
+    ['signature', `No IDS alert matching ${signature.map((x) => `“${x}”`).join(' or ')} in this window.`, (e) => signature.length === 0 || (e.type === 'ids.alert' && signature.some((x) => e.summary.toLowerCase().includes(x.toLowerCase())))],
   ]
   let events = EVENTS
   let emptyFilter: ReportPreview['emptyFilter']

@@ -1,9 +1,9 @@
-import { Selector } from '@astryxdesign/core/Selector'
 import { HStack } from '@astryxdesign/core/Stack'
 import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Text } from '@astryxdesign/core/Text'
 import { Outlet, createFileRoute, notFound, useLocation, useNavigate } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
+import { FilterSelect } from '#/components/FilterSelect'
 import { entityTabs } from '#/components/ViewTabs'
 import type { ViewTab } from '#/components/ViewTabs'
 import { NotFound } from '#/components/NotFound'
@@ -35,13 +35,15 @@ function SensorPicker({ current, sensors }: { current: string; sensors: string[]
   const pathname = useLocation({ select: (location) => location.pathname })
   const tab = pathname.split('/').slice(3).join('/')
   return (
-    <Selector
+    <FilterSelect
       label="Sensor"
       isLabelHidden
       size="sm"
-      value={current}
-      onChange={(value) => void navigate({ href: `/sensors/${encodeURIComponent(value)}${tab ? `/${tab}` : ''}` })}
-      options={sensors.map((s) => ({ value: s, label: s }))}
+      width={200}
+      mode="single"
+      options={sensors.map((s) => ({ value: s }))}
+      value={[current]}
+      onChange={([value]) => value && void navigate({ href: `/sensors/${encodeURIComponent(value)}${tab ? `/${tab}` : ''}` })}
     />
   )
 }

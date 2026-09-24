@@ -43,10 +43,10 @@ export function ReviewStep({
 }) {
   const template = data.templates.find((t) => t.id === draft.template)
   const scope = [
-    draft.scope.ip && `IP ${draft.scope.ip}`,
-    draft.scope.sensor && `sensor ${draft.scope.sensor}`,
-    draft.scope.port && `port ${draft.scope.port}`,
-    draft.scope.signature && `signature “${draft.scope.signature}”`,
+    draft.scope.ip.length > 0 && `IP ${draft.scope.ip.join(', ')}`,
+    draft.scope.sensor.length > 0 && `sensor ${draft.scope.sensor.join(', ')}`,
+    draft.scope.port.length > 0 && `port ${draft.scope.port.join(', ')}`,
+    draft.scope.signature.length > 0 && `signature ${draft.scope.signature.map((s) => `“${s}”`).join(', ')}`,
   ].filter(Boolean)
   return (
     <MetadataList label={{ position: 'start', width: 136 }}>

@@ -8,6 +8,7 @@ import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { FilterSelect, listParam, toParam } from '#/components/FilterSelect'
 import { RecordList } from '#/components/RecordList'
 import { getPayloads } from '#/data/queries'
 import type { CapturedPayload } from '#/data/types'
@@ -16,7 +17,7 @@ import { formatTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/payloads/')({
   validateSearch: (search: Record<string, unknown>): { source?: string } => ({
-    source: typeof search.source === 'string' && search.source ? search.source : undefined,
+    source: toParam(listParam(search.source)),
   }),
   loader: () => getPayloads(),
   component: PayloadsPage,
@@ -78,7 +79,9 @@ function PayloadsPage() {
   const { source } = Route.useSearch()
   const [publishing, setPublishing] = useState<CapturedPayload | null>(null)
   const [published, setPublished] = useState<string | null>(null)
-  const visible = source ? payloads.filter((p) => p.sources.includes(source)) : payloads
+  const navigate = useNavigate()
+  const picked = listParam(source)
+  const visible = picked.length ? payloads.filter((p) => p.sources.some((s) => picked.includes(s))) : payloads
 
   return (
     <>
@@ -91,12 +94,16 @@ function PayloadsPage() {
           )
         }
         toolbar={
-          <HStack gap={1.5} wrap="wrap" vAlign="center">
-            <Token size="sm" label={`All (${payloads.length})`} color={source ? 'default' : 'blue'} href="/payloads" />
-            {sources.map((row) => (
-              <Token key={row.id} size="sm" label={`${row.label} (${row.count})`} color={source === row.label ? 'blue' : 'default'} href={`/payloads?source=${row.label}`} />
-            ))}
-          </HStack>
+          <FilterSelect
+            label="Captured by"
+            isLabelHidden
+            size="sm"
+            width={220}
+            placeholder="Captured by any sensor"
+            options={sources.map((row) => ({ value: row.label, count: row.count }))}
+            value={picked}
+            onChange={(values) => void navigate({ to: '.', search: (prev: Record<string, unknown>) => ({ ...prev, source: toParam(values) }) })}
+          />
         }
         rows={visible}
         columns={columns(setPublishing)}

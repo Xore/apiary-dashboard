@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Button } from '@astryxdesign/core/Button'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Selector } from '@astryxdesign/core/Selector'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
@@ -20,13 +19,16 @@ import type { AnomalyStatus, MlAnomaly, ModelHealth, Severity } from '#/data/typ
 import { formatClock, formatNumber, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { StatusToken, statusLabel } from '#/components/details/Anomaly'
+import { FilterSelect, listParam, toParam } from '#/components/FilterSelect'
+import type { FilterOption } from '#/components/FilterSelect'
 import { PageFrame } from '#/components/PageFrame'
 import { searchTabs } from '#/components/ViewTabs'
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
 const STATUSES: AnomalyStatus[] = ['open', 'acknowledged', ...DISPOSITIONS]
 
-type Search = { view?: 'models'; severity?: Severity; eventType?: string; status?: AnomalyStatus }
+/** Filters are comma lists (?severity=high,critical) matching any value. */
+type Search = { view?: 'models'; severity?: string; eventType?: string; status?: string }
 
 export const Route = createFileRoute('/_layout/ml-anomalies/')({
   staticData: {
@@ -41,9 +43,9 @@ export const Route = createFileRoute('/_layout/ml-anomalies/')({
   },
   validateSearch: (search: Record<string, unknown>): Search => ({
     view: search.view === 'models' ? 'models' : undefined,
-    severity: SEVERITIES.includes(search.severity as Severity) ? (search.severity as Severity) : undefined,
-    eventType: typeof search.eventType === 'string' && search.eventType ? search.eventType : undefined,
-    status: STATUSES.includes(search.status as AnomalyStatus) ? (search.status as AnomalyStatus) : undefined,
+    severity: toParam(listParam(search.severity).filter((v) => SEVERITIES.includes(v as Severity))),
+    eventType: toParam(listParam(search.eventType)),
+    status: toParam(listParam(search.status).filter((v) => STATUSES.includes(v as AnomalyStatus))),
   }),
   loader: () => getMlAnomalies(),
   component: MlAnomaliesPage,
@@ -151,12 +153,10 @@ function MlAnomaliesPage() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [acking, setAcking] = useState(false)
 
-  const rows = data.anomalies.filter(
-    (row) =>
-      (!search.severity || row.severity === search.severity) &&
-      (!search.eventType || row.eventType === search.eventType) &&
-      (!search.status || row.status === search.status),
-  )
+  const anyOf = (list: string | undefined, value: string) => !list || list.split(',').includes(value)
+  const rows = data.anomalies.filter((row) => anyOf(search.severity, row.severity) && anyOf(search.eventType, row.eventType) && anyOf(search.status, row.status))
+  const counted = (values: readonly string[], of: (row: MlAnomaly) => string, label = (v: string) => v): FilterOption[] =>
+    values.map((value) => ({ value, label: label(value), count: data.anomalies.filter((row) => of(row) === value).length }))
   const setFilter = (patch: Search) => void navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true })
   const severityCount = (severity: Severity) => data.bySeverity.find((row) => row.label === severity)?.count ?? 0
 
@@ -193,36 +193,9 @@ function MlAnomaliesPage() {
         }
         toolbar={
           <HStack gap={3} wrap="wrap">
-            <Selector
-              label="Severity"
-              isLabelHidden
-              size="sm"
-              placeholder="All severities"
-              hasClear
-              value={search.severity ?? null}
-              onChange={(value) => setFilter({ severity: (value ?? undefined) as Severity | undefined })}
-              options={SEVERITIES}
-            />
-            <Selector
-              label="Event type"
-              isLabelHidden
-              size="sm"
-              placeholder="All event types"
-              hasClear
-              value={search.eventType ?? null}
-              onChange={(value) => setFilter({ eventType: value ?? undefined })}
-              options={data.eventTypes}
-            />
-            <Selector
-              label="Status"
-              isLabelHidden
-              size="sm"
-              placeholder="All statuses"
-              hasClear
-              value={search.status ?? null}
-              onChange={(value) => setFilter({ status: (value ?? undefined) as AnomalyStatus | undefined })}
-              options={STATUSES.map((value) => ({ value, label: statusLabel(value) }))}
-            />
+            <FilterSelect label="Severity" isLabelHidden size="sm" width={160} placeholder="All severities" options={counted(SEVERITIES, (r) => r.severity)} value={listParam(search.severity)} onChange={(v) => setFilter({ severity: toParam(v) })} />
+            <FilterSelect label="Event type" isLabelHidden size="sm" width={200} placeholder="All event types" options={counted(data.eventTypes, (r) => r.eventType)} value={listParam(search.eventType)} onChange={(v) => setFilter({ eventType: toParam(v) })} />
+            <FilterSelect label="Status" isLabelHidden size="sm" width={180} placeholder="All statuses" options={counted(STATUSES, (r) => r.status, (v) => statusLabel(v as AnomalyStatus))} value={listParam(search.status)} onChange={(v) => setFilter({ status: toParam(v) })} />
             <Text type="supporting">
               {formatNumber(rows.length)} of {formatNumber(data.anomalies.length)} anomalies
             </Text>
