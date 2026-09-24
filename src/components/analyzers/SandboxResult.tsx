@@ -16,6 +16,8 @@ import { AnalyzerSection } from './AnalyzerSection'
 import { queuePayloadAction } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { EntityLink } from '../EntityLink'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useGuardedAction } from '#/lib/useGuardedAction'
 
 const VERDICT_COLOR = { malicious: 'red', suspicious: 'orange', benign: 'green' } as const
 
@@ -35,6 +37,8 @@ function List({ items }: { items: string[] }) {
 
 export function SandboxResult({ run }: { run: SandboxRun }) {
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const isAdmin = useIsAdmin()
+  const { error, guard, clearError } = useGuardedAction()
   const [queued, setQueued] = useState<string | null>(null)
 
   return (
@@ -44,7 +48,7 @@ export function SandboxResult({ run }: { run: SandboxRun }) {
       actions={
         <HStack gap={2} vAlign="center">
           <Token size="sm" color={VERDICT_COLOR[run.verdict]} label={run.verdict} />
-          <Button label="Re-analyze" size="sm" variant="secondary" onClick={() => setConfirmOpen(true)} />
+          <Button label="Re-analyze" size="sm" variant="secondary" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />
         </HStack>
       }
     >
@@ -133,6 +137,7 @@ export function SandboxResult({ run }: { run: SandboxRun }) {
         )}
         {<CodeBlock code={JSON.stringify(run, null, 2)} language="json" maxHeight={560} />}
       </VStack>
+      {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}
       <AlertDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
@@ -142,7 +147,7 @@ export function SandboxResult({ run }: { run: SandboxRun }) {
         actionVariant="primary"
         onAction={async () => {
           setConfirmOpen(false)
-          setQueued(await queuePayloadAction(run.hash, 'sandbox'))
+          setQueued((await guard(() => queuePayloadAction(run.hash, 'sandbox'))) ?? null)
         }}
       />
     </AnalyzerSection>

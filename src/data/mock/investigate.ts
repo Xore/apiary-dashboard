@@ -12,7 +12,7 @@ import type {
   Replay,
   SourceProfile,
 } from '../types'
-import { COMMANDS, EVENTS, SOURCES } from './fixtures'
+import { COMMANDS, EVENTS, SOURCES, credentialOf } from './fixtures'
 import { PAYLOADS } from './operations'
 import { createRng, hex, int, isoMinutesAgo, pick } from './random'
 
@@ -80,7 +80,7 @@ function buildCampaigns(): NetworkCampaign[] {
     .map(([cidr, events]) => {
       const ips = unique(events.map((e) => e.srcIp))
       const sources = SOURCES.filter((s) => ips.includes(s.ip))
-      const creds = unique(events.filter((e) => e.password).map((e) => `${e.username}:${e.password}`)).length
+      const creds = unique(events.flatMap((e) => credentialOf(e) ?? [])).length
       const payloads = events.filter((e) => e.type === 'file.download').length
       const alerts = events.filter((e) => e.type === 'ids.alert').length
       const sensors = unique(events.map((e) => e.sensor))
@@ -117,7 +117,7 @@ function buildCampaigns(): NetworkCampaign[] {
 
 export const NETWORK_CAMPAIGNS: NetworkCampaign[] = buildCampaigns()
 
-export const CRED_REUSE: CredEdge[] = [...byKey(EVENTS.filter((e) => e.password), (e) => `${e.username}:${e.password}`)]
+export const CRED_REUSE: CredEdge[] = [...byKey(EVENTS.filter((e) => credentialOf(e) !== undefined), (e) => credentialOf(e)!)]
   .map(([pair, events]) => {
     const [user, pass] = pair.split(':')
     return {
@@ -151,7 +151,7 @@ function buildClusters(): InfraCluster[] {
     if (sources.length >= 4) add('provider', org, sources.map((s) => s.ip))
   }
   for (const edge of CRED_REUSE.slice(0, 8)) {
-    const ips = unique(EVENTS.filter((e) => `${e.username}:${e.password}` === edge.id).map((e) => e.srcIp))
+    const ips = unique(EVENTS.filter((e) => credentialOf(e) === edge.id).map((e) => e.srcIp))
     add('credential', edge.id, ips)
   }
   for (let i = 0; i < 10; i++) {
@@ -176,7 +176,7 @@ function buildAttackers(): AttackerEntity[] {
     const size = index < 14 ? int(rng, 2, 7) : 1
     const members = unique(Array.from({ length: size }, () => pick(rng, pool)))
     const events = members.flatMap((m) => eventsBySource.get(m.ip) ?? [])
-    const creds = unique(events.filter((e) => e.password).map((e) => `${e.username}:${e.password}`)).slice(0, 8)
+    const creds = unique(events.flatMap((e) => credentialOf(e) ?? [])).slice(0, 8)
     const scanRoll = rng()
     const firstTimes = members.map((m) => m.firstSeen).sort()
     const lastTimes = members.map((m) => m.lastSeen).sort()

@@ -29,11 +29,25 @@ bun run smoke        # clean clone → install → every gate → start → HTTP
 
 ### Mock data
 
-Every page reads through `src/data/queries.ts`, which currently resolves seeded fixtures from `src/data/mock/`. Mock writes (acknowledge, save, mint, …) change in-memory state in the running tab; a full reload starts from the fixtures again.
+Every page reads through `src/data/queries.ts`: the seeded implementation in `src/data/queries.impl.ts` (fixtures in `src/data/mock/`), run through the active mock scenario. Mock writes (acknowledge, save, mint, …) change in-memory state in the running tab; a full reload starts from the fixtures again.
+
+**Scenarios** make the whole backend behave a given way, so every page's empty, error, loading and role-limited states can be seen. Pick one from the **Mock data** button in the top bar, or add `?mock=<scenario>` to any URL; it sticks while you navigate.
+
+| `?mock=` | What the backend does |
+|---|---|
+| `empty` | No data yet: every list empty, every count zero (catalogs and KPI tiles stay, at zero) |
+| `slow` | Every call takes 2.5 s: pending skeletons |
+| `partial` | The same third of the reads fail with 502 on every visit; the rest answer |
+| `unavailable` | Every call fails with 502 |
+| `overloaded` | Every call is shed with 503 and Retry-After: 30 |
+| `expired` | Every call answers 401: session expired |
+| `viewer` | Signed in without admin: admin actions are disabled and refused with 403 |
+
+`bun scripts/crawl.ts <url> 1 --scenarios` opens one page of every route shape under each scenario and fails on a page that crashes or shows the wrong state; smoke runs it. The scenario is process state on the dev server, so it is a single-designer tool, not something to share.
 
 ```bash
-VITE_MOCK_LATENCY_MS=800 bun run dev   # slow backend: see pending states
-VITE_MOCK_FAIL=1 bun run dev           # failing backend: see error states
+VITE_MOCK_LATENCY_MS=800 bun run dev   # extra latency on every call, any scenario
+VITE_MOCK_FAIL=1 bun run dev           # every call fails, without a scenario
 ```
 
 In dev, TanStack devtools open with **Ctrl+~** (the floating trigger is hidden so it never covers page actions).

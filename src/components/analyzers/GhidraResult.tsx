@@ -17,6 +17,8 @@ import { queuePayloadAction } from '#/data/queries'
 import type { GhidraFunction, GhidraAnalysis } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 import { EntityLink } from '../EntityLink'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useGuardedAction } from '#/lib/useGuardedAction'
 
 const fnColumns: TableColumn<GhidraFunction>[] = [
   { key: 'name', header: 'Function', width: proportional(2), renderCell: (row) => <Text type="code">{row.name}</Text> },
@@ -28,6 +30,8 @@ const fnColumns: TableColumn<GhidraFunction>[] = [
 export function GhidraResult({ g, fn }: { g: GhidraAnalysis; fn?: string }) {
   const sha = g.hash
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const isAdmin = useIsAdmin()
+  const { error, guard, clearError } = useGuardedAction()
   const [queued, setQueued] = useState<string | null>(null)
   const selected = g.functions.find((f) => f.name === fn) ?? g.functions[0]
 
@@ -35,7 +39,7 @@ export function GhidraResult({ g, fn }: { g: GhidraAnalysis; fn?: string }) {
     <AnalyzerSection
       title="Ghidra result"
       description="Headless decompilation of one captured payload. Nothing here is executed."
-      actions={<Button label="Re-analyze" size="sm" variant="secondary" onClick={() => setConfirmOpen(true)} />}
+      actions={<Button label="Re-analyze" size="sm" variant="secondary" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />}
     >
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap" vAlign="center">
@@ -151,6 +155,7 @@ export function GhidraResult({ g, fn }: { g: GhidraAnalysis; fn?: string }) {
           </Grid>
         )}
       </VStack>
+      {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}
       <AlertDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
@@ -160,7 +165,7 @@ export function GhidraResult({ g, fn }: { g: GhidraAnalysis; fn?: string }) {
         actionVariant="primary"
         onAction={async () => {
           setConfirmOpen(false)
-          setQueued(await queuePayloadAction(sha, 'ghidra'))
+          setQueued((await guard(() => queuePayloadAction(sha, 'ghidra'))) ?? null)
         }}
       />
     </AnalyzerSection>

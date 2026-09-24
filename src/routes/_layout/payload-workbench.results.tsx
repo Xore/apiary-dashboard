@@ -18,6 +18,8 @@ import { abortGpuJob, getAnalysisResults } from '#/data/queries'
 import { AnalysisRunDialog } from '#/components/dialogs/AnalysisRunDialog'
 import type { AnalysisResult, AnalysisResultsData, AnalyzerTab, GpuJob } from '#/data/types'
 import { formatTime } from '#/lib/format'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useGuardedAction } from '#/lib/useGuardedAction'
 
 const TABS: Array<{ id: AnalyzerTab; label: string }> = [
   { id: 'workbench', label: 'Workbench' },
@@ -96,6 +98,8 @@ function resultHref(row: AnalysisResult): string {
 function GpuQueue({ jobs }: { jobs: GpuJob[] }) {
   const router = useRouter()
   const [busy, setBusy] = useState<string | null>(null)
+  const isAdmin = useIsAdmin()
+  const { error, guard, clearError } = useGuardedAction()
   const columns: TableColumn<GpuJob>[] = [
     { key: 'requestedAt', header: 'Requested', width: pixel(96), renderCell: (row) => <Text type="supporting">{formatTime(row.requestedAt)}</Text> },
     { key: 'jobType', header: 'Type', width: pixel(136) },
@@ -112,11 +116,11 @@ function GpuQueue({ jobs }: { jobs: GpuJob[] }) {
             label="Abort"
             size="sm"
             variant="secondary"
-            isLoading={busy === row.jobId}
+            isLoading={busy === row.jobId} isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED}
             onClick={async () => {
               setBusy(row.jobId)
               try {
-                await abortGpuJob(row.jobId)
+                await guard(() => abortGpuJob(row.jobId))
                 await router.invalidate()
               } finally {
                 setBusy(null)
@@ -129,12 +133,14 @@ function GpuQueue({ jobs }: { jobs: GpuJob[] }) {
   return (
     <Panel title="GPU queue">
       <Text type="supporting">Only queued jobs can be aborted; a generation already running finishes.</Text>
+      {error && <Banner status="error" title="Not aborted" description={error} isDismissable onDismiss={clearError} />}
       <Table data={jobs} columns={columns} idKey="jobId" density="compact" />
     </Panel>
   )
 }
 
 function AnalysisResultsPage() {
+  const isAdmin = useIsAdmin()
   const data = Route.useLoaderData()
   const { tab = 'workbench' } = Route.useSearch()
   const router = useRouter()
@@ -155,7 +161,7 @@ function AnalysisResultsPage() {
           <Link href="/cape">CAPE</Link>
           <Link href="/github-analysis">GitHub analysis</Link>
           <Link href="/sandbox/vnc">Sandbox live view</Link>
-          <Button label="New analysis run" size="sm" onClick={() => setCreating(true)} />
+          <Button label="New analysis run" size="sm" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setCreating(true)} />
           <AnalysisRunDialog
             isOpen={creating}
             onOpenChange={setCreating}

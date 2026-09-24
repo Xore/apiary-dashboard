@@ -10,6 +10,9 @@ import { Heading, Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { useRouter } from '@tanstack/react-router'
 import { linkCredentialToken, rotateCredential } from '#/data/queries'
+import { describeError } from '#/lib/actionError'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import type { BaitCredential, CanaryToken } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 
@@ -23,15 +26,20 @@ export function CredentialInspector({
   const router = useRouter()
   const [newPassword, setNewPassword] = useState('')
   const [busy, setBusy] = useState<'rotate' | 'link' | null>(null)
+  const [error, setError] = useState<{ kind: 'rotate' | 'link'; message: string }>()
+  const isAdmin = useIsAdmin()
   const linked = tokens.find((t) => t.id === credential.linkedTokenId)
   const run = async (
     kind: 'rotate' | 'link',
     write: () => Promise<unknown>,
   ) => {
     setBusy(kind)
+    setError(undefined)
     try {
       await write()
       await router.invalidate()
+    } catch (e) {
+      setError({ kind, message: describeError(e) })
     } finally {
       setBusy(null)
     }
@@ -89,6 +97,8 @@ export function CredentialInspector({
             label="Rotate"
             variant="secondary"
             isLoading={busy === 'rotate'}
+            isDisabled={!isAdmin}
+            tooltip={isAdmin ? undefined : ADMIN_REQUIRED}
             onClick={() =>
               run('rotate', async () => {
                 await rotateCredential(credential.id, newPassword || undefined)
@@ -97,6 +107,8 @@ export function CredentialInspector({
             }
           />
         </HStack>
+        {error?.kind === 'rotate' && <FieldStatus type="error" variant="detached" message={error.message} />}
+        {!isAdmin && <Text type="supporting">{`${ADMIN_REQUIRED} Rotating and linking change the planted file.`}</Text>}
       </VStack>
       <VStack gap={2}>
         <Heading level={3}>Linked canarytoken</Heading>
@@ -105,6 +117,8 @@ export function CredentialInspector({
           isLabelHidden
           hasClear
           placeholder="No linked token"
+          isDisabled={!isAdmin}
+          status={error?.kind === 'link' ? { type: 'error', message: error.message } : undefined}
           value={credential.linkedTokenId ?? null}
           onChange={(tokenId) =>
             void run('link', () =>

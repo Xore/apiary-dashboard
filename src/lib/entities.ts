@@ -75,7 +75,8 @@ export const ENTITIES: Record<EntityKind, EntityDef> = {
   credential: {
     noun: 'credential pair',
     href: (id) => iocHref('credential', id),
-    events: (id) => history(`username:${id.split(':')[0]}`),
+    // A password-only pair (`:pass`, e.g. VNC) has no username to search by.
+    events: (id) => (id.startsWith(':') ? history(id.slice(1)) : history(`username:${id.split(':')[0]}`)),
     isCode: true,
   },
   command: { noun: 'command', href: (id) => iocHref('command', id), events: (id) => history(id), isCode: true },

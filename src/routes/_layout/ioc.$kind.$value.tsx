@@ -44,8 +44,8 @@ function IocLayout() {
         { label: 'Events', value: formatNumber(ioc.events.length) },
         { label: 'Source IPs', value: formatNumber(ioc.group.members.length) },
         { label: 'Sessions', value: formatNumber(ioc.sessions.length) },
-        { label: 'First seen', value: formatDateTime(ioc.events.at(-1)!.timestamp) },
-        { label: 'Last seen', value: formatDateTime(ioc.events[0].timestamp) },
+        { label: 'First seen', value: ioc.events.length ? formatDateTime(ioc.events.at(-1)!.timestamp) : '—' },
+        { label: 'Last seen', value: ioc.events.length ? formatDateTime(ioc.events[0].timestamp) : '—' },
       ]}
     >
       <Outlet />
