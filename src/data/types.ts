@@ -1055,3 +1055,11 @@ export interface IocEntity {
 
 /** Which entity a timeline belongs to. */
 export type TimelineEntity = 'source' | 'session' | 'network' | 'asn' | 'campaign' | 'cluster' | 'identity' | 'payload' | 'ioc'
+
+/** Entities related to the one on screen, grouped by kind. `kind` is an
+ * entity-registry kind (src/lib/entities.ts). */
+export interface RelatedGroup {
+  kind: string
+  label: string
+  items: Array<{ id: string; label?: string; note?: string }>
+}

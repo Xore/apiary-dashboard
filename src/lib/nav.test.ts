@@ -4,7 +4,7 @@ import { NAV_SECTIONS, navHrefFor, navItemFor, pageFor, sectionFor } from './nav
 describe('navigation metadata', () => {
   it('matches the canonical information architecture', () => {
     expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Monitor', 'Investigate', 'Operations', 'Reports', 'Tools', 'Evidence'])
-    expect(NAV_SECTIONS.flatMap((s) => s.items)).toHaveLength(23)
+    expect(NAV_SECTIONS.flatMap((s) => s.items)).toHaveLength(24)
   })
 
   it('has one entry per route', () => {

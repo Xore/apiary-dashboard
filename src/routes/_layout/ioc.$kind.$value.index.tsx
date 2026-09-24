@@ -1,11 +1,16 @@
 import { Grid } from '@astryxdesign/core/Grid'
 import { VStack } from '@astryxdesign/core/Stack'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
+import { RelatedPanel } from '#/components/Related'
+import { getRelated } from '#/data/queries'
 import { MiniTable, StatTile } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/ioc/$kind/$value')
 
-export const Route = createFileRoute('/_layout/ioc/$kind/$value/')({ component: IocOverview })
+export const Route = createFileRoute('/_layout/ioc/$kind/$value/')({
+  loader: ({ params }) => getRelated('ioc', `${params.kind}:${params.value}`),
+  component: IocOverview,
+})
 
 function IocOverview() {
   const ioc = parent.useLoaderData()
@@ -24,6 +29,7 @@ function IocOverview() {
         <MiniTable title="Countries" header="Country" rows={ioc.group.countries} entity="country" />
         <MiniTable title="Commands in the same sessions" header="Command" rows={ioc.group.commands.slice(0, 10)} entity="command" />
       </Grid>
+      <RelatedPanel center={ioc.value} groups={Route.useLoaderData()} />
     </VStack>
   )
 }

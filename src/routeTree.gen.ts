@@ -21,6 +21,7 @@ import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutSourceHealthRouteImport } from './routes/_layout/source-health'
 import { Route as LayoutTopologyRouteImport } from './routes/_layout/topology'
+import { Route as LayoutWatchlistRouteImport } from './routes/_layout/watchlist'
 import { Route as LayoutAgentCampaignsIndexRouteImport } from './routes/_layout/agent-campaigns.index'
 import { Route as LayoutAgentCampaignsIdRouteImport } from './routes/_layout/agent-campaigns.$id'
 import { Route as LayoutAlertsIndexRouteImport } from './routes/_layout/alerts.index'
@@ -224,6 +225,11 @@ const LayoutSourceHealthRoute = LayoutSourceHealthRouteImport.update({
 const LayoutTopologyRoute = LayoutTopologyRouteImport.update({
   id: '/topology',
   path: '/topology',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutWatchlistRoute = LayoutWatchlistRouteImport.update({
+  id: '/watchlist',
+  path: '/watchlist',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutAgentCampaignsIndexRoute =
@@ -1029,6 +1035,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof LayoutSettingsRoute
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
+  '/watchlist': typeof LayoutWatchlistRoute
   '/agent-campaigns/$id': typeof LayoutAgentCampaignsIdRouteWithChildren
   '/alerts/$key': typeof LayoutAlertsKeyRouteWithChildren
   '/asn/$asn': typeof LayoutAsnAsnRouteWithChildren
@@ -1186,6 +1193,7 @@ export interface FileRoutesByTo {
   '/settings': typeof LayoutSettingsRoute
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
+  '/watchlist': typeof LayoutWatchlistRoute
   '/': typeof LayoutIndexRoute
   '/auth-events/$id': typeof LayoutAuthEventsIdRoute
   '/canarytokens/$id': typeof LayoutCanarytokensIdRoute
@@ -1330,6 +1338,7 @@ export interface FileRoutesById {
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/source-health': typeof LayoutSourceHealthRoute
   '/_layout/topology': typeof LayoutTopologyRoute
+  '/_layout/watchlist': typeof LayoutWatchlistRoute
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/agent-campaigns/$id': typeof LayoutAgentCampaignsIdRouteWithChildren
   '/_layout/alerts/$key': typeof LayoutAlertsKeyRouteWithChildren
@@ -1491,6 +1500,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/source-health'
     | '/topology'
+    | '/watchlist'
     | '/agent-campaigns/$id'
     | '/alerts/$key'
     | '/asn/$asn'
@@ -1648,6 +1658,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/source-health'
     | '/topology'
+    | '/watchlist'
     | '/'
     | '/auth-events/$id'
     | '/canarytokens/$id'
@@ -1791,6 +1802,7 @@ export interface FileRouteTypes {
     | '/_layout/settings'
     | '/_layout/source-health'
     | '/_layout/topology'
+    | '/_layout/watchlist'
     | '/_layout/'
     | '/_layout/agent-campaigns/$id'
     | '/_layout/alerts/$key'
@@ -2027,6 +2039,13 @@ declare module '@tanstack/react-router' {
       path: '/topology'
       fullPath: '/topology'
       preLoaderRoute: typeof LayoutTopologyRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/watchlist': {
+      id: '/_layout/watchlist'
+      path: '/watchlist'
+      fullPath: '/watchlist'
+      preLoaderRoute: typeof LayoutWatchlistRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/agent-campaigns/': {
@@ -3391,6 +3410,7 @@ interface LayoutRouteChildren {
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutSourceHealthRoute: typeof LayoutSourceHealthRoute
   LayoutTopologyRoute: typeof LayoutTopologyRoute
+  LayoutWatchlistRoute: typeof LayoutWatchlistRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutAgentCampaignsIdRoute: typeof LayoutAgentCampaignsIdRouteWithChildren
   LayoutAlertsKeyRoute: typeof LayoutAlertsKeyRouteWithChildren
@@ -3462,6 +3482,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutSourceHealthRoute: LayoutSourceHealthRoute,
   LayoutTopologyRoute: LayoutTopologyRoute,
+  LayoutWatchlistRoute: LayoutWatchlistRoute,
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutAgentCampaignsIdRoute: LayoutAgentCampaignsIdRouteWithChildren,
   LayoutAlertsKeyRoute: LayoutAlertsKeyRouteWithChildren,

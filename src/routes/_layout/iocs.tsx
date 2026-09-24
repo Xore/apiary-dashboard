@@ -17,7 +17,7 @@ import { formatNumber, formatTime } from '#/lib/format'
 const KINDS: Array<{ id: IocHubKind; label: string; lede: string }> = [
   { id: 'hash', label: 'Hashes', lede: 'Payloads captured from download events.' },
   { id: 'domain', label: 'Domains', lede: 'Hosts named in downloader commands.' },
-  { id: 'url', label: 'URLs', lede: 'Full fetch URLs from executed commands.' },
+  { id: 'url', label: 'URLs', lede: 'Fetch URLs from executed commands and paths requested from web sensors.' },
   { id: 'credential', label: 'Credentials', lede: 'Username and password pairs tried.' },
   { id: 'command', label: 'Commands', lede: 'Shell commands attackers ran.' },
   { id: 'fingerprint', label: 'Fingerprints', lede: 'Client fingerprints (HASSH and the like) that join addresses.' },

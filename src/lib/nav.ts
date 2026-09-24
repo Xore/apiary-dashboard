@@ -1,9 +1,12 @@
 // Sidebar information architecture. Sections, order, labels, and routes match
-// the canonical frontend-next src/lib/nav.ts @62ee45d; icons are heroicons
-// equivalents of its inline feather paths.
+// the canonical frontend-next src/lib/nav.ts @62ee45d, except where epic #25
+// reshaped them: Indicators replaces Hash / IOC lookup and Executed commands,
+// Watchlist is new, and Credentials reads Bait credentials. Icons are
+// heroicons equivalents of its inline feather paths.
 import {
   BellAlertIcon,
   BellIcon,
+  BookmarkIcon,
   ChartBarSquareIcon,
   ChatBubbleLeftRightIcon,
   ClockIcon,
@@ -62,6 +65,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'Sensor detail', to: '/sensors', icon: ServerStackIcon },
       { label: 'Session recordings', to: '/recordings', icon: PlayCircleIcon },
       { label: 'Indicators', to: '/iocs', icon: MagnifyingGlassIcon },
+      { label: 'Watchlist', to: '/watchlist', icon: BookmarkIcon },
     ],
   },
   {

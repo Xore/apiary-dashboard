@@ -3,13 +3,18 @@ import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
+import { RelatedPanel } from '#/components/Related'
+import { getRelated } from '#/data/queries'
 import { Panel } from '#/components/DashboardBlocks'
 import { EventsPanel } from '#/components/DetailBlocks'
 import { EntityLink } from '#/components/EntityLink'
 
 const parent = getRouteApi('/_layout/events/$id')
 
-export const Route = createFileRoute('/_layout/events/$id/')({ component: EventOverview })
+export const Route = createFileRoute('/_layout/events/$id/')({
+  loader: ({ params }) => getRelated('event', params.id),
+  component: EventOverview,
+})
 
 function EventOverview() {
   const { event, session } = parent.useLoaderData()
@@ -54,6 +59,7 @@ function EventOverview() {
         </Panel>
       </Grid>
       <EventsPanel title="Around it in this session" events={session.slice(0, 8)} action={<EntityLink kind="session" id={event.sessionId}>Full session</EntityLink>} empty="This event is the whole session." />
+      <RelatedPanel center={event.summary} groups={Route.useLoaderData()} />
     </VStack>
   )
 }
