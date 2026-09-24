@@ -31,6 +31,14 @@ export function readListContext(): ListContext | null {
 
 /** Entity pages have tab sub-routes; compare on the entity's base path. */
 export function basePathOf(href: string, entityBase: string): boolean {
-  const path = href.split('?')[0]
-  return path === entityBase || path.startsWith(`${entityBase}/`)
+  const decode = (value: string) => {
+    try {
+      return decodeURIComponent(value)
+    } catch {
+      return value
+    }
+  }
+  const path = decode(href.split('?')[0])
+  const base = decode(entityBase)
+  return path === base || path.startsWith(`${base}/`)
 }

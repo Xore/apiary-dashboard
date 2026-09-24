@@ -127,6 +127,7 @@ import type {
   NetworkEntity,
   SharedSignal,
   SourceGroup,
+  MlAnomaly,
 } from './types'
 
 const HOUR = 3_600_000
@@ -1184,4 +1185,68 @@ export async function getIdentity(id: string): Promise<IdentityEntity | null> {
       ]
     : []
   return { identity, group, shared: sharedSignals(group, extra) }
+}
+
+// ---- Remaining entities (epic #25, Phase D) ----------------------------------
+
+/** The alert-class key an alert group's page lives under (its id without the
+ * acknowledged flag, so acknowledging keeps the URL). */
+export const alertKeyOf = (group: AlertGroup) => group.id.replace(/\|(true|false)$/, '')
+
+export interface AlertDetail {
+  group: AlertGroup
+  sources: string[]
+  hashes: string[]
+}
+
+export async function getAlertDetail(key: string): Promise<AlertDetail | null> {
+  await mockDelay()
+  const members = ALERTS.filter((a) => alertClass(a) === key).map((a) => ({ ...a }))
+  if (!members.length) return null
+  const text = members.map((m) => m.message).join(' ')
+  const known = new Set(SOURCES.map((x) => x.ip))
+  return {
+    group: {
+      id: key,
+      kind: members[0].kind,
+      message: members.length > 1 ? members[0].message.replace(/\b[0-9a-f]{16,}\b/gi, '<hash>') : members[0].message,
+      severity: members[0].severity,
+      count: members.reduce((sum, m) => sum + m.count, 0),
+      firstSeen: members.map((m) => m.firstSeen).sort()[0],
+      lastSeen: members.map((m) => m.lastSeen).sort().at(-1)!,
+      acknowledged: members.every((m) => m.acknowledged),
+      members,
+    },
+    sources: [...new Set(text.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g) ?? [])].filter((ip) => known.has(ip)),
+    hashes: [...new Set(text.match(/\b[0-9a-f]{64}\b/gi) ?? [])],
+  }
+}
+
+export async function getAnomaly(id: string): Promise<{ anomaly: MlAnomaly; event: HoneypotEvent | null } | null> {
+  await mockDelay()
+  const anomaly = ML_ANOMALIES.find((a) => a.id === id)
+  if (!anomaly) return null
+  return { anomaly, event: EVENTS.find((e) => e.id === anomaly.sourceEventId) ?? null }
+}
+
+export async function getLlmAnalysis(id: string): Promise<{ analysis: LlmAnalysis; events: HoneypotEvent[] } | null> {
+  await mockDelay()
+  const analysis = LLM_ANALYSES.find((a) => a.id === id)
+  if (!analysis) return null
+  const events = analysis.sessionId
+    ? EVENTS.filter((e) => e.sessionId === analysis.sessionId)
+    : analysis.payloadSha256
+      ? EVENTS.filter((e) => DOWNLOAD_HASH.get(e.id) === analysis.payloadSha256)
+      : analysis.srcIp
+        ? EVENTS.filter((e) => e.srcIp === analysis.srcIp).slice(0, 50)
+        : []
+  return { analysis, events }
+}
+
+export async function getAgentCampaign(id: string): Promise<{ campaign: AgentCampaign; events: HoneypotEvent[] } | null> {
+  await mockDelay()
+  const campaign = AGENT_CAMPAIGNS.find((c) => c.id === id)
+  if (!campaign) return null
+  const ids = new Set(campaign.events.map((e) => e.eventId))
+  return { campaign, events: EVENTS.filter((e) => ids.has(e.id)) }
 }

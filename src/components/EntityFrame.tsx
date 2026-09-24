@@ -14,6 +14,14 @@ import type { ListContext } from '#/lib/listContext'
 import { formatNumber } from '#/lib/format'
 import { useViewTabs } from './ViewTabs'
 
+function safeDecode(path: string): string {
+  try {
+    return decodeURIComponent(path)
+  } catch {
+    return path
+  }
+}
+
 export type EntityTab = {
   /** Path segment under the entity's base path; the first tab is the index. */
   id: string
@@ -101,8 +109,10 @@ function ListStepper({ basePath, tab }: { basePath: string; tab: string }) {
  * strip, actions, and tabs as route segments shown in the top bar. */
 export function EntityFrame({ kind, title, description, tokens, facts, actions, basePath, tabs, children }: EntityFrameProps) {
   const navigate = useNavigate()
-  const pathname = useLocation({ select: (location) => location.pathname })
-  const rest = pathname.startsWith(basePath) ? pathname.slice(basePath.length).replace(/^\//, '') : ''
+  // The router may hand back a partly decoded pathname, so compare both sides decoded.
+  const pathname = safeDecode(useLocation({ select: (location) => location.pathname }))
+  const base = safeDecode(basePath)
+  const rest = pathname.startsWith(base) ? pathname.slice(base.length).replace(/^\//, '') : ''
   const active = tabs.find((tab) => tab.id === rest.split('/')[0])?.id ?? tabs[0].id
 
   useViewTabs({

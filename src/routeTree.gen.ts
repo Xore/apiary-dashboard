@@ -11,32 +11,33 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
-import { Route as LayoutAgentCampaignsRouteImport } from './routes/_layout/agent-campaigns'
-import { Route as LayoutAlertsRouteImport } from './routes/_layout/alerts'
 import { Route as LayoutAttackersRouteImport } from './routes/_layout/attackers'
-import { Route as LayoutAuthEventsRouteImport } from './routes/_layout/auth-events'
-import { Route as LayoutCanarytokensRouteImport } from './routes/_layout/canarytokens'
 import { Route as LayoutCommandsRouteImport } from './routes/_layout/commands'
-import { Route as LayoutCredentialsRouteImport } from './routes/_layout/credentials'
-import { Route as LayoutDeadLettersRouteImport } from './routes/_layout/dead-letters'
 import { Route as LayoutHistoryRouteImport } from './routes/_layout/history'
 import { Route as LayoutIpsRouteImport } from './routes/_layout/ips'
 import { Route as LayoutKillChainRouteImport } from './routes/_layout/kill-chain'
-import { Route as LayoutLlmAnalysisRouteImport } from './routes/_layout/llm-analysis'
-import { Route as LayoutMlAnomaliesRouteImport } from './routes/_layout/ml-anomalies'
-import { Route as LayoutProblemReportsRouteImport } from './routes/_layout/problem-reports'
-import { Route as LayoutRecordingsRouteImport } from './routes/_layout/recordings'
-import { Route as LayoutReportsRouteImport } from './routes/_layout/reports'
 import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutSourceHealthRouteImport } from './routes/_layout/source-health'
 import { Route as LayoutTopologyRouteImport } from './routes/_layout/topology'
+import { Route as LayoutAgentCampaignsIndexRouteImport } from './routes/_layout/agent-campaigns.index'
+import { Route as LayoutAgentCampaignsIdRouteImport } from './routes/_layout/agent-campaigns.$id'
+import { Route as LayoutAlertsIndexRouteImport } from './routes/_layout/alerts.index'
+import { Route as LayoutAlertsKeyRouteImport } from './routes/_layout/alerts.$key'
 import { Route as LayoutAsnAsnRouteImport } from './routes/_layout/asn.$asn'
+import { Route as LayoutAuthEventsIndexRouteImport } from './routes/_layout/auth-events.index'
+import { Route as LayoutAuthEventsIdRouteImport } from './routes/_layout/auth-events.$id'
 import { Route as LayoutCampaignsIndexRouteImport } from './routes/_layout/campaigns.index'
 import { Route as LayoutCampaignsCidrRouteImport } from './routes/_layout/campaigns.$cidr'
+import { Route as LayoutCanarytokensIndexRouteImport } from './routes/_layout/canarytokens.index'
+import { Route as LayoutCanarytokensIdRouteImport } from './routes/_layout/canarytokens.$id'
 import { Route as LayoutCapeIndexRouteImport } from './routes/_layout/cape.index'
 import { Route as LayoutCapeShaRouteImport } from './routes/_layout/cape.$sha'
 import { Route as LayoutClustersIndexRouteImport } from './routes/_layout/clusters.index'
+import { Route as LayoutCredentialsIndexRouteImport } from './routes/_layout/credentials.index'
+import { Route as LayoutCredentialsIdRouteImport } from './routes/_layout/credentials.$id'
+import { Route as LayoutDeadLettersIndexRouteImport } from './routes/_layout/dead-letters.index'
+import { Route as LayoutDeadLettersIdRouteImport } from './routes/_layout/dead-letters.$id'
 import { Route as LayoutEventIdRouteImport } from './routes/_layout/event.$id'
 import { Route as LayoutEventsIndexRouteImport } from './routes/_layout/events.index'
 import { Route as LayoutEventsIdRouteImport } from './routes/_layout/events.$id'
@@ -46,11 +47,20 @@ import { Route as LayoutGithubAnalysisShaRouteImport } from './routes/_layout/gi
 import { Route as LayoutIdentitiesIdRouteImport } from './routes/_layout/identities.$id'
 import { Route as LayoutInvestigateClusterRouteImport } from './routes/_layout/investigate.cluster'
 import { Route as LayoutInvestigateLookupRouteImport } from './routes/_layout/investigate.lookup'
+import { Route as LayoutLlmAnalysisIndexRouteImport } from './routes/_layout/llm-analysis.index'
+import { Route as LayoutLlmAnalysisIdRouteImport } from './routes/_layout/llm-analysis.$id'
+import { Route as LayoutMlAnomaliesIndexRouteImport } from './routes/_layout/ml-anomalies.index'
+import { Route as LayoutMlAnomaliesIdRouteImport } from './routes/_layout/ml-anomalies.$id'
 import { Route as LayoutNetworksCidrRouteImport } from './routes/_layout/networks.$cidr'
 import { Route as LayoutPayloadAnalysisHashRouteImport } from './routes/_layout/payload-analysis.$hash'
 import { Route as LayoutPayloadWorkbenchResultsRouteImport } from './routes/_layout/payload-workbench.results'
 import { Route as LayoutPayloadsIndexRouteImport } from './routes/_layout/payloads.index'
 import { Route as LayoutPayloadsHashRouteImport } from './routes/_layout/payloads.$hash'
+import { Route as LayoutProblemReportsIndexRouteImport } from './routes/_layout/problem-reports.index'
+import { Route as LayoutProblemReportsIdRouteImport } from './routes/_layout/problem-reports.$id'
+import { Route as LayoutRecordingsIndexRouteImport } from './routes/_layout/recordings.index'
+import { Route as LayoutRecordingsShasumRouteImport } from './routes/_layout/recordings.$shasum'
+import { Route as LayoutReportsIndexRouteImport } from './routes/_layout/reports.index'
 import { Route as LayoutRevdeckIndexRouteImport } from './routes/_layout/revdeck.index'
 import { Route as LayoutRevdeckShaRouteImport } from './routes/_layout/revdeck.$sha'
 import { Route as LayoutSandboxJobRouteImport } from './routes/_layout/sandbox.$job'
@@ -60,6 +70,13 @@ import { Route as LayoutSensorsSensorRouteImport } from './routes/_layout/sensor
 import { Route as LayoutSessionsIdRouteImport } from './routes/_layout/sessions.$id'
 import { Route as LayoutSourcesIpRouteImport } from './routes/_layout/sources.$ip'
 import { Route as LayoutTtyReplayShasumRouteImport } from './routes/_layout/tty-replay.$shasum'
+import { Route as LayoutAgentCampaignsIdIndexRouteImport } from './routes/_layout/agent-campaigns.$id.index'
+import { Route as LayoutAgentCampaignsIdEventsRouteImport } from './routes/_layout/agent-campaigns.$id.events'
+import { Route as LayoutAgentCampaignsIdEvidenceRouteImport } from './routes/_layout/agent-campaigns.$id.evidence'
+import { Route as LayoutAgentCampaignsIdRulesRouteImport } from './routes/_layout/agent-campaigns.$id.rules'
+import { Route as LayoutAlertsKeyIndexRouteImport } from './routes/_layout/alerts.$key.index'
+import { Route as LayoutAlertsKeyEvidenceRouteImport } from './routes/_layout/alerts.$key.evidence'
+import { Route as LayoutAlertsKeyMembersRouteImport } from './routes/_layout/alerts.$key.members'
 import { Route as LayoutAsnAsnIndexRouteImport } from './routes/_layout/asn.$asn.index'
 import { Route as LayoutAsnAsnEventsRouteImport } from './routes/_layout/asn.$asn.events'
 import { Route as LayoutAsnAsnNetworksRouteImport } from './routes/_layout/asn.$asn.networks'
@@ -69,6 +86,7 @@ import { Route as LayoutCampaignsCidrCredentialsRouteImport } from './routes/_la
 import { Route as LayoutCampaignsCidrSourcesRouteImport } from './routes/_layout/campaigns.$cidr.sources'
 import { Route as LayoutCampaignsCidrTimelineRouteImport } from './routes/_layout/campaigns.$cidr.timeline'
 import { Route as LayoutCampaignsCidrWhyRouteImport } from './routes/_layout/campaigns.$cidr.why'
+import { Route as LayoutCanarytokensTriggersIdRouteImport } from './routes/_layout/canarytokens.triggers.$id'
 import { Route as LayoutClustersKindValueRouteImport } from './routes/_layout/clusters.$kind.$value'
 import { Route as LayoutEventsIdIndexRouteImport } from './routes/_layout/events.$id.index'
 import { Route as LayoutEventsIdConnectionRouteImport } from './routes/_layout/events.$id.connection'
@@ -83,6 +101,14 @@ import { Route as LayoutIdentitiesIdTimelineRouteImport } from './routes/_layout
 import { Route as LayoutIdentitiesIdWhyRouteImport } from './routes/_layout/identities.$id.why'
 import { Route as LayoutInvestigateCidrCidrRouteImport } from './routes/_layout/investigate.cidr.$cidr'
 import { Route as LayoutInvestigateIpIpRouteImport } from './routes/_layout/investigate.ip.$ip'
+import { Route as LayoutLlmAnalysisIdIndexRouteImport } from './routes/_layout/llm-analysis.$id.index'
+import { Route as LayoutLlmAnalysisIdBehaviorsRouteImport } from './routes/_layout/llm-analysis.$id.behaviors'
+import { Route as LayoutLlmAnalysisIdEvidenceRouteImport } from './routes/_layout/llm-analysis.$id.evidence'
+import { Route as LayoutLlmAnalysisIdRawRouteImport } from './routes/_layout/llm-analysis.$id.raw'
+import { Route as LayoutMlAnomaliesIdIndexRouteImport } from './routes/_layout/ml-anomalies.$id.index'
+import { Route as LayoutMlAnomaliesIdEventRouteImport } from './routes/_layout/ml-anomalies.$id.event'
+import { Route as LayoutMlAnomaliesIdScoresRouteImport } from './routes/_layout/ml-anomalies.$id.scores'
+import { Route as LayoutMlAnomaliesIdTriageRouteImport } from './routes/_layout/ml-anomalies.$id.triage'
 import { Route as LayoutNetworksCidrIndexRouteImport } from './routes/_layout/networks.$cidr.index'
 import { Route as LayoutNetworksCidrCampaignRouteImport } from './routes/_layout/networks.$cidr.campaign'
 import { Route as LayoutNetworksCidrEventsRouteImport } from './routes/_layout/networks.$cidr.events'
@@ -98,6 +124,11 @@ import { Route as LayoutPayloadsHashRevdeckRouteImport } from './routes/_layout/
 import { Route as LayoutPayloadsHashSandboxRouteImport } from './routes/_layout/payloads.$hash.sandbox'
 import { Route as LayoutPayloadsHashSessionsRouteImport } from './routes/_layout/payloads.$hash.sessions'
 import { Route as LayoutPayloadsHashStaticRouteImport } from './routes/_layout/payloads.$hash.static'
+import { Route as LayoutRecordingsShasumIndexRouteImport } from './routes/_layout/recordings.$shasum.index'
+import { Route as LayoutRecordingsShasumAttackerRouteImport } from './routes/_layout/recordings.$shasum.attacker'
+import { Route as LayoutRecordingsShasumSessionsRouteImport } from './routes/_layout/recordings.$shasum.sessions'
+import { Route as LayoutReportsDefinitionsIdRouteImport } from './routes/_layout/reports.definitions.$id'
+import { Route as LayoutReportsGeneratedIdRouteImport } from './routes/_layout/reports.generated.$id'
 import { Route as LayoutSensorsSensorIndexRouteImport } from './routes/_layout/sensors.$sensor.index'
 import { Route as LayoutSensorsSensorEventsRouteImport } from './routes/_layout/sensors.$sensor.events'
 import { Route as LayoutSensorsSensorExposureRouteImport } from './routes/_layout/sensors.$sensor.exposure'
@@ -134,44 +165,14 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutAgentCampaignsRoute = LayoutAgentCampaignsRouteImport.update({
-  id: '/agent-campaigns',
-  path: '/agent-campaigns',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutAlertsRoute = LayoutAlertsRouteImport.update({
-  id: '/alerts',
-  path: '/alerts',
-  getParentRoute: () => LayoutRoute,
-} as any)
 const LayoutAttackersRoute = LayoutAttackersRouteImport.update({
   id: '/attackers',
   path: '/attackers',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutAuthEventsRoute = LayoutAuthEventsRouteImport.update({
-  id: '/auth-events',
-  path: '/auth-events',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutCanarytokensRoute = LayoutCanarytokensRouteImport.update({
-  id: '/canarytokens',
-  path: '/canarytokens',
-  getParentRoute: () => LayoutRoute,
-} as any)
 const LayoutCommandsRoute = LayoutCommandsRouteImport.update({
   id: '/commands',
   path: '/commands',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutCredentialsRoute = LayoutCredentialsRouteImport.update({
-  id: '/credentials',
-  path: '/credentials',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutDeadLettersRoute = LayoutDeadLettersRouteImport.update({
-  id: '/dead-letters',
-  path: '/dead-letters',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutHistoryRoute = LayoutHistoryRouteImport.update({
@@ -187,31 +188,6 @@ const LayoutIpsRoute = LayoutIpsRouteImport.update({
 const LayoutKillChainRoute = LayoutKillChainRouteImport.update({
   id: '/kill-chain',
   path: '/kill-chain',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutLlmAnalysisRoute = LayoutLlmAnalysisRouteImport.update({
-  id: '/llm-analysis',
-  path: '/llm-analysis',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutMlAnomaliesRoute = LayoutMlAnomaliesRouteImport.update({
-  id: '/ml-anomalies',
-  path: '/ml-anomalies',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutProblemReportsRoute = LayoutProblemReportsRouteImport.update({
-  id: '/problem-reports',
-  path: '/problem-reports',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutRecordingsRoute = LayoutRecordingsRouteImport.update({
-  id: '/recordings',
-  path: '/recordings',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutReportsRoute = LayoutReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutSearchRoute = LayoutSearchRouteImport.update({
@@ -234,9 +210,40 @@ const LayoutTopologyRoute = LayoutTopologyRouteImport.update({
   path: '/topology',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutAgentCampaignsIndexRoute =
+  LayoutAgentCampaignsIndexRouteImport.update({
+    id: '/agent-campaigns/',
+    path: '/agent-campaigns/',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutAgentCampaignsIdRoute = LayoutAgentCampaignsIdRouteImport.update({
+  id: '/agent-campaigns/$id',
+  path: '/agent-campaigns/$id',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAlertsIndexRoute = LayoutAlertsIndexRouteImport.update({
+  id: '/alerts/',
+  path: '/alerts/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAlertsKeyRoute = LayoutAlertsKeyRouteImport.update({
+  id: '/alerts/$key',
+  path: '/alerts/$key',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutAsnAsnRoute = LayoutAsnAsnRouteImport.update({
   id: '/asn/$asn',
   path: '/asn/$asn',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAuthEventsIndexRoute = LayoutAuthEventsIndexRouteImport.update({
+  id: '/auth-events/',
+  path: '/auth-events/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAuthEventsIdRoute = LayoutAuthEventsIdRouteImport.update({
+  id: '/auth-events/$id',
+  path: '/auth-events/$id',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutCampaignsIndexRoute = LayoutCampaignsIndexRouteImport.update({
@@ -247,6 +254,16 @@ const LayoutCampaignsIndexRoute = LayoutCampaignsIndexRouteImport.update({
 const LayoutCampaignsCidrRoute = LayoutCampaignsCidrRouteImport.update({
   id: '/campaigns/$cidr',
   path: '/campaigns/$cidr',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCanarytokensIndexRoute = LayoutCanarytokensIndexRouteImport.update({
+  id: '/canarytokens/',
+  path: '/canarytokens/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCanarytokensIdRoute = LayoutCanarytokensIdRouteImport.update({
+  id: '/canarytokens/$id',
+  path: '/canarytokens/$id',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutCapeIndexRoute = LayoutCapeIndexRouteImport.update({
@@ -262,6 +279,26 @@ const LayoutCapeShaRoute = LayoutCapeShaRouteImport.update({
 const LayoutClustersIndexRoute = LayoutClustersIndexRouteImport.update({
   id: '/clusters/',
   path: '/clusters/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCredentialsIndexRoute = LayoutCredentialsIndexRouteImport.update({
+  id: '/credentials/',
+  path: '/credentials/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCredentialsIdRoute = LayoutCredentialsIdRouteImport.update({
+  id: '/credentials/$id',
+  path: '/credentials/$id',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutDeadLettersIndexRoute = LayoutDeadLettersIndexRouteImport.update({
+  id: '/dead-letters/',
+  path: '/dead-letters/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutDeadLettersIdRoute = LayoutDeadLettersIdRouteImport.update({
+  id: '/dead-letters/$id',
+  path: '/dead-letters/$id',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutEventIdRoute = LayoutEventIdRouteImport.update({
@@ -311,6 +348,26 @@ const LayoutInvestigateLookupRoute = LayoutInvestigateLookupRouteImport.update({
   path: '/investigate/lookup',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutLlmAnalysisIndexRoute = LayoutLlmAnalysisIndexRouteImport.update({
+  id: '/llm-analysis/',
+  path: '/llm-analysis/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutLlmAnalysisIdRoute = LayoutLlmAnalysisIdRouteImport.update({
+  id: '/llm-analysis/$id',
+  path: '/llm-analysis/$id',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutMlAnomaliesIndexRoute = LayoutMlAnomaliesIndexRouteImport.update({
+  id: '/ml-anomalies/',
+  path: '/ml-anomalies/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutMlAnomaliesIdRoute = LayoutMlAnomaliesIdRouteImport.update({
+  id: '/ml-anomalies/$id',
+  path: '/ml-anomalies/$id',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutNetworksCidrRoute = LayoutNetworksCidrRouteImport.update({
   id: '/networks/$cidr',
   path: '/networks/$cidr',
@@ -336,6 +393,32 @@ const LayoutPayloadsIndexRoute = LayoutPayloadsIndexRouteImport.update({
 const LayoutPayloadsHashRoute = LayoutPayloadsHashRouteImport.update({
   id: '/payloads/$hash',
   path: '/payloads/$hash',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutProblemReportsIndexRoute =
+  LayoutProblemReportsIndexRouteImport.update({
+    id: '/problem-reports/',
+    path: '/problem-reports/',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutProblemReportsIdRoute = LayoutProblemReportsIdRouteImport.update({
+  id: '/problem-reports/$id',
+  path: '/problem-reports/$id',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutRecordingsIndexRoute = LayoutRecordingsIndexRouteImport.update({
+  id: '/recordings/',
+  path: '/recordings/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutRecordingsShasumRoute = LayoutRecordingsShasumRouteImport.update({
+  id: '/recordings/$shasum',
+  path: '/recordings/$shasum',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutReportsIndexRoute = LayoutReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutRevdeckIndexRoute = LayoutRevdeckIndexRouteImport.update({
@@ -382,6 +465,45 @@ const LayoutTtyReplayShasumRoute = LayoutTtyReplayShasumRouteImport.update({
   id: '/tty-replay/$shasum',
   path: '/tty-replay/$shasum',
   getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAgentCampaignsIdIndexRoute =
+  LayoutAgentCampaignsIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => LayoutAgentCampaignsIdRoute,
+  } as any)
+const LayoutAgentCampaignsIdEventsRoute =
+  LayoutAgentCampaignsIdEventsRouteImport.update({
+    id: '/events',
+    path: '/events',
+    getParentRoute: () => LayoutAgentCampaignsIdRoute,
+  } as any)
+const LayoutAgentCampaignsIdEvidenceRoute =
+  LayoutAgentCampaignsIdEvidenceRouteImport.update({
+    id: '/evidence',
+    path: '/evidence',
+    getParentRoute: () => LayoutAgentCampaignsIdRoute,
+  } as any)
+const LayoutAgentCampaignsIdRulesRoute =
+  LayoutAgentCampaignsIdRulesRouteImport.update({
+    id: '/rules',
+    path: '/rules',
+    getParentRoute: () => LayoutAgentCampaignsIdRoute,
+  } as any)
+const LayoutAlertsKeyIndexRoute = LayoutAlertsKeyIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutAlertsKeyRoute,
+} as any)
+const LayoutAlertsKeyEvidenceRoute = LayoutAlertsKeyEvidenceRouteImport.update({
+  id: '/evidence',
+  path: '/evidence',
+  getParentRoute: () => LayoutAlertsKeyRoute,
+} as any)
+const LayoutAlertsKeyMembersRoute = LayoutAlertsKeyMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => LayoutAlertsKeyRoute,
 } as any)
 const LayoutAsnAsnIndexRoute = LayoutAsnAsnIndexRouteImport.update({
   id: '/',
@@ -432,6 +554,12 @@ const LayoutCampaignsCidrWhyRoute = LayoutCampaignsCidrWhyRouteImport.update({
   path: '/why',
   getParentRoute: () => LayoutCampaignsCidrRoute,
 } as any)
+const LayoutCanarytokensTriggersIdRoute =
+  LayoutCanarytokensTriggersIdRouteImport.update({
+    id: '/canarytokens/triggers/$id',
+    path: '/canarytokens/triggers/$id',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 const LayoutClustersKindValueRoute = LayoutClustersKindValueRouteImport.update({
   id: '/clusters/$kind/$value',
   path: '/clusters/$kind/$value',
@@ -507,6 +635,53 @@ const LayoutInvestigateIpIpRoute = LayoutInvestigateIpIpRouteImport.update({
   path: '/investigate/ip/$ip',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutLlmAnalysisIdIndexRoute =
+  LayoutLlmAnalysisIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => LayoutLlmAnalysisIdRoute,
+  } as any)
+const LayoutLlmAnalysisIdBehaviorsRoute =
+  LayoutLlmAnalysisIdBehaviorsRouteImport.update({
+    id: '/behaviors',
+    path: '/behaviors',
+    getParentRoute: () => LayoutLlmAnalysisIdRoute,
+  } as any)
+const LayoutLlmAnalysisIdEvidenceRoute =
+  LayoutLlmAnalysisIdEvidenceRouteImport.update({
+    id: '/evidence',
+    path: '/evidence',
+    getParentRoute: () => LayoutLlmAnalysisIdRoute,
+  } as any)
+const LayoutLlmAnalysisIdRawRoute = LayoutLlmAnalysisIdRawRouteImport.update({
+  id: '/raw',
+  path: '/raw',
+  getParentRoute: () => LayoutLlmAnalysisIdRoute,
+} as any)
+const LayoutMlAnomaliesIdIndexRoute =
+  LayoutMlAnomaliesIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => LayoutMlAnomaliesIdRoute,
+  } as any)
+const LayoutMlAnomaliesIdEventRoute =
+  LayoutMlAnomaliesIdEventRouteImport.update({
+    id: '/event',
+    path: '/event',
+    getParentRoute: () => LayoutMlAnomaliesIdRoute,
+  } as any)
+const LayoutMlAnomaliesIdScoresRoute =
+  LayoutMlAnomaliesIdScoresRouteImport.update({
+    id: '/scores',
+    path: '/scores',
+    getParentRoute: () => LayoutMlAnomaliesIdRoute,
+  } as any)
+const LayoutMlAnomaliesIdTriageRoute =
+  LayoutMlAnomaliesIdTriageRouteImport.update({
+    id: '/triage',
+    path: '/triage',
+    getParentRoute: () => LayoutMlAnomaliesIdRoute,
+  } as any)
 const LayoutNetworksCidrIndexRoute = LayoutNetworksCidrIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -593,6 +768,36 @@ const LayoutPayloadsHashStaticRoute =
     id: '/static',
     path: '/static',
     getParentRoute: () => LayoutPayloadsHashRoute,
+  } as any)
+const LayoutRecordingsShasumIndexRoute =
+  LayoutRecordingsShasumIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => LayoutRecordingsShasumRoute,
+  } as any)
+const LayoutRecordingsShasumAttackerRoute =
+  LayoutRecordingsShasumAttackerRouteImport.update({
+    id: '/attacker',
+    path: '/attacker',
+    getParentRoute: () => LayoutRecordingsShasumRoute,
+  } as any)
+const LayoutRecordingsShasumSessionsRoute =
+  LayoutRecordingsShasumSessionsRouteImport.update({
+    id: '/sessions',
+    path: '/sessions',
+    getParentRoute: () => LayoutRecordingsShasumRoute,
+  } as any)
+const LayoutReportsDefinitionsIdRoute =
+  LayoutReportsDefinitionsIdRouteImport.update({
+    id: '/reports/definitions/$id',
+    path: '/reports/definitions/$id',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutReportsGeneratedIdRoute =
+  LayoutReportsGeneratedIdRouteImport.update({
+    id: '/reports/generated/$id',
+    path: '/reports/generated/$id',
+    getParentRoute: () => LayoutRoute,
   } as any)
 const LayoutSensorsSensorIndexRoute =
   LayoutSensorsSensorIndexRouteImport.update({
@@ -741,29 +946,24 @@ const LayoutClustersKindValueMembersRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
-  '/agent-campaigns': typeof LayoutAgentCampaignsRoute
-  '/alerts': typeof LayoutAlertsRoute
   '/attackers': typeof LayoutAttackersRoute
-  '/auth-events': typeof LayoutAuthEventsRoute
-  '/canarytokens': typeof LayoutCanarytokensRoute
   '/commands': typeof LayoutCommandsRoute
-  '/credentials': typeof LayoutCredentialsRoute
-  '/dead-letters': typeof LayoutDeadLettersRoute
   '/history': typeof LayoutHistoryRoute
   '/ips': typeof LayoutIpsRoute
   '/kill-chain': typeof LayoutKillChainRoute
-  '/llm-analysis': typeof LayoutLlmAnalysisRoute
-  '/ml-anomalies': typeof LayoutMlAnomaliesRoute
-  '/problem-reports': typeof LayoutProblemReportsRoute
-  '/recordings': typeof LayoutRecordingsRoute
-  '/reports': typeof LayoutReportsRoute
   '/search': typeof LayoutSearchRoute
   '/settings': typeof LayoutSettingsRoute
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
+  '/agent-campaigns/$id': typeof LayoutAgentCampaignsIdRouteWithChildren
+  '/alerts/$key': typeof LayoutAlertsKeyRouteWithChildren
   '/asn/$asn': typeof LayoutAsnAsnRouteWithChildren
+  '/auth-events/$id': typeof LayoutAuthEventsIdRoute
   '/campaigns/$cidr': typeof LayoutCampaignsCidrRouteWithChildren
+  '/canarytokens/$id': typeof LayoutCanarytokensIdRoute
   '/cape/$sha': typeof LayoutCapeShaRoute
+  '/credentials/$id': typeof LayoutCredentialsIdRoute
+  '/dead-letters/$id': typeof LayoutDeadLettersIdRoute
   '/event/$id': typeof LayoutEventIdRoute
   '/events/$id': typeof LayoutEventsIdRouteWithChildren
   '/ghidra/$sha': typeof LayoutGhidraShaRoute
@@ -771,10 +971,14 @@ export interface FileRoutesByFullPath {
   '/identities/$id': typeof LayoutIdentitiesIdRouteWithChildren
   '/investigate/cluster': typeof LayoutInvestigateClusterRoute
   '/investigate/lookup': typeof LayoutInvestigateLookupRoute
+  '/llm-analysis/$id': typeof LayoutLlmAnalysisIdRouteWithChildren
+  '/ml-anomalies/$id': typeof LayoutMlAnomaliesIdRouteWithChildren
   '/networks/$cidr': typeof LayoutNetworksCidrRouteWithChildren
   '/payload-analysis/$hash': typeof LayoutPayloadAnalysisHashRoute
   '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
   '/payloads/$hash': typeof LayoutPayloadsHashRouteWithChildren
+  '/problem-reports/$id': typeof LayoutProblemReportsIdRoute
+  '/recordings/$shasum': typeof LayoutRecordingsShasumRouteWithChildren
   '/revdeck/$sha': typeof LayoutRevdeckShaRoute
   '/sandbox/$job': typeof LayoutSandboxJobRoute
   '/sandbox/vnc': typeof LayoutSandboxVncRoute
@@ -782,14 +986,30 @@ export interface FileRoutesByFullPath {
   '/sessions/$id': typeof LayoutSessionsIdRouteWithChildren
   '/sources/$ip': typeof LayoutSourcesIpRouteWithChildren
   '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/agent-campaigns/': typeof LayoutAgentCampaignsIndexRoute
+  '/alerts/': typeof LayoutAlertsIndexRoute
+  '/auth-events/': typeof LayoutAuthEventsIndexRoute
   '/campaigns/': typeof LayoutCampaignsIndexRoute
+  '/canarytokens/': typeof LayoutCanarytokensIndexRoute
   '/cape/': typeof LayoutCapeIndexRoute
   '/clusters/': typeof LayoutClustersIndexRoute
+  '/credentials/': typeof LayoutCredentialsIndexRoute
+  '/dead-letters/': typeof LayoutDeadLettersIndexRoute
   '/events/': typeof LayoutEventsIndexRoute
   '/github-analysis/': typeof LayoutGithubAnalysisIndexRoute
+  '/llm-analysis/': typeof LayoutLlmAnalysisIndexRoute
+  '/ml-anomalies/': typeof LayoutMlAnomaliesIndexRoute
   '/payloads/': typeof LayoutPayloadsIndexRoute
+  '/problem-reports/': typeof LayoutProblemReportsIndexRoute
+  '/recordings/': typeof LayoutRecordingsIndexRoute
+  '/reports/': typeof LayoutReportsIndexRoute
   '/revdeck/': typeof LayoutRevdeckIndexRoute
   '/sensors/': typeof LayoutSensorsIndexRoute
+  '/agent-campaigns/$id/events': typeof LayoutAgentCampaignsIdEventsRoute
+  '/agent-campaigns/$id/evidence': typeof LayoutAgentCampaignsIdEvidenceRoute
+  '/agent-campaigns/$id/rules': typeof LayoutAgentCampaignsIdRulesRoute
+  '/alerts/$key/evidence': typeof LayoutAlertsKeyEvidenceRoute
+  '/alerts/$key/members': typeof LayoutAlertsKeyMembersRoute
   '/asn/$asn/events': typeof LayoutAsnAsnEventsRoute
   '/asn/$asn/networks': typeof LayoutAsnAsnNetworksRoute
   '/asn/$asn/sources': typeof LayoutAsnAsnSourcesRoute
@@ -797,6 +1017,7 @@ export interface FileRoutesByFullPath {
   '/campaigns/$cidr/sources': typeof LayoutCampaignsCidrSourcesRoute
   '/campaigns/$cidr/timeline': typeof LayoutCampaignsCidrTimelineRoute
   '/campaigns/$cidr/why': typeof LayoutCampaignsCidrWhyRoute
+  '/canarytokens/triggers/$id': typeof LayoutCanarytokensTriggersIdRoute
   '/clusters/$kind/$value': typeof LayoutClustersKindValueRouteWithChildren
   '/events/$id/connection': typeof LayoutEventsIdConnectionRoute
   '/events/$id/iocs': typeof LayoutEventsIdIocsRoute
@@ -809,6 +1030,12 @@ export interface FileRoutesByFullPath {
   '/identities/$id/why': typeof LayoutIdentitiesIdWhyRoute
   '/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
+  '/llm-analysis/$id/behaviors': typeof LayoutLlmAnalysisIdBehaviorsRoute
+  '/llm-analysis/$id/evidence': typeof LayoutLlmAnalysisIdEvidenceRoute
+  '/llm-analysis/$id/raw': typeof LayoutLlmAnalysisIdRawRoute
+  '/ml-anomalies/$id/event': typeof LayoutMlAnomaliesIdEventRoute
+  '/ml-anomalies/$id/scores': typeof LayoutMlAnomaliesIdScoresRoute
+  '/ml-anomalies/$id/triage': typeof LayoutMlAnomaliesIdTriageRoute
   '/networks/$cidr/campaign': typeof LayoutNetworksCidrCampaignRoute
   '/networks/$cidr/events': typeof LayoutNetworksCidrEventsRoute
   '/networks/$cidr/sources': typeof LayoutNetworksCidrSourcesRoute
@@ -822,6 +1049,10 @@ export interface FileRoutesByFullPath {
   '/payloads/$hash/sandbox': typeof LayoutPayloadsHashSandboxRoute
   '/payloads/$hash/sessions': typeof LayoutPayloadsHashSessionsRoute
   '/payloads/$hash/static': typeof LayoutPayloadsHashStaticRoute
+  '/recordings/$shasum/attacker': typeof LayoutRecordingsShasumAttackerRoute
+  '/recordings/$shasum/sessions': typeof LayoutRecordingsShasumSessionsRoute
+  '/reports/definitions/$id': typeof LayoutReportsDefinitionsIdRoute
+  '/reports/generated/$id': typeof LayoutReportsGeneratedIdRoute
   '/sensors/$sensor/events': typeof LayoutSensorsSensorEventsRoute
   '/sensors/$sensor/exposure': typeof LayoutSensorsSensorExposureRoute
   '/sensors/$sensor/health': typeof LayoutSensorsSensorHealthRoute
@@ -842,12 +1073,17 @@ export interface FileRoutesByFullPath {
   '/sources/$ip/payloads': typeof LayoutSourcesIpPayloadsRoute
   '/sources/$ip/sessions': typeof LayoutSourcesIpSessionsRoute
   '/sources/$ip/timeline': typeof LayoutSourcesIpTimelineRoute
+  '/agent-campaigns/$id/': typeof LayoutAgentCampaignsIdIndexRoute
+  '/alerts/$key/': typeof LayoutAlertsKeyIndexRoute
   '/asn/$asn/': typeof LayoutAsnAsnIndexRoute
   '/campaigns/$cidr/': typeof LayoutCampaignsCidrIndexRoute
   '/events/$id/': typeof LayoutEventsIdIndexRoute
   '/identities/$id/': typeof LayoutIdentitiesIdIndexRoute
+  '/llm-analysis/$id/': typeof LayoutLlmAnalysisIdIndexRoute
+  '/ml-anomalies/$id/': typeof LayoutMlAnomaliesIdIndexRoute
   '/networks/$cidr/': typeof LayoutNetworksCidrIndexRoute
   '/payloads/$hash/': typeof LayoutPayloadsHashIndexRoute
+  '/recordings/$shasum/': typeof LayoutRecordingsShasumIndexRoute
   '/sensors/$sensor/': typeof LayoutSensorsSensorIndexRoute
   '/sessions/$id/': typeof LayoutSessionsIdIndexRoute
   '/sources/$ip/': typeof LayoutSourcesIpIndexRoute
@@ -856,28 +1092,21 @@ export interface FileRoutesByFullPath {
   '/clusters/$kind/$value/': typeof LayoutClustersKindValueIndexRoute
 }
 export interface FileRoutesByTo {
-  '/agent-campaigns': typeof LayoutAgentCampaignsRoute
-  '/alerts': typeof LayoutAlertsRoute
   '/attackers': typeof LayoutAttackersRoute
-  '/auth-events': typeof LayoutAuthEventsRoute
-  '/canarytokens': typeof LayoutCanarytokensRoute
   '/commands': typeof LayoutCommandsRoute
-  '/credentials': typeof LayoutCredentialsRoute
-  '/dead-letters': typeof LayoutDeadLettersRoute
   '/history': typeof LayoutHistoryRoute
   '/ips': typeof LayoutIpsRoute
   '/kill-chain': typeof LayoutKillChainRoute
-  '/llm-analysis': typeof LayoutLlmAnalysisRoute
-  '/ml-anomalies': typeof LayoutMlAnomaliesRoute
-  '/problem-reports': typeof LayoutProblemReportsRoute
-  '/recordings': typeof LayoutRecordingsRoute
-  '/reports': typeof LayoutReportsRoute
   '/search': typeof LayoutSearchRoute
   '/settings': typeof LayoutSettingsRoute
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
   '/': typeof LayoutIndexRoute
+  '/auth-events/$id': typeof LayoutAuthEventsIdRoute
+  '/canarytokens/$id': typeof LayoutCanarytokensIdRoute
   '/cape/$sha': typeof LayoutCapeShaRoute
+  '/credentials/$id': typeof LayoutCredentialsIdRoute
+  '/dead-letters/$id': typeof LayoutDeadLettersIdRoute
   '/event/$id': typeof LayoutEventIdRoute
   '/ghidra/$sha': typeof LayoutGhidraShaRoute
   '/github-analysis/$sha': typeof LayoutGithubAnalysisShaRoute
@@ -885,18 +1114,35 @@ export interface FileRoutesByTo {
   '/investigate/lookup': typeof LayoutInvestigateLookupRoute
   '/payload-analysis/$hash': typeof LayoutPayloadAnalysisHashRoute
   '/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
+  '/problem-reports/$id': typeof LayoutProblemReportsIdRoute
   '/revdeck/$sha': typeof LayoutRevdeckShaRoute
   '/sandbox/$job': typeof LayoutSandboxJobRoute
   '/sandbox/vnc': typeof LayoutSandboxVncRoute
   '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/agent-campaigns': typeof LayoutAgentCampaignsIndexRoute
+  '/alerts': typeof LayoutAlertsIndexRoute
+  '/auth-events': typeof LayoutAuthEventsIndexRoute
   '/campaigns': typeof LayoutCampaignsIndexRoute
+  '/canarytokens': typeof LayoutCanarytokensIndexRoute
   '/cape': typeof LayoutCapeIndexRoute
   '/clusters': typeof LayoutClustersIndexRoute
+  '/credentials': typeof LayoutCredentialsIndexRoute
+  '/dead-letters': typeof LayoutDeadLettersIndexRoute
   '/events': typeof LayoutEventsIndexRoute
   '/github-analysis': typeof LayoutGithubAnalysisIndexRoute
+  '/llm-analysis': typeof LayoutLlmAnalysisIndexRoute
+  '/ml-anomalies': typeof LayoutMlAnomaliesIndexRoute
   '/payloads': typeof LayoutPayloadsIndexRoute
+  '/problem-reports': typeof LayoutProblemReportsIndexRoute
+  '/recordings': typeof LayoutRecordingsIndexRoute
+  '/reports': typeof LayoutReportsIndexRoute
   '/revdeck': typeof LayoutRevdeckIndexRoute
   '/sensors': typeof LayoutSensorsIndexRoute
+  '/agent-campaigns/$id/events': typeof LayoutAgentCampaignsIdEventsRoute
+  '/agent-campaigns/$id/evidence': typeof LayoutAgentCampaignsIdEvidenceRoute
+  '/agent-campaigns/$id/rules': typeof LayoutAgentCampaignsIdRulesRoute
+  '/alerts/$key/evidence': typeof LayoutAlertsKeyEvidenceRoute
+  '/alerts/$key/members': typeof LayoutAlertsKeyMembersRoute
   '/asn/$asn/events': typeof LayoutAsnAsnEventsRoute
   '/asn/$asn/networks': typeof LayoutAsnAsnNetworksRoute
   '/asn/$asn/sources': typeof LayoutAsnAsnSourcesRoute
@@ -904,6 +1150,7 @@ export interface FileRoutesByTo {
   '/campaigns/$cidr/sources': typeof LayoutCampaignsCidrSourcesRoute
   '/campaigns/$cidr/timeline': typeof LayoutCampaignsCidrTimelineRoute
   '/campaigns/$cidr/why': typeof LayoutCampaignsCidrWhyRoute
+  '/canarytokens/triggers/$id': typeof LayoutCanarytokensTriggersIdRoute
   '/events/$id/connection': typeof LayoutEventsIdConnectionRoute
   '/events/$id/iocs': typeof LayoutEventsIdIocsRoute
   '/events/$id/raw': typeof LayoutEventsIdRawRoute
@@ -915,6 +1162,12 @@ export interface FileRoutesByTo {
   '/identities/$id/why': typeof LayoutIdentitiesIdWhyRoute
   '/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
+  '/llm-analysis/$id/behaviors': typeof LayoutLlmAnalysisIdBehaviorsRoute
+  '/llm-analysis/$id/evidence': typeof LayoutLlmAnalysisIdEvidenceRoute
+  '/llm-analysis/$id/raw': typeof LayoutLlmAnalysisIdRawRoute
+  '/ml-anomalies/$id/event': typeof LayoutMlAnomaliesIdEventRoute
+  '/ml-anomalies/$id/scores': typeof LayoutMlAnomaliesIdScoresRoute
+  '/ml-anomalies/$id/triage': typeof LayoutMlAnomaliesIdTriageRoute
   '/networks/$cidr/campaign': typeof LayoutNetworksCidrCampaignRoute
   '/networks/$cidr/events': typeof LayoutNetworksCidrEventsRoute
   '/networks/$cidr/sources': typeof LayoutNetworksCidrSourcesRoute
@@ -928,6 +1181,10 @@ export interface FileRoutesByTo {
   '/payloads/$hash/sandbox': typeof LayoutPayloadsHashSandboxRoute
   '/payloads/$hash/sessions': typeof LayoutPayloadsHashSessionsRoute
   '/payloads/$hash/static': typeof LayoutPayloadsHashStaticRoute
+  '/recordings/$shasum/attacker': typeof LayoutRecordingsShasumAttackerRoute
+  '/recordings/$shasum/sessions': typeof LayoutRecordingsShasumSessionsRoute
+  '/reports/definitions/$id': typeof LayoutReportsDefinitionsIdRoute
+  '/reports/generated/$id': typeof LayoutReportsGeneratedIdRoute
   '/sensors/$sensor/events': typeof LayoutSensorsSensorEventsRoute
   '/sensors/$sensor/exposure': typeof LayoutSensorsSensorExposureRoute
   '/sensors/$sensor/health': typeof LayoutSensorsSensorHealthRoute
@@ -948,12 +1205,17 @@ export interface FileRoutesByTo {
   '/sources/$ip/payloads': typeof LayoutSourcesIpPayloadsRoute
   '/sources/$ip/sessions': typeof LayoutSourcesIpSessionsRoute
   '/sources/$ip/timeline': typeof LayoutSourcesIpTimelineRoute
+  '/agent-campaigns/$id': typeof LayoutAgentCampaignsIdIndexRoute
+  '/alerts/$key': typeof LayoutAlertsKeyIndexRoute
   '/asn/$asn': typeof LayoutAsnAsnIndexRoute
   '/campaigns/$cidr': typeof LayoutCampaignsCidrIndexRoute
   '/events/$id': typeof LayoutEventsIdIndexRoute
   '/identities/$id': typeof LayoutIdentitiesIdIndexRoute
+  '/llm-analysis/$id': typeof LayoutLlmAnalysisIdIndexRoute
+  '/ml-anomalies/$id': typeof LayoutMlAnomaliesIdIndexRoute
   '/networks/$cidr': typeof LayoutNetworksCidrIndexRoute
   '/payloads/$hash': typeof LayoutPayloadsHashIndexRoute
+  '/recordings/$shasum': typeof LayoutRecordingsShasumIndexRoute
   '/sensors/$sensor': typeof LayoutSensorsSensorIndexRoute
   '/sessions/$id': typeof LayoutSessionsIdIndexRoute
   '/sources/$ip': typeof LayoutSourcesIpIndexRoute
@@ -964,30 +1226,25 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
-  '/_layout/agent-campaigns': typeof LayoutAgentCampaignsRoute
-  '/_layout/alerts': typeof LayoutAlertsRoute
   '/_layout/attackers': typeof LayoutAttackersRoute
-  '/_layout/auth-events': typeof LayoutAuthEventsRoute
-  '/_layout/canarytokens': typeof LayoutCanarytokensRoute
   '/_layout/commands': typeof LayoutCommandsRoute
-  '/_layout/credentials': typeof LayoutCredentialsRoute
-  '/_layout/dead-letters': typeof LayoutDeadLettersRoute
   '/_layout/history': typeof LayoutHistoryRoute
   '/_layout/ips': typeof LayoutIpsRoute
   '/_layout/kill-chain': typeof LayoutKillChainRoute
-  '/_layout/llm-analysis': typeof LayoutLlmAnalysisRoute
-  '/_layout/ml-anomalies': typeof LayoutMlAnomaliesRoute
-  '/_layout/problem-reports': typeof LayoutProblemReportsRoute
-  '/_layout/recordings': typeof LayoutRecordingsRoute
-  '/_layout/reports': typeof LayoutReportsRoute
   '/_layout/search': typeof LayoutSearchRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/source-health': typeof LayoutSourceHealthRoute
   '/_layout/topology': typeof LayoutTopologyRoute
   '/_layout/': typeof LayoutIndexRoute
+  '/_layout/agent-campaigns/$id': typeof LayoutAgentCampaignsIdRouteWithChildren
+  '/_layout/alerts/$key': typeof LayoutAlertsKeyRouteWithChildren
   '/_layout/asn/$asn': typeof LayoutAsnAsnRouteWithChildren
+  '/_layout/auth-events/$id': typeof LayoutAuthEventsIdRoute
   '/_layout/campaigns/$cidr': typeof LayoutCampaignsCidrRouteWithChildren
+  '/_layout/canarytokens/$id': typeof LayoutCanarytokensIdRoute
   '/_layout/cape/$sha': typeof LayoutCapeShaRoute
+  '/_layout/credentials/$id': typeof LayoutCredentialsIdRoute
+  '/_layout/dead-letters/$id': typeof LayoutDeadLettersIdRoute
   '/_layout/event/$id': typeof LayoutEventIdRoute
   '/_layout/events/$id': typeof LayoutEventsIdRouteWithChildren
   '/_layout/ghidra/$sha': typeof LayoutGhidraShaRoute
@@ -995,10 +1252,14 @@ export interface FileRoutesById {
   '/_layout/identities/$id': typeof LayoutIdentitiesIdRouteWithChildren
   '/_layout/investigate/cluster': typeof LayoutInvestigateClusterRoute
   '/_layout/investigate/lookup': typeof LayoutInvestigateLookupRoute
+  '/_layout/llm-analysis/$id': typeof LayoutLlmAnalysisIdRouteWithChildren
+  '/_layout/ml-anomalies/$id': typeof LayoutMlAnomaliesIdRouteWithChildren
   '/_layout/networks/$cidr': typeof LayoutNetworksCidrRouteWithChildren
   '/_layout/payload-analysis/$hash': typeof LayoutPayloadAnalysisHashRoute
   '/_layout/payload-workbench/results': typeof LayoutPayloadWorkbenchResultsRoute
   '/_layout/payloads/$hash': typeof LayoutPayloadsHashRouteWithChildren
+  '/_layout/problem-reports/$id': typeof LayoutProblemReportsIdRoute
+  '/_layout/recordings/$shasum': typeof LayoutRecordingsShasumRouteWithChildren
   '/_layout/revdeck/$sha': typeof LayoutRevdeckShaRoute
   '/_layout/sandbox/$job': typeof LayoutSandboxJobRoute
   '/_layout/sandbox/vnc': typeof LayoutSandboxVncRoute
@@ -1006,14 +1267,30 @@ export interface FileRoutesById {
   '/_layout/sessions/$id': typeof LayoutSessionsIdRouteWithChildren
   '/_layout/sources/$ip': typeof LayoutSourcesIpRouteWithChildren
   '/_layout/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/_layout/agent-campaigns/': typeof LayoutAgentCampaignsIndexRoute
+  '/_layout/alerts/': typeof LayoutAlertsIndexRoute
+  '/_layout/auth-events/': typeof LayoutAuthEventsIndexRoute
   '/_layout/campaigns/': typeof LayoutCampaignsIndexRoute
+  '/_layout/canarytokens/': typeof LayoutCanarytokensIndexRoute
   '/_layout/cape/': typeof LayoutCapeIndexRoute
   '/_layout/clusters/': typeof LayoutClustersIndexRoute
+  '/_layout/credentials/': typeof LayoutCredentialsIndexRoute
+  '/_layout/dead-letters/': typeof LayoutDeadLettersIndexRoute
   '/_layout/events/': typeof LayoutEventsIndexRoute
   '/_layout/github-analysis/': typeof LayoutGithubAnalysisIndexRoute
+  '/_layout/llm-analysis/': typeof LayoutLlmAnalysisIndexRoute
+  '/_layout/ml-anomalies/': typeof LayoutMlAnomaliesIndexRoute
   '/_layout/payloads/': typeof LayoutPayloadsIndexRoute
+  '/_layout/problem-reports/': typeof LayoutProblemReportsIndexRoute
+  '/_layout/recordings/': typeof LayoutRecordingsIndexRoute
+  '/_layout/reports/': typeof LayoutReportsIndexRoute
   '/_layout/revdeck/': typeof LayoutRevdeckIndexRoute
   '/_layout/sensors/': typeof LayoutSensorsIndexRoute
+  '/_layout/agent-campaigns/$id/events': typeof LayoutAgentCampaignsIdEventsRoute
+  '/_layout/agent-campaigns/$id/evidence': typeof LayoutAgentCampaignsIdEvidenceRoute
+  '/_layout/agent-campaigns/$id/rules': typeof LayoutAgentCampaignsIdRulesRoute
+  '/_layout/alerts/$key/evidence': typeof LayoutAlertsKeyEvidenceRoute
+  '/_layout/alerts/$key/members': typeof LayoutAlertsKeyMembersRoute
   '/_layout/asn/$asn/events': typeof LayoutAsnAsnEventsRoute
   '/_layout/asn/$asn/networks': typeof LayoutAsnAsnNetworksRoute
   '/_layout/asn/$asn/sources': typeof LayoutAsnAsnSourcesRoute
@@ -1021,6 +1298,7 @@ export interface FileRoutesById {
   '/_layout/campaigns/$cidr/sources': typeof LayoutCampaignsCidrSourcesRoute
   '/_layout/campaigns/$cidr/timeline': typeof LayoutCampaignsCidrTimelineRoute
   '/_layout/campaigns/$cidr/why': typeof LayoutCampaignsCidrWhyRoute
+  '/_layout/canarytokens/triggers/$id': typeof LayoutCanarytokensTriggersIdRoute
   '/_layout/clusters/$kind/$value': typeof LayoutClustersKindValueRouteWithChildren
   '/_layout/events/$id/connection': typeof LayoutEventsIdConnectionRoute
   '/_layout/events/$id/iocs': typeof LayoutEventsIdIocsRoute
@@ -1033,6 +1311,12 @@ export interface FileRoutesById {
   '/_layout/identities/$id/why': typeof LayoutIdentitiesIdWhyRoute
   '/_layout/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/_layout/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
+  '/_layout/llm-analysis/$id/behaviors': typeof LayoutLlmAnalysisIdBehaviorsRoute
+  '/_layout/llm-analysis/$id/evidence': typeof LayoutLlmAnalysisIdEvidenceRoute
+  '/_layout/llm-analysis/$id/raw': typeof LayoutLlmAnalysisIdRawRoute
+  '/_layout/ml-anomalies/$id/event': typeof LayoutMlAnomaliesIdEventRoute
+  '/_layout/ml-anomalies/$id/scores': typeof LayoutMlAnomaliesIdScoresRoute
+  '/_layout/ml-anomalies/$id/triage': typeof LayoutMlAnomaliesIdTriageRoute
   '/_layout/networks/$cidr/campaign': typeof LayoutNetworksCidrCampaignRoute
   '/_layout/networks/$cidr/events': typeof LayoutNetworksCidrEventsRoute
   '/_layout/networks/$cidr/sources': typeof LayoutNetworksCidrSourcesRoute
@@ -1046,6 +1330,10 @@ export interface FileRoutesById {
   '/_layout/payloads/$hash/sandbox': typeof LayoutPayloadsHashSandboxRoute
   '/_layout/payloads/$hash/sessions': typeof LayoutPayloadsHashSessionsRoute
   '/_layout/payloads/$hash/static': typeof LayoutPayloadsHashStaticRoute
+  '/_layout/recordings/$shasum/attacker': typeof LayoutRecordingsShasumAttackerRoute
+  '/_layout/recordings/$shasum/sessions': typeof LayoutRecordingsShasumSessionsRoute
+  '/_layout/reports/definitions/$id': typeof LayoutReportsDefinitionsIdRoute
+  '/_layout/reports/generated/$id': typeof LayoutReportsGeneratedIdRoute
   '/_layout/sensors/$sensor/events': typeof LayoutSensorsSensorEventsRoute
   '/_layout/sensors/$sensor/exposure': typeof LayoutSensorsSensorExposureRoute
   '/_layout/sensors/$sensor/health': typeof LayoutSensorsSensorHealthRoute
@@ -1066,12 +1354,17 @@ export interface FileRoutesById {
   '/_layout/sources/$ip/payloads': typeof LayoutSourcesIpPayloadsRoute
   '/_layout/sources/$ip/sessions': typeof LayoutSourcesIpSessionsRoute
   '/_layout/sources/$ip/timeline': typeof LayoutSourcesIpTimelineRoute
+  '/_layout/agent-campaigns/$id/': typeof LayoutAgentCampaignsIdIndexRoute
+  '/_layout/alerts/$key/': typeof LayoutAlertsKeyIndexRoute
   '/_layout/asn/$asn/': typeof LayoutAsnAsnIndexRoute
   '/_layout/campaigns/$cidr/': typeof LayoutCampaignsCidrIndexRoute
   '/_layout/events/$id/': typeof LayoutEventsIdIndexRoute
   '/_layout/identities/$id/': typeof LayoutIdentitiesIdIndexRoute
+  '/_layout/llm-analysis/$id/': typeof LayoutLlmAnalysisIdIndexRoute
+  '/_layout/ml-anomalies/$id/': typeof LayoutMlAnomaliesIdIndexRoute
   '/_layout/networks/$cidr/': typeof LayoutNetworksCidrIndexRoute
   '/_layout/payloads/$hash/': typeof LayoutPayloadsHashIndexRoute
+  '/_layout/recordings/$shasum/': typeof LayoutRecordingsShasumIndexRoute
   '/_layout/sensors/$sensor/': typeof LayoutSensorsSensorIndexRoute
   '/_layout/sessions/$id/': typeof LayoutSessionsIdIndexRoute
   '/_layout/sources/$ip/': typeof LayoutSourcesIpIndexRoute
@@ -1083,29 +1376,24 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/agent-campaigns'
-    | '/alerts'
     | '/attackers'
-    | '/auth-events'
-    | '/canarytokens'
     | '/commands'
-    | '/credentials'
-    | '/dead-letters'
     | '/history'
     | '/ips'
     | '/kill-chain'
-    | '/llm-analysis'
-    | '/ml-anomalies'
-    | '/problem-reports'
-    | '/recordings'
-    | '/reports'
     | '/search'
     | '/settings'
     | '/source-health'
     | '/topology'
+    | '/agent-campaigns/$id'
+    | '/alerts/$key'
     | '/asn/$asn'
+    | '/auth-events/$id'
     | '/campaigns/$cidr'
+    | '/canarytokens/$id'
     | '/cape/$sha'
+    | '/credentials/$id'
+    | '/dead-letters/$id'
     | '/event/$id'
     | '/events/$id'
     | '/ghidra/$sha'
@@ -1113,10 +1401,14 @@ export interface FileRouteTypes {
     | '/identities/$id'
     | '/investigate/cluster'
     | '/investigate/lookup'
+    | '/llm-analysis/$id'
+    | '/ml-anomalies/$id'
     | '/networks/$cidr'
     | '/payload-analysis/$hash'
     | '/payload-workbench/results'
     | '/payloads/$hash'
+    | '/problem-reports/$id'
+    | '/recordings/$shasum'
     | '/revdeck/$sha'
     | '/sandbox/$job'
     | '/sandbox/vnc'
@@ -1124,14 +1416,30 @@ export interface FileRouteTypes {
     | '/sessions/$id'
     | '/sources/$ip'
     | '/tty-replay/$shasum'
+    | '/agent-campaigns/'
+    | '/alerts/'
+    | '/auth-events/'
     | '/campaigns/'
+    | '/canarytokens/'
     | '/cape/'
     | '/clusters/'
+    | '/credentials/'
+    | '/dead-letters/'
     | '/events/'
     | '/github-analysis/'
+    | '/llm-analysis/'
+    | '/ml-anomalies/'
     | '/payloads/'
+    | '/problem-reports/'
+    | '/recordings/'
+    | '/reports/'
     | '/revdeck/'
     | '/sensors/'
+    | '/agent-campaigns/$id/events'
+    | '/agent-campaigns/$id/evidence'
+    | '/agent-campaigns/$id/rules'
+    | '/alerts/$key/evidence'
+    | '/alerts/$key/members'
     | '/asn/$asn/events'
     | '/asn/$asn/networks'
     | '/asn/$asn/sources'
@@ -1139,6 +1447,7 @@ export interface FileRouteTypes {
     | '/campaigns/$cidr/sources'
     | '/campaigns/$cidr/timeline'
     | '/campaigns/$cidr/why'
+    | '/canarytokens/triggers/$id'
     | '/clusters/$kind/$value'
     | '/events/$id/connection'
     | '/events/$id/iocs'
@@ -1151,6 +1460,12 @@ export interface FileRouteTypes {
     | '/identities/$id/why'
     | '/investigate/cidr/$cidr'
     | '/investigate/ip/$ip'
+    | '/llm-analysis/$id/behaviors'
+    | '/llm-analysis/$id/evidence'
+    | '/llm-analysis/$id/raw'
+    | '/ml-anomalies/$id/event'
+    | '/ml-anomalies/$id/scores'
+    | '/ml-anomalies/$id/triage'
     | '/networks/$cidr/campaign'
     | '/networks/$cidr/events'
     | '/networks/$cidr/sources'
@@ -1164,6 +1479,10 @@ export interface FileRouteTypes {
     | '/payloads/$hash/sandbox'
     | '/payloads/$hash/sessions'
     | '/payloads/$hash/static'
+    | '/recordings/$shasum/attacker'
+    | '/recordings/$shasum/sessions'
+    | '/reports/definitions/$id'
+    | '/reports/generated/$id'
     | '/sensors/$sensor/events'
     | '/sensors/$sensor/exposure'
     | '/sensors/$sensor/health'
@@ -1184,12 +1503,17 @@ export interface FileRouteTypes {
     | '/sources/$ip/payloads'
     | '/sources/$ip/sessions'
     | '/sources/$ip/timeline'
+    | '/agent-campaigns/$id/'
+    | '/alerts/$key/'
     | '/asn/$asn/'
     | '/campaigns/$cidr/'
     | '/events/$id/'
     | '/identities/$id/'
+    | '/llm-analysis/$id/'
+    | '/ml-anomalies/$id/'
     | '/networks/$cidr/'
     | '/payloads/$hash/'
+    | '/recordings/$shasum/'
     | '/sensors/$sensor/'
     | '/sessions/$id/'
     | '/sources/$ip/'
@@ -1198,28 +1522,21 @@ export interface FileRouteTypes {
     | '/clusters/$kind/$value/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/agent-campaigns'
-    | '/alerts'
     | '/attackers'
-    | '/auth-events'
-    | '/canarytokens'
     | '/commands'
-    | '/credentials'
-    | '/dead-letters'
     | '/history'
     | '/ips'
     | '/kill-chain'
-    | '/llm-analysis'
-    | '/ml-anomalies'
-    | '/problem-reports'
-    | '/recordings'
-    | '/reports'
     | '/search'
     | '/settings'
     | '/source-health'
     | '/topology'
     | '/'
+    | '/auth-events/$id'
+    | '/canarytokens/$id'
     | '/cape/$sha'
+    | '/credentials/$id'
+    | '/dead-letters/$id'
     | '/event/$id'
     | '/ghidra/$sha'
     | '/github-analysis/$sha'
@@ -1227,18 +1544,35 @@ export interface FileRouteTypes {
     | '/investigate/lookup'
     | '/payload-analysis/$hash'
     | '/payload-workbench/results'
+    | '/problem-reports/$id'
     | '/revdeck/$sha'
     | '/sandbox/$job'
     | '/sandbox/vnc'
     | '/tty-replay/$shasum'
+    | '/agent-campaigns'
+    | '/alerts'
+    | '/auth-events'
     | '/campaigns'
+    | '/canarytokens'
     | '/cape'
     | '/clusters'
+    | '/credentials'
+    | '/dead-letters'
     | '/events'
     | '/github-analysis'
+    | '/llm-analysis'
+    | '/ml-anomalies'
     | '/payloads'
+    | '/problem-reports'
+    | '/recordings'
+    | '/reports'
     | '/revdeck'
     | '/sensors'
+    | '/agent-campaigns/$id/events'
+    | '/agent-campaigns/$id/evidence'
+    | '/agent-campaigns/$id/rules'
+    | '/alerts/$key/evidence'
+    | '/alerts/$key/members'
     | '/asn/$asn/events'
     | '/asn/$asn/networks'
     | '/asn/$asn/sources'
@@ -1246,6 +1580,7 @@ export interface FileRouteTypes {
     | '/campaigns/$cidr/sources'
     | '/campaigns/$cidr/timeline'
     | '/campaigns/$cidr/why'
+    | '/canarytokens/triggers/$id'
     | '/events/$id/connection'
     | '/events/$id/iocs'
     | '/events/$id/raw'
@@ -1257,6 +1592,12 @@ export interface FileRouteTypes {
     | '/identities/$id/why'
     | '/investigate/cidr/$cidr'
     | '/investigate/ip/$ip'
+    | '/llm-analysis/$id/behaviors'
+    | '/llm-analysis/$id/evidence'
+    | '/llm-analysis/$id/raw'
+    | '/ml-anomalies/$id/event'
+    | '/ml-anomalies/$id/scores'
+    | '/ml-anomalies/$id/triage'
     | '/networks/$cidr/campaign'
     | '/networks/$cidr/events'
     | '/networks/$cidr/sources'
@@ -1270,6 +1611,10 @@ export interface FileRouteTypes {
     | '/payloads/$hash/sandbox'
     | '/payloads/$hash/sessions'
     | '/payloads/$hash/static'
+    | '/recordings/$shasum/attacker'
+    | '/recordings/$shasum/sessions'
+    | '/reports/definitions/$id'
+    | '/reports/generated/$id'
     | '/sensors/$sensor/events'
     | '/sensors/$sensor/exposure'
     | '/sensors/$sensor/health'
@@ -1290,12 +1635,17 @@ export interface FileRouteTypes {
     | '/sources/$ip/payloads'
     | '/sources/$ip/sessions'
     | '/sources/$ip/timeline'
+    | '/agent-campaigns/$id'
+    | '/alerts/$key'
     | '/asn/$asn'
     | '/campaigns/$cidr'
     | '/events/$id'
     | '/identities/$id'
+    | '/llm-analysis/$id'
+    | '/ml-anomalies/$id'
     | '/networks/$cidr'
     | '/payloads/$hash'
+    | '/recordings/$shasum'
     | '/sensors/$sensor'
     | '/sessions/$id'
     | '/sources/$ip'
@@ -1305,30 +1655,25 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_layout'
-    | '/_layout/agent-campaigns'
-    | '/_layout/alerts'
     | '/_layout/attackers'
-    | '/_layout/auth-events'
-    | '/_layout/canarytokens'
     | '/_layout/commands'
-    | '/_layout/credentials'
-    | '/_layout/dead-letters'
     | '/_layout/history'
     | '/_layout/ips'
     | '/_layout/kill-chain'
-    | '/_layout/llm-analysis'
-    | '/_layout/ml-anomalies'
-    | '/_layout/problem-reports'
-    | '/_layout/recordings'
-    | '/_layout/reports'
     | '/_layout/search'
     | '/_layout/settings'
     | '/_layout/source-health'
     | '/_layout/topology'
     | '/_layout/'
+    | '/_layout/agent-campaigns/$id'
+    | '/_layout/alerts/$key'
     | '/_layout/asn/$asn'
+    | '/_layout/auth-events/$id'
     | '/_layout/campaigns/$cidr'
+    | '/_layout/canarytokens/$id'
     | '/_layout/cape/$sha'
+    | '/_layout/credentials/$id'
+    | '/_layout/dead-letters/$id'
     | '/_layout/event/$id'
     | '/_layout/events/$id'
     | '/_layout/ghidra/$sha'
@@ -1336,10 +1681,14 @@ export interface FileRouteTypes {
     | '/_layout/identities/$id'
     | '/_layout/investigate/cluster'
     | '/_layout/investigate/lookup'
+    | '/_layout/llm-analysis/$id'
+    | '/_layout/ml-anomalies/$id'
     | '/_layout/networks/$cidr'
     | '/_layout/payload-analysis/$hash'
     | '/_layout/payload-workbench/results'
     | '/_layout/payloads/$hash'
+    | '/_layout/problem-reports/$id'
+    | '/_layout/recordings/$shasum'
     | '/_layout/revdeck/$sha'
     | '/_layout/sandbox/$job'
     | '/_layout/sandbox/vnc'
@@ -1347,14 +1696,30 @@ export interface FileRouteTypes {
     | '/_layout/sessions/$id'
     | '/_layout/sources/$ip'
     | '/_layout/tty-replay/$shasum'
+    | '/_layout/agent-campaigns/'
+    | '/_layout/alerts/'
+    | '/_layout/auth-events/'
     | '/_layout/campaigns/'
+    | '/_layout/canarytokens/'
     | '/_layout/cape/'
     | '/_layout/clusters/'
+    | '/_layout/credentials/'
+    | '/_layout/dead-letters/'
     | '/_layout/events/'
     | '/_layout/github-analysis/'
+    | '/_layout/llm-analysis/'
+    | '/_layout/ml-anomalies/'
     | '/_layout/payloads/'
+    | '/_layout/problem-reports/'
+    | '/_layout/recordings/'
+    | '/_layout/reports/'
     | '/_layout/revdeck/'
     | '/_layout/sensors/'
+    | '/_layout/agent-campaigns/$id/events'
+    | '/_layout/agent-campaigns/$id/evidence'
+    | '/_layout/agent-campaigns/$id/rules'
+    | '/_layout/alerts/$key/evidence'
+    | '/_layout/alerts/$key/members'
     | '/_layout/asn/$asn/events'
     | '/_layout/asn/$asn/networks'
     | '/_layout/asn/$asn/sources'
@@ -1362,6 +1727,7 @@ export interface FileRouteTypes {
     | '/_layout/campaigns/$cidr/sources'
     | '/_layout/campaigns/$cidr/timeline'
     | '/_layout/campaigns/$cidr/why'
+    | '/_layout/canarytokens/triggers/$id'
     | '/_layout/clusters/$kind/$value'
     | '/_layout/events/$id/connection'
     | '/_layout/events/$id/iocs'
@@ -1374,6 +1740,12 @@ export interface FileRouteTypes {
     | '/_layout/identities/$id/why'
     | '/_layout/investigate/cidr/$cidr'
     | '/_layout/investigate/ip/$ip'
+    | '/_layout/llm-analysis/$id/behaviors'
+    | '/_layout/llm-analysis/$id/evidence'
+    | '/_layout/llm-analysis/$id/raw'
+    | '/_layout/ml-anomalies/$id/event'
+    | '/_layout/ml-anomalies/$id/scores'
+    | '/_layout/ml-anomalies/$id/triage'
     | '/_layout/networks/$cidr/campaign'
     | '/_layout/networks/$cidr/events'
     | '/_layout/networks/$cidr/sources'
@@ -1387,6 +1759,10 @@ export interface FileRouteTypes {
     | '/_layout/payloads/$hash/sandbox'
     | '/_layout/payloads/$hash/sessions'
     | '/_layout/payloads/$hash/static'
+    | '/_layout/recordings/$shasum/attacker'
+    | '/_layout/recordings/$shasum/sessions'
+    | '/_layout/reports/definitions/$id'
+    | '/_layout/reports/generated/$id'
     | '/_layout/sensors/$sensor/events'
     | '/_layout/sensors/$sensor/exposure'
     | '/_layout/sensors/$sensor/health'
@@ -1407,12 +1783,17 @@ export interface FileRouteTypes {
     | '/_layout/sources/$ip/payloads'
     | '/_layout/sources/$ip/sessions'
     | '/_layout/sources/$ip/timeline'
+    | '/_layout/agent-campaigns/$id/'
+    | '/_layout/alerts/$key/'
     | '/_layout/asn/$asn/'
     | '/_layout/campaigns/$cidr/'
     | '/_layout/events/$id/'
     | '/_layout/identities/$id/'
+    | '/_layout/llm-analysis/$id/'
+    | '/_layout/ml-anomalies/$id/'
     | '/_layout/networks/$cidr/'
     | '/_layout/payloads/$hash/'
+    | '/_layout/recordings/$shasum/'
     | '/_layout/sensors/$sensor/'
     | '/_layout/sessions/$id/'
     | '/_layout/sources/$ip/'
@@ -1441,20 +1822,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/agent-campaigns': {
-      id: '/_layout/agent-campaigns'
-      path: '/agent-campaigns'
-      fullPath: '/agent-campaigns'
-      preLoaderRoute: typeof LayoutAgentCampaignsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/alerts': {
-      id: '/_layout/alerts'
-      path: '/alerts'
-      fullPath: '/alerts'
-      preLoaderRoute: typeof LayoutAlertsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
     '/_layout/attackers': {
       id: '/_layout/attackers'
       path: '/attackers'
@@ -1462,39 +1829,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAttackersRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/auth-events': {
-      id: '/_layout/auth-events'
-      path: '/auth-events'
-      fullPath: '/auth-events'
-      preLoaderRoute: typeof LayoutAuthEventsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/canarytokens': {
-      id: '/_layout/canarytokens'
-      path: '/canarytokens'
-      fullPath: '/canarytokens'
-      preLoaderRoute: typeof LayoutCanarytokensRouteImport
-      parentRoute: typeof LayoutRoute
-    }
     '/_layout/commands': {
       id: '/_layout/commands'
       path: '/commands'
       fullPath: '/commands'
       preLoaderRoute: typeof LayoutCommandsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/credentials': {
-      id: '/_layout/credentials'
-      path: '/credentials'
-      fullPath: '/credentials'
-      preLoaderRoute: typeof LayoutCredentialsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/dead-letters': {
-      id: '/_layout/dead-letters'
-      path: '/dead-letters'
-      fullPath: '/dead-letters'
-      preLoaderRoute: typeof LayoutDeadLettersRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/history': {
@@ -1516,41 +1855,6 @@ declare module '@tanstack/react-router' {
       path: '/kill-chain'
       fullPath: '/kill-chain'
       preLoaderRoute: typeof LayoutKillChainRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/llm-analysis': {
-      id: '/_layout/llm-analysis'
-      path: '/llm-analysis'
-      fullPath: '/llm-analysis'
-      preLoaderRoute: typeof LayoutLlmAnalysisRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/ml-anomalies': {
-      id: '/_layout/ml-anomalies'
-      path: '/ml-anomalies'
-      fullPath: '/ml-anomalies'
-      preLoaderRoute: typeof LayoutMlAnomaliesRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/problem-reports': {
-      id: '/_layout/problem-reports'
-      path: '/problem-reports'
-      fullPath: '/problem-reports'
-      preLoaderRoute: typeof LayoutProblemReportsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/recordings': {
-      id: '/_layout/recordings'
-      path: '/recordings'
-      fullPath: '/recordings'
-      preLoaderRoute: typeof LayoutRecordingsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/reports': {
-      id: '/_layout/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof LayoutReportsRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/search': {
@@ -1581,11 +1885,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutTopologyRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/agent-campaigns/': {
+      id: '/_layout/agent-campaigns/'
+      path: '/agent-campaigns'
+      fullPath: '/agent-campaigns/'
+      preLoaderRoute: typeof LayoutAgentCampaignsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/agent-campaigns/$id': {
+      id: '/_layout/agent-campaigns/$id'
+      path: '/agent-campaigns/$id'
+      fullPath: '/agent-campaigns/$id'
+      preLoaderRoute: typeof LayoutAgentCampaignsIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/alerts/': {
+      id: '/_layout/alerts/'
+      path: '/alerts'
+      fullPath: '/alerts/'
+      preLoaderRoute: typeof LayoutAlertsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/alerts/$key': {
+      id: '/_layout/alerts/$key'
+      path: '/alerts/$key'
+      fullPath: '/alerts/$key'
+      preLoaderRoute: typeof LayoutAlertsKeyRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/asn/$asn': {
       id: '/_layout/asn/$asn'
       path: '/asn/$asn'
       fullPath: '/asn/$asn'
       preLoaderRoute: typeof LayoutAsnAsnRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/auth-events/': {
+      id: '/_layout/auth-events/'
+      path: '/auth-events'
+      fullPath: '/auth-events/'
+      preLoaderRoute: typeof LayoutAuthEventsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/auth-events/$id': {
+      id: '/_layout/auth-events/$id'
+      path: '/auth-events/$id'
+      fullPath: '/auth-events/$id'
+      preLoaderRoute: typeof LayoutAuthEventsIdRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/campaigns/': {
@@ -1600,6 +1946,20 @@ declare module '@tanstack/react-router' {
       path: '/campaigns/$cidr'
       fullPath: '/campaigns/$cidr'
       preLoaderRoute: typeof LayoutCampaignsCidrRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/canarytokens/': {
+      id: '/_layout/canarytokens/'
+      path: '/canarytokens'
+      fullPath: '/canarytokens/'
+      preLoaderRoute: typeof LayoutCanarytokensIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/canarytokens/$id': {
+      id: '/_layout/canarytokens/$id'
+      path: '/canarytokens/$id'
+      fullPath: '/canarytokens/$id'
+      preLoaderRoute: typeof LayoutCanarytokensIdRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/cape/': {
@@ -1621,6 +1981,34 @@ declare module '@tanstack/react-router' {
       path: '/clusters'
       fullPath: '/clusters/'
       preLoaderRoute: typeof LayoutClustersIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/credentials/': {
+      id: '/_layout/credentials/'
+      path: '/credentials'
+      fullPath: '/credentials/'
+      preLoaderRoute: typeof LayoutCredentialsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/credentials/$id': {
+      id: '/_layout/credentials/$id'
+      path: '/credentials/$id'
+      fullPath: '/credentials/$id'
+      preLoaderRoute: typeof LayoutCredentialsIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/dead-letters/': {
+      id: '/_layout/dead-letters/'
+      path: '/dead-letters'
+      fullPath: '/dead-letters/'
+      preLoaderRoute: typeof LayoutDeadLettersIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/dead-letters/$id': {
+      id: '/_layout/dead-letters/$id'
+      path: '/dead-letters/$id'
+      fullPath: '/dead-letters/$id'
+      preLoaderRoute: typeof LayoutDeadLettersIdRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/event/$id': {
@@ -1686,6 +2074,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutInvestigateLookupRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/llm-analysis/': {
+      id: '/_layout/llm-analysis/'
+      path: '/llm-analysis'
+      fullPath: '/llm-analysis/'
+      preLoaderRoute: typeof LayoutLlmAnalysisIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/llm-analysis/$id': {
+      id: '/_layout/llm-analysis/$id'
+      path: '/llm-analysis/$id'
+      fullPath: '/llm-analysis/$id'
+      preLoaderRoute: typeof LayoutLlmAnalysisIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/ml-anomalies/': {
+      id: '/_layout/ml-anomalies/'
+      path: '/ml-anomalies'
+      fullPath: '/ml-anomalies/'
+      preLoaderRoute: typeof LayoutMlAnomaliesIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/ml-anomalies/$id': {
+      id: '/_layout/ml-anomalies/$id'
+      path: '/ml-anomalies/$id'
+      fullPath: '/ml-anomalies/$id'
+      preLoaderRoute: typeof LayoutMlAnomaliesIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/networks/$cidr': {
       id: '/_layout/networks/$cidr'
       path: '/networks/$cidr'
@@ -1719,6 +2135,41 @@ declare module '@tanstack/react-router' {
       path: '/payloads/$hash'
       fullPath: '/payloads/$hash'
       preLoaderRoute: typeof LayoutPayloadsHashRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/problem-reports/': {
+      id: '/_layout/problem-reports/'
+      path: '/problem-reports'
+      fullPath: '/problem-reports/'
+      preLoaderRoute: typeof LayoutProblemReportsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/problem-reports/$id': {
+      id: '/_layout/problem-reports/$id'
+      path: '/problem-reports/$id'
+      fullPath: '/problem-reports/$id'
+      preLoaderRoute: typeof LayoutProblemReportsIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/recordings/': {
+      id: '/_layout/recordings/'
+      path: '/recordings'
+      fullPath: '/recordings/'
+      preLoaderRoute: typeof LayoutRecordingsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/recordings/$shasum': {
+      id: '/_layout/recordings/$shasum'
+      path: '/recordings/$shasum'
+      fullPath: '/recordings/$shasum'
+      preLoaderRoute: typeof LayoutRecordingsShasumRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/reports/': {
+      id: '/_layout/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof LayoutReportsIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/revdeck/': {
@@ -1784,6 +2235,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutTtyReplayShasumRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/agent-campaigns/$id/': {
+      id: '/_layout/agent-campaigns/$id/'
+      path: '/'
+      fullPath: '/agent-campaigns/$id/'
+      preLoaderRoute: typeof LayoutAgentCampaignsIdIndexRouteImport
+      parentRoute: typeof LayoutAgentCampaignsIdRoute
+    }
+    '/_layout/agent-campaigns/$id/events': {
+      id: '/_layout/agent-campaigns/$id/events'
+      path: '/events'
+      fullPath: '/agent-campaigns/$id/events'
+      preLoaderRoute: typeof LayoutAgentCampaignsIdEventsRouteImport
+      parentRoute: typeof LayoutAgentCampaignsIdRoute
+    }
+    '/_layout/agent-campaigns/$id/evidence': {
+      id: '/_layout/agent-campaigns/$id/evidence'
+      path: '/evidence'
+      fullPath: '/agent-campaigns/$id/evidence'
+      preLoaderRoute: typeof LayoutAgentCampaignsIdEvidenceRouteImport
+      parentRoute: typeof LayoutAgentCampaignsIdRoute
+    }
+    '/_layout/agent-campaigns/$id/rules': {
+      id: '/_layout/agent-campaigns/$id/rules'
+      path: '/rules'
+      fullPath: '/agent-campaigns/$id/rules'
+      preLoaderRoute: typeof LayoutAgentCampaignsIdRulesRouteImport
+      parentRoute: typeof LayoutAgentCampaignsIdRoute
+    }
+    '/_layout/alerts/$key/': {
+      id: '/_layout/alerts/$key/'
+      path: '/'
+      fullPath: '/alerts/$key/'
+      preLoaderRoute: typeof LayoutAlertsKeyIndexRouteImport
+      parentRoute: typeof LayoutAlertsKeyRoute
+    }
+    '/_layout/alerts/$key/evidence': {
+      id: '/_layout/alerts/$key/evidence'
+      path: '/evidence'
+      fullPath: '/alerts/$key/evidence'
+      preLoaderRoute: typeof LayoutAlertsKeyEvidenceRouteImport
+      parentRoute: typeof LayoutAlertsKeyRoute
+    }
+    '/_layout/alerts/$key/members': {
+      id: '/_layout/alerts/$key/members'
+      path: '/members'
+      fullPath: '/alerts/$key/members'
+      preLoaderRoute: typeof LayoutAlertsKeyMembersRouteImport
+      parentRoute: typeof LayoutAlertsKeyRoute
+    }
     '/_layout/asn/$asn/': {
       id: '/_layout/asn/$asn/'
       path: '/'
@@ -1846,6 +2346,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/campaigns/$cidr/why'
       preLoaderRoute: typeof LayoutCampaignsCidrWhyRouteImport
       parentRoute: typeof LayoutCampaignsCidrRoute
+    }
+    '/_layout/canarytokens/triggers/$id': {
+      id: '/_layout/canarytokens/triggers/$id'
+      path: '/canarytokens/triggers/$id'
+      fullPath: '/canarytokens/triggers/$id'
+      preLoaderRoute: typeof LayoutCanarytokensTriggersIdRouteImport
+      parentRoute: typeof LayoutRoute
     }
     '/_layout/clusters/$kind/$value': {
       id: '/_layout/clusters/$kind/$value'
@@ -1944,6 +2451,62 @@ declare module '@tanstack/react-router' {
       fullPath: '/investigate/ip/$ip'
       preLoaderRoute: typeof LayoutInvestigateIpIpRouteImport
       parentRoute: typeof LayoutRoute
+    }
+    '/_layout/llm-analysis/$id/': {
+      id: '/_layout/llm-analysis/$id/'
+      path: '/'
+      fullPath: '/llm-analysis/$id/'
+      preLoaderRoute: typeof LayoutLlmAnalysisIdIndexRouteImport
+      parentRoute: typeof LayoutLlmAnalysisIdRoute
+    }
+    '/_layout/llm-analysis/$id/behaviors': {
+      id: '/_layout/llm-analysis/$id/behaviors'
+      path: '/behaviors'
+      fullPath: '/llm-analysis/$id/behaviors'
+      preLoaderRoute: typeof LayoutLlmAnalysisIdBehaviorsRouteImport
+      parentRoute: typeof LayoutLlmAnalysisIdRoute
+    }
+    '/_layout/llm-analysis/$id/evidence': {
+      id: '/_layout/llm-analysis/$id/evidence'
+      path: '/evidence'
+      fullPath: '/llm-analysis/$id/evidence'
+      preLoaderRoute: typeof LayoutLlmAnalysisIdEvidenceRouteImport
+      parentRoute: typeof LayoutLlmAnalysisIdRoute
+    }
+    '/_layout/llm-analysis/$id/raw': {
+      id: '/_layout/llm-analysis/$id/raw'
+      path: '/raw'
+      fullPath: '/llm-analysis/$id/raw'
+      preLoaderRoute: typeof LayoutLlmAnalysisIdRawRouteImport
+      parentRoute: typeof LayoutLlmAnalysisIdRoute
+    }
+    '/_layout/ml-anomalies/$id/': {
+      id: '/_layout/ml-anomalies/$id/'
+      path: '/'
+      fullPath: '/ml-anomalies/$id/'
+      preLoaderRoute: typeof LayoutMlAnomaliesIdIndexRouteImport
+      parentRoute: typeof LayoutMlAnomaliesIdRoute
+    }
+    '/_layout/ml-anomalies/$id/event': {
+      id: '/_layout/ml-anomalies/$id/event'
+      path: '/event'
+      fullPath: '/ml-anomalies/$id/event'
+      preLoaderRoute: typeof LayoutMlAnomaliesIdEventRouteImport
+      parentRoute: typeof LayoutMlAnomaliesIdRoute
+    }
+    '/_layout/ml-anomalies/$id/scores': {
+      id: '/_layout/ml-anomalies/$id/scores'
+      path: '/scores'
+      fullPath: '/ml-anomalies/$id/scores'
+      preLoaderRoute: typeof LayoutMlAnomaliesIdScoresRouteImport
+      parentRoute: typeof LayoutMlAnomaliesIdRoute
+    }
+    '/_layout/ml-anomalies/$id/triage': {
+      id: '/_layout/ml-anomalies/$id/triage'
+      path: '/triage'
+      fullPath: '/ml-anomalies/$id/triage'
+      preLoaderRoute: typeof LayoutMlAnomaliesIdTriageRouteImport
+      parentRoute: typeof LayoutMlAnomaliesIdRoute
     }
     '/_layout/networks/$cidr/': {
       id: '/_layout/networks/$cidr/'
@@ -2049,6 +2612,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/payloads/$hash/static'
       preLoaderRoute: typeof LayoutPayloadsHashStaticRouteImport
       parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/recordings/$shasum/': {
+      id: '/_layout/recordings/$shasum/'
+      path: '/'
+      fullPath: '/recordings/$shasum/'
+      preLoaderRoute: typeof LayoutRecordingsShasumIndexRouteImport
+      parentRoute: typeof LayoutRecordingsShasumRoute
+    }
+    '/_layout/recordings/$shasum/attacker': {
+      id: '/_layout/recordings/$shasum/attacker'
+      path: '/attacker'
+      fullPath: '/recordings/$shasum/attacker'
+      preLoaderRoute: typeof LayoutRecordingsShasumAttackerRouteImport
+      parentRoute: typeof LayoutRecordingsShasumRoute
+    }
+    '/_layout/recordings/$shasum/sessions': {
+      id: '/_layout/recordings/$shasum/sessions'
+      path: '/sessions'
+      fullPath: '/recordings/$shasum/sessions'
+      preLoaderRoute: typeof LayoutRecordingsShasumSessionsRouteImport
+      parentRoute: typeof LayoutRecordingsShasumRoute
+    }
+    '/_layout/reports/definitions/$id': {
+      id: '/_layout/reports/definitions/$id'
+      path: '/reports/definitions/$id'
+      fullPath: '/reports/definitions/$id'
+      preLoaderRoute: typeof LayoutReportsDefinitionsIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/reports/generated/$id': {
+      id: '/_layout/reports/generated/$id'
+      path: '/reports/generated/$id'
+      fullPath: '/reports/generated/$id'
+      preLoaderRoute: typeof LayoutReportsGeneratedIdRouteImport
+      parentRoute: typeof LayoutRoute
     }
     '/_layout/sensors/$sensor/': {
       id: '/_layout/sensors/$sensor/'
@@ -2235,6 +2833,42 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface LayoutAgentCampaignsIdRouteChildren {
+  LayoutAgentCampaignsIdEventsRoute: typeof LayoutAgentCampaignsIdEventsRoute
+  LayoutAgentCampaignsIdEvidenceRoute: typeof LayoutAgentCampaignsIdEvidenceRoute
+  LayoutAgentCampaignsIdRulesRoute: typeof LayoutAgentCampaignsIdRulesRoute
+  LayoutAgentCampaignsIdIndexRoute: typeof LayoutAgentCampaignsIdIndexRoute
+}
+
+const LayoutAgentCampaignsIdRouteChildren: LayoutAgentCampaignsIdRouteChildren =
+  {
+    LayoutAgentCampaignsIdEventsRoute: LayoutAgentCampaignsIdEventsRoute,
+    LayoutAgentCampaignsIdEvidenceRoute: LayoutAgentCampaignsIdEvidenceRoute,
+    LayoutAgentCampaignsIdRulesRoute: LayoutAgentCampaignsIdRulesRoute,
+    LayoutAgentCampaignsIdIndexRoute: LayoutAgentCampaignsIdIndexRoute,
+  }
+
+const LayoutAgentCampaignsIdRouteWithChildren =
+  LayoutAgentCampaignsIdRoute._addFileChildren(
+    LayoutAgentCampaignsIdRouteChildren,
+  )
+
+interface LayoutAlertsKeyRouteChildren {
+  LayoutAlertsKeyEvidenceRoute: typeof LayoutAlertsKeyEvidenceRoute
+  LayoutAlertsKeyMembersRoute: typeof LayoutAlertsKeyMembersRoute
+  LayoutAlertsKeyIndexRoute: typeof LayoutAlertsKeyIndexRoute
+}
+
+const LayoutAlertsKeyRouteChildren: LayoutAlertsKeyRouteChildren = {
+  LayoutAlertsKeyEvidenceRoute: LayoutAlertsKeyEvidenceRoute,
+  LayoutAlertsKeyMembersRoute: LayoutAlertsKeyMembersRoute,
+  LayoutAlertsKeyIndexRoute: LayoutAlertsKeyIndexRoute,
+}
+
+const LayoutAlertsKeyRouteWithChildren = LayoutAlertsKeyRoute._addFileChildren(
+  LayoutAlertsKeyRouteChildren,
+)
+
 interface LayoutAsnAsnRouteChildren {
   LayoutAsnAsnEventsRoute: typeof LayoutAsnAsnEventsRoute
   LayoutAsnAsnNetworksRoute: typeof LayoutAsnAsnNetworksRoute
@@ -2313,6 +2947,40 @@ const LayoutIdentitiesIdRouteChildren: LayoutIdentitiesIdRouteChildren = {
 const LayoutIdentitiesIdRouteWithChildren =
   LayoutIdentitiesIdRoute._addFileChildren(LayoutIdentitiesIdRouteChildren)
 
+interface LayoutLlmAnalysisIdRouteChildren {
+  LayoutLlmAnalysisIdBehaviorsRoute: typeof LayoutLlmAnalysisIdBehaviorsRoute
+  LayoutLlmAnalysisIdEvidenceRoute: typeof LayoutLlmAnalysisIdEvidenceRoute
+  LayoutLlmAnalysisIdRawRoute: typeof LayoutLlmAnalysisIdRawRoute
+  LayoutLlmAnalysisIdIndexRoute: typeof LayoutLlmAnalysisIdIndexRoute
+}
+
+const LayoutLlmAnalysisIdRouteChildren: LayoutLlmAnalysisIdRouteChildren = {
+  LayoutLlmAnalysisIdBehaviorsRoute: LayoutLlmAnalysisIdBehaviorsRoute,
+  LayoutLlmAnalysisIdEvidenceRoute: LayoutLlmAnalysisIdEvidenceRoute,
+  LayoutLlmAnalysisIdRawRoute: LayoutLlmAnalysisIdRawRoute,
+  LayoutLlmAnalysisIdIndexRoute: LayoutLlmAnalysisIdIndexRoute,
+}
+
+const LayoutLlmAnalysisIdRouteWithChildren =
+  LayoutLlmAnalysisIdRoute._addFileChildren(LayoutLlmAnalysisIdRouteChildren)
+
+interface LayoutMlAnomaliesIdRouteChildren {
+  LayoutMlAnomaliesIdEventRoute: typeof LayoutMlAnomaliesIdEventRoute
+  LayoutMlAnomaliesIdScoresRoute: typeof LayoutMlAnomaliesIdScoresRoute
+  LayoutMlAnomaliesIdTriageRoute: typeof LayoutMlAnomaliesIdTriageRoute
+  LayoutMlAnomaliesIdIndexRoute: typeof LayoutMlAnomaliesIdIndexRoute
+}
+
+const LayoutMlAnomaliesIdRouteChildren: LayoutMlAnomaliesIdRouteChildren = {
+  LayoutMlAnomaliesIdEventRoute: LayoutMlAnomaliesIdEventRoute,
+  LayoutMlAnomaliesIdScoresRoute: LayoutMlAnomaliesIdScoresRoute,
+  LayoutMlAnomaliesIdTriageRoute: LayoutMlAnomaliesIdTriageRoute,
+  LayoutMlAnomaliesIdIndexRoute: LayoutMlAnomaliesIdIndexRoute,
+}
+
+const LayoutMlAnomaliesIdRouteWithChildren =
+  LayoutMlAnomaliesIdRoute._addFileChildren(LayoutMlAnomaliesIdRouteChildren)
+
 interface LayoutNetworksCidrRouteChildren {
   LayoutNetworksCidrCampaignRoute: typeof LayoutNetworksCidrCampaignRoute
   LayoutNetworksCidrEventsRoute: typeof LayoutNetworksCidrEventsRoute
@@ -2360,6 +3028,24 @@ const LayoutPayloadsHashRouteChildren: LayoutPayloadsHashRouteChildren = {
 
 const LayoutPayloadsHashRouteWithChildren =
   LayoutPayloadsHashRoute._addFileChildren(LayoutPayloadsHashRouteChildren)
+
+interface LayoutRecordingsShasumRouteChildren {
+  LayoutRecordingsShasumAttackerRoute: typeof LayoutRecordingsShasumAttackerRoute
+  LayoutRecordingsShasumSessionsRoute: typeof LayoutRecordingsShasumSessionsRoute
+  LayoutRecordingsShasumIndexRoute: typeof LayoutRecordingsShasumIndexRoute
+}
+
+const LayoutRecordingsShasumRouteChildren: LayoutRecordingsShasumRouteChildren =
+  {
+    LayoutRecordingsShasumAttackerRoute: LayoutRecordingsShasumAttackerRoute,
+    LayoutRecordingsShasumSessionsRoute: LayoutRecordingsShasumSessionsRoute,
+    LayoutRecordingsShasumIndexRoute: LayoutRecordingsShasumIndexRoute,
+  }
+
+const LayoutRecordingsShasumRouteWithChildren =
+  LayoutRecordingsShasumRoute._addFileChildren(
+    LayoutRecordingsShasumRouteChildren,
+  )
 
 interface LayoutSensorsSensorRouteChildren {
   LayoutSensorsSensorEventsRoute: typeof LayoutSensorsSensorEventsRoute
@@ -2454,30 +3140,25 @@ const LayoutClustersKindValueRouteWithChildren =
   )
 
 interface LayoutRouteChildren {
-  LayoutAgentCampaignsRoute: typeof LayoutAgentCampaignsRoute
-  LayoutAlertsRoute: typeof LayoutAlertsRoute
   LayoutAttackersRoute: typeof LayoutAttackersRoute
-  LayoutAuthEventsRoute: typeof LayoutAuthEventsRoute
-  LayoutCanarytokensRoute: typeof LayoutCanarytokensRoute
   LayoutCommandsRoute: typeof LayoutCommandsRoute
-  LayoutCredentialsRoute: typeof LayoutCredentialsRoute
-  LayoutDeadLettersRoute: typeof LayoutDeadLettersRoute
   LayoutHistoryRoute: typeof LayoutHistoryRoute
   LayoutIpsRoute: typeof LayoutIpsRoute
   LayoutKillChainRoute: typeof LayoutKillChainRoute
-  LayoutLlmAnalysisRoute: typeof LayoutLlmAnalysisRoute
-  LayoutMlAnomaliesRoute: typeof LayoutMlAnomaliesRoute
-  LayoutProblemReportsRoute: typeof LayoutProblemReportsRoute
-  LayoutRecordingsRoute: typeof LayoutRecordingsRoute
-  LayoutReportsRoute: typeof LayoutReportsRoute
   LayoutSearchRoute: typeof LayoutSearchRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutSourceHealthRoute: typeof LayoutSourceHealthRoute
   LayoutTopologyRoute: typeof LayoutTopologyRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutAgentCampaignsIdRoute: typeof LayoutAgentCampaignsIdRouteWithChildren
+  LayoutAlertsKeyRoute: typeof LayoutAlertsKeyRouteWithChildren
   LayoutAsnAsnRoute: typeof LayoutAsnAsnRouteWithChildren
+  LayoutAuthEventsIdRoute: typeof LayoutAuthEventsIdRoute
   LayoutCampaignsCidrRoute: typeof LayoutCampaignsCidrRouteWithChildren
+  LayoutCanarytokensIdRoute: typeof LayoutCanarytokensIdRoute
   LayoutCapeShaRoute: typeof LayoutCapeShaRoute
+  LayoutCredentialsIdRoute: typeof LayoutCredentialsIdRoute
+  LayoutDeadLettersIdRoute: typeof LayoutDeadLettersIdRoute
   LayoutEventIdRoute: typeof LayoutEventIdRoute
   LayoutEventsIdRoute: typeof LayoutEventsIdRouteWithChildren
   LayoutGhidraShaRoute: typeof LayoutGhidraShaRoute
@@ -2485,10 +3166,14 @@ interface LayoutRouteChildren {
   LayoutIdentitiesIdRoute: typeof LayoutIdentitiesIdRouteWithChildren
   LayoutInvestigateClusterRoute: typeof LayoutInvestigateClusterRoute
   LayoutInvestigateLookupRoute: typeof LayoutInvestigateLookupRoute
+  LayoutLlmAnalysisIdRoute: typeof LayoutLlmAnalysisIdRouteWithChildren
+  LayoutMlAnomaliesIdRoute: typeof LayoutMlAnomaliesIdRouteWithChildren
   LayoutNetworksCidrRoute: typeof LayoutNetworksCidrRouteWithChildren
   LayoutPayloadAnalysisHashRoute: typeof LayoutPayloadAnalysisHashRoute
   LayoutPayloadWorkbenchResultsRoute: typeof LayoutPayloadWorkbenchResultsRoute
   LayoutPayloadsHashRoute: typeof LayoutPayloadsHashRouteWithChildren
+  LayoutProblemReportsIdRoute: typeof LayoutProblemReportsIdRoute
+  LayoutRecordingsShasumRoute: typeof LayoutRecordingsShasumRouteWithChildren
   LayoutRevdeckShaRoute: typeof LayoutRevdeckShaRoute
   LayoutSandboxJobRoute: typeof LayoutSandboxJobRoute
   LayoutSandboxVncRoute: typeof LayoutSandboxVncRoute
@@ -2496,44 +3181,53 @@ interface LayoutRouteChildren {
   LayoutSessionsIdRoute: typeof LayoutSessionsIdRouteWithChildren
   LayoutSourcesIpRoute: typeof LayoutSourcesIpRouteWithChildren
   LayoutTtyReplayShasumRoute: typeof LayoutTtyReplayShasumRoute
+  LayoutAgentCampaignsIndexRoute: typeof LayoutAgentCampaignsIndexRoute
+  LayoutAlertsIndexRoute: typeof LayoutAlertsIndexRoute
+  LayoutAuthEventsIndexRoute: typeof LayoutAuthEventsIndexRoute
   LayoutCampaignsIndexRoute: typeof LayoutCampaignsIndexRoute
+  LayoutCanarytokensIndexRoute: typeof LayoutCanarytokensIndexRoute
   LayoutCapeIndexRoute: typeof LayoutCapeIndexRoute
   LayoutClustersIndexRoute: typeof LayoutClustersIndexRoute
+  LayoutCredentialsIndexRoute: typeof LayoutCredentialsIndexRoute
+  LayoutDeadLettersIndexRoute: typeof LayoutDeadLettersIndexRoute
   LayoutEventsIndexRoute: typeof LayoutEventsIndexRoute
   LayoutGithubAnalysisIndexRoute: typeof LayoutGithubAnalysisIndexRoute
+  LayoutLlmAnalysisIndexRoute: typeof LayoutLlmAnalysisIndexRoute
+  LayoutMlAnomaliesIndexRoute: typeof LayoutMlAnomaliesIndexRoute
   LayoutPayloadsIndexRoute: typeof LayoutPayloadsIndexRoute
+  LayoutProblemReportsIndexRoute: typeof LayoutProblemReportsIndexRoute
+  LayoutRecordingsIndexRoute: typeof LayoutRecordingsIndexRoute
+  LayoutReportsIndexRoute: typeof LayoutReportsIndexRoute
   LayoutRevdeckIndexRoute: typeof LayoutRevdeckIndexRoute
   LayoutSensorsIndexRoute: typeof LayoutSensorsIndexRoute
+  LayoutCanarytokensTriggersIdRoute: typeof LayoutCanarytokensTriggersIdRoute
   LayoutClustersKindValueRoute: typeof LayoutClustersKindValueRouteWithChildren
   LayoutInvestigateCidrCidrRoute: typeof LayoutInvestigateCidrCidrRoute
   LayoutInvestigateIpIpRoute: typeof LayoutInvestigateIpIpRoute
+  LayoutReportsDefinitionsIdRoute: typeof LayoutReportsDefinitionsIdRoute
+  LayoutReportsGeneratedIdRoute: typeof LayoutReportsGeneratedIdRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
-  LayoutAgentCampaignsRoute: LayoutAgentCampaignsRoute,
-  LayoutAlertsRoute: LayoutAlertsRoute,
   LayoutAttackersRoute: LayoutAttackersRoute,
-  LayoutAuthEventsRoute: LayoutAuthEventsRoute,
-  LayoutCanarytokensRoute: LayoutCanarytokensRoute,
   LayoutCommandsRoute: LayoutCommandsRoute,
-  LayoutCredentialsRoute: LayoutCredentialsRoute,
-  LayoutDeadLettersRoute: LayoutDeadLettersRoute,
   LayoutHistoryRoute: LayoutHistoryRoute,
   LayoutIpsRoute: LayoutIpsRoute,
   LayoutKillChainRoute: LayoutKillChainRoute,
-  LayoutLlmAnalysisRoute: LayoutLlmAnalysisRoute,
-  LayoutMlAnomaliesRoute: LayoutMlAnomaliesRoute,
-  LayoutProblemReportsRoute: LayoutProblemReportsRoute,
-  LayoutRecordingsRoute: LayoutRecordingsRoute,
-  LayoutReportsRoute: LayoutReportsRoute,
   LayoutSearchRoute: LayoutSearchRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutSourceHealthRoute: LayoutSourceHealthRoute,
   LayoutTopologyRoute: LayoutTopologyRoute,
   LayoutIndexRoute: LayoutIndexRoute,
+  LayoutAgentCampaignsIdRoute: LayoutAgentCampaignsIdRouteWithChildren,
+  LayoutAlertsKeyRoute: LayoutAlertsKeyRouteWithChildren,
   LayoutAsnAsnRoute: LayoutAsnAsnRouteWithChildren,
+  LayoutAuthEventsIdRoute: LayoutAuthEventsIdRoute,
   LayoutCampaignsCidrRoute: LayoutCampaignsCidrRouteWithChildren,
+  LayoutCanarytokensIdRoute: LayoutCanarytokensIdRoute,
   LayoutCapeShaRoute: LayoutCapeShaRoute,
+  LayoutCredentialsIdRoute: LayoutCredentialsIdRoute,
+  LayoutDeadLettersIdRoute: LayoutDeadLettersIdRoute,
   LayoutEventIdRoute: LayoutEventIdRoute,
   LayoutEventsIdRoute: LayoutEventsIdRouteWithChildren,
   LayoutGhidraShaRoute: LayoutGhidraShaRoute,
@@ -2541,10 +3235,14 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutIdentitiesIdRoute: LayoutIdentitiesIdRouteWithChildren,
   LayoutInvestigateClusterRoute: LayoutInvestigateClusterRoute,
   LayoutInvestigateLookupRoute: LayoutInvestigateLookupRoute,
+  LayoutLlmAnalysisIdRoute: LayoutLlmAnalysisIdRouteWithChildren,
+  LayoutMlAnomaliesIdRoute: LayoutMlAnomaliesIdRouteWithChildren,
   LayoutNetworksCidrRoute: LayoutNetworksCidrRouteWithChildren,
   LayoutPayloadAnalysisHashRoute: LayoutPayloadAnalysisHashRoute,
   LayoutPayloadWorkbenchResultsRoute: LayoutPayloadWorkbenchResultsRoute,
   LayoutPayloadsHashRoute: LayoutPayloadsHashRouteWithChildren,
+  LayoutProblemReportsIdRoute: LayoutProblemReportsIdRoute,
+  LayoutRecordingsShasumRoute: LayoutRecordingsShasumRouteWithChildren,
   LayoutRevdeckShaRoute: LayoutRevdeckShaRoute,
   LayoutSandboxJobRoute: LayoutSandboxJobRoute,
   LayoutSandboxVncRoute: LayoutSandboxVncRoute,
@@ -2552,17 +3250,31 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutSessionsIdRoute: LayoutSessionsIdRouteWithChildren,
   LayoutSourcesIpRoute: LayoutSourcesIpRouteWithChildren,
   LayoutTtyReplayShasumRoute: LayoutTtyReplayShasumRoute,
+  LayoutAgentCampaignsIndexRoute: LayoutAgentCampaignsIndexRoute,
+  LayoutAlertsIndexRoute: LayoutAlertsIndexRoute,
+  LayoutAuthEventsIndexRoute: LayoutAuthEventsIndexRoute,
   LayoutCampaignsIndexRoute: LayoutCampaignsIndexRoute,
+  LayoutCanarytokensIndexRoute: LayoutCanarytokensIndexRoute,
   LayoutCapeIndexRoute: LayoutCapeIndexRoute,
   LayoutClustersIndexRoute: LayoutClustersIndexRoute,
+  LayoutCredentialsIndexRoute: LayoutCredentialsIndexRoute,
+  LayoutDeadLettersIndexRoute: LayoutDeadLettersIndexRoute,
   LayoutEventsIndexRoute: LayoutEventsIndexRoute,
   LayoutGithubAnalysisIndexRoute: LayoutGithubAnalysisIndexRoute,
+  LayoutLlmAnalysisIndexRoute: LayoutLlmAnalysisIndexRoute,
+  LayoutMlAnomaliesIndexRoute: LayoutMlAnomaliesIndexRoute,
   LayoutPayloadsIndexRoute: LayoutPayloadsIndexRoute,
+  LayoutProblemReportsIndexRoute: LayoutProblemReportsIndexRoute,
+  LayoutRecordingsIndexRoute: LayoutRecordingsIndexRoute,
+  LayoutReportsIndexRoute: LayoutReportsIndexRoute,
   LayoutRevdeckIndexRoute: LayoutRevdeckIndexRoute,
   LayoutSensorsIndexRoute: LayoutSensorsIndexRoute,
+  LayoutCanarytokensTriggersIdRoute: LayoutCanarytokensTriggersIdRoute,
   LayoutClustersKindValueRoute: LayoutClustersKindValueRouteWithChildren,
   LayoutInvestigateCidrCidrRoute: LayoutInvestigateCidrCidrRoute,
   LayoutInvestigateIpIpRoute: LayoutInvestigateIpIpRoute,
+  LayoutReportsDefinitionsIdRoute: LayoutReportsDefinitionsIdRoute,
+  LayoutReportsGeneratedIdRoute: LayoutReportsGeneratedIdRoute,
 }
 
 const LayoutRouteWithChildren =

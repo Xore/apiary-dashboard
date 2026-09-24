@@ -1,0 +1,72 @@
+import { useState } from 'react'
+import { Heading, Text } from '@astryxdesign/core/Text'
+import { List, ListItem } from '@astryxdesign/core/List'
+import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
+import { Selector } from '@astryxdesign/core/Selector'
+import { VStack } from '@astryxdesign/core/Stack'
+import { useRouter } from '@tanstack/react-router'
+import { setProblemStatus } from '#/data/queries'
+import type { ProblemReport, ProblemStatus } from '#/data/types'
+
+export function ReportInspector({ report }: { report: ProblemReport }) {
+  const router = useRouter()
+  const [busy, setBusy] = useState(false)
+  return (
+    <VStack gap={4}>
+      <Selector
+        label="Status"
+        value={report.status}
+        isDisabled={busy}
+        onChange={async (status) => {
+          setBusy(true)
+          try {
+            await setProblemStatus(report.id, status as ProblemStatus)
+            await router.invalidate()
+          } finally {
+            setBusy(false)
+          }
+        }}
+        options={['open', 'triaged', 'fixed', 'wontfix']}
+      />
+      <MetadataList label={{ position: 'start', width: 96 }}>
+        <MetadataListItem label="Page">
+          <Text type="code">{report.page}</Text>
+        </MetadataListItem>
+        <MetadataListItem label="Expected">{report.expected}</MetadataListItem>
+        <MetadataListItem label="Actual">{report.actual}</MetadataListItem>
+        <MetadataListItem label="By">{report.submittedBy}</MetadataListItem>
+        <MetadataListItem label="Browser">{report.userAgent}</MetadataListItem>
+        <MetadataListItem label="Snapshot">
+          {report.hasSnapshot ? 'DOM snapshot attached' : 'none'}
+        </MetadataListItem>
+      </MetadataList>
+      <VStack gap={2}>
+        <Heading level={3}>Action trail</Heading>
+        <List density="compact" hasDividers>
+          {report.actionTrail.map((step, i) => (
+            <ListItem key={i} label={`${i + 1}. ${step}`} />
+          ))}
+        </List>
+      </VStack>
+      {[...report.consoleErrors, ...report.networkFailures].length > 0 && (
+        <VStack gap={2}>
+          <Heading level={3}>Errors</Heading>
+          {[...report.consoleErrors, ...report.networkFailures].map((line) => (
+            <Text key={line} type="code">
+              {line}
+            </Text>
+          ))}
+        </VStack>
+      )}
+      <VStack gap={2}>
+        <Heading level={3}>API calls</Heading>
+        {report.apiCalls.map((call) => (
+          <Text
+            key={`${call.method}${call.path}`}
+            type="code"
+          >{`${call.status} ${call.method} ${call.path}`}</Text>
+        ))}
+      </VStack>
+    </VStack>
+  )
+}

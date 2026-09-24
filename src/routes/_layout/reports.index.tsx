@@ -2,12 +2,9 @@ import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Button } from '@astryxdesign/core/Button'
 import { CheckboxList, CheckboxListItem } from '@astryxdesign/core/CheckboxList'
-import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog'
 import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { FormLayout } from '@astryxdesign/core/FormLayout'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Icon } from '@astryxdesign/core/Icon'
-import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { NumberInput } from '@astryxdesign/core/NumberInput'
 import { RadioList, RadioListItem } from '@astryxdesign/core/RadioList'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
@@ -20,14 +17,15 @@ import type { TableColumn } from '@astryxdesign/core/Table'
 import { Heading, Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
-import { DocumentTextIcon } from '@heroicons/react/24/outline'
 import { useViewTabs } from '#/components/ViewTabs'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
 import { deleteGeneratedReport, deleteReportDefinition, generateReport, getReports, saveReportDefinition } from '#/data/queries'
 import type { GeneratedReport, ReportDefinition, ReportFrequency, ReportsData } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { Link } from '@astryxdesign/core/Link'
+import { ReviewStep, WEEKDAYS, WINDOWS, describeSchedule } from '#/components/details/Report'
 
 const STEPS = [
   { id: 'design', label: 'Design', lede: 'What kind of report this is, and which sections it contains.' },
@@ -40,37 +38,19 @@ const STEPS = [
 type Step = (typeof STEPS)[number]['id']
 const BUILD_STEPS = STEPS.slice(0, 5)
 
-const WINDOWS = [
-  { value: '1h', label: '1 hour' },
-  { value: '6h', label: '6 hours' },
-  { value: '24h', label: '24 hours' },
-  { value: '7d', label: '7 days' },
-  { value: '30d', label: '30 days' },
-]
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const PRESETS: Array<{ id: string; name: string; description: string; schedule: NonNullable<ReportDefinition['schedule']> }> = [
   { id: 'weekly-board', name: 'Weekly board briefing', description: 'A high-level roundup, once a week.', schedule: { frequency: 'weekly', hour: 6, minute: 0, weekday: 1, monthDay: 1 } },
   { id: 'daily-ops', name: 'Daily ops digest', description: 'Every morning before the stand-up.', schedule: { frequency: 'daily', hour: 6, minute: 30, weekday: 1, monthDay: 1 } },
   { id: 'monthly-exec', name: 'Monthly executive', description: 'First of the month, for the long view.', schedule: { frequency: 'monthly', hour: 7, minute: 0, weekday: 1, monthDay: 1 } },
 ]
 
-export const Route = createFileRoute('/_layout/reports')({
+export const Route = createFileRoute('/_layout/reports/')({
   validateSearch: (search: Record<string, unknown>): { step?: Step } => ({
     step: STEPS.some((s) => s.id === search.step) ? (search.step as Step) : undefined,
   }),
   loader: () => getReports(),
   component: ReportsPage,
 })
-
-const pad2 = (n: number) => String(n).padStart(2, '0')
-
-function describeSchedule(schedule: ReportDefinition['schedule']): string {
-  if (!schedule) return 'on demand'
-  const at = `${pad2(schedule.hour)}:${pad2(schedule.minute)} UTC`
-  if (schedule.frequency === 'weekly') return `weekly on ${WEEKDAYS[schedule.weekday]} at ${at}`
-  if (schedule.frequency === 'monthly') return `monthly on day ${schedule.monthDay} at ${at}`
-  return `daily at ${at}`
-}
 
 function emptyDefinition(data: ReportsData): ReportDefinition {
   const template = data.templates[0]
@@ -205,33 +185,11 @@ function BrandingStep({ draft, update }: StepProps) {
   )
 }
 
-function ReviewStep({ draft, data }: StepProps) {
-  const template = data.templates.find((t) => t.id === draft.template)
-  const scope = [draft.scope.ip && `IP ${draft.scope.ip}`, draft.scope.sensor && `sensor ${draft.scope.sensor}`, draft.scope.port && `port ${draft.scope.port}`, draft.scope.signature && `signature “${draft.scope.signature}”`].filter(Boolean)
-  return (
-    <MetadataList label={{ position: 'start', width: 136 }}>
-      <MetadataListItem label="Name">{draft.name || '(unnamed)'}</MetadataListItem>
-      <MetadataListItem label="Template">{template?.name ?? draft.template}</MetadataListItem>
-      <MetadataListItem label="Sections">
-        {draft.elements.map((id) => data.elements.find((e) => e.id === id)?.label ?? id).join(', ') || 'none'}
-      </MetadataListItem>
-      <MetadataListItem label="Theme">{draft.theme}</MetadataListItem>
-      <MetadataListItem label="Window">{WINDOWS.find((w) => w.value === draft.scope.window)?.label ?? draft.scope.window}</MetadataListItem>
-      <MetadataListItem label="Scope">{scope.length ? scope.join(', ') : 'all captured activity'}</MetadataListItem>
-      <MetadataListItem label="Schedule">{describeSchedule(draft.schedule)}</MetadataListItem>
-      <MetadataListItem label="Cover title">{draft.branding.title}</MetadataListItem>
-      <MetadataListItem label="Classification">{draft.branding.classification}</MetadataListItem>
-    </MetadataList>
-  )
-}
-
-// ---- Library ---------------------------------------------------------------
-
 function Library({ data, onEdit }: { data: ReportsData; onEdit: (definition: ReportDefinition) => void }) {
   const router = useRouter()
   const [busy, setBusy] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<{ kind: 'definition' | 'report'; id: string; name: string } | null>(null)
-  const [viewing, setViewing] = useState<GeneratedReport | null>(null)
+  const navigate = useNavigate()
   const act = async (id: string, write: () => Promise<unknown>) => {
     setBusy(id)
     try {
@@ -243,7 +201,7 @@ function Library({ data, onEdit }: { data: ReportsData; onEdit: (definition: Rep
   }
 
   const definitionColumns: TableColumn<ReportDefinition>[] = [
-    { key: 'name', header: 'Definition', width: proportional(2), renderCell: (row) => <Text weight="semibold">{row.name}</Text> },
+    { key: 'name', header: 'Definition', width: proportional(2), renderCell: (row) => <Link href={`/reports/definitions/${row.id}`}>{row.name}</Link> },
     { key: 'template', header: 'Template', width: pixel(160), renderCell: (row) => <Token size="sm" label={data.templates.find((t) => t.id === row.template)?.name ?? row.template} /> },
     { key: 'schedule', header: 'Schedule', width: proportional(2), renderCell: (row) => describeSchedule(row.schedule) },
     {
@@ -261,7 +219,7 @@ function Library({ data, onEdit }: { data: ReportsData; onEdit: (definition: Rep
   ]
   const reportColumns: TableColumn<GeneratedReport>[] = [
     { key: 'createdAt', header: 'Created', width: pixel(184), renderCell: (row) => <Text type="supporting">{formatDateTime(row.createdAt)}</Text> },
-    { key: 'title', header: 'Title', width: proportional(2) },
+    { key: 'title', header: 'Title', width: proportional(2), renderCell: (row) => <Link href={`/reports/generated/${row.id}`}>{row.title}</Link> },
     { key: 'origin', header: 'Origin', width: pixel(96), renderCell: (row) => <Token size="sm" label={row.origin} color={row.origin === 'schedule' ? 'blue' : 'gray'} /> },
     { key: 'sizeBytes', header: 'Size', width: pixel(80), align: 'end', renderCell: (row) => `${Math.round(row.sizeBytes / 1024)} KB` },
     {
@@ -270,7 +228,7 @@ function Library({ data, onEdit }: { data: ReportsData; onEdit: (definition: Rep
       width: pixel(168),
       renderCell: (row) => (
         <HStack gap={1}>
-          <Button label="View" size="sm" variant="secondary" onClick={() => setViewing(row)} />
+          <Button label="View" size="sm" variant="secondary" onClick={() => void navigate({ href: `/reports/generated/${row.id}` })} />
           <Button label="Delete" size="sm" variant="ghost" onClick={() => setConfirm({ kind: 'report', id: row.id, name: row.title })} />
         </HStack>
       ),
@@ -307,14 +265,6 @@ function Library({ data, onEdit }: { data: ReportsData; onEdit: (definition: Rep
           setConfirm(null)
         }}
       />
-      <Dialog isOpen={viewing !== null} onOpenChange={(open) => !open && setViewing(null)} width={720} padding={4}>
-        <DialogHeader title={viewing?.title ?? 'Report'} subtitle={viewing ? formatDateTime(viewing.createdAt) : undefined} onOpenChange={(open) => !open && setViewing(null)} />
-        <EmptyState
-          icon={<Icon icon={DocumentTextIcon} size="lg" />}
-          title="PDF preview"
-          description="The generated PDF renders here once the reports backend is wired. Mock data has no document to show."
-        />
-      </Dialog>
     </VStack>
   )
 }
