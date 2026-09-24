@@ -2,12 +2,13 @@ import { BreadcrumbItem, Breadcrumbs } from '@astryxdesign/core/Breadcrumbs'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Kbd } from '@astryxdesign/core/Kbd'
+import { NavIcon } from '@astryxdesign/core/NavIcon'
 import { HStack, StackItem } from '@astryxdesign/core/Stack'
 import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
-import { TopNav } from '@astryxdesign/core/TopNav'
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav'
+import { MagnifyingGlassIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
 import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
 import { ViewTabsBar } from './ViewTabs'
 import { Selector } from '@astryxdesign/core/Selector'
@@ -54,12 +55,20 @@ export function ShellTopNav({ onOpenPalette }: { onOpenPalette: () => void }) {
   return (
     <TopNav
       label="Page header"
+      heading={
+        <TopNavHeading
+          logo={<NavIcon icon={<Icon icon={ShieldCheckIcon} size="sm" />} />}
+          heading="APIARY"
+          subheading="Honeypot dashboard"
+          headingHref="/"
+        />
+      }
       startContent={
         <HStack gap={4} vAlign="center">
           <ShellBreadcrumbs />
           {/* TopNav sizes its start slot to content, so cap the tabs to what the
-              sidebar, breadcrumbs, and end controls leave; past that they scroll. */}
-          <StackItem size="fill" style={{ maxWidth: 'max(240px, calc(100vw - 820px))' }}>
+              heading, breadcrumbs, and end controls leave; past that they scroll. */}
+          <StackItem size="fill" style={{ maxWidth: 'max(240px, calc(100vw - 860px))' }}>
             <ViewTabsBar />
           </StackItem>
         </HStack>
