@@ -10,6 +10,9 @@ import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { getDeadLetters, purgeDeadLetters } from '#/data/queries'
+import { describeError } from '#/lib/actionError'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import type { DeadLetter } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 
@@ -36,13 +39,20 @@ function DeadLettersPage() {
   const [draft, setDraft] = useState(q ?? '')
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string>()
+  const isAdmin = useIsAdmin()
 
   return (
     <>
       <RecordList
         title="Ingest dead letters"
         description="Documents Elasticsearch rejected, with their original error and field shape for remediation. An empty list is the healthy state."
-        actions={<Button label={`Purge ${rows.length} shown`} size="sm" variant="destructive" isDisabled={rows.length === 0} onClick={() => setConfirmOpen(true)} />}
+        actions={
+          <HStack gap={2} vAlign="center">
+            {error && <FieldStatus type="error" variant="detached" message={error} />}
+            <Button label={`Purge ${rows.length} shown`} size="sm" variant="destructive" isDisabled={rows.length === 0 || !isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />
+          </HStack>
+        }
         toolbar={
           <HStack gap={2} vAlign="end">
             <StackItem size="fill">
@@ -66,9 +76,12 @@ function DeadLettersPage() {
         isActionLoading={busy}
         onAction={async () => {
           setBusy(true)
+          setError(undefined)
           try {
             await purgeDeadLetters(rows.map((r) => r.id))
             await router.invalidate()
+          } catch (e) {
+            setError(describeError(e))
           } finally {
             setBusy(false)
             setConfirmOpen(false)

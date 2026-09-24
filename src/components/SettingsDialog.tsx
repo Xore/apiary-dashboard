@@ -38,6 +38,9 @@ import { getSettings, rollbackConfig, runServiceAction, saveAdminSection, savePr
 import type { AuditEntry, ConfigRevision, Preferences, ServiceStatus, SettingsData } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 import { NAV_SECTIONS } from '#/lib/nav'
+import { FieldStatus } from '@astryxdesign/core/FieldStatus'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useGuardedAction } from '#/lib/useGuardedAction'
 
 export type { PaneId } from './settings/registry'
 export { PANE_IDS } from './settings/registry'
@@ -64,22 +67,27 @@ function useStagedForm<T>(panel: PaneId, saved: T, save: (form: T) => Promise<un
   const { reload, setDirty } = useSettings()
   const [form, setForm] = useState(saved)
   const [busy, setBusy] = useState(false)
+  const { error, guard } = useGuardedAction()
+  const isAdmin = useIsAdmin()
   const dirty = JSON.stringify(form) !== JSON.stringify(saved)
   useEffect(() => setDirty(panel, dirty), [panel, dirty, setDirty])
   useEffect(() => () => setDirty(panel, false), [panel, setDirty])
   const actions = (isValid = true) => (
     <HStack gap={2} hAlign="end" vAlign="center">
-      {dirty && <Text type="supporting">Unsaved changes</Text>}
-      <Button label="Revert" variant="secondary" isDisabled={!dirty} onClick={() => setForm(saved)} />
+      {error ? <FieldStatus type="error" variant="detached" message={error} /> : dirty && <Text type="supporting">Unsaved changes</Text>}
+      <Button label="Revert" variant="secondary" isDisabled={!dirty || !isAdmin} onClick={() => setForm(saved)} />
       <Button
         label="Save"
-        isDisabled={!dirty || !isValid}
+        isDisabled={!dirty || !isValid || !isAdmin}
+        tooltip={isAdmin ? undefined : ADMIN_REQUIRED}
         isLoading={busy}
         onClick={async () => {
           setBusy(true)
           try {
-            await save(form)
-            await reload()
+            await guard(async () => {
+              await save(form)
+              await reload()
+            })
           } finally {
             setBusy(false)
           }
@@ -290,11 +298,15 @@ function UsersPanel() {
 function ServicesPanel() {
   const { data, reload } = useSettings()
   const [busy, setBusy] = useState<string | null>(null)
+  const { error, guard } = useGuardedAction()
+  const isAdmin = useIsAdmin()
   const act = async (name: string, action: 'start' | 'stop' | 'restart') => {
     setBusy(name)
     try {
-      await runServiceAction(name, action)
-      await reload()
+      await guard(async () => {
+        await runServiceAction(name, action)
+        await reload()
+      })
     } finally {
       setBusy(null)
     }
@@ -310,11 +322,11 @@ function ServicesPanel() {
       renderCell: (row) => (
         <HStack gap={1}>
           {row.state === 'exited' ? (
-            <Button label="Start" size="sm" isLoading={busy === row.name} onClick={() => act(row.name, 'start')} />
+            <Button label="Start" size="sm" isLoading={busy === row.name} isDisabled={!isAdmin} onClick={() => act(row.name, 'start')} />
           ) : (
             <>
-              <Button label="Restart" size="sm" variant="secondary" isLoading={busy === row.name} onClick={() => act(row.name, 'restart')} />
-              <Button label="Stop" size="sm" variant="ghost" isDisabled={busy === row.name} onClick={() => act(row.name, 'stop')} />
+              <Button label="Restart" size="sm" variant="secondary" isLoading={busy === row.name} isDisabled={!isAdmin} onClick={() => act(row.name, 'restart')} />
+              <Button label="Stop" size="sm" variant="ghost" isDisabled={busy === row.name || !isAdmin} onClick={() => act(row.name, 'stop')} />
             </>
           )}
         </HStack>
@@ -322,9 +334,12 @@ function ServicesPanel() {
     },
   ]
   return (
-    <SettingsCard>
+    <>
+      {error && <Banner status="error" title="Not done" description={error} />}
+      <SettingsCard>
       <SettingsRow setting="services" detail={<Table data={data.services} columns={columns} idKey="name" density="compact" />} />
     </SettingsCard>
+    </>
   )
 }
 
@@ -332,15 +347,19 @@ function HistoryPanel() {
   const { data, reload } = useSettings()
   const [target, setTarget] = useState<ConfigRevision | null>(null)
   const [busy, setBusy] = useState(false)
+  const { error, guard } = useGuardedAction()
+  const isAdmin = useIsAdmin()
   const columns: TableColumn<ConfigRevision>[] = [
     { key: 'at', header: 'When', width: pixel(184), renderCell: (row) => <Text type="supporting">{formatDateTime(row.at)}</Text> },
     { key: 'section', header: 'Section', width: pixel(136), renderCell: (row) => <Token size="sm" label={row.section} /> },
     { key: 'summary', header: 'Change', width: proportional(2) },
     { key: 'actor', header: 'By', width: pixel(96) },
-    { key: 'id', header: '', width: pixel(112), renderCell: (row) => <Button label="Roll back" size="sm" variant="secondary" onClick={() => setTarget(row)} /> },
+    { key: 'id', header: '', width: pixel(112), renderCell: (row) => <Button label="Roll back" size="sm" variant="secondary" isDisabled={!isAdmin} onClick={() => setTarget(row)} /> },
   ]
   return (
-    <SettingsCard>
+    <>
+      {error && <Banner status="error" title="Not done" description={error} />}
+      <SettingsCard>
       <SettingsRow
         setting="history"
         detail={
@@ -362,8 +381,10 @@ function HistoryPanel() {
                       onClick={async () => {
                         setBusy(true)
                         try {
-                          await rollbackConfig(target.id)
-                          await reload()
+                          await guard(async () => {
+                            await rollbackConfig(target.id)
+                            await reload()
+                          })
                         } finally {
                           setBusy(false)
                           setTarget(null)
@@ -378,6 +399,7 @@ function HistoryPanel() {
         }
       />
     </SettingsCard>
+    </>
   )
 }
 
@@ -450,6 +472,9 @@ function PanelBody({ panel }: { panel: PaneId }) {
 export function SettingsDialog({ pane, onPane, onClose }: { pane: PaneId; onPane: (pane: PaneId) => void; onClose: () => void }) {
   const titleId = useId()
   const navigate = useNavigate()
+  // Administration panels are visible to every role and editable by admins.
+  const isAdmin = useIsAdmin()
+  const readOnly = isAdminPanel(pane) && !isAdmin
   const isNarrow = useMediaQuery(NARROW_VIEWPORT)
   const [data, setData] = useState<SettingsData | null>(null)
   const [prefs, setPrefs] = useState<Preferences | null>(null)
@@ -548,7 +573,13 @@ export function SettingsDialog({ pane, onPane, onClose }: { pane: PaneId; onPane
           <div aria-hidden style={{ width: 32 }} />
         </HStack>
         {discardBanner}
-        <PanelBody key={pane} panel={pane} />
+        {readOnly && <Banner status="info" title="Read only" description="Changing administration settings needs the admin role. You can see them; ask an admin to change them." />}
+        {/* A disabled fieldset disables every control inside it at once. */}
+        <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+          <VStack gap={4}>
+            <PanelBody key={pane} panel={pane} />
+          </VStack>
+        </fieldset>
       </PanelColumn>
     </SettingsContext.Provider>
   )

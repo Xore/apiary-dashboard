@@ -96,6 +96,9 @@ done
 step "SSR link crawl, every entity tab"
 bun scripts/crawl.ts "http://localhost:$PORT" 2 || failed=1
 
+step "every route shape under every mock scenario"
+bun scripts/crawl.ts "http://localhost:$PORT" 1 --scenarios || failed=1
+
 if [[ "$failed" -ne 0 ]]; then
   echo; echo "server log:"; tail -20 "$WORK/server.log"
   exit 1

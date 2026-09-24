@@ -1,4 +1,5 @@
 import { BreadcrumbItem, Breadcrumbs } from '@astryxdesign/core/Breadcrumbs'
+import { MockScenarioMenu } from './MockScenarioMenu'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Kbd } from '@astryxdesign/core/Kbd'
@@ -6,7 +7,6 @@ import { NavIcon } from '@astryxdesign/core/NavIcon'
 import { HStack, StackItem } from '@astryxdesign/core/Stack'
 import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Text } from '@astryxdesign/core/Text'
-import { Token } from '@astryxdesign/core/Token'
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav'
 import { MagnifyingGlassIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
 import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
@@ -89,7 +89,7 @@ export function ShellTopNav({ onOpenPalette }: { onOpenPalette: () => void }) {
               <Kbd keys="⌘K" />
             </HStack>
           </Button>
-          <Token label="Mock data" size="sm" color="orange" />
+          <MockScenarioMenu />
           <HStack gap={1.5} vAlign="center">
             <StatusDot variant="success" label="Live feed connected" isPulsing />
             <Text type="supporting">Live</Text>

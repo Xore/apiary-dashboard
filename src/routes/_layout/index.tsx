@@ -304,7 +304,7 @@ function OverviewPage() {
             ))}
           </Grid>
         )}
-        {view === 'live' && <LiveView views={views} recent={overview.recentEvents} timeline={overview.timeline} start={overview.timeline[0].time} />}
+        {view === 'live' && <LiveView views={views} recent={overview.recentEvents} timeline={overview.timeline} start={overview.timeline.at(0)?.time ?? overview.generatedAt} />}
         {view === 'health' && <HealthView views={views} />}
         {view === 'threats' && <ThreatsView views={views} section={section} />}
         {view === 'behavior' && <BehaviorView views={views} section={section} />}

@@ -70,6 +70,18 @@ function toRows(buckets: TimeBucket[], series: Series[]): TimelineRow[] {
   })
 }
 
+/** A chart with nothing to draw: the space it would take, saying so,
+ * instead of axes around nothing (or an SVG sized by Infinity). */
+function ChartEmpty({ height, label = 'Nothing in this window.' }: { height: number; label?: string }) {
+  return (
+    <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: 'var(--color-background-muted)' }}>
+      <Text type="supporting" color="secondary">
+        {label}
+      </Text>
+    </div>
+  )
+}
+
 function Swatch({ color }: { color: string }) {
   return <Icon icon={StopIcon} size="xsm" style={{ color }} />
 }
@@ -106,6 +118,7 @@ function TimelineTooltip({
 
 /** Hourly events stacked by protocol. */
 export function ProtocolTimeline({ buckets }: { buckets: TimeBucket[] }) {
+  if (!buckets.some((b) => b.total > 0)) return <ChartEmpty height={260} label="No events in this window." />
   const series = seriesFor(buckets)
   const rows = toRows(buckets, series)
   return (
@@ -151,6 +164,7 @@ export function ProtocolTimeline({ buckets }: { buckets: TimeBucket[] }) {
 }
 
 export function Sparkline({ data }: { data: number[] }) {
+  if (data.length === 0) return <div style={{ height: 36 }} />
   const rows = data.map((value, index) => ({ index, value }))
   return (
     <ResponsiveContainer width="100%" height={36}>
@@ -214,6 +228,7 @@ export function TimeLines<T extends { time: string }>({
   series: LineSeries[]
   domain?: [number, number]
 }) {
+  if (data.length === 0) return <ChartEmpty height={220} />
   return (
     <VStack gap={3}>
       <ResponsiveContainer width="100%" height={220}>
@@ -272,6 +287,7 @@ function ValueTooltip({ active, payload }: { active?: boolean; payload?: Array<{
 /** Left-to-right flow between named stages (kill-chain tactics, pipeline
  * components). Labels sit above each node so neighbours never collide. */
 export function FlowSankey({ flow, height = 420 }: { flow: KillChainData['flow']; height?: number }) {
+  if (flow.links.length === 0) return <ChartEmpty height={height} label="No flow to show in this window." />
   return (
     <ResponsiveContainer width="100%" height={height}>
       <Sankey
@@ -307,6 +323,7 @@ export function FlowSankey({ flow, height = 420 }: { flow: KillChainData['flow']
 
 /** Each campaign as a bar from first to last observed activity. */
 export function CampaignTimeline({ rows }: { rows: KillChainData['timeline'] }) {
+  if (rows.length === 0) return <ChartEmpty height={160} label="No campaigns in this window." />
   const data = rows.map((row) => ({ ...row, span: [Date.parse(row.first), Date.parse(row.last)] as [number, number] }))
   const min = Math.min(...data.map((d) => d.span[0]))
   const max = Math.max(...data.map((d) => d.span[1]))
@@ -351,6 +368,7 @@ const HEAT_STEPS = [18, 34, 52, 72, 92]
 /** ATT&CK techniques grouped by tactic; darker = more observed events (one
  * hue, light to dark), never severity. */
 export function CoverageHeatmap({ tactics, cells }: { tactics: string[]; cells: KillChainData['coverage'] }) {
+  if (cells.length === 0 || tactics.length === 0) return <ChartEmpty height={160} label="No techniques observed in this window." />
   const max = Math.max(1, ...cells.map((c) => c.events))
   const step = (events: number) => HEAT_STEPS[Math.min(HEAT_STEPS.length - 1, Math.floor((Math.log2(events + 1) / Math.log2(max + 1)) * HEAT_STEPS.length))]
   const columns = tactics.map((tactic) => cells.filter((c) => c.tactic === tactic))
@@ -410,6 +428,7 @@ const HEAT = [12, 28, 46, 66, 88]
 /** Sensors × hours, one hue light→dark; the exact count is in each cell's
  * tooltip. */
 export function SensorHeatmap({ rows, startIso }: { rows: HeatmapRow[]; startIso: string }) {
+  if (rows.length === 0) return <ChartEmpty height={160} label="No sensors reporting." />
   const max = Math.max(1, ...rows.flatMap((r) => r.cells))
   const labelW = 132
   const cell = 26
@@ -455,6 +474,7 @@ export function SensorHeatmap({ rows, startIso }: { rows: HeatmapRow[]; startIso
 
 /** Horizontal bars for a leaderboard, largest first, one hue. */
 export function RankBars({ rows, height }: { rows: CountRow[]; height?: number }) {
+  if (rows.length === 0) return <ChartEmpty height={height ?? 140} />
   const h = height ?? Math.max(140, rows.length * 30 + 20)
   return (
     <ResponsiveContainer width="100%" height={h}>
@@ -487,6 +507,7 @@ export function SeriesLines({
   format?: (value: number) => string
   dayTicks?: boolean
 }) {
+  if (data.length === 0) return <ChartEmpty height={240} />
   return (
     <VStack gap={3}>
       <ResponsiveContainer width="100%" height={240}>
@@ -543,6 +564,7 @@ export function SeriesLines({
 
 /** Vertical bars over ordered buckets (a histogram). */
 export function Histogram({ rows }: { rows: CountRow[] }) {
+  if (rows.length === 0) return <ChartEmpty height={240} />
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={rows} margin={{ top: 16, right: 8, left: 0, bottom: 0 }} barCategoryGap={8}>

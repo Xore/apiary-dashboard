@@ -6,22 +6,31 @@ import { Selector } from '@astryxdesign/core/Selector'
 import { VStack } from '@astryxdesign/core/Stack'
 import { useRouter } from '@tanstack/react-router'
 import { setProblemStatus } from '#/data/queries'
+import { describeError } from '#/lib/actionError'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 import type { ProblemReport, ProblemStatus } from '#/data/types'
 
 export function ReportInspector({ report }: { report: ProblemReport }) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string>()
+  const isAdmin = useIsAdmin()
   return (
     <VStack gap={4}>
       <Selector
         label="Status"
         value={report.status}
-        isDisabled={busy}
+        isDisabled={busy || !isAdmin}
+        description={isAdmin ? undefined : ADMIN_REQUIRED}
+        status={error ? { type: 'error', message: error } : undefined}
         onChange={async (status) => {
           setBusy(true)
+          setError(undefined)
           try {
             await setProblemStatus(report.id, status as ProblemStatus)
             await router.invalidate()
+          } catch (e) {
+            setError(describeError(e))
           } finally {
             setBusy(false)
           }

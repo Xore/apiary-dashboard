@@ -14,6 +14,8 @@ import { queuePayloadAction } from '#/data/queries'
 import type { GithubStatus, GithubAnalysis } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 import { EntityLink } from '../EntityLink'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useGuardedAction } from '#/lib/useGuardedAction'
 
 const STATUS_BANNER: Record<Exclude<GithubStatus, 'published'>, { title: string; description: string }> = {
   dry_run: { title: 'Dry run', description: 'The pipeline ran without publishing; no scanner results were collected.' },
@@ -25,12 +27,14 @@ const VERDICT_COLOR = { malicious: 'red', suspicious: 'orange', undetected: 'gra
 
 export function GithubResult({ g }: { g: GithubAnalysis }) {
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const isAdmin = useIsAdmin()
+  const { error, guard, clearError } = useGuardedAction()
   const [queued, setQueued] = useState<string | null>(null)
   return (
     <AnalyzerSection
       title="GitHub analysis"
       description="A published sample's multi-engine scanner verdict from the public analysis repository."
-      actions={<Button label="Resubmit" size="sm" variant="secondary" onClick={() => setConfirmOpen(true)} />}
+      actions={<Button label="Resubmit" size="sm" variant="secondary" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />}
     >
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap">
@@ -75,6 +79,7 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
           </Panel>
         </Grid>
       </VStack>
+      {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}
       <AlertDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
@@ -83,7 +88,7 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
         actionLabel="Resubmit"
         onAction={async () => {
           setConfirmOpen(false)
-          setQueued(await queuePayloadAction(g.sha, 'github'))
+          setQueued((await guard(() => queuePayloadAction(g.sha, 'github'))) ?? null)
         }}
       />
     </AnalyzerSection>

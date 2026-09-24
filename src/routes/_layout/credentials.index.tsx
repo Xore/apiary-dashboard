@@ -10,6 +10,7 @@ import { RecordList } from '#/components/RecordList'
 import { getCredentials } from '#/data/queries'
 import type { BaitCredential } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 
 export const Route = createFileRoute('/_layout/credentials/')({
   loader: () => getCredentials(),
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/_layout/credentials/')({
 })
 
 function CredentialsPage() {
+  const isAdmin = useIsAdmin()
   const { credentials, tokens, targets } = Route.useLoaderData()
   const tokenLabel = (id?: string) => tokens.find((t) => t.id === id)?.memo
   const router = useRouter()
@@ -42,7 +44,7 @@ function CredentialsPage() {
       actions={
         <>
           <Text type="supporting">{credentials.length} planted</Text>
-          <Button label="Plant bait credential" size="sm" onClick={() => setCreating(true)} />
+          <Button label="Plant bait credential" size="sm" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setCreating(true)} />
           <BaitCredentialDialog
             targets={targets}
             isOpen={creating}

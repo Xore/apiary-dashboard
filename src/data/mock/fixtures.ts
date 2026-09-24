@@ -73,6 +73,13 @@ const TAGS = ['scanner', 'bruteforce', 'mirai-like', 'cryptominer', 'tor-exit', 
 
 export { COMMANDS, PASSWORDS, USERNAMES } from './fleet'
 
+/** The credential pair an event offered, `user:pass`, or undefined when it
+ * offered none. Some services take a password alone (VNC): `:pass`. */
+export function credentialOf(e: Pick<HoneypotEvent, 'username' | 'password'>): string | undefined {
+  if (e.username === undefined && e.password === undefined) return undefined
+  return `${e.username ?? ''}:${e.password ?? ''}`
+}
+
 function buildSources(): AttackSource[] {
   const rng = createRng(0xa11a)
   const prefixes = ['192.0.2', '198.51.100', '203.0.113']
