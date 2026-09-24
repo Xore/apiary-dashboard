@@ -4,7 +4,7 @@ import { NAV_SECTIONS, navHrefFor, navItemFor, pageFor, sectionFor } from './nav
 describe('navigation metadata', () => {
   it('matches the canonical information architecture', () => {
     expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Monitor', 'Investigate', 'Operations', 'Reports', 'Tools', 'Evidence'])
-    expect(NAV_SECTIONS.flatMap((s) => s.items)).toHaveLength(24)
+    expect(NAV_SECTIONS.flatMap((s) => s.items)).toHaveLength(23)
   })
 
   it('has one entry per route', () => {
@@ -34,6 +34,8 @@ describe('navHrefFor', () => {
     ['/identities/abc/why', '/attackers'],
     ['/sensors/cowrie-vps-01', '/sensors'],
     ['/tty-replay/abc', '/recordings'],
+    ['/ioc/cve/CVE-2017-0144/sources', '/iocs'],
+    ['/commands', '/iocs'],
     ['/recordings/abc/attacker', '/recordings'],
     ['/alerts/yara%7Cx/members', '/alerts'],
     ['/ml-anomalies/a1/triage', '/ml-anomalies'],

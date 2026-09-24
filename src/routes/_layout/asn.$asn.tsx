@@ -34,6 +34,7 @@ function AsnLayout() {
         { id: 'sources', label: 'Sources', count: a.group.members.length },
         { id: 'networks', label: 'Networks', count: a.group.networks.length },
         { id: 'events', label: 'Events', count: a.group.events.length },
+        { id: 'timeline', label: 'Timeline' },
       ]}
     >
       <Outlet />

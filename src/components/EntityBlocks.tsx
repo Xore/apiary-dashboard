@@ -20,6 +20,7 @@ import { SeverityToken } from './SeverityToken'
 
 const KIND_LABEL: Record<TimelineKind, string> = {
   event: 'Event',
+  capture: 'Payload capture',
   anomaly: 'ML anomaly',
   llm: 'LLM analysis',
   canary: 'Canarytoken',

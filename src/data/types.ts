@@ -934,7 +934,7 @@ export interface OverviewViews {
 
 // ---- Entity pages ----------------------------------------------------------
 
-export type TimelineKind = 'event' | 'anomaly' | 'llm' | 'canary' | 'auth' | 'alert'
+export type TimelineKind = 'event' | 'capture' | 'anomaly' | 'llm' | 'canary' | 'auth' | 'alert'
 
 export interface TimelineItem extends Record<string, unknown> {
   id: string
@@ -1029,3 +1029,29 @@ export interface IdentityEntity {
   group: SourceGroup
   shared: SharedSignal[]
 }
+
+// ---- IOCs (epic #25, Phase E) ------------------------------------------------
+
+export type IocHubKind = 'hash' | 'domain' | 'url' | 'credential' | 'command' | 'fingerprint' | 'cve' | 'signature' | 'username' | 'password'
+
+export interface IocRow extends Record<string, unknown> {
+  id: string
+  kind: IocHubKind
+  value: string
+  events: number
+  sources: number
+  sessions: number
+  last?: string
+}
+
+export interface IocEntity {
+  kind: IocHubKind
+  value: string
+  events: HoneypotEvent[]
+  group: SourceGroup
+  sessions: SessionSummary[]
+  payloads: CountRow[]
+}
+
+/** Which entity a timeline belongs to. */
+export type TimelineEntity = 'source' | 'session' | 'network' | 'asn' | 'campaign' | 'cluster' | 'identity' | 'payload' | 'ioc'

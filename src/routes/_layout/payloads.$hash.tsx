@@ -60,6 +60,7 @@ function PayloadLayout() {
         { id: 'github', label: 'GitHub' },
         { id: 'delivered-by', label: 'Delivered by', count: delivery.sources.length },
         { id: 'sessions', label: 'Sessions', count: delivery.sessions.length },
+        { id: 'timeline', label: 'Timeline' },
       ]}
     >
       <Outlet />

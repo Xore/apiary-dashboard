@@ -14,6 +14,7 @@ import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutAttackersRouteImport } from './routes/_layout/attackers'
 import { Route as LayoutCommandsRouteImport } from './routes/_layout/commands'
 import { Route as LayoutHistoryRouteImport } from './routes/_layout/history'
+import { Route as LayoutIocsRouteImport } from './routes/_layout/iocs'
 import { Route as LayoutIpsRouteImport } from './routes/_layout/ips'
 import { Route as LayoutKillChainRouteImport } from './routes/_layout/kill-chain'
 import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
@@ -81,6 +82,7 @@ import { Route as LayoutAsnAsnIndexRouteImport } from './routes/_layout/asn.$asn
 import { Route as LayoutAsnAsnEventsRouteImport } from './routes/_layout/asn.$asn.events'
 import { Route as LayoutAsnAsnNetworksRouteImport } from './routes/_layout/asn.$asn.networks'
 import { Route as LayoutAsnAsnSourcesRouteImport } from './routes/_layout/asn.$asn.sources'
+import { Route as LayoutAsnAsnTimelineRouteImport } from './routes/_layout/asn.$asn.timeline'
 import { Route as LayoutCampaignsCidrIndexRouteImport } from './routes/_layout/campaigns.$cidr.index'
 import { Route as LayoutCampaignsCidrCredentialsRouteImport } from './routes/_layout/campaigns.$cidr.credentials'
 import { Route as LayoutCampaignsCidrSourcesRouteImport } from './routes/_layout/campaigns.$cidr.sources'
@@ -101,6 +103,7 @@ import { Route as LayoutIdentitiesIdTimelineRouteImport } from './routes/_layout
 import { Route as LayoutIdentitiesIdWhyRouteImport } from './routes/_layout/identities.$id.why'
 import { Route as LayoutInvestigateCidrCidrRouteImport } from './routes/_layout/investigate.cidr.$cidr'
 import { Route as LayoutInvestigateIpIpRouteImport } from './routes/_layout/investigate.ip.$ip'
+import { Route as LayoutIocKindValueRouteImport } from './routes/_layout/ioc.$kind.$value'
 import { Route as LayoutLlmAnalysisIdIndexRouteImport } from './routes/_layout/llm-analysis.$id.index'
 import { Route as LayoutLlmAnalysisIdBehaviorsRouteImport } from './routes/_layout/llm-analysis.$id.behaviors'
 import { Route as LayoutLlmAnalysisIdEvidenceRouteImport } from './routes/_layout/llm-analysis.$id.evidence'
@@ -124,6 +127,7 @@ import { Route as LayoutPayloadsHashRevdeckRouteImport } from './routes/_layout/
 import { Route as LayoutPayloadsHashSandboxRouteImport } from './routes/_layout/payloads.$hash.sandbox'
 import { Route as LayoutPayloadsHashSessionsRouteImport } from './routes/_layout/payloads.$hash.sessions'
 import { Route as LayoutPayloadsHashStaticRouteImport } from './routes/_layout/payloads.$hash.static'
+import { Route as LayoutPayloadsHashTimelineRouteImport } from './routes/_layout/payloads.$hash.timeline'
 import { Route as LayoutRecordingsShasumIndexRouteImport } from './routes/_layout/recordings.$shasum.index'
 import { Route as LayoutRecordingsShasumAttackerRouteImport } from './routes/_layout/recordings.$shasum.attacker'
 import { Route as LayoutRecordingsShasumSessionsRouteImport } from './routes/_layout/recordings.$shasum.sessions'
@@ -155,6 +159,13 @@ import { Route as LayoutSourcesIpTimelineRouteImport } from './routes/_layout/so
 import { Route as LayoutClustersKindValueIndexRouteImport } from './routes/_layout/clusters.$kind.$value.index'
 import { Route as LayoutClustersKindValueEventsRouteImport } from './routes/_layout/clusters.$kind.$value.events'
 import { Route as LayoutClustersKindValueMembersRouteImport } from './routes/_layout/clusters.$kind.$value.members'
+import { Route as LayoutClustersKindValueTimelineRouteImport } from './routes/_layout/clusters.$kind.$value.timeline'
+import { Route as LayoutIocKindValueIndexRouteImport } from './routes/_layout/ioc.$kind.$value.index'
+import { Route as LayoutIocKindValueEventsRouteImport } from './routes/_layout/ioc.$kind.$value.events'
+import { Route as LayoutIocKindValuePayloadsRouteImport } from './routes/_layout/ioc.$kind.$value.payloads'
+import { Route as LayoutIocKindValueSessionsRouteImport } from './routes/_layout/ioc.$kind.$value.sessions'
+import { Route as LayoutIocKindValueSourcesRouteImport } from './routes/_layout/ioc.$kind.$value.sources'
+import { Route as LayoutIocKindValueTimelineRouteImport } from './routes/_layout/ioc.$kind.$value.timeline'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -178,6 +189,11 @@ const LayoutCommandsRoute = LayoutCommandsRouteImport.update({
 const LayoutHistoryRoute = LayoutHistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutIocsRoute = LayoutIocsRouteImport.update({
+  id: '/iocs',
+  path: '/iocs',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutIpsRoute = LayoutIpsRouteImport.update({
@@ -525,6 +541,11 @@ const LayoutAsnAsnSourcesRoute = LayoutAsnAsnSourcesRouteImport.update({
   path: '/sources',
   getParentRoute: () => LayoutAsnAsnRoute,
 } as any)
+const LayoutAsnAsnTimelineRoute = LayoutAsnAsnTimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => LayoutAsnAsnRoute,
+} as any)
 const LayoutCampaignsCidrIndexRoute =
   LayoutCampaignsCidrIndexRouteImport.update({
     id: '/',
@@ -633,6 +654,11 @@ const LayoutInvestigateCidrCidrRoute =
 const LayoutInvestigateIpIpRoute = LayoutInvestigateIpIpRouteImport.update({
   id: '/investigate/ip/$ip',
   path: '/investigate/ip/$ip',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutIocKindValueRoute = LayoutIocKindValueRouteImport.update({
+  id: '/ioc/$kind/$value',
+  path: '/ioc/$kind/$value',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutLlmAnalysisIdIndexRoute =
@@ -767,6 +793,12 @@ const LayoutPayloadsHashStaticRoute =
   LayoutPayloadsHashStaticRouteImport.update({
     id: '/static',
     path: '/static',
+    getParentRoute: () => LayoutPayloadsHashRoute,
+  } as any)
+const LayoutPayloadsHashTimelineRoute =
+  LayoutPayloadsHashTimelineRouteImport.update({
+    id: '/timeline',
+    path: '/timeline',
     getParentRoute: () => LayoutPayloadsHashRoute,
   } as any)
 const LayoutRecordingsShasumIndexRoute =
@@ -943,12 +975,54 @@ const LayoutClustersKindValueMembersRoute =
     path: '/members',
     getParentRoute: () => LayoutClustersKindValueRoute,
   } as any)
+const LayoutClustersKindValueTimelineRoute =
+  LayoutClustersKindValueTimelineRouteImport.update({
+    id: '/timeline',
+    path: '/timeline',
+    getParentRoute: () => LayoutClustersKindValueRoute,
+  } as any)
+const LayoutIocKindValueIndexRoute = LayoutIocKindValueIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutIocKindValueRoute,
+} as any)
+const LayoutIocKindValueEventsRoute =
+  LayoutIocKindValueEventsRouteImport.update({
+    id: '/events',
+    path: '/events',
+    getParentRoute: () => LayoutIocKindValueRoute,
+  } as any)
+const LayoutIocKindValuePayloadsRoute =
+  LayoutIocKindValuePayloadsRouteImport.update({
+    id: '/payloads',
+    path: '/payloads',
+    getParentRoute: () => LayoutIocKindValueRoute,
+  } as any)
+const LayoutIocKindValueSessionsRoute =
+  LayoutIocKindValueSessionsRouteImport.update({
+    id: '/sessions',
+    path: '/sessions',
+    getParentRoute: () => LayoutIocKindValueRoute,
+  } as any)
+const LayoutIocKindValueSourcesRoute =
+  LayoutIocKindValueSourcesRouteImport.update({
+    id: '/sources',
+    path: '/sources',
+    getParentRoute: () => LayoutIocKindValueRoute,
+  } as any)
+const LayoutIocKindValueTimelineRoute =
+  LayoutIocKindValueTimelineRouteImport.update({
+    id: '/timeline',
+    path: '/timeline',
+    getParentRoute: () => LayoutIocKindValueRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
   '/attackers': typeof LayoutAttackersRoute
   '/commands': typeof LayoutCommandsRoute
   '/history': typeof LayoutHistoryRoute
+  '/iocs': typeof LayoutIocsRoute
   '/ips': typeof LayoutIpsRoute
   '/kill-chain': typeof LayoutKillChainRoute
   '/search': typeof LayoutSearchRoute
@@ -1013,6 +1087,7 @@ export interface FileRoutesByFullPath {
   '/asn/$asn/events': typeof LayoutAsnAsnEventsRoute
   '/asn/$asn/networks': typeof LayoutAsnAsnNetworksRoute
   '/asn/$asn/sources': typeof LayoutAsnAsnSourcesRoute
+  '/asn/$asn/timeline': typeof LayoutAsnAsnTimelineRoute
   '/campaigns/$cidr/credentials': typeof LayoutCampaignsCidrCredentialsRoute
   '/campaigns/$cidr/sources': typeof LayoutCampaignsCidrSourcesRoute
   '/campaigns/$cidr/timeline': typeof LayoutCampaignsCidrTimelineRoute
@@ -1030,6 +1105,7 @@ export interface FileRoutesByFullPath {
   '/identities/$id/why': typeof LayoutIdentitiesIdWhyRoute
   '/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
+  '/ioc/$kind/$value': typeof LayoutIocKindValueRouteWithChildren
   '/llm-analysis/$id/behaviors': typeof LayoutLlmAnalysisIdBehaviorsRoute
   '/llm-analysis/$id/evidence': typeof LayoutLlmAnalysisIdEvidenceRoute
   '/llm-analysis/$id/raw': typeof LayoutLlmAnalysisIdRawRoute
@@ -1049,6 +1125,7 @@ export interface FileRoutesByFullPath {
   '/payloads/$hash/sandbox': typeof LayoutPayloadsHashSandboxRoute
   '/payloads/$hash/sessions': typeof LayoutPayloadsHashSessionsRoute
   '/payloads/$hash/static': typeof LayoutPayloadsHashStaticRoute
+  '/payloads/$hash/timeline': typeof LayoutPayloadsHashTimelineRoute
   '/recordings/$shasum/attacker': typeof LayoutRecordingsShasumAttackerRoute
   '/recordings/$shasum/sessions': typeof LayoutRecordingsShasumSessionsRoute
   '/reports/definitions/$id': typeof LayoutReportsDefinitionsIdRoute
@@ -1089,12 +1166,20 @@ export interface FileRoutesByFullPath {
   '/sources/$ip/': typeof LayoutSourcesIpIndexRoute
   '/clusters/$kind/$value/events': typeof LayoutClustersKindValueEventsRoute
   '/clusters/$kind/$value/members': typeof LayoutClustersKindValueMembersRoute
+  '/clusters/$kind/$value/timeline': typeof LayoutClustersKindValueTimelineRoute
+  '/ioc/$kind/$value/events': typeof LayoutIocKindValueEventsRoute
+  '/ioc/$kind/$value/payloads': typeof LayoutIocKindValuePayloadsRoute
+  '/ioc/$kind/$value/sessions': typeof LayoutIocKindValueSessionsRoute
+  '/ioc/$kind/$value/sources': typeof LayoutIocKindValueSourcesRoute
+  '/ioc/$kind/$value/timeline': typeof LayoutIocKindValueTimelineRoute
   '/clusters/$kind/$value/': typeof LayoutClustersKindValueIndexRoute
+  '/ioc/$kind/$value/': typeof LayoutIocKindValueIndexRoute
 }
 export interface FileRoutesByTo {
   '/attackers': typeof LayoutAttackersRoute
   '/commands': typeof LayoutCommandsRoute
   '/history': typeof LayoutHistoryRoute
+  '/iocs': typeof LayoutIocsRoute
   '/ips': typeof LayoutIpsRoute
   '/kill-chain': typeof LayoutKillChainRoute
   '/search': typeof LayoutSearchRoute
@@ -1146,6 +1231,7 @@ export interface FileRoutesByTo {
   '/asn/$asn/events': typeof LayoutAsnAsnEventsRoute
   '/asn/$asn/networks': typeof LayoutAsnAsnNetworksRoute
   '/asn/$asn/sources': typeof LayoutAsnAsnSourcesRoute
+  '/asn/$asn/timeline': typeof LayoutAsnAsnTimelineRoute
   '/campaigns/$cidr/credentials': typeof LayoutCampaignsCidrCredentialsRoute
   '/campaigns/$cidr/sources': typeof LayoutCampaignsCidrSourcesRoute
   '/campaigns/$cidr/timeline': typeof LayoutCampaignsCidrTimelineRoute
@@ -1181,6 +1267,7 @@ export interface FileRoutesByTo {
   '/payloads/$hash/sandbox': typeof LayoutPayloadsHashSandboxRoute
   '/payloads/$hash/sessions': typeof LayoutPayloadsHashSessionsRoute
   '/payloads/$hash/static': typeof LayoutPayloadsHashStaticRoute
+  '/payloads/$hash/timeline': typeof LayoutPayloadsHashTimelineRoute
   '/recordings/$shasum/attacker': typeof LayoutRecordingsShasumAttackerRoute
   '/recordings/$shasum/sessions': typeof LayoutRecordingsShasumSessionsRoute
   '/reports/definitions/$id': typeof LayoutReportsDefinitionsIdRoute
@@ -1221,7 +1308,14 @@ export interface FileRoutesByTo {
   '/sources/$ip': typeof LayoutSourcesIpIndexRoute
   '/clusters/$kind/$value/events': typeof LayoutClustersKindValueEventsRoute
   '/clusters/$kind/$value/members': typeof LayoutClustersKindValueMembersRoute
+  '/clusters/$kind/$value/timeline': typeof LayoutClustersKindValueTimelineRoute
+  '/ioc/$kind/$value/events': typeof LayoutIocKindValueEventsRoute
+  '/ioc/$kind/$value/payloads': typeof LayoutIocKindValuePayloadsRoute
+  '/ioc/$kind/$value/sessions': typeof LayoutIocKindValueSessionsRoute
+  '/ioc/$kind/$value/sources': typeof LayoutIocKindValueSourcesRoute
+  '/ioc/$kind/$value/timeline': typeof LayoutIocKindValueTimelineRoute
   '/clusters/$kind/$value': typeof LayoutClustersKindValueIndexRoute
+  '/ioc/$kind/$value': typeof LayoutIocKindValueIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1229,6 +1323,7 @@ export interface FileRoutesById {
   '/_layout/attackers': typeof LayoutAttackersRoute
   '/_layout/commands': typeof LayoutCommandsRoute
   '/_layout/history': typeof LayoutHistoryRoute
+  '/_layout/iocs': typeof LayoutIocsRoute
   '/_layout/ips': typeof LayoutIpsRoute
   '/_layout/kill-chain': typeof LayoutKillChainRoute
   '/_layout/search': typeof LayoutSearchRoute
@@ -1294,6 +1389,7 @@ export interface FileRoutesById {
   '/_layout/asn/$asn/events': typeof LayoutAsnAsnEventsRoute
   '/_layout/asn/$asn/networks': typeof LayoutAsnAsnNetworksRoute
   '/_layout/asn/$asn/sources': typeof LayoutAsnAsnSourcesRoute
+  '/_layout/asn/$asn/timeline': typeof LayoutAsnAsnTimelineRoute
   '/_layout/campaigns/$cidr/credentials': typeof LayoutCampaignsCidrCredentialsRoute
   '/_layout/campaigns/$cidr/sources': typeof LayoutCampaignsCidrSourcesRoute
   '/_layout/campaigns/$cidr/timeline': typeof LayoutCampaignsCidrTimelineRoute
@@ -1311,6 +1407,7 @@ export interface FileRoutesById {
   '/_layout/identities/$id/why': typeof LayoutIdentitiesIdWhyRoute
   '/_layout/investigate/cidr/$cidr': typeof LayoutInvestigateCidrCidrRoute
   '/_layout/investigate/ip/$ip': typeof LayoutInvestigateIpIpRoute
+  '/_layout/ioc/$kind/$value': typeof LayoutIocKindValueRouteWithChildren
   '/_layout/llm-analysis/$id/behaviors': typeof LayoutLlmAnalysisIdBehaviorsRoute
   '/_layout/llm-analysis/$id/evidence': typeof LayoutLlmAnalysisIdEvidenceRoute
   '/_layout/llm-analysis/$id/raw': typeof LayoutLlmAnalysisIdRawRoute
@@ -1330,6 +1427,7 @@ export interface FileRoutesById {
   '/_layout/payloads/$hash/sandbox': typeof LayoutPayloadsHashSandboxRoute
   '/_layout/payloads/$hash/sessions': typeof LayoutPayloadsHashSessionsRoute
   '/_layout/payloads/$hash/static': typeof LayoutPayloadsHashStaticRoute
+  '/_layout/payloads/$hash/timeline': typeof LayoutPayloadsHashTimelineRoute
   '/_layout/recordings/$shasum/attacker': typeof LayoutRecordingsShasumAttackerRoute
   '/_layout/recordings/$shasum/sessions': typeof LayoutRecordingsShasumSessionsRoute
   '/_layout/reports/definitions/$id': typeof LayoutReportsDefinitionsIdRoute
@@ -1370,7 +1468,14 @@ export interface FileRoutesById {
   '/_layout/sources/$ip/': typeof LayoutSourcesIpIndexRoute
   '/_layout/clusters/$kind/$value/events': typeof LayoutClustersKindValueEventsRoute
   '/_layout/clusters/$kind/$value/members': typeof LayoutClustersKindValueMembersRoute
+  '/_layout/clusters/$kind/$value/timeline': typeof LayoutClustersKindValueTimelineRoute
+  '/_layout/ioc/$kind/$value/events': typeof LayoutIocKindValueEventsRoute
+  '/_layout/ioc/$kind/$value/payloads': typeof LayoutIocKindValuePayloadsRoute
+  '/_layout/ioc/$kind/$value/sessions': typeof LayoutIocKindValueSessionsRoute
+  '/_layout/ioc/$kind/$value/sources': typeof LayoutIocKindValueSourcesRoute
+  '/_layout/ioc/$kind/$value/timeline': typeof LayoutIocKindValueTimelineRoute
   '/_layout/clusters/$kind/$value/': typeof LayoutClustersKindValueIndexRoute
+  '/_layout/ioc/$kind/$value/': typeof LayoutIocKindValueIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1379,6 +1484,7 @@ export interface FileRouteTypes {
     | '/attackers'
     | '/commands'
     | '/history'
+    | '/iocs'
     | '/ips'
     | '/kill-chain'
     | '/search'
@@ -1443,6 +1549,7 @@ export interface FileRouteTypes {
     | '/asn/$asn/events'
     | '/asn/$asn/networks'
     | '/asn/$asn/sources'
+    | '/asn/$asn/timeline'
     | '/campaigns/$cidr/credentials'
     | '/campaigns/$cidr/sources'
     | '/campaigns/$cidr/timeline'
@@ -1460,6 +1567,7 @@ export interface FileRouteTypes {
     | '/identities/$id/why'
     | '/investigate/cidr/$cidr'
     | '/investigate/ip/$ip'
+    | '/ioc/$kind/$value'
     | '/llm-analysis/$id/behaviors'
     | '/llm-analysis/$id/evidence'
     | '/llm-analysis/$id/raw'
@@ -1479,6 +1587,7 @@ export interface FileRouteTypes {
     | '/payloads/$hash/sandbox'
     | '/payloads/$hash/sessions'
     | '/payloads/$hash/static'
+    | '/payloads/$hash/timeline'
     | '/recordings/$shasum/attacker'
     | '/recordings/$shasum/sessions'
     | '/reports/definitions/$id'
@@ -1519,12 +1628,20 @@ export interface FileRouteTypes {
     | '/sources/$ip/'
     | '/clusters/$kind/$value/events'
     | '/clusters/$kind/$value/members'
+    | '/clusters/$kind/$value/timeline'
+    | '/ioc/$kind/$value/events'
+    | '/ioc/$kind/$value/payloads'
+    | '/ioc/$kind/$value/sessions'
+    | '/ioc/$kind/$value/sources'
+    | '/ioc/$kind/$value/timeline'
     | '/clusters/$kind/$value/'
+    | '/ioc/$kind/$value/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/attackers'
     | '/commands'
     | '/history'
+    | '/iocs'
     | '/ips'
     | '/kill-chain'
     | '/search'
@@ -1576,6 +1693,7 @@ export interface FileRouteTypes {
     | '/asn/$asn/events'
     | '/asn/$asn/networks'
     | '/asn/$asn/sources'
+    | '/asn/$asn/timeline'
     | '/campaigns/$cidr/credentials'
     | '/campaigns/$cidr/sources'
     | '/campaigns/$cidr/timeline'
@@ -1611,6 +1729,7 @@ export interface FileRouteTypes {
     | '/payloads/$hash/sandbox'
     | '/payloads/$hash/sessions'
     | '/payloads/$hash/static'
+    | '/payloads/$hash/timeline'
     | '/recordings/$shasum/attacker'
     | '/recordings/$shasum/sessions'
     | '/reports/definitions/$id'
@@ -1651,13 +1770,21 @@ export interface FileRouteTypes {
     | '/sources/$ip'
     | '/clusters/$kind/$value/events'
     | '/clusters/$kind/$value/members'
+    | '/clusters/$kind/$value/timeline'
+    | '/ioc/$kind/$value/events'
+    | '/ioc/$kind/$value/payloads'
+    | '/ioc/$kind/$value/sessions'
+    | '/ioc/$kind/$value/sources'
+    | '/ioc/$kind/$value/timeline'
     | '/clusters/$kind/$value'
+    | '/ioc/$kind/$value'
   id:
     | '__root__'
     | '/_layout'
     | '/_layout/attackers'
     | '/_layout/commands'
     | '/_layout/history'
+    | '/_layout/iocs'
     | '/_layout/ips'
     | '/_layout/kill-chain'
     | '/_layout/search'
@@ -1723,6 +1850,7 @@ export interface FileRouteTypes {
     | '/_layout/asn/$asn/events'
     | '/_layout/asn/$asn/networks'
     | '/_layout/asn/$asn/sources'
+    | '/_layout/asn/$asn/timeline'
     | '/_layout/campaigns/$cidr/credentials'
     | '/_layout/campaigns/$cidr/sources'
     | '/_layout/campaigns/$cidr/timeline'
@@ -1740,6 +1868,7 @@ export interface FileRouteTypes {
     | '/_layout/identities/$id/why'
     | '/_layout/investigate/cidr/$cidr'
     | '/_layout/investigate/ip/$ip'
+    | '/_layout/ioc/$kind/$value'
     | '/_layout/llm-analysis/$id/behaviors'
     | '/_layout/llm-analysis/$id/evidence'
     | '/_layout/llm-analysis/$id/raw'
@@ -1759,6 +1888,7 @@ export interface FileRouteTypes {
     | '/_layout/payloads/$hash/sandbox'
     | '/_layout/payloads/$hash/sessions'
     | '/_layout/payloads/$hash/static'
+    | '/_layout/payloads/$hash/timeline'
     | '/_layout/recordings/$shasum/attacker'
     | '/_layout/recordings/$shasum/sessions'
     | '/_layout/reports/definitions/$id'
@@ -1799,7 +1929,14 @@ export interface FileRouteTypes {
     | '/_layout/sources/$ip/'
     | '/_layout/clusters/$kind/$value/events'
     | '/_layout/clusters/$kind/$value/members'
+    | '/_layout/clusters/$kind/$value/timeline'
+    | '/_layout/ioc/$kind/$value/events'
+    | '/_layout/ioc/$kind/$value/payloads'
+    | '/_layout/ioc/$kind/$value/sessions'
+    | '/_layout/ioc/$kind/$value/sources'
+    | '/_layout/ioc/$kind/$value/timeline'
     | '/_layout/clusters/$kind/$value/'
+    | '/_layout/ioc/$kind/$value/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1841,6 +1978,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof LayoutHistoryRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/iocs': {
+      id: '/_layout/iocs'
+      path: '/iocs'
+      fullPath: '/iocs'
+      preLoaderRoute: typeof LayoutIocsRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/ips': {
@@ -2312,6 +2456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAsnAsnSourcesRouteImport
       parentRoute: typeof LayoutAsnAsnRoute
     }
+    '/_layout/asn/$asn/timeline': {
+      id: '/_layout/asn/$asn/timeline'
+      path: '/timeline'
+      fullPath: '/asn/$asn/timeline'
+      preLoaderRoute: typeof LayoutAsnAsnTimelineRouteImport
+      parentRoute: typeof LayoutAsnAsnRoute
+    }
     '/_layout/campaigns/$cidr/': {
       id: '/_layout/campaigns/$cidr/'
       path: '/'
@@ -2450,6 +2601,13 @@ declare module '@tanstack/react-router' {
       path: '/investigate/ip/$ip'
       fullPath: '/investigate/ip/$ip'
       preLoaderRoute: typeof LayoutInvestigateIpIpRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/ioc/$kind/$value': {
+      id: '/_layout/ioc/$kind/$value'
+      path: '/ioc/$kind/$value'
+      fullPath: '/ioc/$kind/$value'
+      preLoaderRoute: typeof LayoutIocKindValueRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/llm-analysis/$id/': {
@@ -2611,6 +2769,13 @@ declare module '@tanstack/react-router' {
       path: '/static'
       fullPath: '/payloads/$hash/static'
       preLoaderRoute: typeof LayoutPayloadsHashStaticRouteImport
+      parentRoute: typeof LayoutPayloadsHashRoute
+    }
+    '/_layout/payloads/$hash/timeline': {
+      id: '/_layout/payloads/$hash/timeline'
+      path: '/timeline'
+      fullPath: '/payloads/$hash/timeline'
+      preLoaderRoute: typeof LayoutPayloadsHashTimelineRouteImport
       parentRoute: typeof LayoutPayloadsHashRoute
     }
     '/_layout/recordings/$shasum/': {
@@ -2830,6 +2995,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutClustersKindValueMembersRouteImport
       parentRoute: typeof LayoutClustersKindValueRoute
     }
+    '/_layout/clusters/$kind/$value/timeline': {
+      id: '/_layout/clusters/$kind/$value/timeline'
+      path: '/timeline'
+      fullPath: '/clusters/$kind/$value/timeline'
+      preLoaderRoute: typeof LayoutClustersKindValueTimelineRouteImport
+      parentRoute: typeof LayoutClustersKindValueRoute
+    }
+    '/_layout/ioc/$kind/$value/': {
+      id: '/_layout/ioc/$kind/$value/'
+      path: '/'
+      fullPath: '/ioc/$kind/$value/'
+      preLoaderRoute: typeof LayoutIocKindValueIndexRouteImport
+      parentRoute: typeof LayoutIocKindValueRoute
+    }
+    '/_layout/ioc/$kind/$value/events': {
+      id: '/_layout/ioc/$kind/$value/events'
+      path: '/events'
+      fullPath: '/ioc/$kind/$value/events'
+      preLoaderRoute: typeof LayoutIocKindValueEventsRouteImport
+      parentRoute: typeof LayoutIocKindValueRoute
+    }
+    '/_layout/ioc/$kind/$value/payloads': {
+      id: '/_layout/ioc/$kind/$value/payloads'
+      path: '/payloads'
+      fullPath: '/ioc/$kind/$value/payloads'
+      preLoaderRoute: typeof LayoutIocKindValuePayloadsRouteImport
+      parentRoute: typeof LayoutIocKindValueRoute
+    }
+    '/_layout/ioc/$kind/$value/sessions': {
+      id: '/_layout/ioc/$kind/$value/sessions'
+      path: '/sessions'
+      fullPath: '/ioc/$kind/$value/sessions'
+      preLoaderRoute: typeof LayoutIocKindValueSessionsRouteImport
+      parentRoute: typeof LayoutIocKindValueRoute
+    }
+    '/_layout/ioc/$kind/$value/sources': {
+      id: '/_layout/ioc/$kind/$value/sources'
+      path: '/sources'
+      fullPath: '/ioc/$kind/$value/sources'
+      preLoaderRoute: typeof LayoutIocKindValueSourcesRouteImport
+      parentRoute: typeof LayoutIocKindValueRoute
+    }
+    '/_layout/ioc/$kind/$value/timeline': {
+      id: '/_layout/ioc/$kind/$value/timeline'
+      path: '/timeline'
+      fullPath: '/ioc/$kind/$value/timeline'
+      preLoaderRoute: typeof LayoutIocKindValueTimelineRouteImport
+      parentRoute: typeof LayoutIocKindValueRoute
+    }
   }
 }
 
@@ -2873,6 +3087,7 @@ interface LayoutAsnAsnRouteChildren {
   LayoutAsnAsnEventsRoute: typeof LayoutAsnAsnEventsRoute
   LayoutAsnAsnNetworksRoute: typeof LayoutAsnAsnNetworksRoute
   LayoutAsnAsnSourcesRoute: typeof LayoutAsnAsnSourcesRoute
+  LayoutAsnAsnTimelineRoute: typeof LayoutAsnAsnTimelineRoute
   LayoutAsnAsnIndexRoute: typeof LayoutAsnAsnIndexRoute
 }
 
@@ -2880,6 +3095,7 @@ const LayoutAsnAsnRouteChildren: LayoutAsnAsnRouteChildren = {
   LayoutAsnAsnEventsRoute: LayoutAsnAsnEventsRoute,
   LayoutAsnAsnNetworksRoute: LayoutAsnAsnNetworksRoute,
   LayoutAsnAsnSourcesRoute: LayoutAsnAsnSourcesRoute,
+  LayoutAsnAsnTimelineRoute: LayoutAsnAsnTimelineRoute,
   LayoutAsnAsnIndexRoute: LayoutAsnAsnIndexRoute,
 }
 
@@ -3010,6 +3226,7 @@ interface LayoutPayloadsHashRouteChildren {
   LayoutPayloadsHashSandboxRoute: typeof LayoutPayloadsHashSandboxRoute
   LayoutPayloadsHashSessionsRoute: typeof LayoutPayloadsHashSessionsRoute
   LayoutPayloadsHashStaticRoute: typeof LayoutPayloadsHashStaticRoute
+  LayoutPayloadsHashTimelineRoute: typeof LayoutPayloadsHashTimelineRoute
   LayoutPayloadsHashIndexRoute: typeof LayoutPayloadsHashIndexRoute
 }
 
@@ -3023,6 +3240,7 @@ const LayoutPayloadsHashRouteChildren: LayoutPayloadsHashRouteChildren = {
   LayoutPayloadsHashSandboxRoute: LayoutPayloadsHashSandboxRoute,
   LayoutPayloadsHashSessionsRoute: LayoutPayloadsHashSessionsRoute,
   LayoutPayloadsHashStaticRoute: LayoutPayloadsHashStaticRoute,
+  LayoutPayloadsHashTimelineRoute: LayoutPayloadsHashTimelineRoute,
   LayoutPayloadsHashIndexRoute: LayoutPayloadsHashIndexRoute,
 }
 
@@ -3124,6 +3342,7 @@ const LayoutSourcesIpRouteWithChildren = LayoutSourcesIpRoute._addFileChildren(
 interface LayoutClustersKindValueRouteChildren {
   LayoutClustersKindValueEventsRoute: typeof LayoutClustersKindValueEventsRoute
   LayoutClustersKindValueMembersRoute: typeof LayoutClustersKindValueMembersRoute
+  LayoutClustersKindValueTimelineRoute: typeof LayoutClustersKindValueTimelineRoute
   LayoutClustersKindValueIndexRoute: typeof LayoutClustersKindValueIndexRoute
 }
 
@@ -3131,6 +3350,7 @@ const LayoutClustersKindValueRouteChildren: LayoutClustersKindValueRouteChildren
   {
     LayoutClustersKindValueEventsRoute: LayoutClustersKindValueEventsRoute,
     LayoutClustersKindValueMembersRoute: LayoutClustersKindValueMembersRoute,
+    LayoutClustersKindValueTimelineRoute: LayoutClustersKindValueTimelineRoute,
     LayoutClustersKindValueIndexRoute: LayoutClustersKindValueIndexRoute,
   }
 
@@ -3139,10 +3359,32 @@ const LayoutClustersKindValueRouteWithChildren =
     LayoutClustersKindValueRouteChildren,
   )
 
+interface LayoutIocKindValueRouteChildren {
+  LayoutIocKindValueEventsRoute: typeof LayoutIocKindValueEventsRoute
+  LayoutIocKindValuePayloadsRoute: typeof LayoutIocKindValuePayloadsRoute
+  LayoutIocKindValueSessionsRoute: typeof LayoutIocKindValueSessionsRoute
+  LayoutIocKindValueSourcesRoute: typeof LayoutIocKindValueSourcesRoute
+  LayoutIocKindValueTimelineRoute: typeof LayoutIocKindValueTimelineRoute
+  LayoutIocKindValueIndexRoute: typeof LayoutIocKindValueIndexRoute
+}
+
+const LayoutIocKindValueRouteChildren: LayoutIocKindValueRouteChildren = {
+  LayoutIocKindValueEventsRoute: LayoutIocKindValueEventsRoute,
+  LayoutIocKindValuePayloadsRoute: LayoutIocKindValuePayloadsRoute,
+  LayoutIocKindValueSessionsRoute: LayoutIocKindValueSessionsRoute,
+  LayoutIocKindValueSourcesRoute: LayoutIocKindValueSourcesRoute,
+  LayoutIocKindValueTimelineRoute: LayoutIocKindValueTimelineRoute,
+  LayoutIocKindValueIndexRoute: LayoutIocKindValueIndexRoute,
+}
+
+const LayoutIocKindValueRouteWithChildren =
+  LayoutIocKindValueRoute._addFileChildren(LayoutIocKindValueRouteChildren)
+
 interface LayoutRouteChildren {
   LayoutAttackersRoute: typeof LayoutAttackersRoute
   LayoutCommandsRoute: typeof LayoutCommandsRoute
   LayoutHistoryRoute: typeof LayoutHistoryRoute
+  LayoutIocsRoute: typeof LayoutIocsRoute
   LayoutIpsRoute: typeof LayoutIpsRoute
   LayoutKillChainRoute: typeof LayoutKillChainRoute
   LayoutSearchRoute: typeof LayoutSearchRoute
@@ -3204,6 +3446,7 @@ interface LayoutRouteChildren {
   LayoutClustersKindValueRoute: typeof LayoutClustersKindValueRouteWithChildren
   LayoutInvestigateCidrCidrRoute: typeof LayoutInvestigateCidrCidrRoute
   LayoutInvestigateIpIpRoute: typeof LayoutInvestigateIpIpRoute
+  LayoutIocKindValueRoute: typeof LayoutIocKindValueRouteWithChildren
   LayoutReportsDefinitionsIdRoute: typeof LayoutReportsDefinitionsIdRoute
   LayoutReportsGeneratedIdRoute: typeof LayoutReportsGeneratedIdRoute
 }
@@ -3212,6 +3455,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAttackersRoute: LayoutAttackersRoute,
   LayoutCommandsRoute: LayoutCommandsRoute,
   LayoutHistoryRoute: LayoutHistoryRoute,
+  LayoutIocsRoute: LayoutIocsRoute,
   LayoutIpsRoute: LayoutIpsRoute,
   LayoutKillChainRoute: LayoutKillChainRoute,
   LayoutSearchRoute: LayoutSearchRoute,
@@ -3273,6 +3517,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutClustersKindValueRoute: LayoutClustersKindValueRouteWithChildren,
   LayoutInvestigateCidrCidrRoute: LayoutInvestigateCidrCidrRoute,
   LayoutInvestigateIpIpRoute: LayoutInvestigateIpIpRoute,
+  LayoutIocKindValueRoute: LayoutIocKindValueRouteWithChildren,
   LayoutReportsDefinitionsIdRoute: LayoutReportsDefinitionsIdRoute,
   LayoutReportsGeneratedIdRoute: LayoutReportsGeneratedIdRoute,
 }
