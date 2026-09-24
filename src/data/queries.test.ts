@@ -130,6 +130,12 @@ describe('link integrity', () => {
     expect(full.emptyFilter).toBeUndefined()
     expect(full.events).toBeGreaterThan(0)
     expect(full.sections.map((s) => s.id)).toEqual(draft.elements)
+    // The preview prints the scope's own rows: scoped to one source, only that source appears.
+    const ip = full.sections.find((s) => s.id === 'sources')?.sample[0]?.[0] ?? (await q.getFacets()).sources[0].value
+    const scoped = await q.previewReport({ ...draft, elements: ['sources', 'appendix'], scope: { ...draft.scope, ip: [ip] } })
+    expect(scoped.sections[0].sample.map(([source]) => source)).toEqual([ip])
+    expect(scoped.sections[1].sample.every(([, event]) => event.startsWith(`${ip} `))).toBe(true)
+    expect(Date.parse(scoped.period.to) - Date.parse(scoped.period.from)).toBeGreaterThan(0)
     const empty = await q.previewReport({ ...draft, scope: { ...draft.scope, ip: ['10.9.9.9'] } })
     expect(empty.emptyFilter?.field).toBe('ip')
     expect(empty.events).toBe(0)

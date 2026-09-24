@@ -538,8 +538,18 @@ export interface ReportPreview {
   sensors: number
   sessions: number
   /** Rows each selected section would carry, and its approximate pages. */
-  sections: Array<{ id: string; label: string; rows: number; pages: number }>
+  sections: Array<{
+    id: string
+    label: string
+    rows: number
+    pages: number
+    /** Column headings and the first rows as the document will print them. */
+    columns: [string, string]
+    sample: Array<[string, string]>
+  }>
   pages: number
+  /** The period the scope window covers, as ISO timestamps. */
+  period: { from: string; to: string }
   /** The scope filter that matched nothing, when one did. */
   emptyFilter?: { field: 'ip' | 'sensor' | 'port' | 'signature' | 'window'; message: string }
 }

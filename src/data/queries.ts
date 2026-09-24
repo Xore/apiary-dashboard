@@ -619,6 +619,9 @@ export async function getFacets(): Promise<Facets> {
 /** What a draft definition would cover. The first scope filter that leaves
  * nothing to report is named, so the wizard can send the operator back to
  * that field rather than render an empty PDF. */
+const SAMPLE_ROWS = 4
+const formatCount = (n: number) => n.toLocaleString('en-US')
+
 export async function previewReport(definition: ReportDefinition): Promise<ReportPreview> {
   await mockDelay()
   const { window, ip, sensor, port, signature } = definition.scope
@@ -649,11 +652,41 @@ export async function previewReport(definition: ReportDefinition): Promise<Repor
     attck: techniquesFor(events).length,
     appendix: Math.min(events.length, 500),
   }
+  // The first rows each section prints, so the review step shows real content.
+  const top = (values: Array<string | undefined>): Array<[string, string]> => {
+    const counts = new Map<string, number>()
+    for (const v of values) if (v) counts.set(v, (counts.get(v) ?? 0) + 1)
+    return [...counts].sort((a, b) => b[1] - a[1]).slice(0, SAMPLE_ROWS).map(([v, n]) => [v, formatCount(n)])
+  }
+  const techniques = techniquesFor(events)
+  const samples: Record<string, { columns: [string, string]; sample: Array<[string, string]> }> = {
+    summary: {
+      columns: ['Measure', 'Value'],
+      sample: [
+        ['Events', formatCount(events.length)],
+        ['Sources', formatCount(sources.size)],
+        ['Sessions', formatCount(new Set(events.map((e) => e.sessionId)).size)],
+        ['Sensors', formatCount(new Set(events.map((e) => e.sensor)).size)],
+        ['Credentials tried', formatCount(rowsFor.credentials)],
+        ['Commands run', formatCount(rowsFor.commands)],
+      ],
+    },
+    timeline: { columns: ['Busiest hour (UTC)', 'Events'], sample: top(events.map((e) => `${e.timestamp.slice(0, 13).replace('T', ' ')}:00`)) },
+    sources: { columns: ['Source', 'Events'], sample: top(events.map((e) => e.srcIp)) },
+    credentials: { columns: ['Username : password', 'Tries'], sample: top(events.filter((e) => e.username).map((e) => `${e.username} : ${e.password ?? ''}`)) },
+    commands: { columns: ['Command', 'Runs'], sample: top(events.map((e) => e.command)) },
+    payloads: { columns: ['SHA-256', 'Downloads'], sample: top(events.map((e) => DOWNLOAD_HASH.get(e.id)?.slice(0, 16))) },
+    campaigns: { columns: ['Network', 'Events'], sample: NETWORK_CAMPAIGNS.filter((c) => [...sources].some((x) => membersOfCidr(c.cidr)?.includes(x))).slice(0, SAMPLE_ROWS).map((c) => [c.cidr, formatCount(c.events)]) },
+    attck: { columns: ['Technique', 'Events'], sample: techniques.slice(0, SAMPLE_ROWS).map((t) => [`${t.id} ${t.name}`, formatCount(t.events)]) },
+    appendix: { columns: ['Time (UTC)', 'Event'], sample: events.slice(0, SAMPLE_ROWS).map((e) => [e.timestamp.slice(0, 19).replace('T', ' '), `${e.srcIp} ${e.type}`]) },
+  }
   const sections = definition.elements.map((id) => {
     const rows = rowsFor[id] ?? 0
-    return { id, label: REPORT_ELEMENTS.find((e) => e.id === id)?.label ?? id, rows, pages: Math.max(1, Math.ceil(rows / 40)) }
+    const { columns, sample } = samples[id] ?? { columns: ['', ''] as [string, string], sample: [] }
+    return { id, label: REPORT_ELEMENTS.find((e) => e.id === id)?.label ?? id, rows, pages: Math.max(1, Math.ceil(rows / 40)), columns, sample }
   })
   return {
+    period: { from: new Date(MOCK_NOW - (RANGE_MS[window] ?? DAY)).toISOString(), to: new Date(MOCK_NOW).toISOString() },
     events: events.length,
     sources: sources.size,
     sensors: new Set(events.map((e) => e.sensor)).size,

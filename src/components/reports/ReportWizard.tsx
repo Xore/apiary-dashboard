@@ -7,7 +7,8 @@
  * Five human steps decide the report: template, content, scope, branding and
  * delivery. Two steps then run themselves: "Check the data" counts what the
  * scope actually matches, and "Render" assembles each section. The last step
- * is human again and generates the PDF.
+ * is human again: it shows the cover and the first page of each section as
+ * they will print, then generates the PDF.
  *
  * The data check can fail for real: a scope filter that matches nothing (an
  * address that sent nothing in the window, a sensor name with a typo) halts
@@ -44,6 +45,7 @@ import type { Facets, GeneratedReport, ReportDefinition, ReportFrequency, Report
 import { formatNumber } from '#/lib/format'
 import { FilterSelect } from '../FilterSelect'
 import { WEEKDAYS, WINDOWS, describeSchedule } from '../details/Report'
+import { ReportPreviewPages } from './ReportPreviewPages'
 
 const STEP_META = [
   { kind: 'human', label: 'Template' },
@@ -448,6 +450,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
 
                   {index === 7 && preview && (
                     <FormLayout defaultOptionality="optional">
+                      <ReportPreviewPages draft={draft} preview={preview} templateName={template.name} />
                       <Card variant="muted" padding={4}>
                         <MetadataList orientation="vertical">
                           <MetadataListItem label="Report" icon={<Icon icon={DocumentTextIcon} size="sm" />}>
