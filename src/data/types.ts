@@ -832,20 +832,115 @@ export interface ProblemReport extends Record<string, unknown> {
   hasSnapshot: boolean
 }
 
+/** Per-operator preferences, as the preference store keeps them. */
 export interface Preferences {
   theme: 'system' | 'dark' | 'light'
+  /** Accent palette from the shared theme. */
+  palette: Palette
   density: 'comfortable' | 'compact'
   motion: 'system' | 'on' | 'off'
+  highContrast: boolean
+  /** Bigger monospace for payloads, commands and raw records. */
+  largeEvidenceText: boolean
+  /** Wrap long values in tables instead of truncating them. */
+  wrapLongValues: boolean
+  collapsedSidebar: boolean
   landing: string
   rowsPerPage: number
   openDetailsInNewTab: boolean
-  timezone: 'UTC' | 'local'
+  /** Keep a page's filters when coming back to it. */
+  rememberFilters: boolean
+  /** `browser`, or an IANA zone such as Europe/Berlin. */
+  timezone: string
   clock: 'h24' | 'h12'
   timestamps: 'relative' | 'absolute'
+  autoRefresh: boolean
   refreshSeconds: number
-  notifyCritical: boolean
+  liveToasts: boolean
+  /** Minimum seconds between two operational toasts. */
+  liveToastSeconds: number
+  mapBasemap: 'osm'
+  mapClustering: boolean
+  mapAnimation: boolean
+  /** Notify for alerts at or above this severity. */
+  notifySeverity: Severity
+  notifySound: boolean
+  notifyDesktop: boolean
   notifyCanary: boolean
   defaultWindow: string
+}
+
+export type Palette = 'claude' | 'amber' | 'lavender' | 'lime' | 'neon' | 'ocean' | 'rose' | 'slate'
+
+/** Dashboard configuration, by section, as the config store keeps it.
+ * Every write is validated first and recorded as a revision. */
+export interface DashboardConfig {
+  revision: number
+  presentation: {
+    appName: string
+    productLabel: string
+    dashboardTitle: string
+    dashboardSubtitle: string
+    orgName: string
+    overviewIntro: string
+    helpLinkLabel: string
+    helpLinkUrl: string
+    bannerText: string
+    bannerSeverity: '' | 'info' | 'success' | 'warning' | 'danger'
+    /** RFC 3339, or empty for no expiry. */
+    bannerExpires: string
+    footerText: string
+    aiDisclaimer: string
+    privacyNotice: string
+  }
+  behavior: {
+    defaultLanding: string
+    defaultTimeWindow: string
+    rowsPerPageOptions: number[]
+    maxExportRows: number
+    refreshIntervalOptions: number[]
+    sourceStaleMinutes: number
+    mapProvider: 'osm'
+    defaultTimezone: string
+    showMlPanels: boolean
+    maintenanceMode: boolean
+    readOnly: boolean
+    showProblemReportButton: boolean
+  }
+  honeypot: {
+    /** A duration such as 30m or 2h, between 5m and 168h. */
+    alertCooldown: string
+    alertCampaignScore: number
+    sandboxAlertRiskScore: number
+    mlAlertThreshold: number
+    yaraScanIntervalSeconds: number
+    yaraMaxBytes: number
+    payloadDedupeIntervalSeconds: number
+  }
+  /** Name and description overrides per report template id. */
+  reportPresets: Partial<Record<string, { name?: string; description?: string }>>
+}
+
+export type ConfigSection = Exclude<keyof DashboardConfig, 'revision'>
+
+/** What validation found wrong, field name → message. Empty when valid. */
+export type ConfigProblems = Record<string, string>
+
+/** The report sender's own counters, as it last published them. */
+export interface ReporterStats {
+  available: boolean
+  reason?: string
+  stats?: { attempted: number; sent: number; suppressedCooldown: number; dryRun: number; failed: number; updatedAt: string }
+}
+
+/** Elasticsearch storage at a glance. */
+export interface EsStorage {
+  clusterStatus: 'green' | 'yellow' | 'red'
+  indexCount: number
+  docCount: number
+  storeBytes: number
+  /** The biggest index families, for where the space goes. */
+  families: Array<{ family: string; indices: number; docs: number; bytes: number }>
 }
 
 export interface ServiceStatus extends Record<string, unknown> {
@@ -879,8 +974,11 @@ export interface SettingsData {
   services: ServiceStatus[]
   history: ConfigRevision[]
   audit: AuditEntry[]
-  branding: { productName: string; helpUrl: string; notice: string; footer: string }
-  honeypot: { alertCooldownMinutes: number; blocklistTtlHours: number; sandboxConcurrency: number; llmDailyReport: boolean }
+  config: DashboardConfig
+  reporter: ReporterStats
+  storage: EsStorage
+  /** The template catalog, for naming preset overrides. */
+  reportTemplates: ReportTemplate[]
 }
 
 // ---- Evidence detail -------------------------------------------------------

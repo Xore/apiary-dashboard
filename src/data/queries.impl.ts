@@ -30,7 +30,9 @@ import {
   PREFERENCES,
   PROBLEM_REPORTS,
   SERVICES,
-  SETTINGS_ADMIN,
+  CONFIG,
+  ES_STORAGE,
+  REPORTER_STATS,
   techniquesFor,
 } from './mock/details'
 import {
@@ -136,7 +138,11 @@ import type {
   IocRow,
   TimelineEntity,
   RelatedGroup,
+  ConfigProblems,
+  ConfigSection,
+  DashboardConfig,
 } from './types'
+import { validateSection } from './mock/config'
 
 const HOUR = 3_600_000
 
@@ -1011,8 +1017,10 @@ export async function getSettings(): Promise<SettingsData> {
     services: SERVICES.map((s) => ({ ...s })),
     history: [...CONFIG_HISTORY],
     audit: [...AUDIT_LOG],
-    branding: { ...SETTINGS_ADMIN.branding },
-    honeypot: { ...SETTINGS_ADMIN.honeypot },
+    config: structuredClone(CONFIG),
+    reporter: structuredClone(REPORTER_STATS),
+    storage: structuredClone(ES_STORAGE),
+    reportTemplates: REPORT_TEMPLATES,
   }
 }
 
@@ -1021,17 +1029,40 @@ export async function savePreferences(next: Preferences): Promise<void> {
   Object.assign(PREFERENCES, next)
 }
 
-function audit(action: string, fields: string[]) {
-  AUDIT_LOG.unshift({ id: `a-${Date.now().toString(36)}`, at: new Date(MOCK_NOW).toISOString(), actor: MOCK_USER.name, action, fields, result: 'ok' })
+function audit(action: string, fields: string[], result: 'ok' | 'rejected' = 'ok') {
+  AUDIT_LOG.unshift({ id: `a-${Date.now().toString(36)}`, at: new Date(MOCK_NOW).toISOString(), actor: MOCK_USER.name, action, fields, result })
 }
 
 /** Mock write: stages an admin config section and records a revision. */
-export async function saveAdminSection<TSection extends keyof typeof SETTINGS_ADMIN>(section: TSection, value: (typeof SETTINGS_ADMIN)[TSection]): Promise<void> {
+/** Section values as they were before each revision, for rollback. */
+const SNAPSHOTS = new Map<string, { section: ConfigSection; value: unknown }>()
+
+const SECTION_NAME: Record<ConfigSection, string> = { presentation: 'presentation', behavior: 'behavior', honeypot: 'honeypot', reportPresets: 'report-presets' }
+
+/** Persist-nothing preview: what saving this section would refuse. */
+export async function validateConfig<TSection extends ConfigSection>(section: TSection, value: DashboardConfig[TSection]): Promise<ConfigProblems> {
   await mockDelay()
-  const changed = Object.keys(value).filter((k) => (value as Record<string, unknown>)[k] !== (SETTINGS_ADMIN[section] as Record<string, unknown>)[k])
-  Object.assign(SETTINGS_ADMIN[section], value)
-  CONFIG_HISTORY.unshift({ id: `rev-${Date.now().toString(36)}`, at: new Date(MOCK_NOW).toISOString(), actor: MOCK_USER.name, section, summary: `Changed ${changed.join(', ') || 'nothing'}` })
-  audit('config.save', changed.map((k) => `${section}.${k}`))
+  return validateSection(section, value, REPORT_TEMPLATES.map((t) => t.id))
+}
+
+/** Stages one config section: validated first, then recorded as a new
+ * revision with what it replaced, so it can be rolled back. */
+export async function saveConfigSection<TSection extends ConfigSection>(section: TSection, value: DashboardConfig[TSection]): Promise<{ ok: true; revision: number } | { ok: false; problems: ConfigProblems }> {
+  await mockDelay()
+  const problems = validateSection(section, value, REPORT_TEMPLATES.map((t) => t.id))
+  if (Object.keys(problems).length > 0) {
+    audit('config.save', Object.keys(problems).map((k) => `${SECTION_NAME[section]}.${k}`), 'rejected')
+    return { ok: false, problems }
+  }
+  const before = CONFIG[section] as Record<string, unknown>
+  const changed = Object.keys({ ...before, ...(value as Record<string, unknown>) }).filter((k) => JSON.stringify(before[k]) !== JSON.stringify((value as Record<string, unknown>)[k]))
+  CONFIG.revision += 1
+  const id = `rev-${CONFIG.revision}`
+  SNAPSHOTS.set(id, { section, value: structuredClone(before) })
+  CONFIG[section] = structuredClone(value)
+  CONFIG_HISTORY.unshift({ id, at: new Date(MOCK_NOW).toISOString(), actor: MOCK_USER.name, section: SECTION_NAME[section], summary: `Changed ${changed.join(', ') || 'nothing'}` })
+  audit('config.save', changed.map((k) => `${SECTION_NAME[section]}.${k}`))
+  return { ok: true, revision: CONFIG.revision }
 }
 
 export async function runServiceAction(name: string, action: 'start' | 'stop' | 'restart'): Promise<void> {
@@ -1047,7 +1078,12 @@ export async function rollbackConfig(revisionId: string): Promise<void> {
   await mockDelay()
   const revision = CONFIG_HISTORY.find((r) => r.id === revisionId)
   if (!revision) return
-  CONFIG_HISTORY.unshift({ id: `rev-${Date.now().toString(36)}`, at: new Date(MOCK_NOW).toISOString(), actor: MOCK_USER.name, section: revision.section, summary: `Rolled back to ${revision.id}` })
+  // Rolling back a revision restores what it replaced; seeded revisions
+  // from before this session have no snapshot and only record the intent.
+  const snapshot = SNAPSHOTS.get(revisionId)
+  CONFIG.revision += 1
+  if (snapshot) (CONFIG as unknown as Record<string, unknown>)[snapshot.section] = structuredClone(snapshot.value)
+  CONFIG_HISTORY.unshift({ id: `rev-${CONFIG.revision}`, at: new Date(MOCK_NOW).toISOString(), actor: MOCK_USER.name, section: revision.section, summary: `Rolled back ${revision.id}` })
   audit('config.rollback', [revision.id])
 }
 
