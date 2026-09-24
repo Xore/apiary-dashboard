@@ -12,20 +12,33 @@ import { CountTable, MiniTable, Panel, StatTile } from '#/components/DashboardBl
 import { FeedStateLabel } from '#/components/FeedState'
 import { PageFrame } from '#/components/PageFrame'
 import { SeverityToken } from '#/components/SeverityToken'
-import { searchTabs } from '#/components/ViewTabs'
+import { BugAntIcon, ChartBarIcon, CpuChipIcon, FingerPrintIcon, KeyIcon, UserGroupIcon } from '@heroicons/react/24/outline'
+import { searchTabs, sectionOf } from '#/components/ViewTabs'
 import { WorldMap } from '#/components/WorldMap'
 import { getOverview, getOverviewViews } from '#/data/queries'
 import type { CapturedPayload, HoneypotEvent, NetworkCampaign, OverviewViews, SensorFeed } from '#/data/types'
 import { formatClock, formatDateTime, formatNumber, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { FilterSelect } from '#/components/FilterSelect'
-import { SectionSwitch, sectionOf } from '#/components/SectionSwitch'
 
+const THREAT_SECTIONS = [
+  { id: 'who', label: 'Who', icon: UserGroupIcon },
+  { id: 'traffic', label: 'Traffic', icon: ChartBarIcon },
+  { id: 'exploits', label: 'Exploits', icon: BugAntIcon },
+] as const
+
+const BEHAVIOR_SECTIONS = [
+  { id: 'input', label: 'Credentials & commands', icon: KeyIcon },
+  { id: 'fingerprints', label: 'Fingerprints', icon: FingerPrintIcon },
+  { id: 'decoys', label: 'Decoys & ICS', icon: CpuChipIcon },
+] as const
+
+// Views with sections show them as a menu under the view's top-bar entry.
 const VIEWS = [
   { id: 'live', label: 'Live operations' },
   { id: 'health', label: 'Collection health' },
-  { id: 'threats', label: 'Threat landscape' },
-  { id: 'behavior', label: 'Attacker behavior' },
+  { id: 'threats', label: 'Threat landscape', sections: THREAT_SECTIONS },
+  { id: 'behavior', label: 'Attacker behavior', sections: BEHAVIOR_SECTIONS },
   { id: 'evidence', label: 'Evidence & campaigns' },
 ] as const
 type View = (typeof VIEWS)[number]['id']
@@ -142,17 +155,10 @@ function HealthView({ views }: { views: OverviewViews }) {
 
 // ---- Threat landscape --------------------------------------------------------
 
-const THREAT_SECTIONS = [
-  { id: 'who', label: 'Who' },
-  { id: 'traffic', label: 'Traffic' },
-  { id: 'exploits', label: 'Exploits' },
-] as const
-
 function ThreatsView({ views, section }: { views: OverviewViews; section?: string }) {
   const current = sectionOf(THREAT_SECTIONS, section)
   return (
     <VStack gap={4}>
-      <SectionSwitch label="Threat landscape sections" sections={THREAT_SECTIONS} value={section} />
       {current === 'who' && (
         <Grid columns={{ minWidth: 300, repeat: 'fit' }} gap={4}>
           <MiniTable title="Top source IPs" header="Source" rows={views.topIps} linkTo={ipLink} />
@@ -188,12 +194,6 @@ function ThreatsView({ views, section }: { views: OverviewViews; section?: strin
 
 // ---- Attacker behavior -------------------------------------------------------
 
-const BEHAVIOR_SECTIONS = [
-  { id: 'input', label: 'Credentials & commands' },
-  { id: 'fingerprints', label: 'Fingerprints' },
-  { id: 'decoys', label: 'Decoys & ICS' },
-] as const
-
 const FINGERPRINT_BARS: Array<[string, keyof OverviewViews]> = [
   ['Attacker OS distribution', 'osDistribution'],
   ['Attacker TCP-stack clusters (JA4T)', 'tcpClusters'],
@@ -225,7 +225,6 @@ function BehaviorView({ views, section }: { views: OverviewViews; section?: stri
   const current = sectionOf(BEHAVIOR_SECTIONS, section)
   return (
     <VStack gap={4}>
-      <SectionSwitch label="Attacker behavior sections" sections={BEHAVIOR_SECTIONS} value={section} />
       {current === 'input' && (
         <Grid columns={{ minWidth: 340, repeat: 'fit' }} gap={4}>
           <MiniTable title="Top credentials (user / pass)" header="Pair" rows={views.credentials} isCode />

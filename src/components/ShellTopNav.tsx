@@ -66,9 +66,10 @@ export function ShellTopNav({ onOpenPalette }: { onOpenPalette: () => void }) {
       startContent={
         <HStack gap={4} vAlign="center">
           <ShellBreadcrumbs />
-          {/* TopNav sizes its start slot to content, so cap the tabs to what the
-              heading, breadcrumbs, and end controls leave; past that they scroll. */}
-          <StackItem size="fill" style={{ maxWidth: 'max(240px, calc(100vw - 860px))' }}>
+          {/* TopNav sizes its start slot to content, so the tabs get a fixed
+              budget: what the heading, breadcrumbs, and end controls leave.
+              Tabs past it go into a More menu. */}
+          <StackItem size="fill" style={{ width: 'max(240px, calc(100vw - 860px))' }}>
             <ViewTabsBar />
           </StackItem>
         </HStack>
