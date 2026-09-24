@@ -4,6 +4,7 @@ import {
   SideNav,
   SideNavItem,
   SideNavSection,
+  useSideNavCollapse,
 } from '@astryxdesign/core/SideNav'
 import {
   ArrowRightStartOnRectangleIcon,
@@ -15,6 +16,8 @@ import type { SessionUser } from '#/data/types'
 import { NAV_SECTIONS, navHrefFor } from '#/lib/nav'
 
 function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettings: () => void }) {
+  // A collapsed sidebar has room for the icon only; the name stays the label.
+  const { isCollapsed } = useSideNavCollapse()
 
   return (
     <DropdownMenu
@@ -23,7 +26,7 @@ function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettin
         label: user.name,
         icon: <Icon icon={UserCircleIcon} size="sm" />,
         variant: 'ghost',
-        width: '100%',
+        ...(isCollapsed ? { isIconOnly: true } : { width: '100%' }),
       }}
     >
       <DropdownMenuItem
