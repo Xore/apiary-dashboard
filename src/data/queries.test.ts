@@ -130,7 +130,7 @@ describe('link integrity', () => {
     expect(full.emptyFilter).toBeUndefined()
     expect(full.events).toBeGreaterThan(0)
     expect(full.sections.map((s) => s.id)).toEqual(draft.elements)
-    const empty = await q.previewReport({ ...draft, scope: { ...draft.scope, ip: '10.9.9.9' } })
+    const empty = await q.previewReport({ ...draft, scope: { ...draft.scope, ip: ['10.9.9.9'] } })
     expect(empty.emptyFilter?.field).toBe('ip')
     expect(empty.events).toBe(0)
     const oneOff = await q.generateReportFrom(draft, false)
@@ -157,7 +157,7 @@ describe('filters and search', () => {
   it('filters events by kind, port, and time window', async () => {
     const logins = await q.getEvents({ kind: 'login' })
     expect(logins.rows.every((e) => e.type === 'login.failed' || e.type === 'login.success')).toBe(true)
-    const ssh = await q.getEvents({ port: 22 })
+    const ssh = await q.getEvents({ port: '22' })
     expect(ssh.rows.every((e) => e.dstPort === 22)).toBe(true)
     const all = await q.getEvents({})
     const lastHour = await q.getEvents({ since: '1h' })

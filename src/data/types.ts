@@ -249,13 +249,14 @@ export interface AuthEventsData {
 
 export type EventKind = 'connection' | 'login' | 'command' | 'download' | 'http' | 'alert'
 
+/** Each filter is a comma list (?sensor=a,b) and matches any of its values. */
 export interface EventFilters {
   ip?: string
   sensor?: string
   country?: string
-  proto?: Protocol
-  port?: number
-  kind?: EventKind
+  proto?: string
+  port?: string | number
+  kind?: string
   /** Relative window such as `1h`, `6h`, `24h`. */
   since?: string
 }
@@ -488,7 +489,8 @@ export interface ReportDefinition extends Record<string, unknown> {
   template: string
   theme: 'dark' | 'light'
   elements: string[]
-  scope: { window: string; ip: string; sensor: string; port: string; signature: string }
+  /** Each filter matches any of its values; an empty list means no filter. */
+  scope: { window: string; ip: string[]; sensor: string[]; port: string[]; signature: string[] }
   branding: { title: string; author: string; headerLeft: string; headerRight: string; footerLeft: string; classification: string }
   schedule: { frequency: ReportFrequency; hour: number; minute: number; weekday: number; monthDay: number } | null
   created: string
@@ -509,6 +511,24 @@ export interface GeneratedReport extends Record<string, unknown> {
   createdAt: string
   sizeBytes: number
   definitionId: string
+}
+
+/** One value a filter can take, with how many events carry it. */
+export interface FacetValue {
+  value: string
+  label?: string
+  count: number
+}
+
+/** Every value each filter can take, for pickers that show them all. */
+export interface Facets {
+  sensors: FacetValue[]
+  sources: FacetValue[]
+  countries: FacetValue[]
+  protocols: FacetValue[]
+  ports: FacetValue[]
+  signatures: FacetValue[]
+  kinds: FacetValue[]
 }
 
 /** What a draft definition would cover, checked before rendering. */

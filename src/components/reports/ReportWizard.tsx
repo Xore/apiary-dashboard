@@ -40,8 +40,9 @@ import { VisuallyHidden } from '@astryxdesign/core/VisuallyHidden'
 import { CalendarDaysIcon, DocumentTextIcon, FunnelIcon, PaintBrushIcon, Squares2X2Icon } from '@heroicons/react/24/outline'
 import { useRouter } from '@tanstack/react-router'
 import { generateReportFrom, previewReport } from '#/data/queries'
-import type { GeneratedReport, ReportDefinition, ReportFrequency, ReportPreview, ReportsData } from '#/data/types'
+import type { Facets, GeneratedReport, ReportDefinition, ReportFrequency, ReportPreview, ReportsData } from '#/data/types'
 import { formatNumber } from '#/lib/format'
+import { FilterSelect } from '../FilterSelect'
 import { WEEKDAYS, WINDOWS, describeSchedule } from '../details/Report'
 
 const STEP_META = [
@@ -87,7 +88,7 @@ export function emptyDraft(data: ReportsData, templateId?: string): ReportDefini
     template: template.id,
     theme: 'dark',
     elements: [...template.elements],
-    scope: { window: '24h', ip: '', sensor: '', port: '', signature: '' },
+    scope: { window: '24h', ip: [], sensor: [], port: [], signature: [] },
     branding: { title: 'APIARY honeypot report', author: '', headerLeft: 'APIARY', headerRight: '', footerLeft: '', classification: 'TLP:AMBER' },
     schedule: null,
     created: '',
@@ -96,7 +97,7 @@ export function emptyDraft(data: ReportsData, templateId?: string): ReportDefini
 
 const plural = (n: number, word: string) => `${formatNumber(n)} ${word}${n === 1 ? '' : 's'}`
 
-export function ReportWizard({ data, initial, onRestart }: { data: ReportsData; initial: ReportDefinition; onRestart: () => void }) {
+export function ReportWizard({ data, facets, initial, onRestart }: { data: ReportsData; facets: Facets; initial: ReportDefinition; onRestart: () => void }) {
   const router = useRouter()
   const [draft, setDraft] = useState<ReportDefinition>(initial)
   const [active, setActive] = useState(0)
@@ -127,10 +128,10 @@ export function ReportWizard({ data, initial, onRestart }: { data: ReportsData; 
   const checksFor = useMemo<Record<number, Array<{ id: string; label: string }>>>(() => {
     const scopeChecks = [
       { id: 'window', label: `Counting events in the last ${WINDOWS.find((w) => w.value === draft.scope.window)?.label ?? draft.scope.window}` },
-      ...(draft.scope.ip ? [{ id: 'ip', label: `Filtering to ${draft.scope.ip}` }] : []),
-      ...(draft.scope.sensor ? [{ id: 'sensor', label: `Filtering to sensor ${draft.scope.sensor}` }] : []),
-      ...(draft.scope.port ? [{ id: 'port', label: `Filtering to port ${draft.scope.port}` }] : []),
-      ...(draft.scope.signature ? [{ id: 'signature', label: `Matching IDS signature “${draft.scope.signature}”` }] : []),
+      ...(draft.scope.ip.length ? [{ id: 'ip', label: `Filtering to ${draft.scope.ip.join(', ')}` }] : []),
+      ...(draft.scope.sensor.length ? [{ id: 'sensor', label: `Filtering to ${draft.scope.sensor.length === 1 ? 'sensor' : 'sensors'} ${draft.scope.sensor.join(', ')}` }] : []),
+      ...(draft.scope.port.length ? [{ id: 'port', label: `Filtering to ${draft.scope.port.length === 1 ? 'port' : 'ports'} ${draft.scope.port.join(', ')}` }] : []),
+      ...(draft.scope.signature.length ? [{ id: 'signature', label: `Matching IDS ${draft.scope.signature.length === 1 ? 'signature' : 'signatures'} ${draft.scope.signature.map((x) => `“${x}”`).join(', ')}` }] : []),
       { id: 'sections', label: `Sizing ${plural(draft.elements.length, 'section')}` },
     ]
     return {
@@ -179,8 +180,10 @@ export function ReportWizard({ data, initial, onRestart }: { data: ReportsData; 
     const content: Record<string, string> = {}
     if (draft.elements.length === 0) content.elements = 'Pick at least one section, or the PDF would only have a cover.'
     const scope: Record<string, string> = {}
-    if (draft.scope.ip && !/^(\d{1,3}\.){3}\d{1,3}$/.test(draft.scope.ip.trim())) scope.ip = 'Enter an IPv4 address, e.g. 203.0.113.7.'
-    if (draft.scope.port && !/^\d{1,5}$/.test(draft.scope.port.trim())) scope.port = 'Enter a port number, e.g. 22.'
+    const badIp = draft.scope.ip.find((ip) => !/^(\d{1,3}\.){3}\d{1,3}$/.test(ip))
+    if (badIp) scope.ip = `“${badIp}” is not an IPv4 address, e.g. 203.0.113.7.`
+    const badPort = draft.scope.port.find((port) => !/^\d{1,5}$/.test(port))
+    if (badPort) scope.port = `“${badPort}” is not a port number, e.g. 22.`
     const branding: Record<string, string> = {}
     if (!draft.branding.title.trim()) branding.title = 'The cover needs a title.'
     return [templateStep, content, scope, branding, {}, {}, {}, {}]
@@ -206,7 +209,8 @@ export function ReportWizard({ data, initial, onRestart }: { data: ReportsData; 
     setActive((a) => a + 1)
   }
 
-  const scopeSummary = [draft.scope.ip, draft.scope.sensor && `sensor ${draft.scope.sensor}`, draft.scope.port && `port ${draft.scope.port}`, draft.scope.signature && `“${draft.scope.signature}”`].filter(Boolean)
+  const listed = (values: string[], one: string, many: string) => (values.length === 0 ? undefined : values.length === 1 ? `${one} ${values[0]}` : `${values.length} ${many}`)
+  const scopeSummary = [listed(draft.scope.ip, 'IP', 'IPs'), listed(draft.scope.sensor, 'sensor', 'sensors'), listed(draft.scope.port, 'port', 'ports'), listed(draft.scope.signature, 'signature', 'signatures')].filter(Boolean)
 
   // What a collapsed step shows: the result it settled, never a status word.
   const summaryFor = (index: number): string | undefined => {
@@ -377,10 +381,10 @@ export function ReportWizard({ data, initial, onRestart }: { data: ReportsData; 
                   {index === 2 && (
                     <FormLayout defaultOptionality="optional">
                       <Selector label="Observation window" value={draft.scope.window} onChange={(window) => setScope({ window })} options={WINDOWS} description="Scheduled runs always cover the window that just ended." />
-                      <TextInput label="Source IP" value={draft.scope.ip} onChange={(ip) => setScope({ ip })} placeholder="203.0.113.7" status={fieldStatus('ip')} />
-                      <TextInput label="Sensor" value={draft.scope.sensor} onChange={(sensor) => setScope({ sensor })} placeholder="cowrie-vps-01" />
-                      <TextInput label="Port" value={draft.scope.port} onChange={(port) => setScope({ port })} placeholder="22" status={fieldStatus('port')} />
-                      <TextInput label="IDS signature" value={draft.scope.signature} onChange={(signature) => setScope({ signature })} placeholder="ET SCAN" />
+                      <FilterSelect label="Source IP" options={facets.sources} value={draft.scope.ip} onChange={(ip) => setScope({ ip })} placeholder="Any address" allowCustom status={fieldStatus('ip')} description="Every address seen, busiest first. You can also type one that is not listed." />
+                      <FilterSelect label="Sensor" options={facets.sensors} value={draft.scope.sensor} onChange={(sensor) => setScope({ sensor })} placeholder="Every sensor" />
+                      <FilterSelect label="Port" options={facets.ports} value={draft.scope.port} onChange={(port) => setScope({ port })} placeholder="Any port" allowCustom status={fieldStatus('port')} />
+                      <FilterSelect label="IDS signature" options={facets.signatures} value={draft.scope.signature} onChange={(signature) => setScope({ signature })} placeholder="Any signature" allowCustom description="Pick signatures, or type part of one, e.g. ET SCAN." />
                       {stepActions('Continue', index)}
                     </FormLayout>
                   )}

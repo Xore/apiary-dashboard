@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
-import { Selector } from '@astryxdesign/core/Selector'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -19,6 +18,7 @@ import { getOverview, getOverviewViews } from '#/data/queries'
 import type { CapturedPayload, HoneypotEvent, NetworkCampaign, OverviewViews, SensorFeed } from '#/data/types'
 import { formatClock, formatDateTime, formatNumber, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
+import { FilterSelect } from '#/components/FilterSelect'
 import { SectionSwitch, sectionOf } from '#/components/SectionSwitch'
 
 const VIEWS = [
@@ -64,7 +64,18 @@ function AttackVectorsPanel({ views }: { views: OverviewViews }) {
   return (
     <Panel
       title="Attack vectors"
-      action={<Selector label="Sensor drill-down" isLabelHidden size="sm" value={sensor} onChange={setSensor} options={sensors} />}
+      action={
+        <FilterSelect
+          label="Sensor drill-down"
+          isLabelHidden
+          size="sm"
+          width={200}
+          mode="single"
+          options={sensors.map((s) => ({ value: s }))}
+          value={[sensor]}
+          onChange={([next]) => next && setSensor(next)}
+        />
+      }
     >
       {vectors && (
         <Grid columns={{ minWidth: 240, repeat: 'fit' }} gap={4}>

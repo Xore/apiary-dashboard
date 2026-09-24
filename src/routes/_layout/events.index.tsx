@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Selector } from '@astryxdesign/core/Selector'
@@ -6,15 +5,16 @@ import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
-import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { entityHref } from '#/lib/entities'
 import { createFileRoute } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { SeverityToken } from '#/components/SeverityToken'
-import { getEvents } from '#/data/queries'
-import type { EventFilters, EventKind, HoneypotEvent, Protocol } from '#/data/types'
+import { getEvents, getFacets } from '#/data/queries'
+import { FilterSelect, listParam, toNumericParam, toParam } from '#/components/FilterSelect'
+import type { FilterOption } from '#/components/FilterSelect'
+import type { EventFilters, EventKind, Facets, HoneypotEvent } from '#/data/types'
 import { downloadCsv, downloadJson } from '#/lib/export'
 import { formatClock, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
@@ -23,25 +23,38 @@ const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http'
 const SINCE = ['1h', '6h', '24h']
 const FILTER_KEYS = ['ip', 'sensor', 'country', 'proto', 'port', 'kind', 'since'] as const
 
+// Each value filter lists every value seen, with counts, under the field.
+const FILTERS: Array<{ key: 'ip' | 'sensor' | 'country' | 'proto' | 'port' | 'kind'; label: string; width: number; options: (f: Facets) => FilterOption[] }> = [
+  { key: 'ip', label: 'Source IP', width: 170, options: (f) => f.sources },
+  { key: 'sensor', label: 'Sensor', width: 170, options: (f) => f.sensors },
+  { key: 'country', label: 'Country', width: 130, options: (f) => f.countries },
+  { key: 'proto', label: 'Protocol', width: 130, options: (f) => f.protocols },
+  { key: 'port', label: 'Port', width: 110, options: (f) => f.ports },
+  { key: 'kind', label: 'Kind', width: 130, options: (f) => f.kinds },
+]
+
 export const Route = createFileRoute('/_layout/events/')({
   // Deep links from other pages arrive here pre-scoped, e.g.
   // /events?ip=…, ?kind=login, ?country=CN, ?since=24h.
   validateSearch: (search: Record<string, unknown>): EventFilters => {
-    const str = (key: string) => (typeof search[key] === 'string' && search[key] ? search[key] : undefined)
-    const port = Number(search.port)
+    // Comma lists, so ?sensor=a,b picks several and ?port=22 still works.
+    const list = (key: string) => toParam(listParam(search[key]))
     return {
-      ip: str('ip'),
-      sensor: str('sensor'),
-      country: str('country'),
-      proto: str('proto') as Protocol | undefined,
-      port: Number.isInteger(port) && port > 0 ? port : undefined,
-      kind: KINDS.includes(search.kind as EventKind) ? (search.kind as EventKind) : undefined,
-      since: str('since'),
+      ip: list('ip'),
+      sensor: list('sensor'),
+      country: list('country'),
+      proto: list('proto'),
+      port: toNumericParam(listParam(search.port)),
+      kind: toParam(listParam(search.kind).filter((k) => KINDS.includes(k as EventKind))),
+      since: typeof search.since === 'string' && SINCE.includes(search.since) ? search.since : undefined,
     }
   },
   // An explicit ?since= wins; otherwise the app-wide range applies.
   loaderDeps: ({ search }) => ({ ...search, since: search.since ?? search.range }),
-  loader: ({ deps }) => getEvents(deps),
+  loader: async ({ deps }) => {
+    const [page, facets] = await Promise.all([getEvents(deps), getFacets()])
+    return { ...page, facets }
+  },
   component: EventsPage,
 })
 
@@ -69,7 +82,6 @@ function EventsPage() {
   const data = Route.useLoaderData()
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
-  const [ipDraft, setIpDraft] = useState(search.ip ?? '')
 
   const setFilter = (patch: EventFilters) => void navigate({ search: (prev) => ({ ...prev, ...patch }) })
   const active = FILTER_KEYS.filter((key) => search[key] !== undefined)
@@ -102,66 +114,21 @@ function EventsPage() {
       toolbar={
         <VStack gap={3}>
           <HStack gap={2} wrap="wrap" vAlign="center">
-            <TextInput
-              label="Source IP"
-              isLabelHidden
-              size="sm"
-              width={180}
-              placeholder="Source IP, Enter to apply"
-              value={ipDraft}
-              onChange={setIpDraft}
-              onEnter={() => setFilter({ ip: ipDraft.trim() || undefined })}
-            />
-            <Selector
-              label="Sensor"
-              isLabelHidden
-              size="sm"
-              placeholder="Sensor"
-              hasClear
-              value={search.sensor ?? null}
-              onChange={(value) => setFilter({ sensor: value ?? undefined })}
-              options={data.values.sensors}
-            />
-            <Selector
-              label="Country"
-              isLabelHidden
-              size="sm"
-              placeholder="Country"
-              hasClear
-              value={search.country ?? null}
-              onChange={(value) => setFilter({ country: value ?? undefined })}
-              options={data.values.countries}
-            />
-            <Selector
-              label="Protocol"
-              isLabelHidden
-              size="sm"
-              placeholder="Protocol"
-              hasClear
-              value={search.proto ?? null}
-              onChange={(value) => setFilter({ proto: (value ?? undefined) as Protocol | undefined })}
-              options={data.values.protos}
-            />
-            <Selector
-              label="Port"
-              isLabelHidden
-              size="sm"
-              placeholder="Port"
-              hasClear
-              value={search.port ? String(search.port) : null}
-              onChange={(value) => setFilter({ port: value ? Number(value) : undefined })}
-              options={data.values.ports.map(String)}
-            />
-            <Selector
-              label="Kind"
-              isLabelHidden
-              size="sm"
-              placeholder="Kind"
-              hasClear
-              value={search.kind ?? null}
-              onChange={(value) => setFilter({ kind: (value ?? undefined) as EventKind | undefined })}
-              options={KINDS}
-            />
+            {FILTERS.map((f) => (
+              <FilterSelect
+                key={f.key}
+                label={f.label}
+                isLabelHidden
+                size="sm"
+                width={f.width}
+                placeholder={f.label}
+                options={f.options(data.facets)}
+                allowCustom={f.key === 'ip' || f.key === 'port'}
+                value={listParam(search[f.key])}
+                onChange={(values) => setFilter({ [f.key]: f.key === 'port' ? toNumericParam(values) : toParam(values) })}
+              />
+            ))}
+            {/* A time window, not a value filter: a plain dropdown like the app-wide range. */}
             <Selector
               label="Time window"
               isLabelHidden
@@ -181,20 +148,14 @@ function EventsPage() {
                   size="sm"
                   color="blue"
                   label={`${key}: ${search[key]}`}
-                  onRemove={() => {
-                    if (key === 'ip') setIpDraft('')
-                    setFilter({ [key]: undefined })
-                  }}
+                  onRemove={() => setFilter({ [key]: undefined })}
                 />
               ))}
               <Button
                 label="Clear all"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  setIpDraft('')
-                  void navigate({ search: {} })
-                }}
+                onClick={() => void navigate({ search: {} })}
               />
             </HStack>
           )}
