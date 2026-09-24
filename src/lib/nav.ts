@@ -1,13 +1,15 @@
 // Sidebar information architecture. Sections, order, labels, and routes match
-// the canonical frontend-next src/lib/nav.ts @62ee45d; icons are heroicons
-// equivalents of its inline feather paths.
+// the canonical frontend-next src/lib/nav.ts @62ee45d, except where epic #25
+// reshaped them: Indicators replaces Hash / IOC lookup and Executed commands,
+// Watchlist is new, and Credentials reads Bait credentials. Icons are
+// heroicons equivalents of its inline feather paths.
 import {
   BellAlertIcon,
   BellIcon,
+  BookmarkIcon,
   ChartBarSquareIcon,
   ChatBubbleLeftRightIcon,
   ClockIcon,
-  CommandLineIcon,
   CpuChipIcon,
   DocumentIcon,
   DocumentTextIcon,
@@ -60,10 +62,10 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'Infrastructure clusters', to: '/clusters', icon: Squares2X2Icon },
       { label: 'Attacker identities', to: '/attackers', icon: FingerPrintIcon },
       { label: 'Kill-chain analytics', to: '/kill-chain', icon: PresentationChartLineIcon },
-      { label: 'Executed commands', to: '/commands', icon: CommandLineIcon },
       { label: 'Sensor detail', to: '/sensors', icon: ServerStackIcon },
       { label: 'Session recordings', to: '/recordings', icon: PlayCircleIcon },
-      { label: 'Hash / IOC lookup', to: '/investigate/lookup', icon: MagnifyingGlassIcon },
+      { label: 'Indicators', to: '/iocs', icon: MagnifyingGlassIcon },
+      { label: 'Watchlist', to: '/watchlist', icon: BookmarkIcon },
     ],
   },
   {
@@ -119,6 +121,7 @@ const PAGE_PREFIXES: Array<[string, string]> = [
   ['/investigate/cluster', 'Cluster'],
   ['/tty-replay/', 'Session recording'],
   ['/recordings/', 'Session recording'],
+  ['/ioc/', 'Indicator'],
   ['/alerts/', 'Alert'],
   ['/ml-anomalies/', 'ML anomaly'],
   ['/llm-analysis/', 'LLM analysis'],
@@ -138,6 +141,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/settings': 'Settings',
   '/search': 'Search',
   '/dead-letters': 'Ingest dead letters',
+  '/commands': 'Executed commands',
   '/problem-reports': 'Problem reports',
   '/sandbox/vnc': 'Sandbox live view',
   '/revdeck': 'RevDeck',
@@ -173,6 +177,8 @@ export function navHrefFor(pathname: string): string {
   }
   if (pathname.startsWith('/identities/')) return '/attackers'
   if (pathname.startsWith('/tty-replay/')) return '/recordings'
+  // Indicator pages and the per-execution command list belong to the hub.
+  if (pathname.startsWith('/ioc/') || pathname === '/commands' || pathname === '/investigate/lookup') return '/iocs'
   // Any other detail page rolls up to the list it lives under.
   const list = [...ALL_ITEMS.map((item) => item.to), ...UNLISTED_LISTS]
     .filter((to) => to !== '/' && pathname.startsWith(`${to}/`))

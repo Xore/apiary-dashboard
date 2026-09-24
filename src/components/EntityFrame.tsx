@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
@@ -7,11 +7,13 @@ import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Heading, Text } from '@astryxdesign/core/Text'
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { basePathOf, readListContext } from '#/lib/listContext'
 import type { ListContext } from '#/lib/listContext'
 import { formatNumber } from '#/lib/format'
+import { getPins, getServerPins, subscribe, togglePin } from '#/lib/watchlist'
 import { useViewTabs } from './ViewTabs'
 
 function safeDecode(path: string): string {
@@ -105,6 +107,22 @@ function ListStepper({ basePath, tab }: { basePath: string; tab: string }) {
   )
 }
 
+/** Pin this entity to the watchlist, or unpin it. */
+function PinButton({ href, kind, title }: { href: string; kind: string; title: string }) {
+  const pins = useSyncExternalStore(subscribe, getPins, getServerPins)
+  const pinned = pins.some((p) => p.href === href)
+  return (
+    <Button
+      label={pinned ? 'Unpin from watchlist' : 'Pin to watchlist'}
+      isIconOnly
+      size="sm"
+      variant="secondary"
+      icon={<Icon icon={pinned ? BookmarkSolidIcon : BookmarkIcon} size="sm" />}
+      onClick={() => togglePin({ href, kind, title })}
+    />
+  )
+}
+
 /** The frame every entity page shares (epic #25): identity header, key-fact
  * strip, actions, and tabs as route segments shown in the top bar. */
 export function EntityFrame({ kind, title, description, tokens, facts, actions, basePath, tabs, children }: EntityFrameProps) {
@@ -141,11 +159,10 @@ export function EntityFrame({ kind, title, description, tokens, facts, actions, 
                 {description && <Text color="secondary">{description}</Text>}
               </VStack>
               <VStack gap={2} hAlign="end">
-                {actions && (
-                  <HStack gap={2} vAlign="center" wrap="wrap">
-                    {actions}
-                  </HStack>
-                )}
+                <HStack gap={2} vAlign="center" wrap="wrap">
+                  {actions}
+                  <PinButton href={basePath} kind={kind} title={typeof title === 'string' ? title : safeDecode(basePath.split('/').pop() ?? basePath)} />
+                </HStack>
                 <ListStepper basePath={basePath} tab={active === tabs[0].id ? '' : active} />
               </VStack>
             </HStack>

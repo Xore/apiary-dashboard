@@ -1,22 +1,26 @@
-import { createFileRoute, getRouteApi } from '@tanstack/react-router'
+import { VStack } from '@astryxdesign/core/Stack'
+import { createFileRoute } from '@tanstack/react-router'
 import { Timeline } from '#/components/EntityBlocks'
-import type { TimelineItem } from '#/data/types'
+import { RelatedPanel } from '#/components/Related'
+import { getEntityTimeline, getRelated } from '#/data/queries'
 
-const parent = getRouteApi('/_layout/sessions/$id')
+export const Route = createFileRoute('/_layout/sessions/$id/')({
+  loader: async ({ params }) => {
+    const [timeline, related] = await Promise.all([getEntityTimeline('session', params.id, 'all'), getRelated('session', params.id)])
+    return { timeline, related }
+  },
+  component: SessionTimeline,
+})
 
-export const Route = createFileRoute('/_layout/sessions/$id/')({ component: SessionTimeline })
-
-/** The session in order, every event linking to its own page. */
+/** The session in order (it is a bounded thing, so the global range does
+ * not apply), with what it touched above. */
 function SessionTimeline() {
-  const s = parent.useLoaderData()
-  const items: TimelineItem[] = s.events.map((e) => ({
-    id: e.id,
-    at: e.timestamp,
-    kind: 'event',
-    title: e.summary,
-    detail: `${e.sensor} · ${e.type} · ${e.protocol.toUpperCase()} ${e.dstPort}`,
-    severity: e.severity,
-    href: `/events/${e.id}`,
-  }))
-  return <Timeline items={items} empty="This session has no events." />
+  const { timeline, related } = Route.useLoaderData()
+  const { id } = Route.useParams()
+  return (
+    <VStack gap={4}>
+      <RelatedPanel center={id} groups={related} />
+      <Timeline items={timeline} empty="This session has no events." />
+    </VStack>
+  )
 }

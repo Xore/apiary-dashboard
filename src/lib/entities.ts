@@ -61,22 +61,25 @@ export const ENTITIES: Record<EntityKind, EntityDef> = {
   recording: { noun: 'recording', href: (id) => `/recordings/${q(id)}`, isCode: true },
   country: { noun: 'country', events: (id) => `/events?country=${q(id)}` },
   port: { noun: 'port', events: (id) => `/events?port=${q(id)}` },
-  domain: { noun: 'domain', events: (id) => history(id), isCode: true },
-  url: { noun: 'URL', events: (id) => history(id), isCode: true },
+  domain: { noun: 'domain', href: (id) => iocHref('domain', id), events: (id) => history(id), isCode: true },
+  url: { noun: 'URL', href: (id) => iocHref('url', id), events: (id) => history(id), isCode: true },
   credential: {
     noun: 'credential pair',
-    href: (id) => clusterHref('credential', id),
+    href: (id) => iocHref('credential', id),
     events: (id) => history(`username:${id.split(':')[0]}`),
     isCode: true,
   },
-  command: { noun: 'command', events: (id) => history(id), isCode: true },
-  username: { noun: 'username', events: (id) => history(`username:${id}`), isCode: true },
-  password: { noun: 'password', events: (id) => history(id), isCode: true },
-  fingerprint: { noun: 'fingerprint', href: (id) => clusterHref('fingerprint', id), isCode: true },
+  command: { noun: 'command', href: (id) => iocHref('command', id), events: (id) => history(id), isCode: true },
+  username: { noun: 'username', href: (id) => iocHref('username', id), events: (id) => history(`username:${id}`), isCode: true },
+  password: { noun: 'password', href: (id) => iocHref('password', id), events: (id) => history(id), isCode: true },
+  fingerprint: { noun: 'fingerprint', href: (id) => iocHref('fingerprint', id), isCode: true },
   'user-agent': { noun: 'user agent', events: (id) => history(id), isCode: true },
-  cve: { noun: 'CVE', events: (id) => history(id) },
-  signature: { noun: 'IDS signature', events: (id) => history(id) },
+  cve: { noun: 'CVE', href: (id) => iocHref('cve', id), events: (id) => history(id) },
+  signature: { noun: 'IDS signature', href: (id) => iocHref('signature', id), events: (id) => history(id) },
 }
+
+/** An indicator's page; a payload hash is its payload. */
+export const iocHref = (kind: string, value: string) => (kind === 'hash' ? `/payloads/${value}` : `/ioc/${kind}/${q(value)}`)
 
 /** Infrastructure clusters live at /clusters/$kind/$value; an ASN cluster is
  * just the ASN's own page. */

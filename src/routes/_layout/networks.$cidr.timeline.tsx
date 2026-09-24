@@ -1,11 +1,9 @@
-import { RangeTimeline } from '#/components/EntityBlocks'
-import { createFileRoute, getRouteApi } from '@tanstack/react-router'
-
-const parent = getRouteApi('/_layout/networks/$cidr')
+import { createFileRoute } from '@tanstack/react-router'
+import { Timeline } from '#/components/EntityBlocks'
+import { getEntityTimeline } from '#/data/queries'
 
 export const Route = createFileRoute('/_layout/networks/$cidr/timeline')({
-  component: () => {
-    const n = parent.useLoaderData()
-    return <RangeTimeline events={n.group.events} />
-  },
+  loaderDeps: ({ search }) => ({ range: search.range }),
+  loader: ({ params, deps }) => getEntityTimeline('network', params.cidr, deps.range),
+  component: () => <Timeline items={Route.useLoaderData()} />,
 })

@@ -128,6 +128,11 @@ import type {
   SharedSignal,
   SourceGroup,
   MlAnomaly,
+  IocEntity,
+  IocHubKind,
+  IocRow,
+  TimelineEntity,
+  RelatedGroup,
 } from './types'
 
 const HOUR = 3_600_000
@@ -429,16 +434,17 @@ export async function getReplay(shasum: string): Promise<Replay | null> {
 }
 
 export type LookupTarget =
-  | { kind: 'ip' | 'cidr'; value: string }
-  | { kind: 'cluster'; clusterKind: ClusterKind; value: string }
+  | { kind: 'payload'; value: string }
+  | { kind: 'cluster'; clusterKind: string; value: string }
   | { kind: 'not-found'; value: string }
 
-/** Resolves a hex value to the cluster kind that knows it. */
+/** Resolves a hex value to the payload or cluster that knows it. */
 export async function resolveHash(value: string): Promise<LookupTarget> {
   await mockDelay()
   const hit = INFRA_CLUSTERS.find(
     (c) => (c.kind === 'payload' || c.kind === 'fingerprint') && c.value.toLowerCase().replace(/^hassh:/, '') === value,
   )
+  if (PAYLOADS.some((p) => p.hash === value)) return { kind: 'payload', value }
   return hit ? { kind: 'cluster', clusterKind: hit.kind, value: hit.value } : { kind: 'not-found', value }
 }
 
@@ -973,6 +979,7 @@ const RANGE_MS: Record<string, number> = { '1h': HOUR, '6h': 6 * HOUR, '24h': DA
 
 /** Keeps items inside the app-wide range (default 24h). */
 export function inRange(at: string, range?: string): boolean {
+  if (range === 'all') return true
   return MOCK_NOW - Date.parse(at) <= (RANGE_MS[range ?? '24h'] ?? DAY)
 }
 
@@ -1012,15 +1019,7 @@ export async function getSourceSessions(ip: string, range?: string): Promise<Ses
  * the anomalies, model analyses, canary triggers, and auth failures that
  * name it. */
 export async function getSourceTimeline(ip: string, range?: string): Promise<TimelineItem[]> {
-  await mockDelay()
-  const items: TimelineItem[] = [
-    ...EVENTS.filter((e) => e.srcIp === ip).map((e) => ({ id: e.id, at: e.timestamp, kind: 'event' as const, title: e.summary, detail: `${e.sensor} · ${e.protocol.toUpperCase()} ${e.dstPort}`, severity: e.severity, href: `/events/${e.id}` })),
-    ...ML_ANOMALIES.filter((a) => a.srcIp === ip).map((a) => ({ id: a.id, at: a.timestamp, kind: 'anomaly' as const, title: a.explanation, detail: `ML score ${a.compositeScore.toFixed(2)} · ${a.status}`, severity: a.severity, href: `/ml-anomalies` })),
-    ...LLM_ANALYSES.filter((a) => a.srcIp === ip).map((a) => ({ id: a.id, at: a.timestamp, kind: 'llm' as const, title: a.summary || '(no summary)', detail: `AI-generated · ${a.intent}`, severity: a.severity, href: '/llm-analysis' })),
-    ...CANARY_TRIGGERS.filter((t) => t.srcIp === ip).map((t) => ({ id: t.id, at: t.triggeredAt, kind: 'canary' as const, title: `Canarytoken fired: ${t.memo}`, detail: t.userAgent, severity: 'critical' as const, href: '/canarytokens?view=fired' })),
-    ...AUTH_FAILURES.filter((f) => f.ip === ip).map((f) => ({ id: f.id, at: f.timestamp, kind: 'auth' as const, title: `Failed login to ${f.clientId}`, detail: `${f.error}${f.username ? ` · ${f.username}` : ''}`, severity: 'medium' as const, href: '/auth-events' })),
-  ]
-  return items.filter((i) => inRange(i.at, range)).sort((a, b) => b.at.localeCompare(a.at))
+  return getEntityTimeline('source', ip, range)
 }
 
 export async function getSourceNetwork(ip: string): Promise<SourceNetwork | null> {
@@ -1249,4 +1248,275 @@ export async function getAgentCampaign(id: string): Promise<{ campaign: AgentCam
   if (!campaign) return null
   const ids = new Set(campaign.events.map((e) => e.eventId))
   return { campaign, events: EVENTS.filter((e) => ids.has(e.id)) }
+}
+
+// ---- IOCs and the unified timeline (epic #25, Phase E) ----------------------
+
+const URL_RE = /https?:\/\/[^\s|;'"]+/g
+/** Signatures and request paths that name a known CVE. */
+const CVE_OF: Array<[RegExp, string]> = [
+  [/EternalBlue|MS17-010/, 'CVE-2017-0144'],
+  [/phpunit/i, 'CVE-2017-9841'],
+  [/\/cgi-bin\/luci/, 'CVE-2023-1389'],
+  [/boaform/, 'CVE-2018-10562'],
+]
+
+/** Every indicator one event carries, as [kind, value] pairs. */
+function iocsOf(e: HoneypotEvent): Array<[IocHubKind, string]> {
+  const out: Array<[IocHubKind, string]> = []
+  if (e.username) {
+    out.push(['credential', `${e.username}:${e.password}`], ['username', e.username])
+    if (e.password) out.push(['password', e.password])
+  }
+  if (e.command) {
+    out.push(['command', e.command])
+    for (const url of e.command.match(URL_RE) ?? []) out.push(['url', url], ['domain', new URL(url).hostname])
+  }
+  if (e.type === 'http.request') {
+    const path = e.summary.split(' ')[1]
+    if (path) out.push(['url', path])
+  }
+  if (e.type === 'ids.alert') out.push(['signature', e.summary])
+  for (const [re, cve] of CVE_OF) if (re.test(e.summary)) out.push(['cve', cve])
+  const hash = DOWNLOAD_HASH.get(e.id)
+  if (hash) out.push(['hash', hash])
+  return out
+}
+
+let iocIndex: Map<string, HoneypotEvent[]> | undefined
+const iocKey = (kind: string, value: string) => `${kind}\u0000${value}`
+function iocEvents(kind: string, value: string): HoneypotEvent[] {
+  if (!iocIndex) {
+    iocIndex = new Map()
+    for (const e of EVENTS) {
+      for (const [k, v] of iocsOf(e)) {
+        const key = iocKey(k, v)
+        if (!iocIndex.has(key)) iocIndex.set(key, [])
+        iocIndex.get(key)!.push(e)
+      }
+    }
+  }
+  if (kind === 'fingerprint') {
+    const ips = new Set(sharedBy('fingerprint', value, 0))
+    return EVENTS.filter((e) => ips.has(e.srcIp))
+  }
+  return iocIndex.get(iocKey(kind, value)) ?? []
+}
+
+function iocRow(kind: IocHubKind, value: string): IocRow {
+  const events = iocEvents(kind, value)
+  return {
+    id: iocKey(kind, value),
+    kind,
+    value,
+    events: events.length,
+    sources: new Set(events.map((e) => e.srcIp)).size,
+    sessions: new Set(events.map((e) => e.sessionId)).size,
+    last: events[0]?.timestamp,
+  }
+}
+
+/** Every indicator seen, by kind, busiest first. */
+export async function getIocCatalog(): Promise<Record<IocHubKind, IocRow[]>> {
+  await mockDelay()
+  iocEvents('', '')
+  const kinds: IocHubKind[] = ['hash', 'domain', 'url', 'credential', 'command', 'fingerprint', 'cve', 'signature', 'username', 'password']
+  const byKind = Object.fromEntries(kinds.map((kind) => [kind, [] as IocRow[]])) as Record<IocHubKind, IocRow[]>
+  for (const key of iocIndex!.keys()) {
+    const [kind, value] = key.split('\u0000') as [IocHubKind, string]
+    byKind[kind].push(iocRow(kind, value))
+  }
+  const fingerprints = new Set([...INFRA_CLUSTERS.filter((c) => c.kind === 'fingerprint').map((c) => c.value), ...ATTACKERS.flatMap((a) => a.fingerprints)])
+  byKind.fingerprint = [...fingerprints].map((fp) => iocRow('fingerprint', fp))
+  // Every captured payload, including those that arrived without a download event.
+  byKind.hash = PAYLOADS.map((p) => iocRow('hash', p.hash))
+  for (const kind of Object.keys(byKind) as IocHubKind[]) byKind[kind].sort((a, b) => b.events - a.events)
+  return byKind
+}
+
+export async function getIoc(kind: string, value: string): Promise<IocEntity | null> {
+  await mockDelay()
+  const events = iocEvents(kind, value)
+  if (!events.length) return null
+  const sessionIds = new Set(events.map((e) => e.sessionId))
+  const sessionEvents = EVENTS.filter((e) => sessionIds.has(e.sessionId))
+  return {
+    kind: kind as IocHubKind,
+    value,
+    events,
+    group: groupOf([...new Set(events.map((e) => e.srcIp))]),
+    sessions: summarizeSessions(sessionEvents),
+    payloads: countBy(sessionEvents.map((e) => DOWNLOAD_HASH.get(e.id)), 50),
+  }
+}
+
+/** The addresses, sessions and events an entity's timeline covers. */
+function timelineScope(kind: TimelineEntity, id: string): { ips: Set<string>; sessions: Set<string>; events?: HoneypotEvent[] } | null {
+  const ipsOf = (ips: string[]) => ({ ips: new Set(ips), sessions: new Set<string>() })
+  switch (kind) {
+    case 'source':
+      return ipsOf([id])
+    case 'session':
+      return { ips: new Set(), sessions: new Set([id]) }
+    case 'network':
+    case 'campaign':
+      return ipsOf(membersOfCidr(id) ?? [])
+    case 'asn':
+      return ipsOf(SOURCES.filter((s) => s.asn === id).map((s) => s.ip))
+    case 'identity':
+      return ipsOf(ATTACKERS.find((a) => a.id === id)?.ips ?? [])
+    case 'cluster': {
+      const [clusterKind, ...rest] = id.split(':')
+      const value = rest.join(':')
+      return ipsOf(clusterKind === 'credential' ? iocEvents('credential', value).map((e) => e.srcIp) : sharedBy(clusterKind, value, INFRA_CLUSTERS.find((c) => c.kind === clusterKind && c.value === value)?.sources ?? 0))
+    }
+    case 'payload': {
+      const sessions = new Set(EVENTS.filter((e) => DOWNLOAD_HASH.get(e.id) === id).map((e) => e.sessionId))
+      return { ips: new Set(), sessions }
+    }
+    case 'ioc': {
+      const [iocKind, ...rest] = id.split(':')
+      const events = iocEvents(iocKind, rest.join(':'))
+      return { ips: new Set(), sessions: new Set(), events }
+    }
+  }
+}
+
+/** Everything that happened around one entity, newest first: its events and
+ * captured payloads, plus the anomalies, model analyses, canary triggers,
+ * auth failures and alerts that name its addresses or sessions. */
+export async function getEntityTimeline(kind: TimelineEntity, id: string, range?: string): Promise<TimelineItem[]> {
+  await mockDelay()
+  const scope = timelineScope(kind, id)
+  if (!scope) return []
+  const { ips, sessions } = scope
+  const events = scope.events ?? EVENTS.filter((e) => ips.has(e.srcIp) || sessions.has(e.sessionId))
+  for (const e of events) {
+    ips.add(e.srcIp)
+    sessions.add(e.sessionId)
+  }
+  // An IOC's timeline stays on its own events; other entities widen to the
+  // records that name their addresses, a session only within its own window.
+  const wide = kind !== 'ioc'
+  const window = kind === 'session' && events.length ? [Date.parse(events.at(-1)!.timestamp) - 5 * 60_000, Date.parse(events[0].timestamp) + 5 * 60_000] : null
+  const inWindow = (at: string) => !window || (Date.parse(at) >= window[0] && Date.parse(at) <= window[1])
+  const items: TimelineItem[] = [
+    ...events.map((e): TimelineItem => {
+      const hash = DOWNLOAD_HASH.get(e.id)
+      return hash
+        ? { id: e.id, at: e.timestamp, kind: 'capture', title: `Payload captured: ${hash.slice(0, 16)}…`, detail: `${e.srcIp} · ${e.sensor}`, severity: e.severity, href: `/payloads/${hash}` }
+        : { id: e.id, at: e.timestamp, kind: 'event', title: e.summary, detail: `${e.srcIp} · ${e.sensor} · ${e.protocol.toUpperCase()} ${e.dstPort}`, severity: e.severity, href: `/events/${e.id}` }
+    }),
+    ...(wide ? ML_ANOMALIES.filter((a) => a.srcIp && ips.has(a.srcIp)) : []).map((a): TimelineItem => ({ id: a.id, at: a.timestamp, kind: 'anomaly', title: a.explanation, detail: `ML score ${a.compositeScore.toFixed(2)} · ${a.status}`, severity: a.severity, href: `/ml-anomalies/${a.id}` })),
+    ...(wide ? LLM_ANALYSES.filter((a) => (a.srcIp && ips.has(a.srcIp)) || (a.sessionId && sessions.has(a.sessionId))) : []).map((a): TimelineItem => ({ id: a.id, at: a.timestamp, kind: 'llm', title: a.summary || '(no summary)', detail: `AI-generated · ${a.intent}`, severity: a.severity, href: `/llm-analysis/${a.id}` })),
+    ...(wide ? CANARY_TRIGGERS.filter((t) => ips.has(t.srcIp)) : []).map((t): TimelineItem => ({ id: t.id, at: t.triggeredAt, kind: 'canary', title: `Canarytoken fired: ${t.memo}`, detail: t.userAgent, severity: 'critical', href: `/canarytokens/triggers/${t.id}` })),
+    ...(wide ? AUTH_FAILURES.filter((f) => f.ip && ips.has(f.ip)) : []).map((f): TimelineItem => ({ id: f.id, at: f.timestamp, kind: 'auth', title: `Failed login to ${f.clientId}`, detail: `${f.error}${f.username ? ` · ${f.username}` : ''}`, severity: 'medium', href: `/auth-events/${f.id}` })),
+    ...(wide ? ALERTS.filter((a) => [...ips].some((ip) => a.message.includes(ip))) : []).map((a): TimelineItem => ({ id: a.key, at: a.lastSeen, kind: 'alert', title: a.message, detail: `${a.kind} · observed ${a.count}×`, severity: a.severity, href: `/alerts/${encodeURIComponent(alertClass(a))}` })),
+  ]
+  return items.filter((i) => inRange(i.at, range) && (i.kind === 'event' || i.kind === 'capture' || inWindow(i.at))).sort((a, b) => b.at.localeCompare(a.at))
+}
+
+// ---- Related entities (epic #25, Phase E) -----------------------------------
+
+const top = <T,>(items: T[], n = 6) => items.slice(0, n)
+
+/** Identities, networks, campaigns and ASNs behind a set of addresses. */
+function relatedToIps(ips: string[], skip: { network?: string; asn?: string; identity?: string; campaign?: string } = {}): RelatedGroup[] {
+  const set = new Set(ips)
+  const identities = ATTACKERS.filter((a) => a.id !== skip.identity && a.ips.some((ip) => set.has(ip)))
+  const networks = countBy(ips.map(cidr26), 50).filter((r) => r.label !== skip.network)
+  const asns = countBy(SOURCES.filter((x) => set.has(x.ip)).map((x) => x.asn), 20).filter((r) => r.label !== skip.asn)
+  const campaigns = NETWORK_CAMPAIGNS.filter((c) => c.cidr !== skip.campaign && networks.some((n) => n.label === c.cidr) )
+  return [
+    { kind: 'identity', label: 'Attacker identities', items: top(identities).map((a) => ({ id: a.id, label: a.id.slice(0, 8), note: `${a.ips.length} IPs` })) },
+    { kind: 'campaign', label: 'Campaigns', items: top(campaigns).map((c) => ({ id: c.cidr, note: `score ${c.score}` })) },
+    { kind: 'network', label: 'Networks', items: top(networks).map((n) => ({ id: n.label, note: `${n.count} ${n.count === 1 ? 'address' : 'addresses'}` })) },
+    { kind: 'asn', label: 'Autonomous systems', items: top(asns).map((a) => ({ id: a.label, note: `${a.count} ${a.count === 1 ? 'address' : 'addresses'}` })) },
+  ]
+}
+
+const sourcesOf = (events: HoneypotEvent[]): RelatedGroup => ({
+  kind: 'source',
+  label: 'Source IPs',
+  items: top(countBy(events.map((e) => e.srcIp), 50)).map((r) => ({ id: r.label, note: `${r.count} events` })),
+})
+const payloadsOf = (events: HoneypotEvent[]): RelatedGroup => ({
+  kind: 'payload',
+  label: 'Payloads',
+  items: top(countBy(events.map((e) => DOWNLOAD_HASH.get(e.id)), 50)).map((r) => ({ id: r.label, label: `${r.label.slice(0, 12)}…` })),
+})
+const sessionsOf = (events: HoneypotEvent[]): RelatedGroup => ({
+  kind: 'session',
+  label: 'Sessions',
+  items: top(countBy(events.map((e) => e.sessionId), 200)).map((r) => ({ id: r.label, note: `${r.count} events` })),
+})
+
+/** What else the entity on screen touches, for its Overview tab. Empty
+ * groups are dropped. */
+export async function getRelated(kind: TimelineEntity | 'event', id: string): Promise<RelatedGroup[]> {
+  await mockDelay()
+  let groups: RelatedGroup[] = []
+  switch (kind) {
+    case 'source': {
+      const events = EVENTS.filter((e) => e.srcIp === id)
+      groups = [...relatedToIps([id]), sessionsOf(events), payloadsOf(events)]
+      break
+    }
+    case 'session': {
+      const events = EVENTS.filter((e) => e.sessionId === id)
+      const recording = RECORDINGS.find((r) => r.session === id)
+      groups = [
+        sourcesOf(events),
+        { kind: 'sensor', label: 'Sensors', items: countBy(events.map((e) => e.sensor), 10).map((r) => ({ id: r.label })) },
+        payloadsOf(events),
+        { kind: 'recording', label: 'Recording', items: recording ? [{ id: recording.shasum, label: `${recording.shasum.slice(0, 12)}…` }] : [] },
+        ...relatedToIps([...new Set(events.map((e) => e.srcIp))]),
+      ]
+      break
+    }
+    case 'event': {
+      const e = EVENTS.find((x) => x.id === id)
+      if (!e) return []
+      const hash = DOWNLOAD_HASH.get(e.id)
+      groups = [
+        { kind: 'source', label: 'Source IP', items: [{ id: e.srcIp }] },
+        { kind: 'session', label: 'Session', items: [{ id: e.sessionId }] },
+        { kind: 'sensor', label: 'Sensor', items: [{ id: e.sensor }] },
+        { kind: 'payload', label: 'Payload', items: hash ? [{ id: hash, label: `${hash.slice(0, 12)}…` }] : [] },
+        ...iocsOf(e)
+          .filter(([k]) => k !== 'hash')
+          .map(([k, v]): RelatedGroup => ({ kind: k, label: k, items: [{ id: v }] })),
+        ...relatedToIps([e.srcIp]),
+      ]
+      break
+    }
+    case 'payload': {
+      const events = EVENTS.filter((e) => DOWNLOAD_HASH.get(e.id) === id)
+      const identities = ATTACKERS.filter((a) => a.payloads.includes(id))
+      groups = [sourcesOf(events), sessionsOf(events), { kind: 'identity', label: 'Attacker identities', items: top(identities).map((a) => ({ id: a.id, label: a.id.slice(0, 8) })) }, ...relatedToIps(events.map((e) => e.srcIp)).filter((g) => g.kind !== 'identity')]
+      break
+    }
+    case 'network':
+      groups = relatedToIps(membersOfCidr(id) ?? [], { network: id })
+      break
+    case 'campaign':
+      groups = relatedToIps(membersOfCidr(id) ?? [], { campaign: id })
+      break
+    case 'asn':
+      groups = relatedToIps(SOURCES.filter((x) => x.asn === id).map((x) => x.ip), { asn: id })
+      break
+    case 'identity':
+      groups = relatedToIps(ATTACKERS.find((a) => a.id === id)?.ips ?? [], { identity: id })
+      break
+    case 'cluster':
+    case 'ioc': {
+      const scope = timelineScope(kind, id)
+      const events = scope?.events ?? EVENTS.filter((e) => scope?.ips.has(e.srcIp))
+      groups = [sourcesOf(events), ...relatedToIps([...new Set(events.map((e) => e.srcIp))]), payloadsOf(events)]
+      break
+    }
+    default:
+      groups = []
+  }
+  return groups.filter((g) => g.items.length > 0)
 }

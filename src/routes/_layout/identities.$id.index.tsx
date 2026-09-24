@@ -4,12 +4,17 @@ import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
+import { RelatedPanel } from '#/components/Related'
+import { getRelated } from '#/data/queries'
 import { Panel } from '#/components/DashboardBlocks'
 import { GroupOverview } from '#/components/EntityBlocks'
 
 const parent = getRouteApi('/_layout/identities/$id')
 
-export const Route = createFileRoute('/_layout/identities/$id/')({ component: IdentityOverview })
+export const Route = createFileRoute('/_layout/identities/$id/')({
+  loader: ({ params }) => getRelated('identity', params.id),
+  component: IdentityOverview,
+})
 
 const attckUrl = (id: string) => `https://attack.mitre.org/techniques/${id.replaceAll('.', '/')}/`
 
@@ -38,6 +43,7 @@ function IdentityOverview() {
         {a.ips.length > 0 && <Link href={`/recordings?ip=${encodeURIComponent(a.ips[0])}`}>Session recordings</Link>}
       </Panel>
       <GroupOverview group={group} base={`/identities/${a.id}`} sourcesTab="members" />
+      <RelatedPanel center={a.id.slice(0, 8)} groups={Route.useLoaderData()} />
     </VStack>
   )
 }

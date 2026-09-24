@@ -34,6 +34,8 @@ describe('navHrefFor', () => {
     ['/identities/abc/why', '/attackers'],
     ['/sensors/cowrie-vps-01', '/sensors'],
     ['/tty-replay/abc', '/recordings'],
+    ['/ioc/cve/CVE-2017-0144/sources', '/iocs'],
+    ['/commands', '/iocs'],
     ['/recordings/abc/attacker', '/recordings'],
     ['/alerts/yara%7Cx/members', '/alerts'],
     ['/ml-anomalies/a1/triage', '/ml-anomalies'],

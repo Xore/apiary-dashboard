@@ -90,6 +90,39 @@ describe('link integrity', () => {
     for (const r of recordings.slice(0, 20)) expect(await q.getReplayDetail(r.shasum), r.shasum).not.toBeNull()
   })
 
+  it('every indicator in the hub opens its page', async () => {
+    const catalog = await q.getIocCatalog()
+    for (const [kind, rows] of Object.entries(catalog)) {
+      for (const row of rows.slice(0, 15)) {
+        if (kind === 'hash') expect(await q.getPayloadAnalysis(row.value), row.value).not.toBeNull()
+        else expect(await q.getIoc(kind, row.value), `${kind}:${row.value}`).not.toBeNull()
+      }
+    }
+  })
+
+  it('related entities and timeline links resolve', async () => {
+    const { sources } = await q.getSourceProfiles()
+    for (const s of sources.slice(0, 5)) {
+      for (const group of await q.getRelated('source', s.ip)) {
+        for (const item of group.items) {
+          const found =
+            group.kind === 'identity' ? await q.getIdentity(item.id)
+            : group.kind === 'network' ? await q.getNetwork(item.id)
+            : group.kind === 'campaign' ? await q.getCampaign(item.id)
+            : group.kind === 'asn' ? await q.getAsn(item.id)
+            : group.kind === 'session' ? await q.getSessionDetail(item.id)
+            : group.kind === 'payload' ? await q.getPayloadAnalysis(item.id)
+            : true
+          expect(found, `${group.kind}:${item.id}`).toBeTruthy()
+        }
+      }
+      const timeline = await q.getEntityTimeline('source', s.ip, 'all')
+      expect(timeline.every((item) => item.href?.startsWith('/'))).toBe(true)
+      for (const item of timeline.filter((i) => i.kind === 'anomaly').slice(0, 3)) expect(await q.getAnomaly(item.id)).not.toBeNull()
+      for (const item of timeline.filter((i) => i.kind === 'llm').slice(0, 3)) expect(await q.getLlmAnalysis(item.id)).not.toBeNull()
+    }
+  })
+
   it('unknown ids resolve to null (rendered as 404)', async () => {
     expect(await q.getEventDetail('evt-nope')).toBeNull()
     expect(await q.getIpProfile('10.0.0.1')).toBeNull()
@@ -98,6 +131,7 @@ describe('link integrity', () => {
     expect(await q.getCampaign('10.0.0.0/26')).toBeNull()
     expect(await q.getIdentity('nope')).toBeNull()
     expect(await q.getAsn('AS0')).toBeNull()
+    expect(await q.getIoc('cve', 'CVE-1999-0001')).toBeNull()
   })
 })
 

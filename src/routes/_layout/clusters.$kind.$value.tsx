@@ -34,6 +34,7 @@ function ClusterLayout() {
         { id: 'overview', label: 'Overview' },
         { id: 'members', label: 'Member IPs', count: c.group.members.length },
         { id: 'events', label: 'Events', count: c.group.events.length },
+        { id: 'timeline', label: 'Timeline' },
       ]}
     >
       <Outlet />

@@ -4,13 +4,18 @@ import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
+import { RelatedPanel } from '#/components/Related'
+import { getRelated } from '#/data/queries'
 import { OperatorActions } from '#/components/analyzers/PayloadBlocks'
 import { Panel, StatTile } from '#/components/DashboardBlocks'
 import { formatDateTime } from '#/lib/format'
 
 const parent = getRouteApi('/_layout/payloads/$hash')
 
-export const Route = createFileRoute('/_layout/payloads/$hash/')({ component: PayloadOverview })
+export const Route = createFileRoute('/_layout/payloads/$hash/')({
+  loader: ({ params }) => getRelated('payload', params.hash),
+  component: PayloadOverview,
+})
 
 function PayloadOverview() {
   const { analysis: a, cape, revdeck, github } = parent.useLoaderData()
@@ -69,6 +74,7 @@ function PayloadOverview() {
         </Panel>
         <OperatorActions a={a} />
       </Grid>
+      <RelatedPanel center={`${p.hash.slice(0, 16)}…`} groups={Route.useLoaderData()} />
     </VStack>
   )
 }
