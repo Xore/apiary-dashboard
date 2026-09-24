@@ -731,10 +731,13 @@ export const FLEET: SensorSpec[] = [
       { label: 'usernames offered', match: has('username') },
     ],
     generate: (rng): EventDraft => {
-      const protocols = pickSkewed(rng, ['TLS+CredSSP', 'TLS', 'Standard RDP', 'TLS+CredSSP+RDSTLS'])
+      const protocols = pickSkewed(rng, ['TLS+CredSSP', 'Standard RDP', 'TLS', 'TLS+CredSSP+RDSTLS'])
       if (rng() < 0.55) {
         const username = pickSkewed(rng, ['hello', 'administrator', 'admin', 'user', 'test'])
-        return { type: 'login.failed', severity: 'low', protocol: 'rdp', dstPort: 3389, eventName: 'connect', summary: `RDP cookie mstshash=${username}`, username, password: '', fields: { event: 'connect', proto: 'rdp', port: 3389, username, canonical_user: username, canonical_pass: '', requested_protocols: protocols, data: `AwAAKybgAAAAAABDb29raWU6IG1zdHNoYXNoPS${hex(rng, 12)}`, canonical_attck_techniques: ['T1110'] } }
+        // The cookie carries only a username; Standard RDP (no NLA) also
+        // hands over the password in the clear.
+        const password = protocols === 'Standard RDP' ? pickSkewed(rng, PASSWORDS) : ''
+        return { type: 'login.failed', severity: 'low', protocol: 'rdp', dstPort: 3389, eventName: 'connect', summary: password ? `RDP login ${username}/${password}` : `RDP cookie mstshash=${username}`, username, password, fields: { event: 'connect', proto: 'rdp', port: 3389, username, canonical_user: username, canonical_pass: password, requested_protocols: protocols, data: `AwAAKybgAAAAAABDb29raWU6IG1zdHNoYXNoPS${hex(rng, 12)}`, canonical_attck_techniques: ['T1110'] } }
       }
       return { type: 'connection', severity: 'info', protocol: 'rdp', dstPort: 3389, eventName: 'connect', summary: `RDP connection (${protocols})`, fields: { event: 'connect', proto: 'rdp', port: 3389, requested_protocols: protocols, data: `TUdMTkREXz${hex(rng, 16)}` } }
     },
