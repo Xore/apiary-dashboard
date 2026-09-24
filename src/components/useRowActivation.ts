@@ -14,8 +14,12 @@ export function useRowActivation<T extends Record<string, unknown>>({
 }: Config<T>): TablePlugin<T> {
   return {
     transformBodyRow: (props, item) => {
-      const fromControl = (target: EventTarget) =>
-        target instanceof Element && target.closest('a, button, input, select, textarea, [role="button"]') !== null
+      // Clicks on controls keep their own behavior, and so do clicks that only
+      // reach the row through React's tree: a menu or dialog opened from a
+      // cell renders in a portal, outside the row's DOM.
+      const fromControl = (target: EventTarget, row: Element) =>
+        !(target instanceof Node && row.contains(target)) ||
+        (target instanceof Element && target.closest('a, button, input, select, textarea, [role="button"], [role="menuitem"]') !== null)
       return {
         ...props,
         htmlProps: {
@@ -27,11 +31,11 @@ export function useRowActivation<T extends Record<string, unknown>>({
           },
           onClick: (event: MouseEvent<HTMLTableRowElement>) => {
             props.htmlProps.onClick?.(event)
-            if (!fromControl(event.target)) onActivate(item, { newTab: event.metaKey || event.ctrlKey })
+            if (!fromControl(event.target, event.currentTarget)) onActivate(item, { newTab: event.metaKey || event.ctrlKey })
           },
           onAuxClick: (event: MouseEvent<HTMLTableRowElement>) => {
             props.htmlProps.onAuxClick?.(event)
-            if (event.button === 1 && !fromControl(event.target)) onActivate(item, { newTab: true })
+            if (event.button === 1 && !fromControl(event.target, event.currentTarget)) onActivate(item, { newTab: true })
           },
           onKeyDown: (event: KeyboardEvent<HTMLTableRowElement>) => {
             props.htmlProps.onKeyDown?.(event)

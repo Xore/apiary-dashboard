@@ -78,6 +78,7 @@ import type {
   AlertRecord,
   AnalysisResult,
   AnalysisResultsData,
+  AnalysisRunConfig,
   BaitCredential,
   CanaryToken,
   CanaryTokenType,
@@ -764,11 +765,13 @@ export async function getAnalysisResults(): Promise<AnalysisResultsData> {
   return { results: [...ANALYSIS_RESULTS], gpuQueue: GPU_QUEUE.map((j) => ({ ...j })), modelHealth: MODEL_HEALTH, analyzers: ANALYZERS }
 }
 
-/** Mock write: queues a workbench run for a captured payload. */
-export async function startWorkbenchRun(hash: string, analyzers: string[]): Promise<AnalysisResult | null> {
+/** Mock write: queues an analysis run of a captured payload with every
+ * option the operator set; GPU analyzers also land on the GPU queue. */
+export async function startAnalysisRun(config: AnalysisRunConfig): Promise<AnalysisResult | null> {
   await mockDelay()
-  const payload = PAYLOADS.find((p) => p.hash === hash.toLowerCase())
+  const payload = PAYLOADS.find((p) => p.hash === config.hash.toLowerCase())
   if (!payload) return null
+  const options = Object.fromEntries(config.analyzers.map((id) => [id, config[id]]))
   const run: AnalysisResult = {
     id: `wb-${Date.now().toString(36)}`,
     analyzer: 'workbench',
@@ -776,12 +779,25 @@ export async function startWorkbenchRun(hash: string, analyzers: string[]): Prom
     file: `${payload.hash.slice(0, 12)}`,
     at: new Date(MOCK_NOW).toISOString(),
     owner: MOCK_USER.name,
-    recipe: analyzers.join('+'),
+    recipe: config.analyzers.join('+'),
     state: 'queued',
-    summary: 'Workbench run',
-    detail: { analyzers },
+    summary: config.run.label || 'Workbench run',
+    detail: { analyzers: config.analyzers, options, priority: config.run.priority, notify: config.run.notify, force: config.run.force },
   }
   ANALYSIS_RESULTS.unshift(run)
+  for (const id of config.analyzers.filter((a) => a === 'ghidra' || a === 'revdeck')) {
+    GPU_QUEUE.unshift({
+      jobId: `gpu-${Date.now().toString(36).slice(-4)}${id[0]}`,
+      requestedAt: new Date(MOCK_NOW).toISOString(),
+      jobType: id === 'ghidra' ? 'ghidra-summary' : 'revdeck',
+      model: config[id].model,
+      status: 'queued',
+      attempts: 0,
+      abortRequested: false,
+      ref: payload.hash.slice(0, 16),
+      vramMib: 10_240,
+    })
+  }
   return run
 }
 

@@ -141,6 +141,30 @@ describe('link integrity', () => {
     expect((await q.getReports()).definitions.some((d) => d.id === kept.definition?.id)).toBe(true)
   })
 
+  it('an analysis run keeps every option and queues GPU analyzers', async () => {
+    const hash = (await q.getPayloads()).payloads.find((p) => p.kind === 'ELF')!.hash
+    const before = (await q.getAnalysisResults()).gpuQueue.length
+    const config: Parameters<typeof q.startAnalysisRun>[0] = {
+      hash,
+      analyzers: ['static', 'ghidra'],
+      static: { minStringLength: 8, extractIocs: true, decodeCandidates: false, sectionEntropy: true },
+      yara: { rulesets: [], stopAtFirstMatch: false, timeoutSeconds: 60 },
+      sandbox: { image: 'ubuntu-22.04-x86_64', durationSeconds: 120, network: 'none', capturePcap: false, memoryDump: false, liveView: false },
+      cape: { image: 'win10-22h2', durationSeconds: 120, package: 'auto', network: 'none', humanInteraction: false },
+      ghidra: { depth: 'aggressive', maxFunctions: 50, model: 'llama3.1:8b', capa: true, floss: false },
+      revdeck: { model: 'llama3.1:8b', maxSteps: 10, requireCitations: true },
+      run: { priority: 'high', label: 'Test run', notify: false, force: true },
+    }
+    const run = await q.startAnalysisRun(config)
+    expect(run).toMatchObject({ summary: 'Test run', recipe: 'static+ghidra', state: 'queued' })
+    expect(run!.detail).toMatchObject({ priority: 'high', options: { static: { minStringLength: 8 }, ghidra: { depth: 'aggressive', model: 'llama3.1:8b' } } })
+    expect(Object.keys(run!.detail.options as object)).toEqual(['static', 'ghidra'])
+    const after = (await q.getAnalysisResults()).gpuQueue
+    expect(after.length).toBe(before + 1)
+    expect(after[0]).toMatchObject({ jobType: 'ghidra-summary', model: 'llama3.1:8b', status: 'queued' })
+    expect(await q.startAnalysisRun({ ...config, hash: 'deadbeef' })).toBeNull()
+  })
+
   it('unknown ids resolve to null (rendered as 404)', async () => {
     expect(await q.getEventDetail('evt-nope')).toBeNull()
     expect(await q.getIpProfile('10.0.0.1')).toBeNull()

@@ -1,20 +1,17 @@
 import { useState } from 'react'
+import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
-import { Grid } from '@astryxdesign/core/Grid'
-import { SelectableCard } from '@astryxdesign/core/SelectableCard'
-import { Selector } from '@astryxdesign/core/Selector'
-import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
+import { Link } from '@astryxdesign/core/Link'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
-import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { searchTabs } from '#/components/ViewTabs'
-import { Panel } from '#/components/DashboardBlocks'
+import { CanaryTokenDialog } from '#/components/dialogs/CanaryTokenDialog'
 import { RecordList } from '#/components/RecordList'
-import { createCanarytoken, getCanarytokens } from '#/data/queries'
-import type { CanaryToken, CanaryTokenType, CanaryTrigger } from '#/data/types'
+import { getCanarytokens } from '#/data/queries'
+import type { CanaryToken, CanaryTrigger } from '#/data/types'
 import { formatDateTime, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 
@@ -28,61 +25,6 @@ export const Route = createFileRoute('/_layout/canarytokens/')({
   loader: () => getCanarytokens(),
   component: CanarytokensPage,
 })
-
-const COMMON = ['aws_keys', 'web_bug', 'ms_word', 'kubeconfig']
-
-function MintPanel({ types, preset, onMinted }: { types: CanaryTokenType[]; preset: string; onMinted: (token: CanaryToken) => void }) {
-  const router = useRouter()
-  const [type, setType] = useState(preset)
-  const [memo, setMemo] = useState('')
-  const [text, setText] = useState('')
-  const [busy, setBusy] = useState(false)
-  const selected = types.find((t) => t.type === type)
-
-  const mint = async () => {
-    setBusy(true)
-    try {
-      const token = await createCanarytoken({ type, memo: memo.trim(), text: text.trim() || undefined })
-      setMemo('')
-      setText('')
-      await router.invalidate()
-      onMinted(token)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <Panel title="Mint a new token">
-      <Grid columns={{ minWidth: 200, repeat: 'fit' }} gap={3}>
-        {types
-          .filter((t) => COMMON.includes(t.type))
-          .map((t) => (
-            <SelectableCard key={t.type} label={t.label} isSelected={type === t.type} onChange={() => setType(t.type)}>
-              <VStack gap={1}>
-                <Text weight="semibold">{t.label}</Text>
-                <Text type="supporting">{t.description}</Text>
-              </VStack>
-            </SelectableCard>
-          ))}
-      </Grid>
-      <HStack gap={2} vAlign="end" wrap="wrap">
-        <Selector
-          label="Token type"
-          value={type}
-          onChange={setType}
-          options={types.map((t) => ({ value: t.type, label: t.label, description: t.description }))}
-        />
-        <StackItem size="fill">
-          <TextInput label="Memo" isRequired placeholder="Where will this token live?" value={memo} onChange={setMemo} />
-        </StackItem>
-        {selected?.needs === 'text' && <TextInput label="Text snippet" isOptional value={text} onChange={setText} />}
-        <Button label="Mint token" isLoading={busy} isDisabled={!memo.trim()} onClick={mint} />
-      </HStack>
-      <Text type="supporting">The memo is what the alert shows when the token fires, so say where you planted it.</Text>
-    </Panel>
-  )
-}
 
 const tokenColumns: TableColumn<CanaryToken>[] = [
   { key: 'createdAt', header: 'Created', width: pixel(184), renderCell: (row) => <Text type="supporting">{formatDateTime(row.createdAt)}</Text> },
@@ -111,33 +53,45 @@ const triggerColumns: TableColumn<CanaryTrigger>[] = [
 function CanarytokensPage() {
   const { types, tokens, triggers } = Route.useLoaderData()
   const { view = 'deployed' } = Route.useSearch()
+  const router = useRouter()
+  const [creating, setCreating] = useState(false)
   const [minted, setMinted] = useState<CanaryToken | null>(null)
+  const create = (
+    <>
+      <Button label="Create token" size="sm" onClick={() => setCreating(true)} />
+      <CanaryTokenDialog
+        types={types}
+        isOpen={creating}
+        onOpenChange={setCreating}
+        onCreated={(token) => {
+          setMinted(token)
+          void router.invalidate()
+        }}
+      />
+    </>
+  )
 
   return view === 'deployed' ? (
     <RecordList
       title="Canarytokens"
       description="Decoy documents, URLs, and hostnames that phone home the moment an attacker touches them."
+      actions={create}
       summary={
-        <VStack gap={3}>
-          <MintPanel types={types} preset="aws_keys" onMinted={setMinted} />
-          {minted && (
-            <Panel title="Token minted" action={<Button label="Dismiss" size="sm" variant="ghost" onClick={() => setMinted(null)} />}>
-              <Text>{minted.memo}</Text>
-              <Text type="code">{minted.url}</Text>
-            </Panel>
-          )}
-        </VStack>
+        minted && (
+          <Banner status="success" title={`Token created: ${minted.memo}`} description={minted.url} isDismissable onDismiss={() => setMinted(null)} endContent={<Link href={`/canarytokens/${encodeURIComponent(minted.id)}`}>Open token</Link>} />
+        )
       }
       rows={tokens}
       columns={tokenColumns}
       getId={(row) => row.id}
       getHref={(row) => `/canarytokens/${encodeURIComponent(row.id)}`}
-      emptyState={{ title: 'No tokens deployed yet', description: 'Pick a common type above to plant your first one.' }}
+      emptyState={{ title: 'No tokens deployed yet', description: 'Use Create token to plant your first one.' }}
     />
   ) : (
     <RecordList
       title="Canarytokens"
       description="Every planted token that phoned home, wherever it was opened."
+      actions={create}
       rows={triggers}
       columns={triggerColumns}
       getId={(row) => row.id}

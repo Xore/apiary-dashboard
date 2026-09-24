@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
-import { CheckboxList, CheckboxListItem } from '@astryxdesign/core/CheckboxList'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
-import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
+import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -15,7 +14,8 @@ import { entityHref } from '#/lib/entities'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
-import { abortGpuJob, getAnalysisResults, startWorkbenchRun } from '#/data/queries'
+import { abortGpuJob, getAnalysisResults } from '#/data/queries'
+import { AnalysisRunDialog } from '#/components/dialogs/AnalysisRunDialog'
 import type { AnalysisResult, AnalysisResultsData, AnalyzerTab, GpuJob } from '#/data/types'
 import { formatTime } from '#/lib/format'
 
@@ -35,9 +35,8 @@ export const Route = createFileRoute('/_layout/payload-workbench/results')({
       tabs: (loaded) => TABS.map((t) => ({ id: t.id, label: t.label, count: (loaded as AnalysisResultsData | undefined)?.results.filter((r) => r.analyzer === t.id).length })),
     }),
   },
-  validateSearch: (search: Record<string, unknown>): { tab?: AnalyzerTab; hash?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { tab?: AnalyzerTab } => ({
     tab: TABS.some((t) => t.id === search.tab) ? (search.tab as AnalyzerTab) : undefined,
-    hash: typeof search.hash === 'string' && search.hash ? search.hash : undefined,
   }),
   loader: () => getAnalysisResults(),
   component: AnalysisResultsPage,
@@ -93,52 +92,6 @@ function resultHref(row: AnalysisResult): string {
 
 
 
-function WorkbenchBuilder({ analyzers, initialHash }: { analyzers: AnalysisResultsData['analyzers']; initialHash: string }) {
-  const router = useRouter()
-  const [hash, setHash] = useState(initialHash)
-  const [selected, setSelected] = useState<string[]>(['static', 'yara'])
-  const [busy, setBusy] = useState(false)
-  const [outcome, setOutcome] = useState<{ ok: boolean; text: string } | null>(null)
-
-  return (
-    <Panel title="Start a new analysis">
-      <HStack gap={2} vAlign="end">
-        <StackItem size="fill">
-          <TextInput label="Payload SHA-256" placeholder="Paste a captured payload hash" value={hash} onChange={setHash} />
-        </StackItem>
-      </HStack>
-      <CheckboxList label="Analyzers" value={selected} onChange={setSelected}>
-        {analyzers.map((a) => (
-          <CheckboxListItem
-            key={a.id}
-            value={a.id}
-            label={a.label}
-            description={a.description}
-            endContent={a.gpu ? <Token size="sm" color="purple" label="GPU queue" /> : undefined}
-          />
-        ))}
-      </CheckboxList>
-      {outcome && <Banner status={outcome.ok ? 'success' : 'error'} title={outcome.text} />}
-      <HStack hAlign="end">
-        <Button
-          label="Start run"
-          isLoading={busy}
-          isDisabled={!hash.trim() || selected.length === 0}
-          onClick={async () => {
-            setBusy(true)
-            try {
-              const run = await startWorkbenchRun(hash.trim(), selected)
-              setOutcome(run ? { ok: true, text: `Run ${run.id} queued (${selected.join(', ')}).` } : { ok: false, text: 'No captured payload has that hash.' })
-              if (run) await router.invalidate()
-            } finally {
-              setBusy(false)
-            }
-          }}
-        />
-      </HStack>
-    </Panel>
-  )
-}
 
 function GpuQueue({ jobs }: { jobs: GpuJob[] }) {
   const router = useRouter()
@@ -183,7 +136,10 @@ function GpuQueue({ jobs }: { jobs: GpuJob[] }) {
 
 function AnalysisResultsPage() {
   const data = Route.useLoaderData()
-  const { tab = 'workbench', hash } = Route.useSearch()
+  const { tab = 'workbench' } = Route.useSearch()
+  const router = useRouter()
+  const [creating, setCreating] = useState(false)
+  const [queued, setQueued] = useState<AnalysisResult | null>(null)
   const [query, setQuery] = useState('')
   const needle = query.trim().toLowerCase()
   const rows = data.results.filter((r) => r.analyzer === tab && (!needle || JSON.stringify(r).toLowerCase().includes(needle)))
@@ -192,19 +148,28 @@ function AnalysisResultsPage() {
   return (
     <RecordList
       title="Analysis results"
-      description="Submit a workbench run against a captured payload, then follow every analyzer's verdict: static analysis, YARA, sandbox detonations, and Ghidra decompilations."
+      description="Launch an analysis run against a captured payload, then follow every analyzer's verdict: static analysis, YARA, sandbox detonations, and Ghidra decompilations."
       actions={
-        <HStack gap={3} wrap="wrap">
+        <HStack gap={3} wrap="wrap" vAlign="center">
           <Link href="/revdeck">RevDeck</Link>
           <Link href="/cape">CAPE</Link>
           <Link href="/github-analysis">GitHub analysis</Link>
           <Link href="/sandbox/vnc">Sandbox live view</Link>
+          <Button label="New analysis run" size="sm" onClick={() => setCreating(true)} />
+          <AnalysisRunDialog
+            isOpen={creating}
+            onOpenChange={setCreating}
+            onQueued={(run) => {
+              setQueued(run)
+              void router.invalidate()
+            }}
+          />
         </HStack>
       }
       summary={
         tab === 'workbench' ? (
           <VStack gap={4}>
-            <WorkbenchBuilder key={hash ?? ''} analyzers={data.analyzers} initialHash={hash ?? ''} />
+            {queued && <Banner status="success" title={`Run ${queued.id} queued`} description={`${queued.recipe ?? ''} on ${queued.file}…`} isDismissable onDismiss={() => setQueued(null)} />}
             <Grid columns={{ minWidth: 380, repeat: 'fit' }} gap={4}>
               <Panel title="My recent runs">
                 <Table data={myRuns} columns={COLUMNS.workbench} idKey="id" density="compact" />
@@ -243,7 +208,7 @@ function AnalysisResultsPage() {
       columns={COLUMNS[tab]}
       getHref={resultHref}
       getId={(row) => row.id}
-      emptyState={{ title: 'No results from this analyzer yet', description: 'Start a workbench run to produce some.' }}
+      emptyState={{ title: 'No results from this analyzer yet', description: 'Launch a New analysis run to produce some.' }}
     />
   )
 }

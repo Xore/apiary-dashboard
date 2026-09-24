@@ -46,7 +46,6 @@ function PayloadOverview() {
               <Text key={tab} type="supporting">{`${label}: not run`}</Text>
             ),
           )}
-          <Link href={`/payload-workbench/results?tab=workbench&hash=${p.hash}`}>Start a workbench run</Link>
         </HStack>
       </Panel>
       <Grid columns={{ minWidth: 340, repeat: 'fit' }} gap={4}>

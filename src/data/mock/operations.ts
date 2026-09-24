@@ -15,6 +15,7 @@ import type {
   SensorFeed,
   SourceHealth,
   Topology,
+  AnalyzerId,
 } from '../types'
 import { EVENTS, SENSORS, SOURCES } from './fixtures'
 import { MOCK_NOW, createRng, hex, int, isoMinutesAgo, pick, pickSkewed } from './random'
@@ -303,8 +304,10 @@ export const ANALYZERS = [
   { id: 'static', label: 'Static analysis', description: 'File type, strings, imports, entropy.', gpu: false },
   { id: 'yara', label: 'YARA', description: 'Match against the deployed rule set.', gpu: false },
   { id: 'sandbox', label: 'Sandbox detonation', description: 'Run in an isolated VM and record behavior.', gpu: false },
+  { id: 'cape', label: 'CAPE (Windows)', description: 'Detonate a Windows PE under a debugger-instrumented guest.', gpu: false },
   { id: 'ghidra', label: 'Ghidra decompilation', description: 'Decompile and summarise with a local model.', gpu: true },
-]
+  { id: 'revdeck', label: 'RevDeck', description: 'Model-driven reverse engineering that cites its tool output.', gpu: true },
+] satisfies Array<{ id: AnalyzerId; label: string; description: string; gpu: boolean }>
 
 export const ANALYSIS_RESULTS: AnalysisResult[] = (() => {
   const rng = createRng(0x9e5b)
