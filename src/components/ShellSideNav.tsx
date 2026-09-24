@@ -1,16 +1,13 @@
 import { DropdownMenu, DropdownMenuItem } from '@astryxdesign/core/DropdownMenu'
 import { Icon } from '@astryxdesign/core/Icon'
-import { NavIcon } from '@astryxdesign/core/NavIcon'
 import {
   SideNav,
-  SideNavHeading,
   SideNavItem,
   SideNavSection,
 } from '@astryxdesign/core/SideNav'
 import {
   ArrowRightStartOnRectangleIcon,
   Cog6ToothIcon,
-  ShieldCheckIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline'
 import { useLocation } from '@tanstack/react-router'
@@ -48,14 +45,6 @@ export function ShellSideNav({ user, onOpenSettings }: { user: SessionUser; onOp
     <SideNav
       collapsible
       resizable={{ defaultWidth: 260, minWidth: 220, maxWidth: 360 }}
-      header={
-        <SideNavHeading
-          heading="APIARY"
-          subheading="Honeypot dashboard"
-          icon={<NavIcon icon={<Icon icon={ShieldCheckIcon} size="sm" />} />}
-          headingHref="/"
-        />
-      }
       footer={
         <SideNavSection title="Account" isHeaderHidden>
           <AccountMenu user={user} onOpenSettings={onOpenSettings} />
