@@ -63,7 +63,8 @@ function RelationGraph({ center, groups }: { center: string; groups: RelatedGrou
   const cy = H / 2
   return (
     <VStack gap={2}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Relationships of ${center}`}>
+      {/* Capped like the identity graph, so its labels do not grow with wide screens. */}
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: 720, display: 'block', margin: '0 auto' }} role="img" aria-label={`Relationships of ${center}`}>
         {nodes.map(({ group, g, item, slot: at }) => {
           const angle = (at / slots) * 2 * Math.PI - Math.PI / 2
           const x = cx + Math.cos(angle) * 190

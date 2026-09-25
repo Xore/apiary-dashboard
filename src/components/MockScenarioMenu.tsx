@@ -16,7 +16,7 @@ const SIGN_IN_PAGES = [
 /** The "Mock data" badge, as a switch: pick how the mock backend behaves
  * (empty, failing, slow, viewer role) and every page follows, or simulate
  * an operational incident to see the toasts. */
-export function MockScenarioMenu() {
+export function MockScenarioMenu({ compact = false }: { compact?: boolean }) {
   const navigate = useNavigate()
   const raw = useSearch({ strict: false, select: (search: Record<string, unknown>) => search.mock })
   const current = isScenario(raw) ? raw : 'normal'
@@ -31,6 +31,8 @@ export function MockScenarioMenu() {
         icon: <Icon icon={BeakerIcon} size="sm" />,
         size: 'sm',
         variant: current === 'normal' ? 'secondary' : 'primary',
+        // Narrow screens: the icon, with the scenario in its tooltip.
+        ...(compact ? { isIconOnly: true, tooltip: current === 'normal' ? 'Mock data' : `Mock: ${active.label}` } : {}),
       }}
     >
       {SCENARIOS.map((scenario) => (

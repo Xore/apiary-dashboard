@@ -2,8 +2,9 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
 import { Icon } from '@astryxdesign/core/Icon'
 import type { IconType } from '@astryxdesign/core/Icon'
+import { DropdownMenu, DropdownMenuItem, DropdownMenuSubMenu } from '@astryxdesign/core/DropdownMenu'
 import { TopNavItem, TopNavMenu } from '@astryxdesign/core/TopNav'
-import { ArrowRightIcon } from '@heroicons/react/24/outline'
+import { ArrowRightIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { useRouter, useRouterState } from '@tanstack/react-router'
 import { formatNumber } from '#/lib/format'
 
@@ -133,18 +134,13 @@ export function useViewTabs(): ViewTabsModel | null {
   return model.tabs.length < 2 ? null : model
 }
 
-/** The tabs of the deepest route that declares them, drawn as top-bar nav
- * items: a plain tab is a link, a tab with sections is a hover menu listing
- * them (after the Astryx TopNav "Multiple Dropdowns" block). The bar matches
- * the current location itself, and the location switches as soon as a
- * navigation starts, so the tabs show up before the new page's data arrives
- * (and are part of the server render). */
-export function ViewTabsBar() {
+/** The current page's tabs with where each entry goes, and a click handler
+ * that routes in-app while leaving new-tab clicks to the browser. */
+export function useViewTabLinks() {
   const router = useRouter()
   const location = useRouterState({ select: (state) => state.location })
   const model = useViewTabs()
   if (!model) return null
-
   // Real hrefs, so every entry is a link (new tab, copy link, prefetch).
   // A tab or section that is another page links there; the rest switch
   // this page's view.
@@ -163,7 +159,51 @@ export function ViewTabsBar() {
     event?.preventDefault()
     void router.navigate({ href })
   }
-  return <TabStrip model={model} hrefOf={hrefOf} go={go} />
+  return { model, hrefOf, go }
+}
+
+/** The tabs of the deepest route that declares them, drawn as top-bar nav
+ * items: a plain tab is a link, a tab with sections is a hover menu listing
+ * them (after the Astryx TopNav "Multiple Dropdowns" block). The bar matches
+ * the current location itself, and the location switches as soon as a
+ * navigation starts, so the tabs show up before the new page's data arrives
+ * (and are part of the server render). */
+export function ViewTabsBar() {
+  const links = useViewTabLinks()
+  return links ? <TabStrip {...links} /> : null
+}
+
+
+/** The same tabs as one "Views" menu, for screens too narrow for a strip:
+ * the button names the current view, and a tab with sections opens them
+ * as a submenu, so the layering stays the same. */
+export function ViewTabsMenu() {
+  const links = useViewTabLinks()
+  if (!links) return null
+  const { model, hrefOf, go } = links
+  const active = model.tabs.find((tab) => tab.id === model.value) ?? model.tabs[0]
+  const current = <Icon icon={CheckIcon} size="sm" />
+  return (
+    <DropdownMenu placement="below" alignment="start" menuWidth={260} button={{ label: labelOf(active), size: 'sm', variant: 'secondary', tooltip: model.label }}>
+      {model.tabs.map((tab) =>
+        tab.sections?.length ? (
+          <DropdownMenuSubMenu key={tab.id} label={labelOf(tab)}>
+            {tab.sections.map((section) => (
+              <DropdownMenuItem
+                key={section.id}
+                label={section.label}
+                icon={section.icon}
+                endContent={tab.id === model.value && section.id === model.section ? current : undefined}
+                onClick={() => go(hrefOf(tab.id, section.id))()}
+              />
+            ))}
+          </DropdownMenuSubMenu>
+        ) : (
+          <DropdownMenuItem key={tab.id} label={labelOf(tab)} endContent={tab.id === model.value ? current : undefined} onClick={() => go(hrefOf(tab.id))()} />
+        ),
+      )}
+    </DropdownMenu>
+  )
 }
 
 // Keeps each entry on one line at its natural width.

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -155,10 +154,6 @@ function AnalysisResultsPage() {
       description="Launch an analysis run against a captured payload, then follow every analyzer's verdict: static analysis, YARA, sandbox detonations, and Ghidra decompilations."
       actions={
         <HStack gap={3} wrap="wrap" vAlign="center">
-          <Link href="/revdeck">RevDeck</Link>
-          <Link href="/cape">CAPE</Link>
-          <Link href="/github-analysis">GitHub analysis</Link>
-          <Link href="/sandbox/vnc">Sandbox live view</Link>
           <Button label="New analysis run" size="sm" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setCreating(true)} />
           <AnalysisRunDialog
             isOpen={creating}

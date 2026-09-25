@@ -9,7 +9,7 @@ const ignore = () => {}
 
 /** The one live indicator: live, paused, or stalled. Clicking pauses or
  * resumes every refresh path at once. */
-export function LiveBadge() {
+export function LiveBadge({ compact = false }: { compact?: boolean }) {
   // The shell holds the one connection, so the badge tells the truth on
   // every page, including one whose own load failed.
   useLiveEvents(ignore)
@@ -24,7 +24,7 @@ export function LiveBadge() {
     <Button label={label} variant="ghost" size="sm" tooltip={tooltip} onClick={toggleLive}>
       <HStack gap={1.5} vAlign="center">
         <StatusDot variant={variant} label={label} isPulsing={variant === 'success'} />
-        <Text type="supporting">{label}</Text>
+        {!compact && <Text type="supporting">{label}</Text>}
       </HStack>
     </Button>
   )

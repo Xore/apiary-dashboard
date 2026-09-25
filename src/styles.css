@@ -54,3 +54,28 @@ html[data-motion="reduced"] *::after {
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
 }
+
+/* Large screens at 1:1 scaling (a 4K panel at 100 %): the whole interface
+   grows in steps, so text, spacing and the navigation keep their proportions
+   instead of a laptop-sized UI spread thin across 3840 px. Screens that
+   scale in the OS (the usual 200 % on 4K) report a normal width and are
+   unaffected. */
+@media (min-width: 2560px) {
+  :root { --ui-zoom: 1.25; }
+}
+@media (min-width: 3200px) {
+  :root { --ui-zoom: 1.5; }
+}
+@media (min-width: 2560px) {
+  html { zoom: var(--ui-zoom); }
+  /* Viewport units are zoomed too, so the shell (sized to the viewport)
+     divides them back out; everything inside sizes from it. */
+  .astryx-app-shell { height: calc(100dvh / var(--ui-zoom)) !important; }
+}
+
+/* Below the drawer breakpoint the top bar is the compact one. A first visit
+   the server could not size renders the desktop bar until hydration; hide
+   its tabs and breadcrumb from the first paint so they never pile up. */
+@media (max-width: 1023px) {
+  .apiary-desktop-start { display: none !important; }
+}

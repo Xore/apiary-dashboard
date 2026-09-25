@@ -73,7 +73,6 @@ function SourceHealthPage() {
     <PageFrame
       title="Source & pipeline health"
       description="Is every sensor still feeding the pipeline? Freshness per source, ordered by most recent event."
-      actions={<Link href="/dead-letters">Dead letters</Link>}
     >
       <VStack gap={6}>
         <Grid columns={{ minWidth: 200, repeat: 'fit' }} gap={4}>

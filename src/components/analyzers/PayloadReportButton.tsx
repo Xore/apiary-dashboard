@@ -39,7 +39,7 @@ export function PayloadReportButton({ hash }: { hash: string }) {
             <LayoutContent>
               <VStack gap={3}>
                 {error && <Banner status="error" title="The report was not generated" description={error} />}
-                {pdf && <iframe title={`${report?.title ?? 'Payload report'} (PDF)`} src={pdf} style={{ width: '100%', height: '72vh', border: 0, borderRadius: 8 }} />}
+                {pdf && <iframe title={`${report?.title ?? 'Payload report'} (PDF)`} src={pdf} style={{ width: '100%', height: 'calc(72dvh / var(--ui-zoom, 1))', border: 0, borderRadius: 8 }} />}
               </VStack>
             </LayoutContent>
           }

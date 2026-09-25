@@ -12,7 +12,7 @@ import { ShieldCheckIcon } from '@heroicons/react/24/outline'
 
 export function AuthFrame({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 16, background: 'var(--color-background-body)' }}>
+    <main style={{ minHeight: 'calc(100dvh / var(--ui-zoom, 1))', display: 'grid', placeItems: 'center', padding: 16, background: 'var(--color-background-body)' }}>
       <VStack gap={4} style={{ width: '100%', maxWidth: 440 }}>
         <HStack gap={2} vAlign="center" hAlign="center">
           <NavIcon icon={<Icon icon={ShieldCheckIcon} size="sm" />} />

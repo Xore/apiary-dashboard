@@ -14,7 +14,8 @@ import { SettingsDialog } from './SettingsDialog'
 import type { PaneId } from './SettingsDialog'
 import { ShellBanners, ShellFooter } from './ShellNotices'
 import { ShellSideNav } from './ShellSideNav'
-import { ShellTopNav } from './ShellTopNav'
+import { PhoneViewBar, ShellTopNav } from './ShellTopNav'
+import { rememberViewportWidth } from '#/lib/viewport'
 
 // Pages without a sidebar entry stay reachable from the palette.
 const UNLISTED = [
@@ -40,12 +41,15 @@ const PAGES = [
 type ShellProps = {
   user: SessionUser
   config: ShellConfig
+  /** Whether the first render is the narrow (drawer) layout: what the
+   * server knew of this browser's width, so it renders the same. */
+  narrow?: boolean
   /** The open settings pane, if the settings modal is showing. */
   settingsPane?: PaneId
   onSettingsPane: (pane: PaneId | undefined) => void
 }
 
-export function ShellAppShell({ user, config, settingsPane, onSettingsPane }: ShellProps) {
+export function ShellAppShell({ user, config, narrow = false, settingsPane, onSettingsPane }: ShellProps) {
   const navigate = useNavigate()
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
   const searchSource = useMemo(() => createStaticSource(PAGES), [])
@@ -61,6 +65,8 @@ export function ShellAppShell({ user, config, settingsPane, onSettingsPane }: Sh
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  useEffect(() => rememberViewportWidth(), [])
+
   const prefs = usePreferences()
   const timeKey = prefs ? `${prefs.timezone}|${prefs.clock}|${prefs.timestamps}` : undefined
 
@@ -70,10 +76,13 @@ export function ShellAppShell({ user, config, settingsPane, onSettingsPane }: Sh
     <ToastViewport position="topEnd" inset={{ top: 64, end: 16 }} maxVisible={4}>
       <AppShell
         contentPadding={0}
+        // Tablets get the drawer too: a 260 px sidebar leaves them too little.
+        mobileNav={{ breakpoint: 'lg', defaultIsMobile: narrow }}
         topNav={<ShellTopNav config={config} onOpenPalette={() => setIsPaletteOpen(true)} />}
         sideNav={<ShellSideNav user={user} config={config} onOpenSettings={() => onSettingsPane('account')} />}
       >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+          <PhoneViewBar />
           <ShellBanners config={config} />
           {/* Times are formatted from module state, so a change to how they
               read remounts the page; dialogs in the shell stay open. */}
