@@ -77,6 +77,13 @@ CHECKS=(
   "/sensors 307"
   "/sources/10.0.0.1 404"
   "/no-such-page 404"
+  "/auth/login 200"
+  "/auth/login?fail=unavailable 200"
+  "/auth/callback?code=expired 200"
+  "/auth/callback?error=invalid_request 200"
+  "/auth/callback?code=failed 200"
+  "/auth/callback?code=mock&return_to=%2F%2Fevil.example.test 307"
+  "/auth/logout 307"
 )
 
 step "HTTP checks"

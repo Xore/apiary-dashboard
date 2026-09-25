@@ -5,6 +5,14 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { INCIDENTS, resolveAll, simulate } from '#/data/mock/incidents'
 import { SCENARIOS, isScenario } from '#/data/scenario'
 
+const SIGN_IN_PAGES = [
+  { label: 'Show: sign-in', href: '/auth/login' },
+  { label: 'Show: sign-in attempt expired', href: '/auth/callback?code=expired' },
+  { label: 'Show: sign-in refused by the provider', href: '/auth/callback?error=invalid_request' },
+  { label: 'Show: sign-in could not complete', href: '/auth/callback?code=failed' },
+  { label: 'Show: sign-in unavailable', href: '/auth/login?fail=unavailable' },
+]
+
 /** The "Mock data" badge, as a switch: pick how the mock backend behaves
  * (empty, failing, slow, viewer role) and every page follows, or simulate
  * an operational incident to see the toasts. */
@@ -41,6 +49,11 @@ export function MockScenarioMenu() {
         <DropdownMenuItem key={incident.id} label={`Simulate: ${incident.label.toLowerCase()}`} onClick={() => simulate(incident.id)} />
       ))}
       <DropdownMenuItem label="Simulate: everything recovers" onClick={resolveAll} />
+      <DropdownMenuDivider />
+      {/* The pages outside the shell: sign-in and the ways it fails. */}
+      {SIGN_IN_PAGES.map((page) => (
+        <DropdownMenuItem key={page.href} label={page.label} onClick={() => void navigate({ href: page.href })} />
+      ))}
     </DropdownMenu>
   )
 }
