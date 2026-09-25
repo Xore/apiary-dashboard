@@ -6,6 +6,11 @@ import { StopIcon } from '@heroicons/react/24/solid'
 import {
   Bar,
   BarChart,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -574,6 +579,24 @@ export function Histogram({ rows }: { rows: CountRow[] }) {
         <Tooltip cursor={{ fill: 'var(--color-background-muted)' }} content={<ValueTooltip />} />
         <Bar dataKey="count" name="Connections" fill="var(--color-data-categorical-blue)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
       </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
+/** Why an identity merged: per fingerprint family, how many values its
+ * members share. The shape says which signals did the joining. */
+export function FusionRadar({ categories, values }: { categories: string[]; values: number[] }) {
+  if (values.every((v) => v === 0)) return <ChartEmpty height={280} label="No values are shared: this identity has a single member address." />
+  const data = categories.map((category, i) => ({ category, shared: values[i] }))
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <RadarChart data={data} outerRadius="72%">
+        <PolarGrid stroke={GRID_STROKE} />
+        <PolarAngleAxis dataKey="category" tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} />
+        <PolarRadiusAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }} axisLine={false} angle={90} />
+        <Radar dataKey="shared" name="Shared values" stroke="var(--color-data-categorical-blue)" fill="var(--color-data-categorical-blue)" fillOpacity={0.25} isAnimationActive={false} />
+        <Tooltip formatter={(value) => [`${String(value)} shared`, 'Values']} />
+      </RadarChart>
     </ResponsiveContainer>
   )
 }
