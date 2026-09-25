@@ -10,7 +10,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { getCommands } from '#/data/queries'
 import type { HoneypotEvent } from '#/data/types'
-import { downloadCsv } from '#/lib/export'
+import { apiHref } from '#/lib/apiHref'
 import { formatClock, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { ZoneHeader } from '#/components/ZoneHeader'
@@ -42,7 +42,7 @@ function CommandsPage() {
             size="sm"
             variant="secondary"
             icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-            onClick={() => downloadCsv('commands.csv', commands, ['timestamp', 'sensor', 'srcIp', 'command', 'sessionId'])}
+            href={apiHref('/api/export/commands.csv')}
           />
         </>
       }

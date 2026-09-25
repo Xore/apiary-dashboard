@@ -84,6 +84,18 @@ CHECKS=(
   "/auth/callback?code=failed 200"
   "/auth/callback?code=mock&return_to=%2F%2Fevil.example.test 307"
   "/auth/logout 307"
+  "/api/export/events.csv?sensor=cowrie 200"
+  "/api/export/history.json?q=wget 200"
+  "/api/export/nope 404"
+  "/api/export/commands.csv?mock=unavailable 502"
+  "/api/payload/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/download 200"
+  "/api/payload/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/download?mock=viewer 403"
+  "/api/recording/89090804218391c1e01f60efae130436c0001cf6acbe087b582dd8dd5fc12bd5/cast 200"
+  "/api/recording/89090804218391c1e01f60efae130436c0001cf6acbe087b582dd8dd5fc12bd5/raw 200"
+  "/api/report/rpt-8256dc8894/pdf 200"
+  "/api/raw-report/github-analysis/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37 200"
+  "/api/artifact/ghidra/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/decompiled.c 200"
+  "/api/artifact/sandbox/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/host.pcap 200"
 )
 
 step "HTTP checks"

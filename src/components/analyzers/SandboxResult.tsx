@@ -3,6 +3,8 @@
 // network (both packet captures), file forensics (Windows samples: the PE
 // itself), diagnostics (how the run went), and raw. Long logs fold away;
 // nothing here offers the sample's bytes.
+import { apiHref } from '#/lib/apiHref'
+import { Link } from '@astryxdesign/core/Link'
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Banner } from '@astryxdesign/core/Banner'
@@ -315,7 +317,7 @@ function Raw({ run }: { run: SandboxRun }) {
         <Table
           data={run.exported.map((a) => ({ ...a, id: a.name }))}
           columns={[
-            { key: 'name', header: 'File', width: proportional(2), renderCell: (row) => <Text type="code">{row.name}</Text> },
+            { key: 'name', header: 'File', width: proportional(2), renderCell: (row) => <Link href={apiHref(`/api/artifact/sandbox/${encodeURIComponent(run.job)}/${encodeURIComponent(row.name)}`)}>{row.name}</Link> },
             { key: 'size', header: 'Size', width: pixel(96), align: 'end', renderCell: (row) => bytes(row.size) },
             { key: 'sha256', header: 'SHA-256', width: proportional(3), renderCell: (row) => <Text type="code">{row.sha256}</Text> },
           ]}

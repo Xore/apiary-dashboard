@@ -13,7 +13,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { searchHistory } from '#/data/queries'
 import type { HoneypotEvent } from '#/data/types'
-import { downloadJson } from '#/lib/export'
+import { apiHref } from '#/lib/apiHref'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/history')({
@@ -54,7 +54,7 @@ function HistoryPage() {
             size="sm"
             variant="secondary"
             icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-            onClick={() => downloadJson('history.json', rows)}
+            href={apiHref('/api/export/history.json', { q })}
           />
         </>
       }

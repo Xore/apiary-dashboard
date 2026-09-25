@@ -16,7 +16,7 @@ import { WorldMap } from '#/components/WorldMap'
 import { getSourceProfiles } from '#/data/queries'
 import type { SourceProfile } from '#/data/types'
 import { entityHref } from '#/lib/entities'
-import { downloadCsv } from '#/lib/export'
+import { apiHref } from '#/lib/apiHref'
 import { formatNumber, formatTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/ips')({
@@ -53,7 +53,7 @@ function SourcesPage() {
           size="sm"
           variant="secondary"
           icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-          onClick={() => downloadCsv('ips.csv', sources, ['ip', 'country', 'org', 'events', 'logins', 'sessions', 'sensors', 'first', 'last'])}
+          href={apiHref('/api/export/ips.csv')}
         />
       }
       summary={

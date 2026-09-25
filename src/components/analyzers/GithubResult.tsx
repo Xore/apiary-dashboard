@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiHref } from '#/lib/apiHref'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
@@ -34,7 +35,12 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
     <AnalyzerSection
       title="GitHub analysis"
       description="A published sample's multi-engine scanner verdict from the public analysis repository."
-      actions={<Button label="Resubmit" size="sm" variant="secondary" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />}
+      actions={
+        <>
+          <Button label="Raw report" size="sm" variant="secondary" href={apiHref(`/api/raw-report/github-analysis/${g.sha}`)} />
+          <Button label="Resubmit" size="sm" variant="secondary" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />
+        </>
+      }
     >
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap">

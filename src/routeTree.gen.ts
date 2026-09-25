@@ -79,6 +79,7 @@ import { Route as LayoutSensorsSensorRouteImport } from './routes/_layout/sensor
 import { Route as LayoutSessionsIdRouteImport } from './routes/_layout/sessions.$id'
 import { Route as LayoutSourcesIpRouteImport } from './routes/_layout/sources.$ip'
 import { Route as LayoutTtyReplayShasumRouteImport } from './routes/_layout/tty-replay.$shasum'
+import { Route as ApiExportNameRouteImport } from './routes/api.export.$name'
 import { Route as LayoutAgentCampaignsIdIndexRouteImport } from './routes/_layout/agent-campaigns.$id.index'
 import { Route as LayoutAgentCampaignsIdEventsRouteImport } from './routes/_layout/agent-campaigns.$id.events'
 import { Route as LayoutAgentCampaignsIdEvidenceRouteImport } from './routes/_layout/agent-campaigns.$id.evidence'
@@ -171,6 +172,11 @@ import { Route as LayoutSourcesIpNetworkRouteImport } from './routes/_layout/sou
 import { Route as LayoutSourcesIpPayloadsRouteImport } from './routes/_layout/sources.$ip.payloads'
 import { Route as LayoutSourcesIpSessionsRouteImport } from './routes/_layout/sources.$ip.sessions'
 import { Route as LayoutSourcesIpTimelineRouteImport } from './routes/_layout/sources.$ip.timeline'
+import { Route as ApiCanarytokenIdDownloadRouteImport } from './routes/api.canarytoken.$id.download'
+import { Route as ApiPayloadHashDownloadRouteImport } from './routes/api.payload.$hash.download'
+import { Route as ApiRawReportKindShaRouteImport } from './routes/api.raw-report.$kind.$sha'
+import { Route as ApiRecordingShasumFormatRouteImport } from './routes/api.recording.$shasum.$format'
+import { Route as ApiReportIdPdfRouteImport } from './routes/api.report.$id.pdf'
 import { Route as LayoutClustersKindValueIndexRouteImport } from './routes/_layout/clusters.$kind.$value.index'
 import { Route as LayoutClustersKindValueBreakdownRouteImport } from './routes/_layout/clusters.$kind.$value.breakdown'
 import { Route as LayoutClustersKindValueEventsRouteImport } from './routes/_layout/clusters.$kind.$value.events'
@@ -183,6 +189,7 @@ import { Route as LayoutIocKindValuePayloadsRouteImport } from './routes/_layout
 import { Route as LayoutIocKindValueSessionsRouteImport } from './routes/_layout/ioc.$kind.$value.sessions'
 import { Route as LayoutIocKindValueSourcesRouteImport } from './routes/_layout/ioc.$kind.$value.sources'
 import { Route as LayoutIocKindValueTimelineRouteImport } from './routes/_layout/ioc.$kind.$value.timeline'
+import { Route as ApiArtifactKindKeyFilenameRouteImport } from './routes/api.artifact.$kind.$key.$filename'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -538,6 +545,11 @@ const LayoutTtyReplayShasumRoute = LayoutTtyReplayShasumRouteImport.update({
   id: '/tty-replay/$shasum',
   path: '/tty-replay/$shasum',
   getParentRoute: () => LayoutRoute,
+} as any)
+const ApiExportNameRoute = ApiExportNameRouteImport.update({
+  id: '/api/export/$name',
+  path: '/api/export/$name',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutAgentCampaignsIdIndexRoute =
   LayoutAgentCampaignsIdIndexRouteImport.update({
@@ -1053,6 +1065,33 @@ const LayoutSourcesIpTimelineRoute = LayoutSourcesIpTimelineRouteImport.update({
   path: '/timeline',
   getParentRoute: () => LayoutSourcesIpRoute,
 } as any)
+const ApiCanarytokenIdDownloadRoute =
+  ApiCanarytokenIdDownloadRouteImport.update({
+    id: '/api/canarytoken/$id/download',
+    path: '/api/canarytoken/$id/download',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPayloadHashDownloadRoute = ApiPayloadHashDownloadRouteImport.update({
+  id: '/api/payload/$hash/download',
+  path: '/api/payload/$hash/download',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRawReportKindShaRoute = ApiRawReportKindShaRouteImport.update({
+  id: '/api/raw-report/$kind/$sha',
+  path: '/api/raw-report/$kind/$sha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRecordingShasumFormatRoute =
+  ApiRecordingShasumFormatRouteImport.update({
+    id: '/api/recording/$shasum/$format',
+    path: '/api/recording/$shasum/$format',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiReportIdPdfRoute = ApiReportIdPdfRouteImport.update({
+  id: '/api/report/$id/pdf',
+  path: '/api/report/$id/pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutClustersKindValueIndexRoute =
   LayoutClustersKindValueIndexRouteImport.update({
     id: '/',
@@ -1124,6 +1163,12 @@ const LayoutIocKindValueTimelineRoute =
     path: '/timeline',
     getParentRoute: () => LayoutIocKindValueRoute,
   } as any)
+const ApiArtifactKindKeyFilenameRoute =
+  ApiArtifactKindKeyFilenameRouteImport.update({
+    id: '/api/artifact/$kind/$key/$filename',
+    path: '/api/artifact/$kind/$key/$filename',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
@@ -1176,6 +1221,7 @@ export interface FileRoutesByFullPath {
   '/sessions/$id': typeof LayoutSessionsIdRouteWithChildren
   '/sources/$ip': typeof LayoutSourcesIpRouteWithChildren
   '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/api/export/$name': typeof ApiExportNameRoute
   '/agent-campaigns/': typeof LayoutAgentCampaignsIndexRoute
   '/alerts/': typeof LayoutAlertsIndexRoute
   '/auth-events/': typeof LayoutAuthEventsIndexRoute
@@ -1273,6 +1319,11 @@ export interface FileRoutesByFullPath {
   '/sources/$ip/payloads': typeof LayoutSourcesIpPayloadsRoute
   '/sources/$ip/sessions': typeof LayoutSourcesIpSessionsRoute
   '/sources/$ip/timeline': typeof LayoutSourcesIpTimelineRoute
+  '/api/canarytoken/$id/download': typeof ApiCanarytokenIdDownloadRoute
+  '/api/payload/$hash/download': typeof ApiPayloadHashDownloadRoute
+  '/api/raw-report/$kind/$sha': typeof ApiRawReportKindShaRoute
+  '/api/recording/$shasum/$format': typeof ApiRecordingShasumFormatRoute
+  '/api/report/$id/pdf': typeof ApiReportIdPdfRoute
   '/agent-campaigns/$id/': typeof LayoutAgentCampaignsIdIndexRoute
   '/alerts/$key/': typeof LayoutAlertsKeyIndexRoute
   '/asn/$asn/': typeof LayoutAsnAsnIndexRoute
@@ -1297,6 +1348,7 @@ export interface FileRoutesByFullPath {
   '/ioc/$kind/$value/sessions': typeof LayoutIocKindValueSessionsRoute
   '/ioc/$kind/$value/sources': typeof LayoutIocKindValueSourcesRoute
   '/ioc/$kind/$value/timeline': typeof LayoutIocKindValueTimelineRoute
+  '/api/artifact/$kind/$key/$filename': typeof ApiArtifactKindKeyFilenameRoute
   '/clusters/$kind/$value/': typeof LayoutClustersKindValueIndexRoute
   '/ioc/$kind/$value/': typeof LayoutIocKindValueIndexRoute
 }
@@ -1337,6 +1389,7 @@ export interface FileRoutesByTo {
   '/sandbox/$job': typeof LayoutSandboxJobRoute
   '/sandbox/vnc': typeof LayoutSandboxVncRoute
   '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/api/export/$name': typeof ApiExportNameRoute
   '/agent-campaigns': typeof LayoutAgentCampaignsIndexRoute
   '/alerts': typeof LayoutAlertsIndexRoute
   '/auth-events': typeof LayoutAuthEventsIndexRoute
@@ -1432,6 +1485,11 @@ export interface FileRoutesByTo {
   '/sources/$ip/payloads': typeof LayoutSourcesIpPayloadsRoute
   '/sources/$ip/sessions': typeof LayoutSourcesIpSessionsRoute
   '/sources/$ip/timeline': typeof LayoutSourcesIpTimelineRoute
+  '/api/canarytoken/$id/download': typeof ApiCanarytokenIdDownloadRoute
+  '/api/payload/$hash/download': typeof ApiPayloadHashDownloadRoute
+  '/api/raw-report/$kind/$sha': typeof ApiRawReportKindShaRoute
+  '/api/recording/$shasum/$format': typeof ApiRecordingShasumFormatRoute
+  '/api/report/$id/pdf': typeof ApiReportIdPdfRoute
   '/agent-campaigns/$id': typeof LayoutAgentCampaignsIdIndexRoute
   '/alerts/$key': typeof LayoutAlertsKeyIndexRoute
   '/asn/$asn': typeof LayoutAsnAsnIndexRoute
@@ -1456,6 +1514,7 @@ export interface FileRoutesByTo {
   '/ioc/$kind/$value/sessions': typeof LayoutIocKindValueSessionsRoute
   '/ioc/$kind/$value/sources': typeof LayoutIocKindValueSourcesRoute
   '/ioc/$kind/$value/timeline': typeof LayoutIocKindValueTimelineRoute
+  '/api/artifact/$kind/$key/$filename': typeof ApiArtifactKindKeyFilenameRoute
   '/clusters/$kind/$value': typeof LayoutClustersKindValueIndexRoute
   '/ioc/$kind/$value': typeof LayoutIocKindValueIndexRoute
 }
@@ -1512,6 +1571,7 @@ export interface FileRoutesById {
   '/_layout/sessions/$id': typeof LayoutSessionsIdRouteWithChildren
   '/_layout/sources/$ip': typeof LayoutSourcesIpRouteWithChildren
   '/_layout/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/api/export/$name': typeof ApiExportNameRoute
   '/_layout/agent-campaigns/': typeof LayoutAgentCampaignsIndexRoute
   '/_layout/alerts/': typeof LayoutAlertsIndexRoute
   '/_layout/auth-events/': typeof LayoutAuthEventsIndexRoute
@@ -1609,6 +1669,11 @@ export interface FileRoutesById {
   '/_layout/sources/$ip/payloads': typeof LayoutSourcesIpPayloadsRoute
   '/_layout/sources/$ip/sessions': typeof LayoutSourcesIpSessionsRoute
   '/_layout/sources/$ip/timeline': typeof LayoutSourcesIpTimelineRoute
+  '/api/canarytoken/$id/download': typeof ApiCanarytokenIdDownloadRoute
+  '/api/payload/$hash/download': typeof ApiPayloadHashDownloadRoute
+  '/api/raw-report/$kind/$sha': typeof ApiRawReportKindShaRoute
+  '/api/recording/$shasum/$format': typeof ApiRecordingShasumFormatRoute
+  '/api/report/$id/pdf': typeof ApiReportIdPdfRoute
   '/_layout/agent-campaigns/$id/': typeof LayoutAgentCampaignsIdIndexRoute
   '/_layout/alerts/$key/': typeof LayoutAlertsKeyIndexRoute
   '/_layout/asn/$asn/': typeof LayoutAsnAsnIndexRoute
@@ -1633,6 +1698,7 @@ export interface FileRoutesById {
   '/_layout/ioc/$kind/$value/sessions': typeof LayoutIocKindValueSessionsRoute
   '/_layout/ioc/$kind/$value/sources': typeof LayoutIocKindValueSourcesRoute
   '/_layout/ioc/$kind/$value/timeline': typeof LayoutIocKindValueTimelineRoute
+  '/api/artifact/$kind/$key/$filename': typeof ApiArtifactKindKeyFilenameRoute
   '/_layout/clusters/$kind/$value/': typeof LayoutClustersKindValueIndexRoute
   '/_layout/ioc/$kind/$value/': typeof LayoutIocKindValueIndexRoute
 }
@@ -1689,6 +1755,7 @@ export interface FileRouteTypes {
     | '/sessions/$id'
     | '/sources/$ip'
     | '/tty-replay/$shasum'
+    | '/api/export/$name'
     | '/agent-campaigns/'
     | '/alerts/'
     | '/auth-events/'
@@ -1786,6 +1853,11 @@ export interface FileRouteTypes {
     | '/sources/$ip/payloads'
     | '/sources/$ip/sessions'
     | '/sources/$ip/timeline'
+    | '/api/canarytoken/$id/download'
+    | '/api/payload/$hash/download'
+    | '/api/raw-report/$kind/$sha'
+    | '/api/recording/$shasum/$format'
+    | '/api/report/$id/pdf'
     | '/agent-campaigns/$id/'
     | '/alerts/$key/'
     | '/asn/$asn/'
@@ -1810,6 +1882,7 @@ export interface FileRouteTypes {
     | '/ioc/$kind/$value/sessions'
     | '/ioc/$kind/$value/sources'
     | '/ioc/$kind/$value/timeline'
+    | '/api/artifact/$kind/$key/$filename'
     | '/clusters/$kind/$value/'
     | '/ioc/$kind/$value/'
   fileRoutesByTo: FileRoutesByTo
@@ -1850,6 +1923,7 @@ export interface FileRouteTypes {
     | '/sandbox/$job'
     | '/sandbox/vnc'
     | '/tty-replay/$shasum'
+    | '/api/export/$name'
     | '/agent-campaigns'
     | '/alerts'
     | '/auth-events'
@@ -1945,6 +2019,11 @@ export interface FileRouteTypes {
     | '/sources/$ip/payloads'
     | '/sources/$ip/sessions'
     | '/sources/$ip/timeline'
+    | '/api/canarytoken/$id/download'
+    | '/api/payload/$hash/download'
+    | '/api/raw-report/$kind/$sha'
+    | '/api/recording/$shasum/$format'
+    | '/api/report/$id/pdf'
     | '/agent-campaigns/$id'
     | '/alerts/$key'
     | '/asn/$asn'
@@ -1969,6 +2048,7 @@ export interface FileRouteTypes {
     | '/ioc/$kind/$value/sessions'
     | '/ioc/$kind/$value/sources'
     | '/ioc/$kind/$value/timeline'
+    | '/api/artifact/$kind/$key/$filename'
     | '/clusters/$kind/$value'
     | '/ioc/$kind/$value'
   id:
@@ -2024,6 +2104,7 @@ export interface FileRouteTypes {
     | '/_layout/sessions/$id'
     | '/_layout/sources/$ip'
     | '/_layout/tty-replay/$shasum'
+    | '/api/export/$name'
     | '/_layout/agent-campaigns/'
     | '/_layout/alerts/'
     | '/_layout/auth-events/'
@@ -2121,6 +2202,11 @@ export interface FileRouteTypes {
     | '/_layout/sources/$ip/payloads'
     | '/_layout/sources/$ip/sessions'
     | '/_layout/sources/$ip/timeline'
+    | '/api/canarytoken/$id/download'
+    | '/api/payload/$hash/download'
+    | '/api/raw-report/$kind/$sha'
+    | '/api/recording/$shasum/$format'
+    | '/api/report/$id/pdf'
     | '/_layout/agent-campaigns/$id/'
     | '/_layout/alerts/$key/'
     | '/_layout/asn/$asn/'
@@ -2145,6 +2231,7 @@ export interface FileRouteTypes {
     | '/_layout/ioc/$kind/$value/sessions'
     | '/_layout/ioc/$kind/$value/sources'
     | '/_layout/ioc/$kind/$value/timeline'
+    | '/api/artifact/$kind/$key/$filename'
     | '/_layout/clusters/$kind/$value/'
     | '/_layout/ioc/$kind/$value/'
   fileRoutesById: FileRoutesById
@@ -2154,6 +2241,13 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthLogoutRoute: typeof AuthLogoutRoute
+  ApiExportNameRoute: typeof ApiExportNameRoute
+  ApiCanarytokenIdDownloadRoute: typeof ApiCanarytokenIdDownloadRoute
+  ApiPayloadHashDownloadRoute: typeof ApiPayloadHashDownloadRoute
+  ApiRawReportKindShaRoute: typeof ApiRawReportKindShaRoute
+  ApiRecordingShasumFormatRoute: typeof ApiRecordingShasumFormatRoute
+  ApiReportIdPdfRoute: typeof ApiReportIdPdfRoute
+  ApiArtifactKindKeyFilenameRoute: typeof ApiArtifactKindKeyFilenameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2647,6 +2741,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tty-replay/$shasum'
       preLoaderRoute: typeof LayoutTtyReplayShasumRouteImport
       parentRoute: typeof LayoutRoute
+    }
+    '/api/export/$name': {
+      id: '/api/export/$name'
+      path: '/api/export/$name'
+      fullPath: '/api/export/$name'
+      preLoaderRoute: typeof ApiExportNameRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_layout/agent-campaigns/$id/': {
       id: '/_layout/agent-campaigns/$id/'
@@ -3292,6 +3393,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSourcesIpTimelineRouteImport
       parentRoute: typeof LayoutSourcesIpRoute
     }
+    '/api/canarytoken/$id/download': {
+      id: '/api/canarytoken/$id/download'
+      path: '/api/canarytoken/$id/download'
+      fullPath: '/api/canarytoken/$id/download'
+      preLoaderRoute: typeof ApiCanarytokenIdDownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payload/$hash/download': {
+      id: '/api/payload/$hash/download'
+      path: '/api/payload/$hash/download'
+      fullPath: '/api/payload/$hash/download'
+      preLoaderRoute: typeof ApiPayloadHashDownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/raw-report/$kind/$sha': {
+      id: '/api/raw-report/$kind/$sha'
+      path: '/api/raw-report/$kind/$sha'
+      fullPath: '/api/raw-report/$kind/$sha'
+      preLoaderRoute: typeof ApiRawReportKindShaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/recording/$shasum/$format': {
+      id: '/api/recording/$shasum/$format'
+      path: '/api/recording/$shasum/$format'
+      fullPath: '/api/recording/$shasum/$format'
+      preLoaderRoute: typeof ApiRecordingShasumFormatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/report/$id/pdf': {
+      id: '/api/report/$id/pdf'
+      path: '/api/report/$id/pdf'
+      fullPath: '/api/report/$id/pdf'
+      preLoaderRoute: typeof ApiReportIdPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_layout/clusters/$kind/$value/': {
       id: '/_layout/clusters/$kind/$value/'
       path: '/'
@@ -3375,6 +3511,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ioc/$kind/$value/timeline'
       preLoaderRoute: typeof LayoutIocKindValueTimelineRouteImport
       parentRoute: typeof LayoutIocKindValueRoute
+    }
+    '/api/artifact/$kind/$key/$filename': {
+      id: '/api/artifact/$kind/$key/$filename'
+      path: '/api/artifact/$kind/$key/$filename'
+      fullPath: '/api/artifact/$kind/$key/$filename'
+      preLoaderRoute: typeof ApiArtifactKindKeyFilenameRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -3891,6 +4034,13 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthLogoutRoute: AuthLogoutRoute,
+  ApiExportNameRoute: ApiExportNameRoute,
+  ApiCanarytokenIdDownloadRoute: ApiCanarytokenIdDownloadRoute,
+  ApiPayloadHashDownloadRoute: ApiPayloadHashDownloadRoute,
+  ApiRawReportKindShaRoute: ApiRawReportKindShaRoute,
+  ApiRecordingShasumFormatRoute: ApiRecordingShasumFormatRoute,
+  ApiReportIdPdfRoute: ApiReportIdPdfRoute,
+  ApiArtifactKindKeyFilenameRoute: ApiArtifactKindKeyFilenameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

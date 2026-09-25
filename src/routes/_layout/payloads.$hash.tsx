@@ -4,6 +4,11 @@ import { VERDICT_COLOR } from '#/components/analyzers/PayloadBlocks'
 import { EntityFrame } from '#/components/EntityFrame'
 import { OpenInMenu } from '#/components/OpenInMenu'
 import { virusTotalLink } from '#/lib/toolLinks'
+import { apiHref } from '#/lib/apiHref'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { Button } from '@astryxdesign/core/Button'
+import { Icon } from '@astryxdesign/core/Icon'
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { entityTabs } from '#/components/ViewTabs'
 import type { ViewTab } from '#/components/ViewTabs'
 import { NotFound } from '#/components/NotFound'
@@ -35,6 +40,7 @@ export const Route = createFileRoute('/_layout/payloads/$hash')({
 function PayloadLayout() {
   const { analysis: a, delivery } = Route.useLoaderData()
   const p = a.payload
+  const isAdmin = useIsAdmin()
 
   return (
     <EntityFrame
@@ -42,7 +48,20 @@ function PayloadLayout() {
       title={`${p.hash.slice(0, 16)}…`}
       description={`${a.fileType} · ${p.platform}`}
       basePath={`/payloads/${p.hash}`}
-      actions={<OpenInMenu links={[virusTotalLink(p.hash)]} />}
+      actions={
+        <>
+          <Button
+            label="Download sample"
+            size="sm"
+            variant="secondary"
+            icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
+            isDisabled={!isAdmin}
+            tooltip={isAdmin ? 'Live malware: the captured bytes, unchanged' : ADMIN_REQUIRED}
+            href={apiHref(`/api/payload/${p.hash}/download`)}
+          />
+          <OpenInMenu links={[virusTotalLink(p.hash)]} />
+        </>
+      }
       tokens={
         <>
           {p.verdict && <Token size="sm" color={VERDICT_COLOR[p.verdict.label]} label={p.verdict.label} />}

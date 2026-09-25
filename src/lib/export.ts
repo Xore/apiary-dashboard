@@ -1,5 +1,5 @@
-// Client-side downloads of rows already on screen. The canonical app streams
-// these from /api/export/*; with mock data the rows in hand are the data set.
+// CSV for the served exports (/api/export/*), and the one client-side
+// download: the event explorer's loaded rows as JSON, as production does.
 
 function download(filename: string, type: string, body: string) {
   const url = URL.createObjectURL(new Blob([body], { type }))
@@ -15,9 +15,10 @@ function csvCell(value: unknown): string {
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 }
 
-export function downloadCsv<T extends Record<string, unknown>>(filename: string, rows: T[], columns: Array<keyof T & string>) {
+/** Rows as CSV, one column per key, quoted where a value needs it. */
+export function toCsv<T extends Record<string, unknown>>(rows: T[], columns: Array<keyof T & string>): string {
   const lines = [columns.join(','), ...rows.map((row) => columns.map((column) => csvCell(row[column])).join(','))]
-  download(filename, 'text/csv', `${lines.join('\n')}\n`)
+  return `${lines.join('\n')}\n`
 }
 
 export function downloadJson(filename: string, value: unknown) {

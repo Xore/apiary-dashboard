@@ -1,6 +1,8 @@
 // The data seam. Route loaders call these functions and nothing else; today
 // they resolve mock fixtures, later each becomes a createServerFn call to the
 // backend with the same signature.
+import { ghidraArtifacts, sandboxArtifacts, sizeOf } from './mock/artifacts'
+import type { ArtifactFile } from './mock/artifacts'
 import { EVENTS, MOCK_USER, PASSWORDS, SENSORS, SOURCES, USERNAMES, credentialOf } from './mock/fixtures'
 import {
   ATTACKERS,
@@ -1205,6 +1207,36 @@ export async function getGhidraAnalysis(sha: string): Promise<GhidraAnalysis | n
   await mockDelay()
   const payload = findPayload(sha)
   return payload && payload.kind !== 'shell script' ? buildGhidraAnalysis(payload) : null
+}
+
+/** One file of an analysis run's artifacts, as the store lists it. */
+export type ArtifactRow = { filename: string; kind: string; contentType: string; sizeBytes: number; importedAt: string }
+
+async function artifactFiles(kind: string, key: string): Promise<{ files: ArtifactFile[]; at: string } | null> {
+  if (kind === 'ghidra') {
+    const payload = findPayload(key)
+    if (!payload || payload.kind === 'shell script') return null
+    const analysis = buildGhidraAnalysis(payload)
+    return { files: ghidraArtifacts(analysis), at: analysis.at }
+  }
+  if (kind === 'sandbox') {
+    const run = await getSandboxRun(key)
+    return run ? { files: sandboxArtifacts(run), at: run.at } : null
+  }
+  return null
+}
+
+/** The files a Ghidra (by sample) or sandbox (by job) run left behind. */
+export async function getArtifacts(kind: string, key: string): Promise<ArtifactRow[] | null> {
+  await mockDelay()
+  const found = await artifactFiles(kind, key)
+  return found?.files.map((f) => ({ filename: f.filename, kind: f.kind, contentType: f.contentType, sizeBytes: sizeOf(f.body), importedAt: found.at })) ?? null
+}
+
+/** One artifact's bytes, for its download. */
+export async function getArtifactFile(kind: string, key: string, filename: string): Promise<ArtifactFile | null> {
+  await mockDelay()
+  return (await artifactFiles(kind, key))?.files.find((f) => f.filename === filename) ?? null
 }
 
 export async function getRevDeckRuns(): Promise<RevDeckRun[]> {

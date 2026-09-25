@@ -1,13 +1,12 @@
-import { EmptyState } from '@astryxdesign/core/EmptyState'
-import { Icon } from '@astryxdesign/core/Icon'
+import { Button } from '@astryxdesign/core/Button'
 import { Link } from '@astryxdesign/core/Link'
 import { Token } from '@astryxdesign/core/Token'
-import { DocumentTextIcon } from '@heroicons/react/24/outline'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { EntityFrame } from '#/components/EntityFrame'
 import { NotFound } from '#/components/NotFound'
 import { getReports } from '#/data/queries'
+import { apiHref } from '#/lib/apiHref'
 import { formatDateTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/reports/generated/$id')({
@@ -32,6 +31,7 @@ export const Route = createFileRoute('/_layout/reports/generated/$id')({
 
 function GeneratedReportPage() {
   const { report: r, definition, template } = Route.useLoaderData()
+  const pdf = apiHref(`/api/report/${encodeURIComponent(r.id)}/pdf`)
   return (
     <EntityFrame
       kind="Generated report"
@@ -62,12 +62,9 @@ function GeneratedReportPage() {
         },
       ]}
     >
-      <Panel title="Document">
-        <EmptyState
-          icon={<Icon icon={DocumentTextIcon} size="lg" />}
-          title="PDF preview"
-          description="The generated PDF renders here once the reports backend is wired. Mock data has no document to show."
-        />
+      <Panel title="Document" action={<Button label="Open PDF" size="sm" variant="secondary" href={pdf} target="_blank" rel="noopener noreferrer" />}>
+        {/* The browser's own PDF viewer; the document is served inline. */}
+        <iframe title={`${r.title} (PDF)`} src={pdf} style={{ width: '100%', height: '70vh', border: 0, borderRadius: 8 }} />
       </Panel>
     </EntityFrame>
   )
