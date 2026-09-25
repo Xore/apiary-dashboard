@@ -13,7 +13,7 @@ import { Panel } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { getNetworkCampaigns } from '#/data/queries'
 import type { CredEdge, NetworkCampaign } from '#/data/types'
-import { downloadCsv } from '#/lib/export'
+import { apiHref } from '#/lib/apiHref'
 import { formatNumber, formatTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/campaigns/')({
@@ -61,9 +61,7 @@ function CampaignsPage() {
             size="sm"
             variant="secondary"
             icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-            onClick={() =>
-              downloadCsv('campaigns.csv', campaigns, ['cidr', 'score', 'events', 'uniqueIps', 'sensors', 'ports', 'creds', 'payloads', 'alerts', 'first', 'last'])
-            }
+            href={apiHref('/api/export/campaigns.csv')}
           />
         </>
       }

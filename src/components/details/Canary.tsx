@@ -4,7 +4,7 @@ import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import type { CanaryToken, CanaryTrigger } from '#/data/types'
-import { downloadJson } from '#/lib/export'
+import { apiHref } from '#/lib/apiHref'
 import { formatDateTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 
@@ -56,9 +56,7 @@ export function TokenInspector({
             label="Download artifact"
             size="sm"
             variant="secondary"
-            onClick={() =>
-              downloadJson(`${token.artifact}.json`, { mock: true, token })
-            }
+            href={apiHref(`/api/canarytoken/${encodeURIComponent(token.id)}/download`)}
           />
         )}
       </HStack>

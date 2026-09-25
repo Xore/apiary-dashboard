@@ -1,4 +1,6 @@
 import { Banner } from '@astryxdesign/core/Banner'
+import { Button } from '@astryxdesign/core/Button'
+import { apiHref } from '#/lib/apiHref'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Grid } from '@astryxdesign/core/Grid'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
@@ -15,7 +17,11 @@ import { EntityLink } from '../EntityLink'
 
 export function CapeResult({ run }: { run: CapeRun }) {
   return (
-    <AnalyzerSection title="CAPE result" description="Detonation in an isolated, debugger-instrumented Windows guest, built to defeat debugger-class time evasion.">
+    <AnalyzerSection
+      title="CAPE result"
+      description="Detonation in an isolated, debugger-instrumented Windows guest, built to defeat debugger-class time evasion."
+      actions={<Button label="Raw report" size="sm" variant="secondary" href={apiHref(`/api/raw-report/cape/${run.sha}`)} />}
+    >
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap">
           <EntityLink kind="payload" id={run.sha}><Text type="code">{`${run.sha.slice(0, 24)}…`}</Text></EntityLink>

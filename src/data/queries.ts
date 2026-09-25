@@ -8,7 +8,7 @@ import * as impl from './queries.impl'
 import { withScenario } from './scenario'
 
 export { alertKeyOf, generatePassword, inRange, isReadOnly, mockNow, redact } from './queries.impl'
-export type { AlertDetail, LookupTarget, PayloadAction, ProblemReportInput } from './queries.impl'
+export type { AlertDetail, ArtifactRow, LookupTarget, PayloadAction, ProblemReportInput } from './queries.impl'
 
 export const getSessionUser = withScenario('getSessionUser', impl.getSessionUser)
 export const getOverview = withScenario('getOverview', impl.getOverview)
@@ -84,6 +84,8 @@ export const getGhidraAnalysis = withScenario('getGhidraAnalysis', impl.getGhidr
 export const getRevDeckRuns = withScenario('getRevDeckRuns', impl.getRevDeckRuns)
 export const getRevDeckRun = withScenario('getRevDeckRun', impl.getRevDeckRun)
 export const getCapeRuns = withScenario('getCapeRuns', impl.getCapeRuns)
+export const getArtifacts = withScenario('getArtifacts', impl.getArtifacts)
+export const getArtifactFile = withScenario('getArtifactFile', impl.getArtifactFile)
 export const getCapeRun = withScenario('getCapeRun', impl.getCapeRun)
 export const getGithubAnalyses = withScenario('getGithubAnalyses', impl.getGithubAnalyses)
 export const getGithubAnalysis = withScenario('getGithubAnalysis', impl.getGithubAnalysis)

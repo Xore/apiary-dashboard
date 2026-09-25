@@ -3,6 +3,7 @@
 // contains and calls), data (what it references), deep dive (what a
 // reverse-engineering session recovered), and raw. Nothing here executes the
 // sample; names and strings from it are shown as text only.
+import { ArtifactList } from './ArtifactList'
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Banner } from '@astryxdesign/core/Banner'
@@ -409,9 +410,12 @@ export function GhidraResult({ g, fn, section }: { g: GhidraAnalysis; fn?: strin
         {section === 'data' && <Data g={g} />}
         {section === 'deepdive' && <DeepDive g={g} />}
         {section === 'raw' && (
-          <Panel title="Analysis record">
-            <CodeBlock code={JSON.stringify(g, null, 2)} language="json" maxHeight={640} />
-          </Panel>
+          <>
+            <ArtifactList kind="ghidra" artifactKey={g.hash} />
+            <Panel title="Analysis record">
+              <CodeBlock code={JSON.stringify(g, null, 2)} language="json" maxHeight={640} />
+            </Panel>
+          </>
         )}
       </VStack>
       {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}

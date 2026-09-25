@@ -11,7 +11,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { getInfraClusters } from '#/data/queries'
 import type { InfraCluster } from '#/data/types'
-import { downloadCsv } from '#/lib/export'
+import { apiHref } from '#/lib/apiHref'
 import { formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/clusters/')({
@@ -53,7 +53,7 @@ function ClustersPage() {
             size="sm"
             variant="secondary"
             icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-            onClick={() => downloadCsv('clusters.csv', clusters, ['kind', 'value', 'sources', 'events', 'sensors'])}
+            href={apiHref('/api/export/clusters.csv')}
           />
         </>
       }

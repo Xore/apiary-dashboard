@@ -15,7 +15,8 @@ import { getEvents, getFacets } from '#/data/queries'
 import { FilterSelect, listParam, toNumericParam, toParam } from '#/components/FilterSelect'
 import type { FilterOption } from '#/components/FilterSelect'
 import type { EventFilters, EventKind, Facets, HoneypotEvent } from '#/data/types'
-import { downloadCsv, downloadJson } from '#/lib/export'
+import { apiHref } from '#/lib/apiHref'
+import { downloadJson } from '#/lib/export'
 import { formatClock, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { useLiveRefresh } from '#/lib/live'
@@ -134,15 +135,15 @@ function EventsPage() {
             size="sm"
             variant="secondary"
             icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-            onClick={() =>
-              downloadCsv('events.csv', data.rows, ['timestamp', 'sensor', 'persona', 'asset', 'srcIp', 'country', 'city', 'org', 'provider', 'protocol', 'dstPort', 'type', 'severity', 'summary', 'fingerprint', 'sessionId'])
-            }
+            tooltip="Every event matching the filters, not only the rows loaded here"
+            href={apiHref('/api/export/events.csv', Object.fromEntries(FILTER_KEYS.map((key) => [key, search[key]])))}
           />
           <Button
             label="JSON"
             size="sm"
             variant="secondary"
             icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
+            tooltip="The loaded rows' full records"
             onClick={() => downloadJson('events.json', data.rows)}
           />
         </>

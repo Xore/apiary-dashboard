@@ -13,6 +13,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { FilterSelect, listParam, toParam } from '#/components/FilterSelect'
 import { AnalysisRunDialog } from '#/components/dialogs/AnalysisRunDialog'
 import { virusTotalLink } from '#/lib/toolLinks'
+import { apiHref } from '#/lib/apiHref'
 import { RecordList } from '#/components/RecordList'
 import { getPayloads } from '#/data/queries'
 import type { AnalysisResult, CapturedPayload } from '#/data/types'
@@ -48,6 +49,7 @@ function PayloadActions({ payload, onPublish, onAnalyze }: { payload: CapturedPa
         { label: 'New analysis run…', isDisabled: !isAdmin, description: isAdmin ? undefined : ADMIN_REQUIRED, onClick: () => onAnalyze(payload.hash) },
         { label: 'Who delivered it', onClick: () => void navigate({ href: `/payloads/${hash}/delivered-by` }) },
         { label: 'Publish to GitHub…', isDisabled: !isAdmin, description: isAdmin ? undefined : ADMIN_REQUIRED, onClick: () => onPublish(payload) },
+        { label: 'Download sample', isDisabled: !isAdmin, description: isAdmin ? 'Live malware: the captured bytes' : ADMIN_REQUIRED, onClick: () => void window.location.assign(apiHref(`/api/payload/${hash}/download`)) },
         { label: 'Look up on VirusTotal', description: 'Opens in a new tab', onClick: () => void window.open(virusTotalLink(payload.hash).href, '_blank', 'noopener,noreferrer') },
       ]}
     />

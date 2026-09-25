@@ -101,6 +101,8 @@ while (queue.length) {
     if (location) queue.push(new URL(location, base).pathname)
     continue
   }
+  // A download is checked for answering, not read for links or states.
+  if (path.startsWith('/api/')) continue
   const html = await res.text()
   if (!samples.has(key)) samples.set(key, path)
   for (const match of html.matchAll(/href="(\/[^"#]*)"/g)) {

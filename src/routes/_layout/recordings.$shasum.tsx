@@ -6,7 +6,7 @@ import type { ViewTab } from '#/components/ViewTabs'
 import { EntityLink } from '#/components/EntityLink'
 import { NotFound } from '#/components/NotFound'
 import { getReplayDetail } from '#/data/queries'
-import { downloadJson } from '#/lib/export'
+import { apiHref } from '#/lib/apiHref'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/recordings/$shasum')({
@@ -36,18 +36,10 @@ function RecordingLayout() {
       title={`${shasum.slice(0, 16)}…`}
       basePath={`/recordings/${shasum}`}
       actions={
-        <Button
-          label="Download (.cast)"
-          size="sm"
-          variant="secondary"
-          onClick={() =>
-            downloadJson(`${shasum.slice(0, 12)}.cast.json`, {
-              version: 2,
-              duration: replay.durationSeconds,
-              transcript: replay.transcript,
-            })
-          }
-        />
+        <>
+          <Button label="Download .cast" size="sm" variant="secondary" tooltip="For asciinema play" href={apiHref(`/api/recording/${shasum}/cast`)} />
+          <Button label="Raw TTY log" size="sm" variant="secondary" tooltip="The sensor's own terminal log" href={apiHref(`/api/recording/${shasum}/raw`)} />
+        </>
       }
       facts={[
         {
