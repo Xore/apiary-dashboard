@@ -7,6 +7,7 @@ import type { ViewTab } from '#/components/ViewTabs'
 import { NotFound } from '#/components/NotFound'
 import { getCapeRun, getGithubAnalysis, getPayloadAnalysis, getPayloadDelivery, getRevDeckRun } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
+import { GHIDRA_SECTIONS } from '#/components/analyzers/GhidraResult'
 
 export const Route = createFileRoute('/_layout/payloads/$hash')({
   staticData: { viewTabs: entityTabs({ label: 'Payload views', basePath: (params) => `/payloads/${params.hash}`, tabs: tabsFor }) },
@@ -60,7 +61,7 @@ function PayloadLayout() {
 
 /** The top-bar tabs: static until the loader data arrives, then with counts. */
 function tabsFor(loaded: unknown): ViewTab[] {
-  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'static', label: 'Static' }, { id: 'indicators', label: 'Indicators' }, { id: 'sandbox', label: 'Sandbox' }, { id: 'ghidra', label: 'Ghidra' }, { id: 'cape', label: 'CAPE' }, { id: 'revdeck', label: 'RevDeck' }, { id: 'github', label: 'GitHub' }, { id: 'delivered-by', label: 'Delivered by' }, { id: 'sessions', label: 'Sessions' }, { id: 'timeline', label: 'Timeline' }]
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'static', label: 'Static' }, { id: 'indicators', label: 'Indicators' }, { id: 'sandbox', label: 'Sandbox' }, { id: 'ghidra', label: 'Ghidra', sections: GHIDRA_SECTIONS }, { id: 'cape', label: 'CAPE' }, { id: 'revdeck', label: 'RevDeck' }, { id: 'github', label: 'GitHub' }, { id: 'delivered-by', label: 'Delivered by' }, { id: 'sessions', label: 'Sessions' }, { id: 'timeline', label: 'Timeline' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const { analysis: a, delivery } = data
   return [
@@ -68,7 +69,7 @@ function tabsFor(loaded: unknown): ViewTab[] {
     { id: 'static', label: 'Static' },
     { id: 'indicators', label: 'Indicators', count: a.iocs.length + a.yara.length },
     { id: 'sandbox', label: 'Sandbox' },
-    { id: 'ghidra', label: 'Ghidra' },
+    { id: 'ghidra', label: 'Ghidra', sections: GHIDRA_SECTIONS },
     { id: 'cape', label: 'CAPE' },
     { id: 'revdeck', label: 'RevDeck' },
     { id: 'github', label: 'GitHub' },

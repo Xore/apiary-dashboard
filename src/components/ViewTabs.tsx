@@ -32,7 +32,7 @@ export type ViewTabsModel = {
   section?: string
   /** Where choosing a tab (or one of its sections) goes: a path, or a change
    * to the search params. */
-  href?: (id: string) => string
+  href?: (id: string, section?: string) => string
   search?: (id: string, section?: string) => Record<string, unknown>
 }
 
@@ -83,19 +83,27 @@ function safeDecode(path: string): string {
 }
 
 /** Tabs as route segments under an entity's base path (epic #25): the first
- * tab is the base path itself, the rest are `<base>/<id>`. */
+ * tab is the base path itself, the rest are `<base>/<id>`. A tab's sections
+ * live in `?section=`, the first one the default and left out of the URL. */
 export function entityTabs({ label, basePath, tabs }: { label: string; basePath: (params: Record<string, string>) => string; tabs: (data: unknown) => ViewTab[] }): ViewTabsFn {
-  return ({ params, pathname, data }) => {
+  return ({ params, pathname, data, search }) => {
     const base = basePath(params)
     const list = tabs(data)
     const path = safeDecode(pathname)
     const decodedBase = safeDecode(base)
     const rest = path.startsWith(decodedBase) ? path.slice(decodedBase.length).replace(/^\//, '') : ''
+    const value = list.find((tab) => tab.id === rest.split('/')[0])?.id ?? list[0].id
+    const sections = list.find((tab) => tab.id === value)?.sections
     return {
       label,
       tabs: list,
-      value: list.find((tab) => tab.id === rest.split('/')[0])?.id ?? list[0].id,
-      href: (id) => (id === list[0].id ? base : `${base}/${id}`),
+      value,
+      section: sections ? sectionOf(sections, search.section) : undefined,
+      href: (id, section) => {
+        const own = list.find((tab) => tab.id === id)?.sections
+        const target = id === list[0].id ? base : `${base}/${id}`
+        return own && section && section !== own[0].id ? `${target}?section=${encodeURIComponent(section)}` : target
+      },
     }
   }
 }
@@ -126,7 +134,7 @@ export function ViewTabsBar() {
   // Real hrefs, so every entry is a link (new tab, copy link, prefetch).
   const hrefOf = (id: string, section?: string) =>
     model.href
-      ? model.href(id)
+      ? model.href(id, section)
       : router.buildLocation({ to: location.pathname, search: (prev: Record<string, unknown>) => ({ ...prev, ...model.search?.(id, section) }) } as never).href
   // Menu items render as plain anchors; route their clicks client-side, but
   // leave modified clicks (new tab/window) to the browser.

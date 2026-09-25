@@ -129,29 +129,168 @@ const DECOMPILED = (name: string, host: string) => `void ${name}(void)
   handle_commands(fd);
 }`
 
+/** Who calls whom in the decompiled bot: main fans out to setup and the
+ * C2 loop, the command handler reaches the attack vectors. */
+const CALL_GRAPH: Record<string, string[]> = {
+  main: ['killer_init', 'scanner_init', 'table_unlock_val', 'connect_cnc'],
+  connect_cnc: ['resolve_cnc_addr', 'handle_commands'],
+  resolve_cnc_addr: ['table_unlock_val'],
+  handle_commands: ['attack_udp', 'attack_syn', 'util_strlen'],
+  scanner_init: ['util_strlen'],
+  killer_init: [],
+  table_unlock_val: [],
+  attack_udp: [],
+  attack_syn: [],
+  util_strlen: [],
+}
+
+const SIGNATURES: Record<string, string> = {
+  main: 'int main(int argc, char **argv)',
+  connect_cnc: 'void connect_cnc(void)',
+  resolve_cnc_addr: 'uint32_t resolve_cnc_addr(void)',
+  handle_commands: 'void handle_commands(int fd)',
+  scanner_init: 'void scanner_init(void)',
+  killer_init: 'void killer_init(void)',
+  table_unlock_val: 'void table_unlock_val(uint8_t id)',
+  attack_udp: 'void attack_udp(uint8_t targs_len, struct attack_target *targs, uint8_t opts_len, struct attack_option *opts)',
+  attack_syn: 'void attack_syn(uint8_t targs_len, struct attack_target *targs, uint8_t opts_len, struct attack_option *opts)',
+  util_strlen: 'int util_strlen(char *str)',
+}
+
+const evidence = (flossOnly: string[], sandboxStaticOnly: string[], confirmedAtRuntime: string[]) => ({ flossOnly, sandboxStaticOnly, confirmedAtRuntime })
+
 export function buildGhidraAnalysis(payload: CapturedPayload): GhidraAnalysis {
   const rng = createRng(seedFor(payload.hash) ^ 0x9d9d)
   const host = pick(rng, C2_HOSTS)
-  const names = ['main', 'connect_cnc', 'handle_commands', 'attack_udp', 'attack_syn', 'scanner_init', 'killer_init', 'table_unlock_val', 'resolve_cnc_addr', 'util_strlen']
+  const names = Object.keys(CALL_GRAPH)
+  const callersOf = (name: string) => names.filter((n) => CALL_GRAPH[n].includes(name))
+  const pe = payload.kind === 'PE32'
+  const requested = int(rng, 60, 4000)
+  const failed = rng() < 0.08
+  const functions = names.map((name) => ({
+    name,
+    address: `0x${(0x401000 + names.indexOf(name) * 0x1a0 + int(rng, 0, 0x90)).toString(16)}`,
+    size: int(rng, 40, 2400),
+    calls: CALL_GRAPH[name].length,
+    signature: SIGNATURES[name],
+    callers: callersOf(name),
+    callees: CALL_GRAPH[name],
+    decompiled: DECOMPILED(name, host),
+  }))
+  const family = payload.verdict?.family ?? 'Mirai'
+  const staticStrings = ['/bin/busybox', 'KILLATTK', 'LOLNOGTFO', '/proc/net/tcp', 'GETLOCALIP', 'enable', 'system', 'shell', 'sh', host]
   return {
     hash: payload.hash,
-    at: isoMinutesAgo(int(rng, 60, 4000)),
+    at: isoMinutesAgo(requested - 4),
     arch: payload.platform,
-    functions: names.map((name) => ({ name, address: `0x${hex(rng, 6)}`, size: int(rng, 40, 2400), calls: int(rng, 0, 30), decompiled: DECOMPILED(name, host) })),
+    run: {
+      requestedAt: isoMinutesAgo(requested),
+      startedAt: isoMinutesAgo(requested - 1),
+      completedAt: isoMinutesAgo(requested - 4),
+      exitStatus: failed ? 'error' : 'ok',
+      ...(failed ? { error: 'Decompiler timed out on 3 functions; results are partial.' } : {}),
+    },
+    functionsTotal: int(rng, 180, 420),
+    functions,
     imports: ['socket', 'connect', 'fork', 'execve', 'sleep', 'kill', 'inet_pton'].map((name) => ({ id: name, label: name, count: int(rng, 1, 40) })),
-    strings: ['/bin/busybox', 'KILLATTK', 'LOLNOGTFO', '/proc/net/tcp', 'GETLOCALIP', host],
-    cryptoConstants: rng() < 0.5 ? [{ name: 'ChaCha20 sigma', address: `0x${hex(rng, 6)}` }] : [],
+    strings: staticStrings,
+    cryptoConstants: rng() < 0.5 ? [{ name: 'ChaCha20 sigma', address: `0x${hex(rng, 6)}`, algorithm: 'ChaCha20' }] : [],
     fuzzy: { ssdeep: `96:${hex(rng, 24)}`, tlsh: `T1${hex(rng, 64).toUpperCase()}`, imphash: hex(rng, 32) },
+    lief: {
+      format: pe ? 'PE' : 'ELF',
+      architecture: payload.platform,
+      entrypoint: `0x${(0x400194 + int(rng, 0, 0x40)).toString(16)}`,
+      isPie: !pe && rng() < 0.3,
+      stripped: rng() < 0.8,
+      isDll: pe ? false : null,
+      compileTimestamp: pe ? isoMinutesAgo(int(rng, 60 * 24 * 20, 60 * 24 * 400)) : null,
+      sectionCount: int(rng, 5, 14),
+      libraries: pe ? ['KERNEL32.dll', 'WS2_32.dll', 'ADVAPI32.dll'] : [],
+    },
     capa: [
-      { capability: 'create TCP socket', namespace: 'communication/socket/tcp', attck: 'T1095' },
-      { capability: 'terminate process', namespace: 'host-interaction/process/terminate' },
-      { capability: 'encode data using XOR', namespace: 'data-manipulation/encoding/xor', attck: 'T1027' },
+      { capability: 'create TCP socket', namespace: 'communication/socket/tcp', matches: int(rng, 1, 6), attck: 'T1095' },
+      { capability: 'terminate process', namespace: 'host-interaction/process/terminate', matches: int(rng, 1, 4) },
+      { capability: 'encode data using XOR', namespace: 'data-manipulation/encoding/xor', matches: int(rng, 1, 9), attck: 'T1027' },
+      { capability: 'enumerate processes', namespace: 'host-interaction/process/list', matches: int(rng, 1, 3), attck: 'T1057' },
+      { capability: 'send data on socket', namespace: 'communication/socket/send', matches: int(rng, 2, 12) },
     ],
-    floss: { decoded: ['/etc/rc.local', 'watchdog'], stack: ['cnc', host], tight: ['KILLATTK'] },
+    capaAttack: [
+      { id: 'T1095', tactic: 'Command and Control', technique: 'Non-Application Layer Protocol' },
+      { id: 'T1027', tactic: 'Defense Evasion', technique: 'Obfuscated Files or Information' },
+      { id: 'T1057', tactic: 'Discovery', technique: 'Process Discovery' },
+    ],
+    capaMbc: [
+      { id: 'C0001.004', objective: 'Communication', behavior: 'Socket Communication::Create TCP Socket' },
+      { id: 'C0026.002', objective: 'Data', behavior: 'Encode Data::XOR' },
+      { id: 'E1057', objective: 'Discovery', behavior: 'Process Discovery' },
+    ],
+    floss: {
+      decoded: ['/etc/rc.local', 'watchdog', host],
+      stack: ['cnc', host],
+      tight: ['KILLATTK'],
+      static: staticStrings,
+      totals: { decoded: 3, stack: 2, tight: 1, static: int(rng, 180, 900) },
+      truncated: true,
+    },
+    iocCorrelation: {
+      hasSandboxRun: rng() < 0.8,
+      ips: evidence([], [], /\d/.test(host) ? [host] : []),
+      domains: evidence(/\d/.test(host) ? [] : [host], [], []),
+      urls: evidence([`http://${host}/bins.sh`], [], []),
+      uncPaths: evidence([], [], []),
+    },
     aiTriage: {
-      summary: `Mirai-lineage bot: resolves ${host}, connects on port 23, waits for attack commands (UDP/SYN floods), and kills competing processes. No persistence of its own.`,
+      summary: `${family}-lineage bot: resolves ${host}, connects on port 23, waits for attack commands (UDP/SYN floods), and kills competing processes. No persistence of its own.`,
       model: 'qwen2.5-coder:14b',
       confidence: pick(rng, ['medium', 'high'] as const),
+      familyGuess: `${family} (variant)`,
+      behaviors: ['C2 over raw TCP', 'UDP and SYN flood modules', 'kills competing bots', 'telnet scanner'],
+    },
+    types: [
+      { name: 'attack_target', kind: 'struct', size: 16, fields: [{ name: 'sock_addr', type: 'struct sockaddr_in', offset: 0, size: 8 }, { name: 'addr', type: 'uint32_t', offset: 8, size: 4 }, { name: 'netmask', type: 'uint8_t', offset: 12, size: 1 }] },
+      { name: 'attack_option', kind: 'struct', size: 8, fields: [{ name: 'val', type: 'char *', offset: 0, size: 4 }, { name: 'key', type: 'uint8_t', offset: 4, size: 1 }] },
+      { name: 'ATTACK_VECTOR', kind: 'enum', size: 1, fields: [{ name: 'ATK_VEC_UDP', type: '0', offset: 0, size: 1 }, { name: 'ATK_VEC_SYN', type: '3', offset: 0, size: 1 }] },
+    ],
+    globals: [
+      { address: `0x${hex(rng, 6)}`, name: 'table', type: 'struct table_value[64]', size: 512 },
+      { address: `0x${hex(rng, 6)}`, name: 'methods', type: 'struct attack_method *', size: 4 },
+      { address: `0x${hex(rng, 6)}`, name: 'fd_serv', type: 'int', size: 4 },
+      { address: `0x${hex(rng, 6)}`, name: 'LOCAL_ADDR', type: 'uint32_t', size: 4 },
+    ],
+    annotations: {
+      revision: int(rng, 2, 9),
+      entries: [
+        { address: functions[1].address, displayName: 'C2 connect loop', comment: `Retries every 5 s until ${host} answers.`, tags: ['c2', 'network'] },
+        { address: functions[3].address, displayName: 'command dispatcher', comment: 'Parses the attack command and looks up the vector in the methods table.', tags: ['c2'] },
+        { address: functions[6].address, displayName: 'string table decode', comment: 'XOR 0xdeadbeef over the obfuscated config table.', tags: ['obfuscation'] },
+      ],
+    },
+    memoryMap: [
+      { name: '.text', start: '0x00400000', end: '0x0040d4c3', size: 0xd4c4, permissions: 'r-x', hex: '7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00', ascii: '.ELF............' },
+      { name: '.rodata', start: '0x0040d4c4', end: '0x0040f1ff', size: 0x1d3c, permissions: 'r--', hex: '2f 62 69 6e 2f 62 75 73 79 62 6f 78 00 4b 49 4c', ascii: '/bin/busybox.KIL' },
+      { name: '.data', start: '0x00420000', end: '0x004201ff', size: 0x200, permissions: 'rw-', hex: '00 00 00 00 17 00 00 00 50 00 00 00 bb 01 00 00', ascii: '........P.......' },
+      { name: '.bss', start: '0x00420200', end: '0x00424fff', size: 0x4e00, permissions: 'rw-', hex: '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00', ascii: '................' },
+    ],
+    chat: {
+      threads: [
+        { id: 't1', title: 'What does the command handler do?', messageCount: 4 },
+        { id: 't2', title: 'Is there a kill switch?', messageCount: 2 },
+      ],
+      messages: [
+        { role: 'user', content: 'What does handle_commands do with the bytes it reads?' },
+        { role: 'tool', tool: 'decompile', content: `handle_commands @ ${functions[3].address}: reads a length-prefixed buffer, calls attack_parse` },
+        { role: 'assistant', content: `It reads a length-prefixed command from the C2 socket and dispatches it: the first byte picks the attack vector (UDP or SYN flood), the rest are targets and options. [cite: handle_commands@${functions[3].address}]` },
+        { role: 'user', content: 'Does it persist?' },
+      ],
+    },
+    symbolRecovery: {
+      matched: int(rng, 30, 90),
+      total: int(rng, 180, 420),
+      candidates: [
+        { address: `0x${hex(rng, 6)}`, recovered: 'util_memcpy', confidence: 0.94, source: 'FLIRT (uclibc)' },
+        { address: `0x${hex(rng, 6)}`, recovered: 'rand_next', confidence: 0.81, source: 'BSim similarity' },
+        { address: `0x${hex(rng, 6)}`, recovered: 'attack_gre_ip', confidence: 0.62, source: 'RevDeck (LLM, unverified)' },
+      ],
     },
   }
 }

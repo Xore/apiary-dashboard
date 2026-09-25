@@ -1058,22 +1058,52 @@ export interface GhidraFunction extends Record<string, unknown> {
   name: string
   address: string
   size: number
+  /** How many functions it calls. */
   calls: number
+  /** The decompiler's recovered signature. */
+  signature: string
+  /** Function names that call it, and that it calls: the call graph. */
+  callers: string[]
+  callees: string[]
   decompiled: string
 }
 
+/** Where an indicator was seen: only in FLOSS's recovered strings, only in
+ * the sandbox's static pass, or confirmed when the sample actually ran. */
+export interface IocEvidence {
+  flossOnly: string[]
+  sandboxStaticOnly: string[]
+  confirmedAtRuntime: string[]
+}
+
+/** A Ghidra decompilation and everything run alongside it (LIEF, capa,
+ * FLOSS, fuzzy hashes, triage), plus the deep-dive data a RevDeck session
+ * recovers (types, globals, annotations, memory, chat, symbols). */
 export interface GhidraAnalysis {
   hash: string
   at: string
   arch: string
+  run: { requestedAt: string; startedAt: string; completedAt: string; exitStatus: 'ok' | 'error'; error?: string }
+  /** Functions Ghidra found; only the deepened ones are listed. */
+  functionsTotal: number
   functions: GhidraFunction[]
   imports: CountRow[]
   strings: string[]
-  cryptoConstants: Array<{ name: string; address: string }>
+  cryptoConstants: Array<{ name: string; address: string; algorithm: string }>
   fuzzy: { ssdeep: string; tlsh: string; imphash: string }
-  capa: Array<{ capability: string; namespace: string; attck?: string }>
-  floss: { decoded: string[]; stack: string[]; tight: string[] }
-  aiTriage: { summary: string; model: string; confidence: 'low' | 'medium' | 'high' }
+  lief: { format: 'ELF' | 'PE'; architecture: string; entrypoint: string; isPie: boolean; stripped: boolean; isDll: boolean | null; compileTimestamp: string | null; sectionCount: number; libraries: string[] }
+  capa: Array<{ capability: string; namespace: string; matches: number; attck?: string }>
+  capaAttack: Array<{ id: string; tactic: string; technique: string }>
+  capaMbc: Array<{ id: string; objective: string; behavior: string }>
+  floss: { decoded: string[]; stack: string[]; tight: string[]; static: string[]; totals: { decoded: number; stack: number; tight: number; static: number }; truncated: boolean }
+  iocCorrelation: { hasSandboxRun: boolean; ips: IocEvidence; domains: IocEvidence; urls: IocEvidence; uncPaths: IocEvidence }
+  aiTriage: { summary: string; model: string; confidence: 'low' | 'medium' | 'high'; familyGuess: string; behaviors: string[] }
+  types: Array<{ name: string; kind: 'struct' | 'enum' | 'typedef'; size: number; fields: Array<{ name: string; type: string; offset: number; size: number }> }>
+  globals: Array<{ address: string; name: string; type: string; size: number }>
+  annotations: { revision: number; entries: Array<{ address: string; displayName: string; comment: string; tags: string[] }> }
+  memoryMap: Array<{ name: string; start: string; end: string; size: number; permissions: string; hex: string; ascii: string }>
+  chat: { threads: Array<{ id: string; title: string; messageCount: number }>; messages: Array<{ role: 'user' | 'assistant' | 'tool'; content: string; tool?: string }> }
+  symbolRecovery: { matched: number; total: number; candidates: Array<{ address: string; recovered: string; confidence: number; source: string }> }
 }
 
 export interface RevDeckRun extends Record<string, unknown> {
