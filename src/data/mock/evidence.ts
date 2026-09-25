@@ -111,6 +111,120 @@ export function buildSandboxRun(payload: CapturedPayload): SandboxRun {
       { id: 'T1053.003', name: 'Cron', tactic: 'Persistence', events: int(rng, 0, 2) },
     ].filter((t) => t.events > 0),
     diagnostics: { vm: 'qemu-x86_64', snapshot: 'clean-2026-09-01', 'packet capture': 'complete', 'guest agent': 'ok', network: 'sinkholed (fake DNS + INetSim)' },
+    ...sandboxForensics(payload, host),
+    // A Windows detonation reports Windows things: its own paths, API
+    // calls and guest, not the Linux defaults above.
+    ...(payload.kind === 'PE32'
+      ? {
+          changedPaths: ['C:\\Users\\user\\AppData\\Local\\Temp\\svchost.exe', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Update', 'C:\\Windows\\System32\\Tasks\\Update'],
+          syscalls: ['NtCreateFile', 'NtWriteVirtualMemory', 'NtCreateThreadEx', 'NtSetValueKey', 'NtConnectPort', 'NtAllocateVirtualMemory'].map((name) => ({ id: name, label: name, count: int(rng, 1, 900) })).sort((a, b) => b.count - a.count),
+          processesAdded: ['svchost.exe (from Temp)', 'schtasks.exe'],
+          iocsStatic: [host, `http://${host}/update.bin`],
+          output: '',
+          diagnostics: { vm: 'win10-22h2-x64 (KVM)', snapshot: 'golden-2026-09-10', 'packet capture': 'complete', 'guest agent': 'ok', network: 'sinkholed (fake DNS + INetSim)' },
+        }
+      : {}),
+  }
+}
+
+/** The rest of a run's record: route, process and socket diffs, both packet
+ * captures, static indicators, the run's own logs, exported files, and for
+ * Windows samples the PE forensics. Its own random stream, so adding it
+ * never reshuffles the fields above. */
+function sandboxForensics(payload: CapturedPayload, host: string): Omit<SandboxRun, 'job' | 'hash' | 'at' | 'verdict' | 'risk' | 'platform' | 'durationSeconds' | 'packets' | 'changedPaths' | 'syscalls' | 'processesAdded' | 'socketsAdded' | 'output' | 'dns' | 'connections' | 'iocsStatic' | 'iocsDynamic' | 'techniques' | 'diagnostics'> {
+  const rng = createRng(seedFor(payload.hash) ^ 0x5b5b)
+  const windows = payload.kind === 'PE32'
+  const port = pick(rng, [23, 80, 443, 6667])
+  const guestIp = '10.0.2.15'
+  const tcpdumpLine = (i: number, proto: string, dst: string) => `12:0${Math.floor(i / 10)}:${String(10 + (i % 50)).padStart(2, '0')}.${hex(rng, 6)} IP ${guestIp}.${40000 + i} > ${dst}: ${proto}`
+  return {
+    route: windows ? { name: 'windows-kvm', vm: 'win10-22h2-x64', snapshot: 'golden-2026-09-10' } : { name: 'linux-qemu', vm: `qemu-${payload.platform.includes('arm') ? 'arm' : payload.platform.includes('mips') ? 'mips' : 'x86_64'}`, snapshot: 'clean-2026-09-01' },
+    processes: windows ? { added: ['C:\\Users\\user\\AppData\\Local\\Temp\\svchost.exe', 'cmd.exe /c schtasks /create /tn Update /tr ...'], removed: [] } : { added: ['/tmp/.x', 'sh -c ./x', 'kworker/0:1 (masquerade)'].slice(0, int(rng, 1, 3)), removed: ['telnetd'] },
+    sockets: windows
+      ? { before: ['TCP 0.0.0.0:135 LISTEN', 'TCP 0.0.0.0:445 LISTEN'], after: ['TCP 0.0.0.0:135 LISTEN', 'TCP 0.0.0.0:445 LISTEN', `TCP ${guestIp}:49712 ${host}:${port} ESTABLISHED`] }
+      : { before: ['tcp 0.0.0.0:22 LISTEN'], after: ['tcp 0.0.0.0:22 LISTEN', `tcp ${guestIp}:${int(rng, 40000, 60000)} ${host}:${port} ESTABLISHED`, 'udp 0.0.0.0:0 (raw, flood)'] },
+    stdout: windows ? '' : 'listening tun0\nconnected to C2\nattack module loaded: udpflood\n',
+    stderr: rng() < 0.3 ? 'sh: /proc/sys/kernel/randomize_va_space: Permission denied\n' : '',
+    network: {
+      bytes: int(rng, 4_000, 900_000),
+      protocols: [
+        { id: 'tcp', label: 'tcp', count: int(rng, 20, 800) },
+        { id: 'udp', label: 'udp', count: int(rng, 10, 3000) },
+        { id: 'dns', label: 'dns', count: int(rng, 1, 12) },
+      ],
+      remoteIps: [host.match(/\d/) ? host : '198.51.100.23', '203.0.113.200'],
+      hostEvents: Array.from({ length: 6 }, (_, i) => tcpdumpLine(i, i % 3 === 2 ? 'UDP, length 1458' : `Flags [S], seq ${int(rng, 1e8, 9e8)}`, `${host}.${port}`)),
+      attempts: [`connect(${host}:${port}) = 0`, 'connect(203.0.113.200:80) = -1 ETIMEDOUT'],
+      guest: {
+        packets: int(rng, 30, 2000),
+        pcapBytes: int(rng, 10_000, 1_200_000),
+        protocols: [
+          { id: 'tcp', label: 'tcp', count: int(rng, 20, 600) },
+          { id: 'udp', label: 'udp', count: int(rng, 10, 1500) },
+        ],
+        events: Array.from({ length: 4 }, (_, i) => tcpdumpLine(i + 10, 'UDP, length 512', `203.0.113.${int(rng, 1, 254)}.${int(rng, 1, 65535)}`)),
+      },
+    },
+    staticIocs: {
+      remoteIps: [host.match(/\d/) ? host : '198.51.100.23'],
+      uncPaths: windows ? ['\\\\192.0.2.66\\share\\payload.dll'] : [],
+      downloadUrls: [`http://${host}/bins.sh`],
+      downloadCradles: windows ? 1 : int(rng, 0, 3),
+    },
+    ...(windows
+      ? {
+          windows: {
+            peType: 'PE32',
+            machine: 'IMAGE_FILE_MACHINE_I386',
+            subsystem: 'WINDOWS_GUI',
+            imageBase: '0x00400000',
+            entryPoint: `0x${(0x401000 + int(rng, 0, 0x4000)).toString(16)}`,
+            compileTimestamp: isoMinutesAgo(int(rng, 60 * 24 * 30, 60 * 24 * 900)),
+            imphash: hex(rng, 32),
+            isDll: false,
+            signaturePresent: rng() < 0.3,
+            authenticode: 'Signature: present\nSigner: CN=Example Software Ltd (self-signed)\nChain: untrusted root\nTimestamp: none\nVerdict: not trusted',
+            suspiciousImports: [
+              { name: 'VirtualAllocEx', library: 'KERNEL32.dll', why: 'allocates memory in another process' },
+              { name: 'WriteProcessMemory', library: 'KERNEL32.dll', why: 'writes into another process: injection' },
+              { name: 'CreateRemoteThread', library: 'KERNEL32.dll', why: 'runs code in another process' },
+              { name: 'URLDownloadToFileA', library: 'urlmon.dll', why: 'download cradle' },
+            ],
+            sections: [
+              { name: '.text', virtualSize: 0x3a2c0, rawSize: 0x3a400, entropy: 6.41, characteristics: 'CODE | EXECUTE | READ' },
+              { name: '.rdata', virtualSize: 0x9a10, rawSize: 0x9c00, entropy: 5.12, characteristics: 'INITIALIZED_DATA | READ' },
+              { name: '.data', virtualSize: 0x2f40, rawSize: 0x1000, entropy: 3.02, characteristics: 'INITIALIZED_DATA | READ | WRITE' },
+              { name: 'UPX1', virtualSize: 0x18000, rawSize: 0x17e00, entropy: 7.93, characteristics: 'CODE | EXECUTE | READ | WRITE' },
+            ],
+            imports: [
+              { library: 'KERNEL32.dll', symbols: ['VirtualAllocEx', 'WriteProcessMemory', 'CreateRemoteThread', 'GetProcAddress', 'LoadLibraryA'] },
+              { library: 'urlmon.dll', symbols: ['URLDownloadToFileA'] },
+              { library: 'ADVAPI32.dll', symbols: ['RegSetValueExA', 'RegOpenKeyExA'] },
+            ],
+            exports: [],
+            warnings: ['Section UPX1 is writable and executable', 'Entropy 7.93 in UPX1: packed', 'Checksum mismatch'],
+            asciiStrings: ['This program cannot be run in DOS mode.', 'UPX!', `http://${host}/update.bin`, 'Software\\Microsoft\\Windows\\CurrentVersion\\Run'],
+            utf16Strings: ['svchost.exe', 'schtasks /create /tn Update'],
+            exiftool: `File Type                       : Win32 EXE\nMachine Type                    : Intel 386 or later\nTime Stamp                      : 2025:04:19 03:12:44+00:00\nPE Type                         : PE32\nLinker Version                  : 14.29\nSubsystem                       : Windows GUI\nFile Version                    : 10.0.19041.1\nOriginal File Name              : svchost.exe\nCompany Name                    : Microsoft Corporation`,
+          },
+        }
+      : {}),
+    logs: {
+      kernel: windows ? 'Windows 10 22H2 build 19045.3803 (guest)' : `Linux version 5.10.0 (buildroot) #1 SMP ${payload.platform}\n[    0.000000] Booting Linux on physical CPU 0x0`,
+      hostTcpdump: 'tcpdump: listening on br-sandbox, link-type EN10MB (Ethernet), snapshot length 262144 bytes\n6 packets captured',
+      guestTcpdump: 'tcpdump: listening on eth0, link-type EN10MB (Ethernet)\n4 packets captured',
+      serialConsole: windows ? '' : 'buildroot login: root (automatic login)\n# ./sample &\n# ',
+      qemu: 'qemu-system: -netdev tap,id=net0: running\nqemu-system: guest shutdown requested at t+180s',
+      domainState: 'shut off (shutdown)\nqemu status: exited 0',
+      ...(rng() < 0.15 ? { classifierError: 'classifier: model not loaded; verdict from rules only' } : {}),
+      ...(windows && rng() < 0.3 ? { peParserError: 'pefile: section UPX1 raw size exceeds file; parsed with warnings' } : {}),
+    },
+    exported: [
+      { name: 'behavior.json', size: int(rng, 8_000, 90_000), sha256: hex(rng, 64) },
+      { name: 'host.pcap', size: int(rng, 10_000, 900_000), sha256: hex(rng, 64) },
+      { name: 'guest.pcap', size: int(rng, 10_000, 1_200_000), sha256: hex(rng, 64) },
+      { name: 'console.log', size: int(rng, 500, 20_000), sha256: hex(rng, 64) },
+    ],
   }
 }
 

@@ -1052,6 +1052,51 @@ export interface SandboxRun {
   iocsDynamic: string[]
   techniques: Technique[]
   diagnostics: Record<string, string>
+  /** Which sandbox ran it, and on what image. */
+  route: { name: 'linux-qemu' | 'windows-kvm'; vm: string; snapshot: string }
+  /** What the payload did: process and socket state before and after. */
+  processes: { added: string[]; removed: string[] }
+  sockets: { before: string[]; after: string[] }
+  stdout: string
+  stderr: string
+  /** The packet captures, on the host bridge and inside the guest. */
+  network: {
+    bytes: number
+    protocols: CountRow[]
+    remoteIps: string[]
+    hostEvents: string[]
+    attempts: string[]
+    guest: { packets: number; pcapBytes: number; protocols: CountRow[]; events: string[] }
+  }
+  /** Indicators the static pass found, for the runtime to confirm or not. */
+  staticIocs: { remoteIps: string[]; uncPaths: string[]; downloadUrls: string[]; downloadCradles: number }
+  /** PE forensics, for Windows samples only. */
+  windows?: WindowsForensics
+  /** The run's own logs, for when the run itself went wrong. */
+  logs: { kernel: string; hostTcpdump: string; guestTcpdump: string; serialConsole: string; qemu: string; domainState: string; classifierError?: string; peParserError?: string }
+  /** Files the run exported, downloadable from the run page. */
+  exported: Array<{ name: string; size: number; sha256: string }>
+}
+
+export interface WindowsForensics {
+  peType: 'PE32' | 'PE32+'
+  machine: string
+  subsystem: string
+  imageBase: string
+  entryPoint: string
+  compileTimestamp: string
+  imphash: string
+  isDll: boolean
+  signaturePresent: boolean
+  authenticode: string
+  suspiciousImports: Array<{ name: string; library: string; why: string }>
+  sections: Array<{ name: string; virtualSize: number; rawSize: number; entropy: number; characteristics: string }>
+  imports: Array<{ library: string; symbols: string[] }>
+  exports: string[]
+  warnings: string[]
+  asciiStrings: string[]
+  utf16Strings: string[]
+  exiftool: string
 }
 
 export interface GhidraFunction extends Record<string, unknown> {
