@@ -8,6 +8,9 @@ import { NotFound } from '#/components/NotFound'
 import { getCapeRun, getGithubAnalysis, getPayloadAnalysis, getPayloadDelivery, getRevDeckRun } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { GHIDRA_SECTIONS } from '#/components/analyzers/GhidraResult'
+import { SANDBOX_SECTIONS } from '#/components/analyzers/SandboxResult'
+
+const LINUX_SANDBOX = SANDBOX_SECTIONS.filter((s) => s.id !== 'file')
 
 export const Route = createFileRoute('/_layout/payloads/$hash')({
   staticData: { viewTabs: entityTabs({ label: 'Payload views', basePath: (params) => `/payloads/${params.hash}`, tabs: tabsFor }) },
@@ -61,14 +64,15 @@ function PayloadLayout() {
 
 /** The top-bar tabs: static until the loader data arrives, then with counts. */
 function tabsFor(loaded: unknown): ViewTab[] {
-  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'static', label: 'Static' }, { id: 'indicators', label: 'Indicators' }, { id: 'sandbox', label: 'Sandbox' }, { id: 'ghidra', label: 'Ghidra', sections: GHIDRA_SECTIONS }, { id: 'cape', label: 'CAPE' }, { id: 'revdeck', label: 'RevDeck' }, { id: 'github', label: 'GitHub' }, { id: 'delivered-by', label: 'Delivered by' }, { id: 'sessions', label: 'Sessions' }, { id: 'timeline', label: 'Timeline' }]
+  if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'static', label: 'Static' }, { id: 'indicators', label: 'Indicators' }, { id: 'sandbox', label: 'Sandbox', sections: LINUX_SANDBOX }, { id: 'ghidra', label: 'Ghidra', sections: GHIDRA_SECTIONS }, { id: 'cape', label: 'CAPE' }, { id: 'revdeck', label: 'RevDeck' }, { id: 'github', label: 'GitHub' }, { id: 'delivered-by', label: 'Delivered by' }, { id: 'sessions', label: 'Sessions' }, { id: 'timeline', label: 'Timeline' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const { analysis: a, delivery } = data
   return [
     { id: 'overview', label: 'Overview' },
     { id: 'static', label: 'Static' },
     { id: 'indicators', label: 'Indicators', count: a.iocs.length + a.yara.length },
-    { id: 'sandbox', label: 'Sandbox' },
+    // File forensics reads a Windows PE; other samples have nothing there.
+    { id: 'sandbox', label: 'Sandbox', sections: a.payload.kind === 'PE32' ? SANDBOX_SECTIONS : LINUX_SANDBOX },
     { id: 'ghidra', label: 'Ghidra', sections: GHIDRA_SECTIONS },
     { id: 'cape', label: 'CAPE' },
     { id: 'revdeck', label: 'RevDeck' },

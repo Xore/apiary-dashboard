@@ -384,3 +384,21 @@ describe('ghidra deep dive', () => {
     expect(checked).toBeGreaterThan(0)
   })
 })
+
+describe('sandbox forensics', () => {
+  it('only Windows runs carry PE forensics; every run has its captures, logs and exports', async () => {
+    let windows = 0
+    for (const p of (await q.getPayloads()).payloads) {
+      const run = await q.getSandboxRun(p.hash)
+      if (!run) continue
+      expect(Boolean(run.windows), p.hash).toBe(p.kind === 'PE32')
+      expect(run.route.name).toBe(p.kind === 'PE32' ? 'windows-kvm' : 'linux-qemu')
+      expect(run.exported.length).toBeGreaterThan(0)
+      expect(run.logs.qemu.length).toBeGreaterThan(0)
+      // What appeared after detonation includes everything that was there before.
+      expect(run.sockets.after).toEqual(expect.arrayContaining(run.sockets.before))
+      if (run.windows) windows++
+    }
+    expect(windows).toBeGreaterThan(0)
+  })
+})
