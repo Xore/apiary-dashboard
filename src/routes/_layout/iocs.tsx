@@ -12,22 +12,24 @@ import { searchTabs } from '#/components/ViewTabs'
 import { getIocCatalog, getNetworkCampaigns, getSourceProfiles } from '#/data/queries'
 import type { IocHubKind, IocRow } from '#/data/types'
 import { iocHref } from '#/lib/entities'
+import { IOC_KINDS, iocKindTab } from '#/lib/navFamilies'
 import { formatNumber, formatTime } from '#/lib/format'
 
-const KINDS: Array<{ id: IocHubKind; label: string; lede: string }> = [
-  { id: 'hash', label: 'Hashes', lede: 'Payloads captured from download events.' },
-  { id: 'domain', label: 'Domains', lede: 'Hosts named in downloader commands.' },
-  { id: 'url', label: 'URLs', lede: 'Fetch URLs from executed commands and paths requested from web sensors.' },
-  { id: 'credential', label: 'Credentials', lede: 'Username and password pairs tried.' },
-  { id: 'command', label: 'Commands', lede: 'Shell commands attackers ran.' },
-  { id: 'fingerprint', label: 'Fingerprints', lede: 'Client fingerprints (HASSH and the like) that join addresses.' },
-  { id: 'cve', label: 'CVEs', lede: 'Vulnerabilities named by IDS signatures and exploit paths.' },
-  { id: 'signature', label: 'Signatures', lede: 'IDS signatures that fired.' },
-]
+const LEDES: Record<(typeof IOC_KINDS)[number]['id'], string> = {
+  hash: 'Payloads captured from download events.',
+  domain: 'Hosts named in downloader commands.',
+  url: 'Fetch URLs from executed commands and paths requested from web sensors.',
+  credential: 'Username and password pairs tried.',
+  command: 'Shell commands attackers ran.',
+  fingerprint: 'Client fingerprints (HASSH and the like) that join addresses.',
+  cve: 'Vulnerabilities named by IDS signatures and exploit paths.',
+  signature: 'IDS signatures that fired.',
+}
+const KINDS = IOC_KINDS.map((k) => ({ ...k, lede: LEDES[k.id] }))
 const isKind = (value: unknown): value is IocHubKind => KINDS.some((k) => k.id === value)
 
 export const Route = createFileRoute('/_layout/iocs')({
-  staticData: { viewTabs: searchTabs({ label: 'Indicator kinds', param: 'kind', tabs: (loaded) => KINDS.map((k) => ({ id: k.id, label: k.label, count: (loaded as { catalog?: Record<string, unknown[]> } | undefined)?.catalog?.[k.id].length })) }) },
+  staticData: { viewTabs: searchTabs({ label: 'Indicator kinds', param: 'kind', tabs: (loaded) => IOC_KINDS.map((k) => iocKindTab(k, (loaded as { catalog?: Record<string, unknown[]> } | undefined)?.catalog?.[k.id].length)) }) },
   validateSearch: (search: Record<string, unknown>): { kind?: IocHubKind } => ({
     kind: isKind(search.kind) && search.kind !== 'hash' ? search.kind : undefined,
   }),

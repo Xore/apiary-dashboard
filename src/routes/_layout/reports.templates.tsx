@@ -8,8 +8,10 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { getReports } from '#/data/queries'
 import type { ReportTemplate } from '#/data/types'
+import { reportTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/reports/templates')({
+  staticData: { viewTabs: reportTabs },
   loader: () => getReports(),
   component: TemplatesPage,
 })

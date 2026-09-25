@@ -9,7 +9,6 @@ import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
-import { searchTabs } from '#/components/ViewTabs'
 import { entityHref } from '#/lib/entities'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
@@ -20,6 +19,7 @@ import type { AnalysisResult, AnalysisResultsData, AnalyzerTab, GpuJob } from '#
 import { formatTime } from '#/lib/format'
 import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 import { useGuardedAction } from '#/lib/useGuardedAction'
+import { analysisTabs } from '#/lib/navFamilies'
 
 const TABS: Array<{ id: AnalyzerTab; label: string }> = [
   { id: 'workbench', label: 'Workbench' },
@@ -31,11 +31,9 @@ const TABS: Array<{ id: AnalyzerTab; label: string }> = [
 
 export const Route = createFileRoute('/_layout/payload-workbench/results')({
   staticData: {
-    viewTabs: searchTabs({
-      label: 'Analysis results views',
-      param: 'tab',
-      tabs: (loaded) => TABS.map((t) => ({ id: t.id, label: t.label, count: (loaded as AnalysisResultsData | undefined)?.results.filter((r) => r.analyzer === t.id).length })),
-    }),
+    // Shared with the CAPE, GitHub and RevDeck lists and the sandbox's live
+    // view, which are tabs of these results in the top bar.
+    viewTabs: analysisTabs((id, loaded) => (TABS.some((t) => t.id === id) ? (loaded as AnalysisResultsData | undefined)?.results.filter((r) => r.analyzer === id).length : undefined)),
   },
   validateSearch: (search: Record<string, unknown>): { tab?: AnalyzerTab } => ({
     tab: TABS.some((t) => t.id === search.tab) ? (search.tab as AnalyzerTab) : undefined,

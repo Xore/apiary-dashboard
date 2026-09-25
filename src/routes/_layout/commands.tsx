@@ -14,8 +14,10 @@ import { apiHref } from '#/lib/apiHref'
 import { formatClock, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { ZoneHeader } from '#/components/ZoneHeader'
+import { indicatorTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/commands')({
+  staticData: { viewTabs: indicatorTabs },
   loader: () => getCommands(),
   component: CommandsPage,
 })

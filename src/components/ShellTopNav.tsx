@@ -10,7 +10,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav'
 import { MagnifyingGlassIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
 import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
-import { ViewTabsBar } from './ViewTabs'
+import { TOP_NAV_END_ID, ViewTabsBar } from './ViewTabs'
 import { Selector } from '@astryxdesign/core/Selector'
 import { useLocation, useNavigate, useSearch } from '@tanstack/react-router'
 import { DEFAULT_RANGE, RANGES, isRange } from '#/lib/range'
@@ -76,7 +76,8 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
         </HStack>
       }
       endContent={
-        <>
+        // The tab strip measures up to here, so tabs never run under it.
+        <HStack id={TOP_NAV_END_ID} gap={2} vAlign="center">
           <RangePicker />
           <Button
             label="Search"
@@ -92,7 +93,7 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
           </Button>
           <MockScenarioMenu />
           <LiveBadge />
-        </>
+        </HStack>
       }
     />
   )

@@ -8,9 +8,11 @@ import { RecordList } from '#/components/RecordList'
 import { getGithubAnalyses } from '#/data/queries'
 import type { GithubAnalysis, GithubStatus } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { analysisTabs } from '#/lib/navFamilies'
 
 // Index leaf so github-analysis/$sha is not swallowed by a parent component.
 export const Route = createFileRoute('/_layout/github-analysis/')({
+  staticData: { viewTabs: analysisTabs() },
   loader: () => getGithubAnalyses(),
   component: GithubIndexPage,
 })
