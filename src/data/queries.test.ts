@@ -364,3 +364,23 @@ describe('attacker identity fusion', () => {
     expect(await q.getIdentityFusion('nosuch')).toBeNull()
   })
 })
+
+describe('ghidra deep dive', () => {
+  it('the call graph is consistent both ways, and triage names the payload family', async () => {
+    const payloads = (await q.getPayloads()).payloads
+    let checked = 0
+    for (const p of payloads) {
+      const g = await q.getGhidraAnalysis(p.hash)
+      if (!g) continue
+      checked++
+      const byName = new Map(g.functions.map((f) => [f.name, f]))
+      for (const f of g.functions) {
+        for (const callee of f.callees) expect(byName.get(callee)?.callers, `${f.name} -> ${callee}`).toContain(f.name)
+        for (const caller of f.callers) expect(byName.get(caller)?.callees, `${caller} -> ${f.name}`).toContain(f.name)
+        expect(f.calls).toBe(f.callees.length)
+      }
+      if (p.verdict?.family) expect(g.aiTriage.familyGuess).toContain(p.verdict.family)
+    }
+    expect(checked).toBeGreaterThan(0)
+  })
+})
