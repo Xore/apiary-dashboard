@@ -122,7 +122,7 @@ function runScenario<TArgs extends unknown[], TResult>(name: string, query: (...
     // The session comes from the sign-in cookie, not the backend: it
     // survives a backend outage, and only the role changes.
     // Cached configuration, like the session: it outlives a backend outage.
-    if (name === 'getShellConfig') return query(...args)
+    if (name === 'getShellConfig' || name === 'getPreferences') return query(...args)
     if (name === 'getSessionUser') {
       const user = (await query(...args)) as SessionUser
       return (scenario === 'viewer' ? { ...user, name: 'Analyst', roles: ['viewer'] } : user) as TResult

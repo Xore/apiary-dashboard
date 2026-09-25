@@ -8,6 +8,7 @@ import { RecordList } from '#/components/RecordList'
 import { getRecordings } from '#/data/queries'
 import type { Recording } from '#/data/types'
 import { formatClock, formatNumber } from '#/lib/format'
+import { ZoneHeader } from '#/components/ZoneHeader'
 
 export const Route = createFileRoute('/_layout/recordings/')({
   validateSearch: (search: Record<string, unknown>): { ip?: string } => ({
@@ -19,7 +20,7 @@ export const Route = createFileRoute('/_layout/recordings/')({
 })
 
 const columns: TableColumn<Recording>[] = [
-  { key: 'when', header: 'Closed (UTC)', width: pixel(120), renderCell: (row) => <Text type="supporting">{formatClock(row.when)}</Text> },
+  { key: 'when', header: <ZoneHeader label="Closed" />, width: pixel(128), renderCell: (row) => <Text type="supporting">{formatClock(row.when)}</Text> },
   { key: 'srcIp', header: 'Source', width: pixel(136), renderCell: (row) => row.srcIp ?? '—' },
   { key: 'country', header: 'Country', width: pixel(80), renderCell: (row) => row.country ?? '—' },
   { key: 'session', header: 'Session', width: proportional(2), renderCell: (row) => <Text type="code">{row.session}</Text> },

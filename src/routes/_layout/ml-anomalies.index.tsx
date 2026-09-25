@@ -25,6 +25,7 @@ import { PageFrame } from '#/components/PageFrame'
 import { searchTabs } from '#/components/ViewTabs'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
+import { ZoneHeader } from '#/components/ZoneHeader'
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
 const STATUSES: AnomalyStatus[] = ['open', 'acknowledged', ...DISPOSITIONS]
@@ -56,7 +57,7 @@ export const Route = createFileRoute('/_layout/ml-anomalies/')({
 const columns: TableColumn<MlAnomaly>[] = [
   {
     key: 'timestamp',
-    header: 'Time (UTC)',
+    header: <ZoneHeader label="Time" />,
     width: pixel(112),
     renderCell: (row) => (
       <HStack gap={1.5} vAlign="center">

@@ -12,6 +12,7 @@ import { EntityLink } from '#/components/EntityLink'
 import type { HoneypotEvent, SensorReading } from '#/data/types'
 import { formatClock } from '#/lib/format'
 import { fieldText, readField } from '#/lib/sensorFields'
+import { ZoneHeader } from '#/components/ZoneHeader'
 
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
@@ -35,7 +36,7 @@ function columnsFor(reading: SensorReading): TableColumn<HoneypotEvent>[] {
   }))
   const artefact = reading.artefacts.at(0)
   return [
-    { key: 'timestamp', header: 'Time (UTC)', width: pixel(96), renderCell: (row) => <EntityLink kind="event" id={row.id}>{formatClock(row.timestamp)}</EntityLink> },
+    { key: 'timestamp', header: <ZoneHeader label="Time" />, width: pixel(128), renderCell: (row) => <EntityLink kind="event" id={row.id}>{formatClock(row.timestamp)}</EntityLink> },
     { key: 'srcIp', header: 'Source', width: pixel(140), renderCell: (row) => <EntityLink kind="source" id={row.srcIp} /> },
     { key: 'dstPort', header: 'Port', width: pixel(72), renderCell: (row) => <Text type="code">{row.dstPort}</Text> },
     ...own,

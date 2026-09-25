@@ -8,6 +8,7 @@ import { formatDateTime, formatNumber } from '#/lib/format'
 import { Panel } from './DashboardBlocks'
 import { SeverityToken } from './SeverityToken'
 import { EntityLink } from './EntityLink'
+import { tableDensity, usePreferences } from '#/lib/prefs'
 
 const eventColumns = (showSource: boolean): TableColumn<HoneypotEvent>[] => [
   { key: 'timestamp', header: 'Time', width: pixel(184), renderCell: (row) => <Text type="supporting">{formatDateTime(row.timestamp)}</Text> },
@@ -27,10 +28,11 @@ export function EventsPanel({ title, events, showSource = false, action, empty =
   action?: React.ReactNode
   empty?: string
 }) {
+  const prefs = usePreferences()
   return (
     <Panel title={title} action={action}>
       {events.length ? (
-        <Table data={events} columns={eventColumns(showSource)} idKey="id" density="compact" textOverflow="truncate" />
+        <Table data={events} columns={eventColumns(showSource)} idKey="id" density={tableDensity(prefs)} textOverflow={prefs?.wrapLongValues ? 'wrap' : 'truncate'} />
       ) : (
         <Text type="supporting">{empty}</Text>
       )}

@@ -13,6 +13,7 @@ import { formatChange, formatCompact, formatNumber } from '#/lib/format'
 import type { EntityKind } from '#/lib/entities'
 import { Sparkline } from './charts'
 import { EntityLink } from './EntityLink'
+import { tableDensity, usePreferences } from '#/lib/prefs'
 
 /** A titled widget card with an optional trailing action (usually a Link). */
 export function Panel({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
@@ -74,6 +75,7 @@ export function CountTable({ header, rows, countHeader = 'Count', isCode = false
   /** Renders each value as an EntityLink of this kind (page + value menu). */
   entity?: EntityKind
 }) {
+  const prefs = usePreferences()
   const columns: TableColumn<CountRow>[] = [
     {
       key: 'label',
@@ -87,7 +89,7 @@ export function CountTable({ header, rows, countHeader = 'Count', isCode = false
     },
     { key: 'count', header: countHeader, width: pixel(88), align: 'end', renderCell: (row) => formatNumber(row.count) },
   ]
-  return <Table data={rows} columns={columns} idKey="id" density="compact" />
+  return <Table data={rows} columns={columns} idKey="id" density={tableDensity(prefs)} />
 }
 
 /** A titled top-N breakdown; renders a short note instead of an empty table. */
