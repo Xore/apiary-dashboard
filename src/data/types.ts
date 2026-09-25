@@ -91,6 +91,10 @@ export interface HoneypotEvent extends Record<string, unknown> {
   payloadClass?: string
   /** DNP3 control-function severity: an unconfirmed operate is critical. */
   icsSeverity?: 'critical' | 'high'
+  /** The flow's Community ID (`network.community_id`), written by the flow
+   * sensors in front of the honeypots; the sharpest pivot into packet and
+   * IDS tools. Absent on events no flow sensor saw. */
+  communityId?: string
 }
 
 /** How the source network is classified (`source.as.type`). */
@@ -637,6 +641,8 @@ export interface CanaryTrigger extends Record<string, unknown> {
   srcIp: string
   userAgent: string
   location: string
+  /** The token service's own page for this token, when it gives one. */
+  manageUrl?: string
 }
 
 export interface CanaryTokenType {
@@ -947,9 +953,21 @@ export interface DashboardConfig {
 
 export type ConfigSection = Exclude<keyof DashboardConfig, 'revision'>
 
+/** Where the deployment's other tools live, from its environment rather
+ * than the settings: each is absent when not deployed, and a link to it is
+ * then left out rather than guessed. */
+export interface DeploymentLinks {
+  kibana?: string
+  evebox?: string
+  arkime?: string
+  /** The identity provider's account console (Keycloak's `<issuer>/account/`). */
+  accountConsole?: string
+}
+
 /** What the shell itself needs of the configuration: labels, the banner,
- * notices, and the switches that change every page. */
-export type ShellConfig = Pick<DashboardConfig, 'presentation' | 'behavior'>
+ * notices, and the switches that change every page; and where the
+ * deployment's other tools are. */
+export type ShellConfig = Pick<DashboardConfig, 'presentation' | 'behavior'> & { links: DeploymentLinks }
 
 /** What validation found wrong, field name → message. Empty when valid. */
 export type ConfigProblems = Record<string, string>

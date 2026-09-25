@@ -3,6 +3,7 @@
 import type {
   AuditEntry,
   DashboardConfig,
+  DeploymentLinks,
   EsStorage,
   ReporterStats,
   ConfigRevision,
@@ -175,6 +176,14 @@ export const AUDIT_LOG: AuditEntry[] = [
 ]
 
 /** The dashboard configuration, at the compiled defaults plus a few edits. */
+/** The deployment's other tools, as its environment names them. */
+export const DEPLOYMENT_LINKS: DeploymentLinks = {
+  kibana: 'https://kibana.example.test',
+  evebox: 'https://evebox.example.test',
+  arkime: 'https://arkime.example.test',
+  accountConsole: 'https://sso.example.test/realms/apiary/account/',
+}
+
 export const CONFIG: DashboardConfig = {
   revision: 14,
   presentation: {

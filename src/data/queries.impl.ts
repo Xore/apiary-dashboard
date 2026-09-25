@@ -31,6 +31,7 @@ import {
   PROBLEM_REPORTS,
   SERVICES,
   CONFIG,
+  DEPLOYMENT_LINKS,
   ES_STORAGE,
   REPORTER_STATS,
   techniquesFor,
@@ -1103,7 +1104,7 @@ export const mockNow = () => MOCK_NOW
 /** The configuration the shell renders with on every page. */
 export async function getShellConfig(): Promise<ShellConfig> {
   await mockDelay({ canFail: false })
-  return { presentation: { ...CONFIG.presentation }, behavior: { ...CONFIG.behavior } }
+  return { presentation: { ...CONFIG.presentation }, behavior: { ...CONFIG.behavior }, links: { ...DEPLOYMENT_LINKS } }
 }
 
 /** Read-only mode: every write refused for everyone, except the switches

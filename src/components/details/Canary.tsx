@@ -83,6 +83,11 @@ export function TriggerInspector({ trigger }: { trigger: CanaryTrigger }) {
           <Text type="code">{trigger.userAgent}</Text>
         </MetadataListItem>
       </MetadataList>
+      {trigger.manageUrl && (
+        <HStack>
+          <Button label="Manage token" size="sm" variant="secondary" href={trigger.manageUrl} target="_blank" rel="noopener noreferrer" />
+        </HStack>
+      )}
     </VStack>
   )
 }
