@@ -10,7 +10,7 @@ const config = defineConfig({
   resolve: { tsconfigPaths: true },
   // Console piping off: with Vite's own client-console forwarding it echoes
   // every browser error between client and server without end.
-  plugins: [devtools({ consolePiping: { enabled: false } }), tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [devtools({ consolePiping: { enabled: false } }), tailwindcss(), tanstackStart({ router: { routeFileIgnorePattern: '\\.test\\.' } }), viteReact()],
 })
 
 export default config
