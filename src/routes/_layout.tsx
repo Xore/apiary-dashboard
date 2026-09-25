@@ -9,6 +9,7 @@ import { ShellAppShell } from '#/components/ShellAppShell'
 import { getPreferences, getSessionUser, getShellConfig } from '#/data/queries'
 import { isScenario, setMockScenario } from '#/data/scenario'
 import type { MockScenario } from '#/data/scenario'
+import { isNarrowViewport } from '#/lib/viewport'
 
 export const Route = createFileRoute('/_layout')({
   // `?settings=<pane>` opens the settings modal over any page; `?range=` is
@@ -41,7 +42,7 @@ export const Route = createFileRoute('/_layout')({
   },
   loader: async () => {
     const [user, config] = await Promise.all([getSessionUser(), getShellConfig()])
-    return { user, config }
+    return { user, config, narrow: isNarrowViewport() }
   },
   component: LayoutComponent,
 })
@@ -59,7 +60,7 @@ function rememberedSearch(path: string): string | null {
 }
 
 function LayoutComponent() {
-  const { user, config } = Route.useLoaderData()
+  const { user, config, narrow } = Route.useLoaderData()
   const prefs = usePreferences()
   const location = useLocation()
   // Keep each page's last filters for "remember filters" (this tab only).
@@ -80,5 +81,5 @@ function LayoutComponent() {
   const navigate = useNavigate()
   const setSettings = (pane: PaneId | undefined) =>
     void navigate({ to: '.', search: (prev: Record<string, unknown>) => ({ ...prev, settings: pane }) })
-  return <ShellAppShell user={user} config={config} settingsPane={settings} onSettingsPane={setSettings} />
+  return <ShellAppShell user={user} config={config} narrow={narrow} settingsPane={settings} onSettingsPane={setSettings} />
 }

@@ -22,6 +22,7 @@ import {
 } from 'recharts'
 import type { CountRow, HeatmapRow, KillChainData, SeriesPoint, TimeBucket } from '#/data/types'
 import { formatDateTime, formatDay, formatNumber, formatTime } from '#/lib/format'
+import { useMeasuredWidth } from '#/lib/useMeasuredWidth'
 
 // Colors follow the protocol, never its rank, so filtering never repaints a
 // series. Order (blue, orange, teal, purple, pink) is validated with the
@@ -373,17 +374,26 @@ const HEAT_STEPS = [18, 34, 52, 72, 92]
 /** ATT&CK techniques grouped by tactic; darker = more observed events (one
  * hue, light to dark), never severity. */
 export function CoverageHeatmap({ tactics, cells }: { tactics: string[]; cells: KillChainData['coverage'] }) {
+  const [ref, measured] = useMeasuredWidth<HTMLDivElement>()
   if (cells.length === 0 || tactics.length === 0) return <ChartEmpty height={160} label="No techniques observed in this window." />
   const max = Math.max(1, ...cells.map((c) => c.events))
   const step = (events: number) => HEAT_STEPS[Math.min(HEAT_STEPS.length - 1, Math.floor((Math.log2(events + 1) / Math.log2(max + 1)) * HEAT_STEPS.length))]
   const columns = tactics.map((tactic) => cells.filter((c) => c.tactic === tactic))
-  const cellW = 150
+  // Columns share the panel's real width, never narrower than a technique
+  // name needs (then the grid scrolls sideways); text keeps one size.
+  const minCellW = 120
+  const natural = tactics.length * (150 + 6)
+  const width = Math.max(tactics.length * (minCellW + 6), measured ?? natural)
+  const cellW = width / tactics.length - 6
+  const nameChars = Math.floor((cellW - 16) / 5.6)
   const cellH = 44
   const headH = 36
   const rows = Math.max(...columns.map((c) => c.length))
+  const height = headH + rows * (cellH + 6)
   return (
     <VStack gap={3}>
-      <svg viewBox={`0 0 ${tactics.length * (cellW + 6)} ${headH + rows * (cellH + 6)}`} width="100%" role="img" aria-label="ATT&CK technique coverage by tactic">
+      <div ref={ref} style={{ overflowX: 'auto' }}>
+      <svg viewBox={`0 0 ${width} ${height}`} width={measured ? width : '100%'} height={measured ? height : undefined} role="img" aria-label="ATT&CK technique coverage by tactic">
         {columns.map((column, ci) => (
           <g key={tactics[ci]} transform={`translate(${ci * (cellW + 6)}, 0)`}>
             <text x={0} y={22} fontSize={12} fontWeight={600} fill="var(--color-text-primary)">
@@ -405,7 +415,7 @@ export function CoverageHeatmap({ tactics, cells }: { tactics: string[]; cells: 
                     {cell.technique}
                   </text>
                   <text x={8} y={34} fontSize={10} fill={pct > 70 ? 'var(--color-background-card)' : 'var(--color-text-primary)'}>
-                    {cell.name.length > 22 ? `${cell.name.slice(0, 21)}…` : cell.name}
+                    {cell.name.length > nameChars ? `${cell.name.slice(0, nameChars - 1)}…` : cell.name}
                   </text>
                 </g>
               )
@@ -413,6 +423,7 @@ export function CoverageHeatmap({ tactics, cells }: { tactics: string[]; cells: 
           </g>
         ))}
       </svg>
+      </div>
       <HStack gap={2} vAlign="center">
         <Text type="supporting">Fewer events</Text>
         <svg width={HEAT_STEPS.length * 22} height={12} aria-hidden="true">
@@ -433,19 +444,26 @@ const HEAT = [12, 28, 46, 66, 88]
 /** Sensors × hours, one hue light→dark; the exact count is in each cell's
  * tooltip. */
 export function SensorHeatmap({ rows, startIso }: { rows: HeatmapRow[]; startIso: string }) {
+  const [ref, measured] = useMeasuredWidth<HTMLDivElement>()
   if (rows.length === 0) return <ChartEmpty height={160} label="No sensors reporting." />
   const max = Math.max(1, ...rows.flatMap((r) => r.cells))
+  // Drawn at the panel's real width: hours stretch to fill it, rows keep
+  // one height and the text one size, whatever the screen.
   const labelW = 132
-  const cell = 26
+  const cellH = 20
   const gap = 3
-  const width = labelW + 24 * (cell + gap)
+  // Never narrower than a readable cell; below that the grid scrolls.
+  const width = Math.max(labelW + 24 * 12, measured ?? labelW + 24 * (26 + gap))
+  const col = (width - labelW) / 24
+  const cellW = Math.max(4, col - gap)
   const start = Date.parse(startIso)
   return (
     <VStack gap={2}>
-      <svg viewBox={`0 0 ${width} ${rows.length * (cell + gap) + 22}`} width="100%" role="img" aria-label="Hourly events per sensor, last 24 hours">
+      <div ref={ref} style={{ overflowX: 'auto' }}>
+      <svg viewBox={`0 0 ${width} ${rows.length * (cellH + gap) + 22}`} width={measured ? width : '100%'} role="img" aria-label="Hourly events per sensor, last 24 hours">
         {rows.map((row, ri) => (
-          <g key={row.sensor} transform={`translate(0, ${ri * (cell + gap)})`}>
-            <text x={0} y={cell / 2} dy="0.35em" fontSize={12} fill="var(--color-text-primary)">
+          <g key={row.sensor} transform={`translate(0, ${ri * (cellH + gap)})`}>
+            <text x={0} y={cellH / 2} dy="0.35em" fontSize={12} fill="var(--color-text-primary)">
               {row.sensor}
             </text>
             {row.cells.map((count, ci) => {
@@ -454,9 +472,9 @@ export function SensorHeatmap({ rows, startIso }: { rows: HeatmapRow[]; startIso
               return (
                 <rect
                   key={ci}
-                  x={labelW + ci * (cell + gap)}
-                  width={cell}
-                  height={cell}
+                  x={labelW + ci * col}
+                  width={cellW}
+                  height={cellH}
                   rx={3}
                   fill={pct ? `color-mix(in srgb, var(--color-data-categorical-blue) ${pct}%, var(--color-background-card))` : 'var(--color-background-muted)'}
                 >
@@ -467,11 +485,12 @@ export function SensorHeatmap({ rows, startIso }: { rows: HeatmapRow[]; startIso
           </g>
         ))}
         {[0, 6, 12, 18, 23].map((ci) => (
-          <text key={ci} x={labelW + ci * (cell + gap)} y={rows.length * (cell + gap) + 14} fontSize={11} fill="var(--color-text-secondary)">
+          <text key={ci} x={labelW + ci * col + (ci === 23 ? cellW : 0)} y={rows.length * (cellH + gap) + 14} textAnchor={ci === 23 ? 'end' : 'start'} fontSize={11} fill="var(--color-text-secondary)">
             {formatTime(new Date(start + ci * 3_600_000).toISOString()).slice(0, 5)}
           </text>
         ))}
       </svg>
+      </div>
       <Text type="supporting">Darker cells mean more events. Hover a cell for the exact count.</Text>
     </VStack>
   )

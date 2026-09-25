@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from '@astryxdesign/core/Link'
 import { HStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -66,7 +65,6 @@ function IocsPage() {
         <HStack gap={3} vAlign="center" wrap="wrap">
           <TextInput label={`Filter ${current.label.toLowerCase()}`} isLabelHidden size="sm" width={320} placeholder={`Filter ${current.label.toLowerCase()}`} value={filter} onChange={setFilter} />
           <Text type="supporting">{current.lede}</Text>
-          {kind === 'command' && <Link href="/commands">Every execution</Link>}
         </HStack>
       }
       rows={rows}

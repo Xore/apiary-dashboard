@@ -64,7 +64,7 @@ function GeneratedReportPage() {
     >
       <Panel title="Document" action={<Button label="Open PDF" size="sm" variant="secondary" href={pdf} target="_blank" rel="noopener noreferrer" />}>
         {/* The browser's own PDF viewer; the document is served inline. */}
-        <iframe title={`${r.title} (PDF)`} src={pdf} style={{ width: '100%', height: '70vh', border: 0, borderRadius: 8 }} />
+        <iframe title={`${r.title} (PDF)`} src={pdf} style={{ width: '100%', height: 'calc(70dvh / var(--ui-zoom, 1))', border: 0, borderRadius: 8 }} />
       </Panel>
     </EntityFrame>
   )

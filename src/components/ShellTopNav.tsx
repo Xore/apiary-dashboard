@@ -10,15 +10,21 @@ import { Text } from '@astryxdesign/core/Text'
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav'
 import { MagnifyingGlassIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
 import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
-import { TOP_NAV_END_ID, ViewTabsBar, useViewTabs } from './ViewTabs'
+import { TOP_NAV_END_ID, ViewTabsBar, ViewTabsMenu, useViewTabs } from './ViewTabs'
+import { useAppShellMobile } from '@astryxdesign/core/AppShell'
+import { useMediaQuery } from '@astryxdesign/core/hooks'
 import { Selector } from '@astryxdesign/core/Selector'
 import { useLocation, useNavigate, useSearch } from '@tanstack/react-router'
 import { DEFAULT_RANGE, RANGES, isRange } from '#/lib/range'
 import type { RangeId } from '#/lib/range'
 import type { ShellConfig } from '#/data/types'
 
-/** The app-wide time range; every page reads it from ?range=. */
-function RangePicker() {
+/** Phones get a second row for the page's views and the time range. */
+export const PHONE_QUERY = '(max-width: 639px)'
+
+/** The app-wide time range; every page reads it from ?range=. Compact
+ * shows the short names (24h, 7d). */
+export function RangePicker({ compact = false }: { compact?: boolean }) {
   const navigate = useNavigate()
   const raw = useSearch({ strict: false, select: (search: Record<string, unknown>) => search.range })
   const range: RangeId = isRange(raw) ? raw : DEFAULT_RANGE
@@ -31,7 +37,7 @@ function RangePicker() {
       onChange={(value) =>
         void navigate({ to: '.', search: (prev: Record<string, unknown>) => ({ ...prev, range: value === DEFAULT_RANGE || !isRange(value) ? undefined : value }) })
       }
-      options={RANGES.map((r) => ({ value: r.id, label: r.label }))}
+      options={RANGES.map((r) => ({ value: r.id, label: compact ? r.id : r.label }))}
     />
   )
 }
@@ -56,6 +62,10 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
   // A page with tabs gives the bar to them: the sidebar already says where
   // you are, and the tabs say which view.
   const hasTabs = useViewTabs() !== null
+  // In the drawer layout the tabs become one Views menu and the controls
+  // their icons; on a phone the views and range move to a row of their own.
+  const { isMobile } = useAppShellMobile()
+  const isPhone = useMediaQuery(PHONE_QUERY)
   return (
     <TopNav
       label="Page header"
@@ -63,12 +73,13 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
         <TopNavHeading
           logo={<NavIcon icon={<Icon icon={ShieldCheckIcon} size="sm" />} />}
           heading={config.presentation.appName}
-          subheading={config.presentation.productLabel}
+          subheading={isMobile ? undefined : config.presentation.productLabel}
           headingHref="/"
         />
       }
       startContent={
-        <HStack gap={4} vAlign="center">
+        isMobile ? undefined : (
+        <HStack gap={4} vAlign="center" className="apiary-desktop-start">
           {!hasTabs && <ShellBreadcrumbs />}
           {/* TopNav sizes its start slot to content, so the tabs get a fixed
               budget: what the heading, breadcrumbs, and end controls leave.
@@ -77,27 +88,41 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
             <ViewTabsBar />
           </StackItem>
         </HStack>
+        )
       }
       endContent={
         // The tab strip measures up to here, so tabs never run under it.
         <HStack id={TOP_NAV_END_ID} gap={2} vAlign="center">
-          <RangePicker />
-          <Button
-            label="Search"
-            variant="secondary"
-            size="sm"
-            icon={<Icon icon={MagnifyingGlassIcon} size="sm" />}
-            onClick={onOpenPalette}
-          >
-            <HStack gap={2} vAlign="center">
-              <Text>Search</Text>
-              <Kbd keys="⌘K" />
-            </HStack>
-          </Button>
-          <MockScenarioMenu />
-          <LiveBadge />
+          {isMobile && !isPhone && <ViewTabsMenu />}
+          {!isPhone && <RangePicker compact={isMobile} />}
+          {isMobile ? (
+            <Button label="Search" variant="secondary" size="sm" isIconOnly tooltip="Search (⌘K)" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette} />
+          ) : (
+            <Button label="Search" variant="secondary" size="sm" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette}>
+              <HStack gap={2} vAlign="center">
+                <Text>Search</Text>
+                <Kbd keys="⌘K" />
+              </HStack>
+            </Button>
+          )}
+          <MockScenarioMenu compact={isMobile} />
+          <LiveBadge compact={isPhone} />
         </HStack>
       }
     />
+  )
+}
+
+/** A phone's second row: the page's views and the time range, under the
+ * top bar where there is room for them. */
+export function PhoneViewBar() {
+  const isPhone = useMediaQuery(PHONE_QUERY)
+  if (!isPhone) return null
+  return (
+    <HStack gap={2} vAlign="center" hAlign="between" style={{ padding: '8px 16px', borderBottom: '1px solid var(--color-border-default, transparent)' }}>
+      <ViewTabsMenu />
+      <StackItem size="fill" />
+      <RangePicker compact />
+    </HStack>
   )
 }
