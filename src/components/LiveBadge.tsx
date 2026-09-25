@@ -3,6 +3,7 @@ import { HStack } from '@astryxdesign/core/Stack'
 import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Text } from '@astryxdesign/core/Text'
 import { toggleLive, useLiveEvents, useLiveState } from '#/lib/live'
+import { usePreferences } from '#/lib/prefs'
 
 const ignore = () => {}
 
@@ -12,7 +13,8 @@ export function LiveBadge() {
   // The shell holds the one connection, so the badge tells the truth on
   // every page, including one whose own load failed.
   useLiveEvents(ignore)
-  const { paused, connectionHealthy } = useLiveState()
+  const prefs = usePreferences()
+  const { paused, connectionHealthy } = useLiveState(prefs?.autoRefresh)
   const [variant, label, tooltip] = paused
     ? (['neutral', 'Paused', 'Live updates are paused. Click to resume.'] as const)
     : connectionHealthy

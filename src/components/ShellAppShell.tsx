@@ -6,6 +6,8 @@ import { ToastViewport } from '@astryxdesign/core/Toast'
 import { createStaticSource } from '@astryxdesign/core/Typeahead'
 import type { SessionUser, ShellConfig } from '#/data/types'
 import { NAV_SECTIONS } from '#/lib/nav'
+import { usePreferences } from '#/lib/prefs'
+import { EventNotifications } from './EventNotifications'
 import { LiveToasts } from './LiveToasts'
 import { ProblemReportButton } from './ProblemReportButton'
 import { SettingsDialog } from './SettingsDialog'
@@ -59,6 +61,9 @@ export function ShellAppShell({ user, config, settingsPane, onSettingsPane }: Sh
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  const prefs = usePreferences()
+  const timeKey = prefs ? `${prefs.timezone}|${prefs.clock}|${prefs.timestamps}` : undefined
+
   return (
     // Toasts top right, under the top bar: the bottom corners belong to the
     // account menu and the report-a-problem button.
@@ -70,7 +75,9 @@ export function ShellAppShell({ user, config, settingsPane, onSettingsPane }: Sh
       >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
           <ShellBanners config={config} />
-          <div style={{ flex: 1, minHeight: 0 }}>
+          {/* Times are formatted from module state, so a change to how they
+              read remounts the page; dialogs in the shell stay open. */}
+          <div key={timeKey} style={{ flex: 1, minHeight: 0 }}>
             <Outlet />
           </div>
           <ShellFooter config={config} />
@@ -89,6 +96,7 @@ export function ShellAppShell({ user, config, settingsPane, onSettingsPane }: Sh
         }}
       />
       <LiveToasts />
+      <EventNotifications />
       <ProblemReportButton />
       {settingsPane && <SettingsDialog pane={settingsPane} onPane={onSettingsPane} onClose={() => onSettingsPane(undefined)} />}
     </ToastViewport>

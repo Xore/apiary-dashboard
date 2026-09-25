@@ -13,6 +13,7 @@ import type { HoneypotEvent } from '#/data/types'
 import { downloadCsv } from '#/lib/export'
 import { formatClock, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
+import { ZoneHeader } from '#/components/ZoneHeader'
 
 export const Route = createFileRoute('/_layout/commands')({
   loader: () => getCommands(),
@@ -20,7 +21,7 @@ export const Route = createFileRoute('/_layout/commands')({
 })
 
 const columns: TableColumn<HoneypotEvent>[] = [
-  { key: 'timestamp', header: 'Seen (UTC)', width: pixel(96), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
+  { key: 'timestamp', header: <ZoneHeader label="Seen" />, width: pixel(128), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
   { key: 'sensor', header: 'Sensor', width: pixel(152), renderCell: (row) => <Token label={row.sensor} size="sm" /> },
   { key: 'srcIp', header: 'Source IP', width: pixel(136), renderCell: (row) => <EntityLink kind="source" id={row.srcIp} /> },
   { key: 'command', header: 'Command', width: proportional(4), renderCell: (row) => <Text type="code">{row.command ?? row.summary}</Text> },

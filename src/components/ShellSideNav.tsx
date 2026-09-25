@@ -14,6 +14,7 @@ import {
 import { useLocation } from '@tanstack/react-router'
 import type { SessionUser, ShellConfig } from '#/data/types'
 import { NAV_SECTIONS, navHrefFor } from '#/lib/nav'
+import { usePreferences } from '#/lib/prefs'
 
 function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettings: () => void }) {
   // A collapsed sidebar has room for the icon only; the name stays the label.
@@ -41,12 +42,13 @@ function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettin
 }
 
 export function ShellSideNav({ user, config, onOpenSettings }: { user: SessionUser; config: ShellConfig; onOpenSettings: () => void }) {
+  const prefs = usePreferences()
   const pathname = useLocation({ select: (location) => location.pathname })
   const activeHref = navHrefFor(pathname)
 
   return (
     <SideNav
-      collapsible
+      collapsible={{ defaultIsCollapsed: prefs?.collapsedSidebar ?? false }}
       resizable={{ defaultWidth: 260, minWidth: 220, maxWidth: 360 }}
       footer={
         <SideNavSection title="Account" isHeaderHidden>

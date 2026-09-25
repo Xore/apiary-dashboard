@@ -134,7 +134,7 @@ export const SETTINGS: Setting[] = [
   { id: 'notifyDesktop', panel: 'time', title: 'Desktop notifications', description: 'Through the browser, while the dashboard is open.', icon: BellIcon, keywords: 'notification browser' },
   { id: 'notifySound', panel: 'time', title: 'Sound', description: 'A short sound with each notification.', icon: SpeakerWaveIcon, keywords: 'audio notification' },
   { id: 'notifyCanary', panel: 'time', title: 'Canarytoken fires', description: 'A notification when a planted token phones home.', icon: BellIcon, keywords: 'notification canary' },
-  { id: 'defaultWindow', panel: 'map', title: 'Default window', description: 'The time range an investigation opens with.', icon: CalendarDaysIcon, keywords: 'range time investigation' },
+  { id: 'defaultWindow', panel: 'map', title: 'Default window', description: 'The time range the dashboard opens with.', icon: CalendarDaysIcon, keywords: 'range time investigation' },
   { id: 'mapBasemap', panel: 'map', title: 'Basemap', description: 'The tiles under the attack map.', icon: MapIcon, keywords: 'map tiles openstreetmap' },
   { id: 'mapClustering', panel: 'map', title: 'Cluster markers', description: 'Group nearby origins into one marker until you zoom in.', icon: MapIcon, keywords: 'map cluster' },
   { id: 'mapAnimation', panel: 'map', title: 'Map animation', description: 'Animate new origins as they arrive.', icon: SparklesIcon, keywords: 'map motion' },

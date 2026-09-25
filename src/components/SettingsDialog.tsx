@@ -272,7 +272,22 @@ function TimePanel() {
             </SegmentedControl>
           }
         />
-        <SettingsRow setting="notifyDesktop" control={<Switch label="Desktop notifications" isLabelHidden value={prefs.notifyDesktop} onChange={(notifyDesktop) => setPref({ notifyDesktop })} />} />
+        <SettingsRow
+          setting="notifyDesktop"
+          control={
+            <Switch
+              label="Desktop notifications"
+              isLabelHidden
+              value={prefs.notifyDesktop}
+              onChange={(notifyDesktop) => {
+                // The browser asks once, when they are first turned on.
+                if (notifyDesktop && typeof Notification !== 'undefined' && Notification.permission === 'default') void Notification.requestPermission()
+                setPref({ notifyDesktop })
+              }}
+            />
+          }
+          detail={prefs.notifyDesktop && typeof Notification !== 'undefined' && Notification.permission === 'denied' ? <Text type="supporting">The browser blocks notifications for this site. Allow them in its site settings.</Text> : undefined}
+        />
         <SettingsRow setting="notifySound" control={<Switch label="Sound" isLabelHidden value={prefs.notifySound} onChange={(notifySound) => setPref({ notifySound })} />} />
         <SettingsRow setting="notifyCanary" control={<Switch label="Canarytoken fires" isLabelHidden value={prefs.notifyCanary} onChange={(notifyCanary) => setPref({ notifyCanary })} />} />
       </SettingsCard>
@@ -735,6 +750,7 @@ function PanelBody({ panel }: { panel: PaneId }) {
 export function SettingsDialog({ pane, onPane, onClose }: { pane: PaneId; onPane: (pane: PaneId) => void; onClose: () => void }) {
   const titleId = useId()
   const navigate = useNavigate()
+  const router = useRouter()
   // Administration panels are visible to every role and editable by admins.
   const isAdmin = useIsAdmin()
   const readOnly = isAdminPanel(pane) && !isAdmin
@@ -775,7 +791,11 @@ export function SettingsDialog({ pane, onPane, onClose }: { pane: PaneId; onPane
       setSaveState('saving')
       saveTimer.current = setTimeout(() => {
         void savePreferences(next)
-          .then(() => setSaveState('saved'))
+          .then(async () => {
+            setSaveState('saved')
+            // The whole app renders with these: apply them now.
+            await router.invalidate()
+          })
           .catch(() => setSaveState('failed'))
       }, 400)
       return next

@@ -19,6 +19,7 @@ import { downloadCsv, downloadJson } from '#/lib/export'
 import { formatClock, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { useLiveRefresh } from '#/lib/live'
+import { ZoneHeader } from '#/components/ZoneHeader'
 
 const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http', 'protocol', 'alert']
 const SINCE = ['1h', '6h', '24h']
@@ -73,7 +74,7 @@ export const Route = createFileRoute('/_layout/events/')({
 })
 
 const columns: TableColumn<HoneypotEvent>[] = [
-  { key: 'timestamp', header: 'Time (UTC)', width: pixel(104), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
+  { key: 'timestamp', header: <ZoneHeader label="Time" />, width: pixel(128), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
   { key: 'severity', header: 'Severity', width: pixel(96), renderCell: (row) => <SeverityToken severity={row.severity} /> },
   {
     key: 'sensor',

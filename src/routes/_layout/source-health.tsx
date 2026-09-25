@@ -17,6 +17,7 @@ import { EntityLink } from '#/components/EntityLink'
 import { useCallback, useEffect } from 'react'
 import { HEALTH_CHANGED } from '#/data/mock/incidents'
 import { useLiveInterval } from '#/lib/live'
+import { usePreferences } from '#/lib/prefs'
 
 export const Route = createFileRoute('/_layout/source-health')({
   loader: () => getSourceHealth(),
@@ -58,7 +59,7 @@ function SourceHealthPage() {
   // Health moves in minutes: re-read it on the live interval, and at once
   // when a simulated incident changes it.
   const refresh = useCallback(() => void router.invalidate(), [router])
-  useLiveInterval(refresh, 30_000)
+  useLiveInterval(refresh, (usePreferences()?.refreshSeconds ?? 30) * 1000)
   useEffect(() => {
     window.addEventListener(HEALTH_CHANGED, refresh)
     return () => window.removeEventListener(HEALTH_CHANGED, refresh)

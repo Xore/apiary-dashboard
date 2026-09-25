@@ -7,7 +7,7 @@
 import * as impl from './queries.impl'
 import { withScenario } from './scenario'
 
-export { alertKeyOf, generatePassword, inRange, isReadOnly, redact } from './queries.impl'
+export { alertKeyOf, generatePassword, inRange, isReadOnly, mockNow, redact } from './queries.impl'
 export type { AlertDetail, LookupTarget, PayloadAction, ProblemReportInput } from './queries.impl'
 
 export const getSessionUser = withScenario('getSessionUser', impl.getSessionUser)
@@ -70,6 +70,7 @@ export const submitProblemReport = withScenario('submitProblemReport', impl.subm
 export const setProblemStatus = withScenario('setProblemStatus', impl.setProblemStatus)
 export const getSettings = withScenario('getSettings', impl.getSettings)
 export const getShellConfig = withScenario('getShellConfig', impl.getShellConfig)
+export const getPreferences = withScenario('getPreferences', impl.getPreferences)
 export const savePreferences = withScenario('savePreferences', impl.savePreferences)
 export const validateConfig = withScenario('validateConfig', impl.validateConfig)
 export const saveConfigSection = withScenario('saveConfigSection', impl.saveConfigSection)

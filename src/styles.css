@@ -17,3 +17,40 @@ body,
 body {
   margin: 0;
 }
+
+/*
+ * Operator preferences, as attributes the root sets on <html>. Unlayered, so
+ * they win over the theme's layered tokens. The theme syncs
+ * data-astryx-theme onto <html>, where its tokens live, so the overrides
+ * sit on the same element.
+ */
+
+/* Accent palette. The default (Claude) is the theme's own neutral accent. */
+html[data-palette="amber"] { --color-accent: light-dark(#b46a00, #f0a02a); --color-accent-muted: light-dark(#fdf0db, #3a2a10); }
+html[data-palette="lavender"] { --color-accent: light-dark(#6c56d8, #a896f2); --color-accent-muted: light-dark(#efebfd, #2a2440); }
+html[data-palette="lime"] { --color-accent: light-dark(#4d7c0f, #8fd13a); --color-accent-muted: light-dark(#eef7de, #22301a); }
+html[data-palette="neon"] { --color-accent: light-dark(#00857a, #19e0c7); --color-accent-muted: light-dark(#dcf7f3, #103430); }
+html[data-palette="ocean"] { --color-accent: light-dark(#1b5fb5, #5aa0f8); --color-accent-muted: light-dark(#e3eefc, #14263d); }
+html[data-palette="rose"] { --color-accent: light-dark(#b93d68, #f07ea6); --color-accent-muted: light-dark(#fbe7ee, #3a1b27); }
+html[data-palette="slate"] { --color-accent: light-dark(#475569, #a3b1c6); --color-accent-muted: light-dark(#eceff4, #232a35); }
+
+/* High contrast: secondary text reads as primary, hairlines as borders. */
+html[data-contrast="more"] {
+  --color-text-secondary: var(--color-text-primary);
+  --color-border: var(--color-border-emphasized);
+}
+
+/* Larger evidence text: payloads, commands and raw records in monospace. */
+html[data-evidence="large"] {
+  --text-code-size: calc(var(--font-size-base) * 1.15);
+}
+
+/* Reduced motion, when the operator asks for it regardless of the OS. */
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

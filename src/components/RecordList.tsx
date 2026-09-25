@@ -13,6 +13,7 @@ import { useLocation, useNavigate } from '@tanstack/react-router'
 import { formatNumber } from '#/lib/format'
 import { saveListContext } from '#/lib/listContext'
 import { useRowActivation } from './useRowActivation'
+import { tableDensity, usePreferences } from '#/lib/prefs'
 
 type RecordListProps<T extends Record<string, unknown>> = {
   title: string
@@ -45,8 +46,10 @@ export function RecordList<T extends Record<string, unknown>>({
   getId,
   getHref,
   emptyState,
-  pageSize = 25,
+  pageSize: pageSizeProp,
 }: RecordListProps<T>) {
+  const prefs = usePreferences()
+  const pageSize = pageSizeProp ?? prefs?.rowsPerPage ?? 25
   const navigate = useNavigate()
   const location = useLocation()
   const listHref = location.href
@@ -70,8 +73,11 @@ export function RecordList<T extends Record<string, unknown>>({
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
   const currentPage = Math.min(page, pageCount)
   const visible = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  const openRow = (row: T, { newTab }: { newTab: boolean }) => {
+  const openRow = (row: T, { newTab: modified }: { newTab: boolean }) => {
     const href = getHref(row)
+    // With "open detail pages in a new tab", a plain click opens one and a
+    // modified click stays here: the modifier always means "the other way".
+    const newTab = prefs?.openDetailsInNewTab ? !modified : modified
     if (newTab) {
       // A new tab starts without router state, so carry the app-wide range.
       const range = new URLSearchParams(location.searchStr).get('range')
@@ -121,8 +127,8 @@ export function RecordList<T extends Record<string, unknown>>({
                   data={visible}
                   columns={columns}
                   idKey={getId}
-                  density="compact"
-                  textOverflow="truncate"
+                  density={tableDensity(prefs)}
+                  textOverflow={prefs?.wrapLongValues ? 'wrap' : 'truncate'}
                   hasHover
                   plugins={{ activation }}
                 />

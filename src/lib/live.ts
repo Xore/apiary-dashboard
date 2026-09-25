@@ -23,16 +23,20 @@ function set(next: Partial<LiveState>) {
 }
 
 let restored = false
-function restorePaused() {
+function restorePaused(autoRefresh = true) {
   if (restored || typeof window === 'undefined') return
   restored = true
+  let stored: string | null = null
   try {
-    if (localStorage.getItem(PAUSED_KEY) === '1') {
-      set({ paused: true })
-      syncStream()
-    }
+    stored = localStorage.getItem(PAUSED_KEY)
   } catch {
-    /* storage unavailable: live by default */
+    /* storage unavailable: the preference decides */
+  }
+  // The badge's own last choice wins; without one, "refresh automatically"
+  // off means starting paused.
+  if (stored === '1' || (stored === null && !autoRefresh)) {
+    set({ paused: true })
+    syncStream()
   }
 }
 
@@ -89,8 +93,8 @@ export function useLiveEvents(handler: Handler) {
 
 const serverSnapshot: LiveState = { paused: false, connectionHealthy: true }
 
-export function useLiveState(): LiveState {
-  useEffect(restorePaused, [])
+export function useLiveState(autoRefresh?: boolean): LiveState {
+  useEffect(() => restorePaused(autoRefresh), [autoRefresh])
   return useSyncExternalStore(
     (listener) => {
       listeners.add(listener)

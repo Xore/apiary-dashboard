@@ -22,6 +22,8 @@ import { EntityLink } from '#/components/EntityLink'
 import { FilterSelect } from '#/components/FilterSelect'
 import { useLiveRefresh } from '#/lib/live'
 import { useShellConfig } from '#/lib/session'
+import { ZoneHeader } from '#/components/ZoneHeader'
+import { usePreferences } from '#/lib/prefs'
 
 const THREAT_SECTIONS = [
   { id: 'who', label: 'Who', icon: UserGroupIcon },
@@ -64,7 +66,7 @@ const ipLink = (ip: string) => `/sources/${ip}`
 // ---- Live operations ---------------------------------------------------------
 
 const eventColumns: TableColumn<HoneypotEvent>[] = [
-  { key: 'timestamp', header: 'Time (UTC)', width: pixel(96), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
+  { key: 'timestamp', header: <ZoneHeader label="Time" />, width: pixel(128), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
   { key: 'severity', header: 'Severity', width: pixel(96), renderCell: (row) => <SeverityToken severity={row.severity} /> },
   { key: 'sensor', header: 'Sensor', width: pixel(140) },
   { key: 'srcIp', header: 'Source', width: pixel(150), renderCell: (row) => <HStack gap={1.5} vAlign="center"><Link href={ipLink(row.srcIp)}>{row.srcIp}</Link><Text type="supporting">{row.country}</Text></HStack> },
@@ -297,8 +299,8 @@ function EvidenceView({ views }: { views: OverviewViews }) {
 function OverviewPage() {
   const { overview, views } = Route.useLoaderData()
   const { view = 'live', section } = Route.useSearch()
-  // The numbers follow the live stream, not more often than every 10 s.
-  useLiveRefresh(10_000)
+  // The numbers follow the live stream, at most every refresh interval.
+  useLiveRefresh((usePreferences()?.refreshSeconds ?? 10) * 1000)
   return (
     <PageFrame title="Overview" description={`Last 24 hours · generated ${formatDateTime(overview.generatedAt)}`}>
       <VStack gap={5}>

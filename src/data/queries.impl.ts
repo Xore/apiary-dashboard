@@ -1091,6 +1091,15 @@ function audit(action: string, fields: string[], result: 'ok' | 'rejected' = 'ok
 }
 
 /** Mock write: stages an admin config section and records a revision. */
+/** The operator's own preferences, which every page renders with. */
+export async function getPreferences(): Promise<Preferences> {
+  await mockDelay({ canFail: false })
+  return { ...PREFERENCES }
+}
+
+/** The mock's "now": what relative timestamps count back from. */
+export const mockNow = () => MOCK_NOW
+
 /** The configuration the shell renders with on every page. */
 export async function getShellConfig(): Promise<ShellConfig> {
   await mockDelay({ canFail: false })
