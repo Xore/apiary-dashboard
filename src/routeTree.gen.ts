@@ -22,6 +22,9 @@ import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutSourceHealthRouteImport } from './routes/_layout/source-health'
 import { Route as LayoutTopologyRouteImport } from './routes/_layout/topology'
 import { Route as LayoutWatchlistRouteImport } from './routes/_layout/watchlist'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AuthLoginRouteImport } from './routes/auth.login'
+import { Route as AuthLogoutRouteImport } from './routes/auth.logout'
 import { Route as LayoutAgentCampaignsIndexRouteImport } from './routes/_layout/agent-campaigns.index'
 import { Route as LayoutAgentCampaignsIdRouteImport } from './routes/_layout/agent-campaigns.$id'
 import { Route as LayoutAlertsIndexRouteImport } from './routes/_layout/alerts.index'
@@ -244,6 +247,21 @@ const LayoutWatchlistRoute = LayoutWatchlistRouteImport.update({
   id: '/watchlist',
   path: '/watchlist',
   getParentRoute: () => LayoutRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLogoutRoute = AuthLogoutRouteImport.update({
+  id: '/auth/logout',
+  path: '/auth/logout',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutAgentCampaignsIndexRoute =
   LayoutAgentCampaignsIndexRouteImport.update({
@@ -1120,6 +1138,9 @@ export interface FileRoutesByFullPath {
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
   '/watchlist': typeof LayoutWatchlistRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/logout': typeof AuthLogoutRoute
   '/agent-campaigns/$id': typeof LayoutAgentCampaignsIdRouteWithChildren
   '/alerts/$key': typeof LayoutAlertsKeyRouteWithChildren
   '/asn/$asn': typeof LayoutAsnAsnRouteWithChildren
@@ -1291,6 +1312,9 @@ export interface FileRoutesByTo {
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
   '/watchlist': typeof LayoutWatchlistRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/logout': typeof AuthLogoutRoute
   '/': typeof LayoutIndexRoute
   '/auth-events/$id': typeof LayoutAuthEventsIdRoute
   '/canarytokens/$id': typeof LayoutCanarytokensIdRoute
@@ -1449,6 +1473,9 @@ export interface FileRoutesById {
   '/_layout/source-health': typeof LayoutSourceHealthRoute
   '/_layout/topology': typeof LayoutTopologyRoute
   '/_layout/watchlist': typeof LayoutWatchlistRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/logout': typeof AuthLogoutRoute
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/agent-campaigns/$id': typeof LayoutAgentCampaignsIdRouteWithChildren
   '/_layout/alerts/$key': typeof LayoutAlertsKeyRouteWithChildren
@@ -1624,6 +1651,9 @@ export interface FileRouteTypes {
     | '/source-health'
     | '/topology'
     | '/watchlist'
+    | '/auth/callback'
+    | '/auth/login'
+    | '/auth/logout'
     | '/agent-campaigns/$id'
     | '/alerts/$key'
     | '/asn/$asn'
@@ -1795,6 +1825,9 @@ export interface FileRouteTypes {
     | '/source-health'
     | '/topology'
     | '/watchlist'
+    | '/auth/callback'
+    | '/auth/login'
+    | '/auth/logout'
     | '/'
     | '/auth-events/$id'
     | '/canarytokens/$id'
@@ -1952,6 +1985,9 @@ export interface FileRouteTypes {
     | '/_layout/source-health'
     | '/_layout/topology'
     | '/_layout/watchlist'
+    | '/auth/callback'
+    | '/auth/login'
+    | '/auth/logout'
     | '/_layout/'
     | '/_layout/agent-campaigns/$id'
     | '/_layout/alerts/$key'
@@ -2115,6 +2151,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthLogoutRoute: typeof AuthLogoutRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2209,6 +2248,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/watchlist'
       preLoaderRoute: typeof LayoutWatchlistRouteImport
       parentRoute: typeof LayoutRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/logout': {
+      id: '/auth/logout'
+      path: '/auth/logout'
+      fullPath: '/auth/logout'
+      preLoaderRoute: typeof AuthLogoutRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_layout/agent-campaigns/': {
       id: '/_layout/agent-campaigns/'
@@ -3828,6 +3888,9 @@ const LayoutRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
+  AuthCallbackRoute: AuthCallbackRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthLogoutRoute: AuthLogoutRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

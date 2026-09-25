@@ -5,7 +5,7 @@ import { Icon } from '@astryxdesign/core/Icon'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { ArrowRightEndOnRectangleIcon, ClockIcon, ExclamationTriangleIcon, LockClosedIcon, SignalSlashIcon } from '@heroicons/react/24/outline'
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useLocation, useNavigate, useRouter } from '@tanstack/react-router'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 import type { ComponentType, SVGProps } from 'react'
 import { asApiError } from '#/data/errors'
@@ -32,8 +32,9 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
   const api = asApiError(error)
   const reading = READING[api?.kind ?? 'unknown']
   if (!api) console.error('Route error:', error)
-  // Mock sign-in: signing in again means leaving the expired-session scenario.
-  const signIn = () => void navigate({ to: '.', search: (prev: Record<string, unknown>) => ({ ...prev, mock: undefined }) })
+  // Through sign-in and back to this page.
+  const href = useLocation({ select: (l) => l.href })
+  const signIn = () => void navigate({ to: '/auth/login', search: { return_to: href } })
   return (
     <PageFrame title={reading.title}>
       <VStack gap={4}>
