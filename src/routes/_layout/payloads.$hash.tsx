@@ -2,6 +2,8 @@ import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { VERDICT_COLOR } from '#/components/analyzers/PayloadBlocks'
 import { EntityFrame } from '#/components/EntityFrame'
+import { OpenInMenu } from '#/components/OpenInMenu'
+import { virusTotalLink } from '#/lib/toolLinks'
 import { entityTabs } from '#/components/ViewTabs'
 import type { ViewTab } from '#/components/ViewTabs'
 import { NotFound } from '#/components/NotFound'
@@ -40,6 +42,7 @@ function PayloadLayout() {
       title={`${p.hash.slice(0, 16)}…`}
       description={`${a.fileType} · ${p.platform}`}
       basePath={`/payloads/${p.hash}`}
+      actions={<OpenInMenu links={[virusTotalLink(p.hash)]} />}
       tokens={
         <>
           {p.verdict && <Token size="sm" color={VERDICT_COLOR[p.verdict.label]} label={p.verdict.label} />}

@@ -252,6 +252,7 @@ export const CANARY_TRIGGERS: CanaryTrigger[] = (() => {
       srcIp: pick(rng, SOURCES).ip,
       userAgent: pick(rng, ['aws-cli/2.15.0 Python/3.11', 'curl/8.4.0', 'Microsoft Office Word 2016', 'kubectl/v1.29.1', 'python-requests/2.31']),
       location: pick(rng, ['Beijing, CN', 'Moscow, RU', 'Amsterdam, NL', 'São Paulo, BR']),
+      manageUrl: `https://canarytokens.example.test/manage?token=${token.id}`,
     }
   })
 })()

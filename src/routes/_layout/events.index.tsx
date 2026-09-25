@@ -20,6 +20,9 @@ import { formatClock, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { useLiveRefresh } from '#/lib/live'
 import { ZoneHeader } from '#/components/ZoneHeader'
+import { OpenInMenu } from '#/components/OpenInMenu'
+import { useShellConfig } from '#/lib/session'
+import { eventToolLinks } from '#/lib/toolLinks'
 
 const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http', 'protocol', 'alert']
 const SINCE = ['1h', '6h', '24h']
@@ -101,7 +104,12 @@ const columns: TableColumn<HoneypotEvent>[] = [
   },
   { key: 'dstPort', header: 'Port', width: pixel(96), renderCell: (row) => `${row.dstPort}/${row.protocol}` },
   { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <Text type="code">{row.summary}</Text> },
+  { key: 'openIn', header: '', width: pixel(56), renderCell: (row) => <EventOpenIn event={row} /> },
 ]
+
+function EventOpenIn({ event }: { event: HoneypotEvent }) {
+  return <OpenInMenu compact links={eventToolLinks(event, useShellConfig().links)} />
+}
 
 
 function EventsPage() {

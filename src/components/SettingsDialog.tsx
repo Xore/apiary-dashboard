@@ -40,7 +40,8 @@ import type { AuditEntry, ConfigProblems, ConfigRevision, ConfigSection, Dashboa
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { NAV_SECTIONS } from '#/lib/nav'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { ADMIN_REQUIRED, useIsAdmin, useShellConfig } from '#/lib/session'
+import { accountLinks } from '#/lib/toolLinks'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 
 export type { PaneId } from './settings/registry'
@@ -130,15 +131,31 @@ function useStagedForm<TSection extends ConfigSection>(panel: PaneId, section: T
 
 // ---- Personal panels (apply as they change) --------------------------------------
 
+/** One of the identity provider's own pages: opened in a new tab, never embedded. */
+const external = (href: string, label = 'Open') => <Button label={label} variant="secondary" size="sm" href={href} target="_blank" rel="noopener noreferrer" />
+
 function AccountPanel() {
-  const { data } = useSettings()
+  const { data, openPage } = useSettings()
+  const account = accountLinks(useShellConfig().links.accountConsole)
   return (
-    <SettingsCard title="Identity">
-      <SettingsRow setting="name" control={<Text>{data.user.name}</Text>} />
-      <SettingsRow setting="email" control={<Text>{data.user.email}</Text>} />
-      <SettingsRow setting="roles" control={<HStack gap={1}>{data.user.roles.map((role) => <Token key={role} size="sm" label={role} />)}</HStack>} />
-      <SettingsRow setting="session" control={<Text type="supporting">OIDC provider (mock)</Text>} />
-    </SettingsCard>
+    <>
+      <SettingsCard title="Identity">
+        <SettingsRow setting="name" control={<Text>{data.user.name}</Text>} />
+        <SettingsRow setting="email" control={<Text>{data.user.email}</Text>} />
+        <SettingsRow setting="roles" control={<HStack gap={1}>{data.user.roles.map((role) => <Token key={role} size="sm" label={role} />)}</HStack>} />
+        <SettingsRow setting="session" control={<Text type="supporting">OIDC provider (mock)</Text>} />
+        <SettingsRow setting="signOut" control={<Button label="Sign out" variant="secondary" size="sm" onClick={() => openPage('/auth/logout')} />} />
+      </SettingsCard>
+      {account && (
+        // Credentials live with the identity provider, never here.
+        <SettingsCard title="Managed by the identity provider, in a new tab">
+          <SettingsRow setting="accountProfile" control={external(account.profile)} />
+          <SettingsRow setting="accountSecurity" control={external(account.security)} />
+          <SettingsRow setting="accountSessions" control={external(account.sessions)} />
+          <SettingsRow setting="accountConsole" control={external(account.manageAccount, 'Manage account')} />
+        </SettingsCard>
+      )}
+    </>
   )
 }
 

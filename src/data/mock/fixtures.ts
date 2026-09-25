@@ -146,6 +146,23 @@ function pivotsOf(fields: SensorFields): Pick<HoneypotEvent, 'fingerprint' | 'fi
 
 /** One event from a sensor's generator, with the decoy identity and the
  * pivots the pipeline adds. The live stream builds its events here too. */
+/** Sensors no flow sensor sees: a canarytoken calls back from wherever it
+ * was opened, not through the bridge in front of the honeypots. */
+const UNBRIDGED = new Set(['canarytokens'])
+
+/** A Community ID v1 in shape (`1:` and a base64 SHA-1), derived from the
+ * flow so every event of one connection carries the same one. */
+function communityIdOf(srcIp: string, srcPort: number, dstPort: number, protocol: string): string {
+  const flow = `${srcIp}:${srcPort}>${dstPort}/${protocol}`
+  const bytes: number[] = []
+  for (let seed = 0; bytes.length < 20; seed++) {
+    let hash = 0x811c9dc5 ^ seed
+    for (const c of flow) hash = Math.imul(hash ^ c.charCodeAt(0), 0x01000193)
+    bytes.push(hash & 0xff, (hash >>> 8) & 0xff, (hash >>> 16) & 0xff, (hash >>> 24) & 0xff)
+  }
+  return `1:${btoa(String.fromCharCode(...bytes))}`
+}
+
 export function eventFrom(spec: SensorSpec, source: AttackSource, sessionId: string, timestamp: string, rng: Rng, decoy: Rng): HoneypotEvent {
   const { type, severity, protocol, dstPort, eventName, summary, fields: own, username, password, command } = spec.generate(rng, sessionId)
   // The decoy identity rides along in the sensor's own fields, as the
@@ -153,16 +170,19 @@ export function eventFrom(spec: SensorSpec, source: AttackSource, sessionId: str
   const persona = spec.persona && decoy() < (spec.persona.share ?? 1) ? spec.persona : undefined
   const asset = persona ? (persona.assetFor?.(own) ?? persona.assets[0]) : undefined
   const fields: SensorFields = persona && asset ? { ...own, persona_id: persona.id, site_id: persona.site, asset_id: asset, organization: persona.organization } : own
+  const id = `evt-${hex(rng, 10)}`
+  const srcPort = int(rng, 1024, 65535)
   return {
-    id: `evt-${hex(rng, 10)}`,
+    id,
     timestamp,
     sensor: spec.id,
     protocol,
     type,
     severity,
     srcIp: source.ip,
-    srcPort: int(rng, 1024, 65535),
+    srcPort,
     dstPort,
+    ...(UNBRIDGED.has(spec.id) ? {} : { communityId: communityIdOf(source.ip, srcPort, dstPort, protocol) }),
     country: source.country,
     asn: source.asn,
     sessionId,

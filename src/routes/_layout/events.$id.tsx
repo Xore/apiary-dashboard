@@ -8,6 +8,9 @@ import { SeverityToken } from '#/components/SeverityToken'
 import { getEventDetail } from '#/data/queries'
 import { formatDateTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
+import { OpenInMenu } from '#/components/OpenInMenu'
+import { useShellConfig } from '#/lib/session'
+import { eventToolLinks, virusTotalLink } from '#/lib/toolLinks'
 
 export const Route = createFileRoute('/_layout/events/$id')({
   staticData: { viewTabs: entityTabs({ label: 'Event views', basePath: (params) => `/events/${encodeURIComponent(params.id)}`, tabs: tabsFor }) },
@@ -21,13 +24,15 @@ export const Route = createFileRoute('/_layout/events/$id')({
 })
 
 function EventLayout() {
-  const { event } = Route.useLoaderData()
+  const { event, hashes } = Route.useLoaderData()
+  const links = useShellConfig().links
 
   return (
     <EntityFrame
       kind="Event"
       title={event.summary}
       basePath={`/events/${encodeURIComponent(event.id)}`}
+      actions={<OpenInMenu links={[...eventToolLinks(event, links), ...hashes.slice(0, 1).map((h) => virusTotalLink(h))]} />}
       tokens={
         <>
           <SeverityToken severity={event.severity} />
