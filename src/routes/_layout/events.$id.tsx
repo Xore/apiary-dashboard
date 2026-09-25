@@ -1,4 +1,5 @@
 import { Token } from '@astryxdesign/core/Token'
+import { RecordingDownloads } from '#/components/RecordingDownloads'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { NotFound } from '#/components/NotFound'
 import { EntityFrame } from '#/components/EntityFrame'
@@ -24,7 +25,7 @@ export const Route = createFileRoute('/_layout/events/$id')({
 })
 
 function EventLayout() {
-  const { event, hashes } = Route.useLoaderData()
+  const { event, hashes, recordingShasum } = Route.useLoaderData()
   const links = useShellConfig().links
 
   return (
@@ -32,7 +33,12 @@ function EventLayout() {
       kind="Event"
       title={event.summary}
       basePath={`/events/${encodeURIComponent(event.id)}`}
-      actions={<OpenInMenu links={[...eventToolLinks(event, links), ...hashes.slice(0, 1).map((h) => virusTotalLink(h))]} />}
+      actions={
+        <>
+          {recordingShasum && <RecordingDownloads shasum={recordingShasum} />}
+          <OpenInMenu links={[...eventToolLinks(event, links), ...hashes.slice(0, 1).map((h) => virusTotalLink(h))]} />
+        </>
+      }
       tokens={
         <>
           <SeverityToken severity={event.severity} />

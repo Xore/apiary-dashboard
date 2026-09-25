@@ -6,7 +6,7 @@ import { Panel } from '#/components/DashboardBlocks'
 import { EntityFrame } from '#/components/EntityFrame'
 import { NotFound } from '#/components/NotFound'
 import { getReports } from '#/data/queries'
-import { apiHref } from '#/lib/apiHref'
+import { reportPdfHref } from '#/lib/reportPdf'
 import { formatDateTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/reports/generated/$id')({
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/_layout/reports/generated/$id')({
 
 function GeneratedReportPage() {
   const { report: r, definition, template } = Route.useLoaderData()
-  const pdf = apiHref(`/api/report/${encodeURIComponent(r.id)}/pdf`)
+  const pdf = reportPdfHref(r, definition)
   return (
     <EntityFrame
       kind="Generated report"

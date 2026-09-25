@@ -30,6 +30,8 @@ import type { EventFilters, ReportDefinition } from './types'
 import { toCsv } from '#/lib/export'
 import { formatNumber } from '#/lib/format'
 import { buildPdf } from '#/lib/pdf'
+import { fromBase64Url, payloadOfReport } from '#/lib/reportPdf'
+import type { ReportSpec } from '#/lib/reportPdf'
 import type { PdfLine } from '#/lib/pdf'
 
 const HASH = /^[0-9a-fA-F]{32,64}$/
@@ -132,12 +134,52 @@ export const recordingFile = (shasum: string, format: string) => async () => {
 
 // ---- Reports ---------------------------------------------------------------
 
-export const reportPdf = (id: string) => async () => {
+/** A payload's own report: what the sample is, and what each analysis found. */
+async function payloadReportPdf(hash: string): Promise<Response> {
+  const a = await getPayloadAnalysis(hash)
+  if (!a) return text(404, 'report unavailable')
+  const p = a.payload
+  const title = `Payload report ${p.hash.slice(0, 12)}`
+  const lines: PdfLine[] = [
+    { text: 'TLP:AMBER', size: 9, bold: true },
+    { text: title, size: 22, bold: true, gap: 8 },
+    { text: `${a.fileType} - ${p.platform}`, size: 10 },
+    { text: `Verdict: ${p.verdict ? `${p.verdict.label}${p.verdict.family ? ` (${p.verdict.family})` : ''}` : 'none yet'} - static risk ${a.staticRisk}/100`, size: 11, gap: 6 },
+    { text: 'Hashes', size: 14, bold: true, gap: 12 },
+    ...Object.entries(a.hashes).map(([k, v]) => ({ text: `${k}  |  ${v}`, size: 9 })),
+    { text: 'Capture', size: 14, bold: true, gap: 12 },
+    { text: `First captured ${p.capturedAt.slice(0, 16).replace('T', ' ')} UTC, ${formatNumber(p.copies)} copies, ${formatNumber(p.sizeBytes)} bytes, from ${p.sources.join(', ')}`, size: 9 },
+    { text: 'YARA', size: 14, bold: true, gap: 12 },
+    ...(a.yara.length ? a.yara.map((rule) => ({ text: rule, size: 9 })) : [{ text: 'No rule matched.', size: 9 }]),
+    { text: 'Indicators', size: 14, bold: true, gap: 12 },
+    ...(a.iocs.length ? a.iocs.slice(0, 30).map((ioc) => ({ text: `${ioc.kind}  |  ${ioc.value}`, size: 9 })) : [{ text: 'None extracted.', size: 9 }]),
+    { text: 'Analyses', size: 14, bold: true, gap: 12 },
+    { text: `Sandbox: ${a.sandbox ? `${a.sandbox.verdict}, risk ${a.sandbox.risk}` : 'not detonated'}`, size: 9 },
+    { text: `Ghidra: ${a.ghidra ? 'decompiled' : 'not decompiled'}`, size: 9 },
+    { text: `GitHub: ${a.github ? `${a.github.status}, ${a.github.detections}/${a.github.engines} engines` : 'not published'}`, size: 9 },
+    { text: 'Mock document: the real payload report adds the analyses in full.', size: 8, gap: 16 },
+  ]
+  return file(buildPdf(lines, title), 'application/pdf', `${title}.pdf`, 'inline')
+}
+
+export const reportPdf = (id: string) => async (search: URLSearchParams) => {
+  const payload = payloadOfReport(id)
+  if (payload) return payloadReportPdf(payload)
   const data = await getReports()
-  const report = data.generated.find((g) => g.id === id)
+  // The server's own record first; a report made in another browser tab's
+  // mock state is described by the link instead.
+  const known = data.generated.find((g) => g.id === id)
+  let spec: ReportSpec | undefined
+  try {
+    const raw = search.get('spec')
+    spec = raw ? (JSON.parse(fromBase64Url(raw)) as ReportSpec) : undefined
+  } catch {
+    spec = undefined
+  }
+  const report = known ?? (spec ? { id, title: spec.title, template: spec.template, createdAt: spec.createdAt, definitionId: spec.definition?.id ?? '' } : undefined)
   if (!report) return text(404, 'report unavailable')
   const template = data.templates.find((t) => t.id === report.template)
-  const saved = data.definitions.find((d) => d.id === report.definitionId)
+  const saved = data.definitions.find((d) => d.id === report.definitionId) ?? (known ? undefined : spec?.definition)
   // A one-off report kept no definition: it covered its template's sections.
   const definition: ReportDefinition = saved ?? {
     id: report.id,

@@ -733,6 +733,24 @@ export async function previewReport(definition: ReportDefinition): Promise<Repor
 
 /** Generates a PDF from a draft, saving the draft as a reusable definition
  * first when asked to (a one-off report keeps no definition). */
+/** One sample's own PDF report; it joins the report history like any other. */
+export async function generatePayloadReport(hash: string): Promise<GeneratedReport | null> {
+  await mockDelay()
+  const payload = findPayload(hash)
+  if (!payload) return null
+  const report: GeneratedReport = {
+    id: `rpt-payload-${payload.hash}-${Date.now().toString(36)}`,
+    title: `Payload report ${payload.hash.slice(0, 12)}`,
+    template: 'payload',
+    origin: 'manual',
+    createdAt: new Date(MOCK_NOW).toISOString(),
+    sizeBytes: 96 * 1024,
+    definitionId: '',
+  }
+  GENERATED_REPORTS.unshift(report)
+  return report
+}
+
 export async function generateReportFrom(definition: ReportDefinition, keep: boolean): Promise<{ report: GeneratedReport; definition?: ReportDefinition }> {
   await mockDelay()
   const saved = keep ? await saveReportDefinition(definition) : undefined
@@ -891,6 +909,7 @@ export async function getEventDetail(id: string): Promise<EventDetail | null> {
     connection: EVENTS.filter((e) => e.srcIp === event.srcIp && e.sensor === event.sensor && e.dstPort === event.dstPort && e.id !== id).slice(0, 10),
     source: EVENTS.filter((e) => e.srcIp === event.srcIp && e.sessionId !== event.sessionId).slice(0, 25),
     hashes: [DOWNLOAD_HASH.get(event.id)].filter((h): h is string => h !== undefined),
+    recordingShasum: RECORDINGS.find((r) => r.session === event.sessionId)?.shasum,
     reading: readingOf(event.sensor),
   }
 }

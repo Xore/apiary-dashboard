@@ -3,6 +3,7 @@
 // contains and calls), data (what it references), deep dive (what a
 // reverse-engineering session recovered), and raw. Nothing here executes the
 // sample; names and strings from it are shown as text only.
+import { apiHref } from '#/lib/apiHref'
 import { ArtifactList } from './ArtifactList'
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
@@ -203,7 +204,7 @@ function Code({ g, fn, onSelect }: { g: GhidraAnalysis; fn?: string; onSelect: (
   const selected = g.functions.find((f) => f.name === fn)
   return (
     <VStack gap={4}>
-      <Panel title="Call graph">
+      <Panel title="Call graph" action={<Button label="SVG" size="sm" variant="ghost" tooltip="The graph as a standalone file, no script" href={apiHref(`/api/artifact/ghidra/${g.hash}/call-graph.svg`)} />}>
         <CallGraph functions={g.functions} selected={selected?.name} onSelect={(name) => onSelect(name === selected?.name ? undefined : name)} />
       </Panel>
       <Grid columns={{ minWidth: 380, repeat: 'fit' }} gap={4}>

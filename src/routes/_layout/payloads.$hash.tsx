@@ -3,6 +3,7 @@ import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { VERDICT_COLOR } from '#/components/analyzers/PayloadBlocks'
 import { EntityFrame } from '#/components/EntityFrame'
 import { OpenInMenu } from '#/components/OpenInMenu'
+import { PayloadReportButton } from '#/components/analyzers/PayloadReportButton'
 import { virusTotalLink } from '#/lib/toolLinks'
 import { apiHref } from '#/lib/apiHref'
 import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
@@ -59,6 +60,7 @@ function PayloadLayout() {
             tooltip={isAdmin ? 'Live malware: the captured bytes, unchanged' : ADMIN_REQUIRED}
             href={apiHref(`/api/payload/${p.hash}/download`)}
           />
+          <PayloadReportButton hash={p.hash} />
           <OpenInMenu links={[virusTotalLink(p.hash)]} />
         </>
       }

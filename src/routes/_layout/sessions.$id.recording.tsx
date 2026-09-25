@@ -1,4 +1,6 @@
 import { Link } from '@astryxdesign/core/Link'
+import { HStack } from '@astryxdesign/core/Stack'
+import { RecordingDownloads } from '#/components/RecordingDownloads'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
@@ -28,7 +30,10 @@ function SessionRecording() {
     <Panel
       title="Terminal recording"
       action={
-        <Link href={`/recordings/${recording.shasum}`}>Open recording</Link>
+        <HStack gap={3} vAlign="center">
+          <RecordingDownloads shasum={recording.shasum} />
+          <Link href={`/recordings/${recording.shasum}`}>Open recording</Link>
+        </HStack>
       }
     >
       <Player replay={recording.detail.replay} />

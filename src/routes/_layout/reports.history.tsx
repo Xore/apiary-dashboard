@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { reportPdfHref } from '#/lib/reportPdf'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Button } from '@astryxdesign/core/Button'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -48,7 +49,17 @@ function HistoryPage() {
     { key: 'definitionId', header: 'From', width: proportional(1), renderCell: (row) => <Text type="supporting">{definitionName(row.definitionId) ?? (row.definitionId ? 'deleted definition' : 'one-off')}</Text> },
     { key: 'origin', header: 'Origin', width: pixel(96), renderCell: (row) => <Token size="sm" label={row.origin} color={row.origin === 'schedule' ? 'blue' : 'gray'} /> },
     { key: 'sizeBytes', header: 'Size', width: pixel(80), align: 'end', renderCell: (row) => `${Math.round(row.sizeBytes / 1024)} KB` },
-    { key: 'id', header: '', width: pixel(96), renderCell: (row) => <Button label="Delete" size="sm" variant="ghost" onClick={() => setConfirm(row)} /> },
+    {
+      key: 'id',
+      header: '',
+      width: pixel(160),
+      renderCell: (row) => (
+        <HStack gap={1}>
+          <Button label="PDF" size="sm" variant="ghost" tooltip="Open the PDF in a new tab" href={reportPdfHref(row, data.definitions.find((d) => d.id === row.definitionId))} target="_blank" rel="noopener noreferrer" />
+          <Button label="Delete" size="sm" variant="ghost" onClick={() => setConfirm(row)} />
+        </HStack>
+      ),
+    },
   ]
 
   return (
