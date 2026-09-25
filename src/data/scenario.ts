@@ -8,13 +8,15 @@
 // single designer and wrong for anything shared: this is a mock-only seam.
 import { ApiError } from './errors'
 import { CONFIG } from './mock/details'
+import { enlarged, originalArgs } from './mock/large'
 import type { SessionUser } from './types'
 
-export type MockScenario = 'normal' | 'empty' | 'slow' | 'partial' | 'unavailable' | 'overloaded' | 'expired' | 'viewer'
+export type MockScenario = 'normal' | 'empty' | 'large' | 'slow' | 'partial' | 'unavailable' | 'overloaded' | 'expired' | 'viewer'
 
 export const SCENARIOS: Array<{ id: MockScenario; label: string; description: string }> = [
   { id: 'normal', label: 'Normal', description: 'Seeded mock data, every call succeeds.' },
   { id: 'empty', label: 'Empty', description: 'A backend with no data yet: every list empty, every count zero.' },
+  { id: 'large', label: 'Large volumes', description: 'A busy deployment: six-digit counts, long lists, long values.' },
   { id: 'slow', label: 'Slow', description: 'Every call takes 2.5 s: loading states.' },
   { id: 'partial', label: 'Partly failing', description: 'About a third of the calls fail; the rest succeed.' },
   { id: 'unavailable', label: 'Backend down', description: 'Every call fails with 502.' },
@@ -133,6 +135,7 @@ function runScenario<TArgs extends unknown[], TResult>(name: string, query: (...
     if (scenario === 'expired') throw new ApiError('expired', name)
     if (scenario === 'viewer' && ADMIN_WRITES.has(name)) throw new ApiError('forbidden', name)
     if (!isRead(name) && !READ_ONLY_EXEMPT.has(name) && readOnly()) throw new ApiError('locked', name)
+    if (scenario === 'large' && isRead(name)) return enlarged(await query(...(originalArgs(args) as TArgs)))
     const result = await query(...args)
     return scenario === 'empty' && isRead(name) ? emptied(result, KEEP_WHEN_EMPTY[name], ZERO_ITEMS[name]) : result
   }
