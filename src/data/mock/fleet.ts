@@ -1033,9 +1033,9 @@ export const FLEET: SensorSpec[] = [
     lastSeenMinutes: 40,
     columns: [
       { header: 'event', field: 'event', mono: true },
-      { header: 'command', field: 'command', mono: true },
+      { header: 'command or message', field: ['command', 'body_preview'], mono: true },
     ],
-    artefacts: [{ label: 'SMTP exchange', field: 'command' }],
+    artefacts: [{ label: 'SMTP exchange', field: ['command', 'body_preview'] }],
     tops: [
       { label: 'senders', field: 'mail_from' },
       { label: 'recipients', field: 'rcpt_to' },
@@ -1048,7 +1048,7 @@ export const FLEET: SensorSpec[] = [
       const from = pick(rng, ['spameri@example.test', 'info@example.test', 'noreply@example.test'])
       const to = pick(rng, ['receiver@example.test', 'test@example.test'])
       const session_id = String(int(rng, 1000, 9999))
-      if (rng() < 0.7) return { type: 'protocol.request', severity: 'low', protocol: 'smtp', dstPort: 25, eventName: 'envelope', summary: `MAIL FROM:<${from}> RCPT TO:<${to}>`, fields: { event: 'envelope', session_id, server_name: 'mail01.example.test', command: `mail from:<${from}>\r\nrcpt to:<${to}>`, mail_from: from, rcpt_to: to, dst_port: 25 } }
+      if (rng() < 0.55) return { type: 'protocol.request', severity: 'low', protocol: 'smtp', dstPort: 25, eventName: 'envelope', summary: `MAIL FROM:<${from}> RCPT TO:<${to}>`, fields: { event: 'envelope', session_id, server_name: 'mail01.example.test', command: `mail from:<${from}>\r\nrcpt to:<${to}>`, mail_from: from, rcpt_to: to, dst_port: 25 } }
       return { type: 'protocol.request', severity: 'medium', protocol: 'smtp', dstPort: 25, eventName: 'mail-body', summary: `Message from ${from} (${int(rng, 1, 40)} KB)`, fields: { event: 'mail-body', session_id, server_name: 'mail01.example.test', mail_from: from, rcpt_to: to, body_preview: 'Subject: relay test\r\n\r\nThis is a relay test from 198.51.100.77.', dst_port: 25 } }
     },
   },

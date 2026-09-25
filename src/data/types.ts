@@ -832,6 +832,30 @@ export interface ProblemReport extends Record<string, unknown> {
   hasSnapshot: boolean
 }
 
+/** A message a mail sensor captured. The body is kept as plain text only
+ * (an HTML body is decoded, never rendered) and attachments as metadata
+ * only, so the viewer can be neither a script sink nor a malware source. */
+export interface CapturedMail {
+  sessionId: string
+  sizeBytes: number
+  importedAt: string
+  from: MailAddress | null
+  to: MailAddress[]
+  subject: string
+  /** The Date header, as sent. */
+  date: string
+  messageId: string
+  bodyText: string
+  /** True when the message had only an HTML part, decoded to text here. */
+  fromHtml: boolean
+  attachments: Array<{ filename: string; contentType: string; sizeBytes: number; sha256: string }>
+}
+
+export interface MailAddress {
+  name: string
+  address: string
+}
+
 /** Per-operator preferences, as the preference store keeps them. */
 export interface Preferences {
   theme: 'system' | 'dark' | 'light'

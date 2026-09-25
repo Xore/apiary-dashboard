@@ -138,12 +138,14 @@ import type {
   IocRow,
   TimelineEntity,
   RelatedGroup,
+  CapturedMail,
   ConfigProblems,
   ConfigSection,
   DashboardConfig,
 } from './types'
 import { validateSection } from './mock/config'
 import { withIncidents } from './mock/incidents'
+import { mailFor } from './mock/mail'
 
 const HOUR = 3_600_000
 
@@ -1004,6 +1006,13 @@ export async function purgeDeadLetters(ids: string[]): Promise<number> {
 export async function getProblemReports(): Promise<ProblemReport[]> {
   await mockDelay()
   return PROBLEM_REPORTS.map((r) => ({ ...r }))
+}
+
+/** The message a mail-sensor session captured, or null when only the
+ * envelope was (an answer about the session, not a failure). */
+export async function getMail(sessionId: string): Promise<CapturedMail | null> {
+  await mockDelay()
+  return mailFor(sessionId, EVENTS)
 }
 
 /** What the report-a-problem capture sends. */

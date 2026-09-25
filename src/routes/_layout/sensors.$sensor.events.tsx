@@ -1,9 +1,12 @@
+import { Divider } from '@astryxdesign/core/Divider'
 import { Link } from '@astryxdesign/core/Link'
+import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
+import { CapturedMailInline } from '#/components/CapturedMail'
 import { Panel } from '#/components/DashboardBlocks'
 import { EntityLink } from '#/components/EntityLink'
 import type { HoneypotEvent, SensorReading } from '#/data/types'
@@ -57,9 +60,37 @@ function SensorEvents() {
   const { detail } = parent.useLoaderData()
   const { sensor, reading } = detail
   return (
-    <Panel title="What it captured" action={<Link href={`/events?sensor=${sensor.id}`}>All events</Link>}>
-      <Text type="supporting">{reading.what}. The newest events, with this sensor's own fields; open a row for the full record.</Text>
-      <Table data={detail.recentEvents} columns={columnsFor(reading)} idKey="id" density="compact" textOverflow="truncate" />
+    <VStack gap={4}>
+      <Panel title="What it captured" action={<Link href={`/events?sensor=${sensor.id}`}>All events</Link>}>
+        <Text type="supporting">{reading.what}. The newest events, with this sensor's own fields; open a row for the full record.</Text>
+        <Table data={detail.recentEvents} columns={columnsFor(reading)} idKey="id" density="compact" textOverflow="truncate" />
+      </Panel>
+      {sensor.id === 'mailoney' && <MailSessions events={detail.recentEvents} />}
+    </VStack>
+  )
+}
+
+/** A mail sensor's point: the messages, one session each, opened on demand. */
+function MailSessions({ events }: { events: HoneypotEvent[] }) {
+  const sessions = [...new Map(events.map((e) => [e.sessionId, e])).values()]
+  return (
+    <Panel title="Messages">
+      <Text type="supporting">One per session. A session that stopped after the envelope has no body to show.</Text>
+      <VStack gap={4}>
+        {sessions.map((e, i) => (
+          <VStack key={e.sessionId} gap={2}>
+            {i > 0 && <Divider />}
+            <HStack gap={2} vAlign="center" wrap="wrap">
+              <Text type="supporting">{formatClock(e.timestamp)}</Text>
+              <EntityLink kind="source" id={e.srcIp} />
+              <Text type="code">{`${String(e.fields.mail_from ?? '?')} → ${String(e.fields.rcpt_to ?? '?')}`}</Text>
+              <StackItem size="fill" />
+              <EntityLink kind="session" id={e.sessionId}>Session</EntityLink>
+            </HStack>
+            <CapturedMailInline sessionId={e.sessionId} />
+          </VStack>
+        ))}
+      </VStack>
     </Panel>
   )
 }
