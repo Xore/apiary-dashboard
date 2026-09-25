@@ -130,6 +130,7 @@ if (withScenarios) {
   // What each scenario may show; anything else is a finding.
   const allowed: Record<string, Array<keyof typeof BOUNDARY | 'page'>> = {
     empty: ['page'],
+    large: ['page'],
     viewer: ['page'],
     partial: ['page', 'unavailable'],
     unavailable: ['unavailable'],
