@@ -335,3 +335,20 @@ describe('problem reports', () => {
     expect(report.networkFailures).toEqual(['getEvents -> 502'])
   })
 })
+
+describe('captured mail', () => {
+  it('a session with a body has its message; an envelope-only session has none', async () => {
+    const sessions = [...new Set((await q.getEvents({ sensor: 'mailoney' })).rows.map((e) => e.sessionId))]
+    const mails = await Promise.all(sessions.map((id) => q.getMail(id)))
+    const found = mails.filter((m) => m !== null)
+    expect(found.length).toBeGreaterThan(0)
+    expect(mails.some((m) => m === null)).toBe(true)
+    for (const mail of found) {
+      expect(mail.from?.address).toMatch(/@example\.test$/)
+      expect(mail.bodyText.length).toBeGreaterThan(0)
+      // Metadata only: a name, a type, a size and a hash, never content.
+      for (const a of mail.attachments) expect(Object.keys(a).sort()).toEqual(['contentType', 'filename', 'sha256', 'sizeBytes'])
+    }
+    expect(await q.getMail('nosuchsession')).toBeNull()
+  })
+})

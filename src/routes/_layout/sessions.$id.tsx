@@ -58,6 +58,8 @@ function tabsFor(loaded: unknown): ViewTab[] {
     { id: 'downloads', label: 'Downloads', count: s.payloads.length },
     { id: 'recording', label: 'Recording' },
     { id: 'attck', label: 'ATT&CK', count: s.techniques.length },
+    // A mail sensor's session carries the message it delivered.
+    ...(s.events.some((e: { sensor: string }) => e.sensor === 'mailoney') ? [{ id: 'mail', label: 'Message' }] : []),
     { id: 'raw', label: 'Raw' },
   ]
 }

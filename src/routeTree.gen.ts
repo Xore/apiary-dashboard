@@ -153,6 +153,7 @@ import { Route as LayoutSessionsIdAttckRouteImport } from './routes/_layout/sess
 import { Route as LayoutSessionsIdCommandsRouteImport } from './routes/_layout/sessions.$id.commands'
 import { Route as LayoutSessionsIdCredentialsRouteImport } from './routes/_layout/sessions.$id.credentials'
 import { Route as LayoutSessionsIdDownloadsRouteImport } from './routes/_layout/sessions.$id.downloads'
+import { Route as LayoutSessionsIdMailRouteImport } from './routes/_layout/sessions.$id.mail'
 import { Route as LayoutSessionsIdRawRouteImport } from './routes/_layout/sessions.$id.raw'
 import { Route as LayoutSessionsIdRecordingRouteImport } from './routes/_layout/sessions.$id.recording'
 import { Route as LayoutSourcesIpIndexRouteImport } from './routes/_layout/sources.$ip.index'
@@ -956,6 +957,11 @@ const LayoutSessionsIdDownloadsRoute =
     path: '/downloads',
     getParentRoute: () => LayoutSessionsIdRoute,
   } as any)
+const LayoutSessionsIdMailRoute = LayoutSessionsIdMailRouteImport.update({
+  id: '/mail',
+  path: '/mail',
+  getParentRoute: () => LayoutSessionsIdRoute,
+} as any)
 const LayoutSessionsIdRawRoute = LayoutSessionsIdRawRouteImport.update({
   id: '/raw',
   path: '/raw',
@@ -1232,6 +1238,7 @@ export interface FileRoutesByFullPath {
   '/sessions/$id/commands': typeof LayoutSessionsIdCommandsRoute
   '/sessions/$id/credentials': typeof LayoutSessionsIdCredentialsRoute
   '/sessions/$id/downloads': typeof LayoutSessionsIdDownloadsRoute
+  '/sessions/$id/mail': typeof LayoutSessionsIdMailRoute
   '/sessions/$id/raw': typeof LayoutSessionsIdRawRoute
   '/sessions/$id/recording': typeof LayoutSessionsIdRecordingRoute
   '/sources/$ip/alerts': typeof LayoutSourcesIpAlertsRoute
@@ -1387,6 +1394,7 @@ export interface FileRoutesByTo {
   '/sessions/$id/commands': typeof LayoutSessionsIdCommandsRoute
   '/sessions/$id/credentials': typeof LayoutSessionsIdCredentialsRoute
   '/sessions/$id/downloads': typeof LayoutSessionsIdDownloadsRoute
+  '/sessions/$id/mail': typeof LayoutSessionsIdMailRoute
   '/sessions/$id/raw': typeof LayoutSessionsIdRawRoute
   '/sessions/$id/recording': typeof LayoutSessionsIdRecordingRoute
   '/sources/$ip/alerts': typeof LayoutSourcesIpAlertsRoute
@@ -1560,6 +1568,7 @@ export interface FileRoutesById {
   '/_layout/sessions/$id/commands': typeof LayoutSessionsIdCommandsRoute
   '/_layout/sessions/$id/credentials': typeof LayoutSessionsIdCredentialsRoute
   '/_layout/sessions/$id/downloads': typeof LayoutSessionsIdDownloadsRoute
+  '/_layout/sessions/$id/mail': typeof LayoutSessionsIdMailRoute
   '/_layout/sessions/$id/raw': typeof LayoutSessionsIdRawRoute
   '/_layout/sessions/$id/recording': typeof LayoutSessionsIdRecordingRoute
   '/_layout/sources/$ip/alerts': typeof LayoutSourcesIpAlertsRoute
@@ -1733,6 +1742,7 @@ export interface FileRouteTypes {
     | '/sessions/$id/commands'
     | '/sessions/$id/credentials'
     | '/sessions/$id/downloads'
+    | '/sessions/$id/mail'
     | '/sessions/$id/raw'
     | '/sessions/$id/recording'
     | '/sources/$ip/alerts'
@@ -1888,6 +1898,7 @@ export interface FileRouteTypes {
     | '/sessions/$id/commands'
     | '/sessions/$id/credentials'
     | '/sessions/$id/downloads'
+    | '/sessions/$id/mail'
     | '/sessions/$id/raw'
     | '/sessions/$id/recording'
     | '/sources/$ip/alerts'
@@ -2060,6 +2071,7 @@ export interface FileRouteTypes {
     | '/_layout/sessions/$id/commands'
     | '/_layout/sessions/$id/credentials'
     | '/_layout/sessions/$id/downloads'
+    | '/_layout/sessions/$id/mail'
     | '/_layout/sessions/$id/raw'
     | '/_layout/sessions/$id/recording'
     | '/_layout/sources/$ip/alerts'
@@ -3115,6 +3127,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSessionsIdDownloadsRouteImport
       parentRoute: typeof LayoutSessionsIdRoute
     }
+    '/_layout/sessions/$id/mail': {
+      id: '/_layout/sessions/$id/mail'
+      path: '/mail'
+      fullPath: '/sessions/$id/mail'
+      preLoaderRoute: typeof LayoutSessionsIdMailRouteImport
+      parentRoute: typeof LayoutSessionsIdRoute
+    }
     '/_layout/sessions/$id/raw': {
       id: '/_layout/sessions/$id/raw'
       path: '/raw'
@@ -3552,6 +3571,7 @@ interface LayoutSessionsIdRouteChildren {
   LayoutSessionsIdCommandsRoute: typeof LayoutSessionsIdCommandsRoute
   LayoutSessionsIdCredentialsRoute: typeof LayoutSessionsIdCredentialsRoute
   LayoutSessionsIdDownloadsRoute: typeof LayoutSessionsIdDownloadsRoute
+  LayoutSessionsIdMailRoute: typeof LayoutSessionsIdMailRoute
   LayoutSessionsIdRawRoute: typeof LayoutSessionsIdRawRoute
   LayoutSessionsIdRecordingRoute: typeof LayoutSessionsIdRecordingRoute
   LayoutSessionsIdIndexRoute: typeof LayoutSessionsIdIndexRoute
@@ -3562,6 +3582,7 @@ const LayoutSessionsIdRouteChildren: LayoutSessionsIdRouteChildren = {
   LayoutSessionsIdCommandsRoute: LayoutSessionsIdCommandsRoute,
   LayoutSessionsIdCredentialsRoute: LayoutSessionsIdCredentialsRoute,
   LayoutSessionsIdDownloadsRoute: LayoutSessionsIdDownloadsRoute,
+  LayoutSessionsIdMailRoute: LayoutSessionsIdMailRoute,
   LayoutSessionsIdRawRoute: LayoutSessionsIdRawRoute,
   LayoutSessionsIdRecordingRoute: LayoutSessionsIdRecordingRoute,
   LayoutSessionsIdIndexRoute: LayoutSessionsIdIndexRoute,
