@@ -1006,6 +1006,49 @@ export async function getProblemReports(): Promise<ProblemReport[]> {
   return PROBLEM_REPORTS.map((r) => ({ ...r }))
 }
 
+/** What the report-a-problem capture sends. */
+export type ProblemReportInput = {
+  page: string
+  expected: string
+  actual: string
+  actionTrail: string[]
+  consoleErrors: string[]
+  networkFailures: string[]
+  apiCalls: Array<{ method: string; path: string; status: number }>
+  domSnapshot?: string
+  userAgent: string
+}
+
+/** Secrets never survive into a stored report: credentials, tokens and
+ * cookies are replaced wherever they appear, as the store's own pass does. */
+export function redact(text: string): string {
+  return text
+    .replace(/\beyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]{8,}/g, '[redacted jwt]')
+    .replace(/\b(bearer)\s+[\w.~+/-]{8,}=*/gi, '$1 [redacted]')
+    .replace(/\b(authorization|cookie|set-cookie|x-api-key|api[_-]?key|token|access_token|refresh_token|session|password|passwd|secret)(["']?\s*[:=]\s*["']?)[^\s"'&,;}]+/gi, '$1$2[redacted]')
+}
+
+export async function submitProblemReport(input: ProblemReportInput): Promise<{ id: string }> {
+  await mockDelay()
+  const id = `pr-${Date.now().toString(36)}`
+  PROBLEM_REPORTS.unshift({
+    id,
+    submittedAt: new Date().toISOString(),
+    submittedBy: MOCK_USER.name,
+    status: 'open',
+    page: input.page,
+    expected: redact(input.expected),
+    actual: redact(input.actual),
+    consoleErrors: input.consoleErrors.map(redact),
+    networkFailures: input.networkFailures.map(redact),
+    apiCalls: input.apiCalls,
+    actionTrail: input.actionTrail.map(redact),
+    userAgent: input.userAgent,
+    hasSnapshot: Boolean(input.domSnapshot),
+  })
+  return { id }
+}
+
 export async function setProblemStatus(id: string, status: ProblemStatus): Promise<void> {
   await mockDelay()
   const report = PROBLEM_REPORTS.find((r) => r.id === id)

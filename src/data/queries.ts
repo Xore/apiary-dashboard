@@ -7,8 +7,8 @@
 import * as impl from './queries.impl'
 import { withScenario } from './scenario'
 
-export { alertKeyOf, generatePassword, inRange } from './queries.impl'
-export type { AlertDetail, LookupTarget, PayloadAction } from './queries.impl'
+export { alertKeyOf, generatePassword, inRange, redact } from './queries.impl'
+export type { AlertDetail, LookupTarget, PayloadAction, ProblemReportInput } from './queries.impl'
 
 export const getSessionUser = withScenario('getSessionUser', impl.getSessionUser)
 export const getOverview = withScenario('getOverview', impl.getOverview)
@@ -65,6 +65,7 @@ export const searchAll = withScenario('searchAll', impl.searchAll)
 export const getDeadLetters = withScenario('getDeadLetters', impl.getDeadLetters)
 export const purgeDeadLetters = withScenario('purgeDeadLetters', impl.purgeDeadLetters)
 export const getProblemReports = withScenario('getProblemReports', impl.getProblemReports)
+export const submitProblemReport = withScenario('submitProblemReport', impl.submitProblemReport)
 export const setProblemStatus = withScenario('setProblemStatus', impl.setProblemStatus)
 export const getSettings = withScenario('getSettings', impl.getSettings)
 export const savePreferences = withScenario('savePreferences', impl.savePreferences)

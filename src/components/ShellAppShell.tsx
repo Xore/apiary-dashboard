@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useNavigate } from '@tanstack/react-router'
 import { AppShell } from '@astryxdesign/core/AppShell'
 import { CommandPalette } from '@astryxdesign/core/CommandPalette'
+import { ToastViewport } from '@astryxdesign/core/Toast'
 import { createStaticSource } from '@astryxdesign/core/Typeahead'
 import type { SessionUser } from '#/data/types'
 import { NAV_SECTIONS } from '#/lib/nav'
 import { LiveToasts } from './LiveToasts'
+import { ProblemReportButton } from './ProblemReportButton'
 import { SettingsDialog } from './SettingsDialog'
 import type { PaneId } from './SettingsDialog'
 import { ShellSideNav } from './ShellSideNav'
@@ -56,7 +58,9 @@ export function ShellAppShell({ user, settingsPane, onSettingsPane }: ShellProps
   }, [])
 
   return (
-    <>
+    // Toasts top right, under the top bar: the bottom corners belong to the
+    // account menu and the report-a-problem button.
+    <ToastViewport position="topEnd" inset={{ top: 64, end: 16 }} maxVisible={4}>
       <AppShell
         contentPadding={0}
         topNav={<ShellTopNav onOpenPalette={() => setIsPaletteOpen(true)} />}
@@ -77,7 +81,8 @@ export function ShellAppShell({ user, settingsPane, onSettingsPane }: ShellProps
         }}
       />
       <LiveToasts />
+      <ProblemReportButton />
       {settingsPane && <SettingsDialog pane={settingsPane} onPane={onSettingsPane} onClose={() => onSettingsPane(undefined)} />}
-    </>
+    </ToastViewport>
   )
 }
