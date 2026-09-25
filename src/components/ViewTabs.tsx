@@ -113,13 +113,9 @@ export function entityTabs({ label, basePath, tabs }: { label: string; basePath:
   }
 }
 
-/** The tabs of the deepest route that declares them, drawn as top-bar nav
- * items: a plain tab is a link, a tab with sections is a hover menu listing
- * them (after the Astryx TopNav "Multiple Dropdowns" block). The bar matches
- * the current location itself, and the location switches as soon as a
- * navigation starts, so the tabs show up before the new page's data arrives
- * (and are part of the server render). */
-export function ViewTabsBar() {
+/** The current page's tabs: those of the deepest route that declares them,
+ * or null when it has fewer than two (nothing to switch between). */
+export function useViewTabs(): ViewTabsModel | null {
   const router = useRouter()
   const location = useRouterState({ select: (state) => state.location })
   const committed = useRouterState({ select: (state) => state.matches })
@@ -134,7 +130,20 @@ export function ViewTabsBar() {
     pathname: location.pathname,
     data: match?.status === 'success' ? match.loaderData : undefined,
   })
-  if (model.tabs.length < 2) return null
+  return model.tabs.length < 2 ? null : model
+}
+
+/** The tabs of the deepest route that declares them, drawn as top-bar nav
+ * items: a plain tab is a link, a tab with sections is a hover menu listing
+ * them (after the Astryx TopNav "Multiple Dropdowns" block). The bar matches
+ * the current location itself, and the location switches as soon as a
+ * navigation starts, so the tabs show up before the new page's data arrives
+ * (and are part of the server render). */
+export function ViewTabsBar() {
+  const router = useRouter()
+  const location = useRouterState({ select: (state) => state.location })
+  const model = useViewTabs()
+  if (!model) return null
 
   // Real hrefs, so every entry is a link (new tab, copy link, prefetch).
   // A tab or section that is another page links there; the rest switch
