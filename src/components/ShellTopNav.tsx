@@ -10,7 +10,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav'
 import { MagnifyingGlassIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
 import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
-import { TOP_NAV_END_ID, ViewTabsBar } from './ViewTabs'
+import { TOP_NAV_END_ID, ViewTabsBar, useViewTabs } from './ViewTabs'
 import { Selector } from '@astryxdesign/core/Selector'
 import { useLocation, useNavigate, useSearch } from '@tanstack/react-router'
 import { DEFAULT_RANGE, RANGES, isRange } from '#/lib/range'
@@ -53,6 +53,9 @@ function ShellBreadcrumbs() {
 }
 
 export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; onOpenPalette: () => void }) {
+  // A page with tabs gives the bar to them: the sidebar already says where
+  // you are, and the tabs say which view.
+  const hasTabs = useViewTabs() !== null
   return (
     <TopNav
       label="Page header"
@@ -66,11 +69,11 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
       }
       startContent={
         <HStack gap={4} vAlign="center">
-          <ShellBreadcrumbs />
+          {!hasTabs && <ShellBreadcrumbs />}
           {/* TopNav sizes its start slot to content, so the tabs get a fixed
               budget: what the heading, breadcrumbs, and end controls leave.
               Tabs past it go into a More menu. */}
-          <StackItem size="fill" style={{ width: 'max(240px, calc(100vw - 860px))' }}>
+          <StackItem size="fill" style={{ width: hasTabs ? 'max(240px, calc(100vw - 730px))' : 'max(240px, calc(100vw - 860px))' }}>
             <ViewTabsBar />
           </StackItem>
         </HStack>
