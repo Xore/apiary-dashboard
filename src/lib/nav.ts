@@ -7,7 +7,6 @@
 import {
   BellAlertIcon,
   BellIcon,
-  BookOpenIcon,
   BookmarkIcon,
   ChartBarSquareIcon,
   ChatBubbleLeftRightIcon,
@@ -24,7 +23,6 @@ import {
   MagnifyingGlassIcon,
   PlayCircleIcon,
   PresentationChartLineIcon,
-  RectangleStackIcon,
   ServerStackIcon,
   ShareIcon,
   SignalIcon,
@@ -83,10 +81,8 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Reports',
     items: [
-      { label: 'Generate', to: '/reports/generate', icon: DocumentPlusIcon },
-      { label: 'History', to: '/reports/history', icon: ClockIcon },
-      { label: 'Templates', to: '/reports/templates', icon: RectangleStackIcon },
-      { label: 'Library', to: '/reports/library', icon: BookOpenIcon },
+      // Generate, History, Templates and Library are its top-bar tabs.
+      { label: 'Reports studio', to: '/reports/generate', icon: DocumentPlusIcon },
     ],
   },
   {
@@ -148,6 +144,9 @@ const PAGE_PREFIXES: Array<[string, string]> = [
 const PAGE_LABELS: Record<string, string> = {
   '/settings': 'Settings',
   '/search': 'Search',
+  '/reports/history': 'Report history',
+  '/reports/templates': 'Report templates',
+  '/reports/library': 'Report library',
   '/dead-letters': 'Ingest dead letters',
   '/commands': 'Executed commands',
   '/problem-reports': 'Problem reports',
@@ -158,8 +157,6 @@ const PAGE_LABELS: Record<string, string> = {
 }
 
 const ALL_ITEMS = NAV_SECTIONS.flatMap((section) => section.items)
-// List pages reached from settings rather than the sidebar.
-const UNLISTED_LISTS = ['/dead-letters', '/problem-reports']
 
 /** The sidebar entry a pathname rolls up to: detail pages highlight (and
  * breadcrumb under) their parent. */
@@ -185,14 +182,14 @@ export function navHrefFor(pathname: string): string {
   }
   if (pathname.startsWith('/identities/')) return '/attackers'
   if (pathname.startsWith('/tty-replay/')) return '/recordings'
-  // A report belongs to History, a saved definition to the Library.
-  if (pathname.startsWith('/reports/generated/')) return '/reports/history'
-  if (pathname.startsWith('/reports/definitions/')) return '/reports/library'
-  if (pathname === '/reports') return '/reports/generate'
+  // The studio's pages are tabs of its one entry.
+  if (pathname === '/reports' || pathname.startsWith('/reports/')) return '/reports/generate'
+  // Dead letters and problem reports are tabs of Source & pipeline health.
+  if (/^\/(dead-letters|problem-reports)(\/|$)/.test(pathname)) return '/source-health'
   // Indicator pages and the per-execution command list belong to the hub.
   if (pathname.startsWith('/ioc/') || pathname === '/commands' || pathname === '/investigate/lookup') return '/iocs'
   // Any other detail page rolls up to the list it lives under.
-  const list = [...ALL_ITEMS.map((item) => item.to), ...UNLISTED_LISTS]
+  const list = ALL_ITEMS.map((item) => item.to)
     .filter((to) => to !== '/' && pathname.startsWith(`${to}/`))
     .sort((a, b) => b.length - a.length)
   return list.length ? list[0] : pathname

@@ -15,8 +15,10 @@ import type { GeneratedReport } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
+import { reportTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/reports/history')({
+  staticData: { viewTabs: reportTabs },
   validateSearch: (search: Record<string, unknown>): { origin?: string; template?: string } => ({
     origin: toParam(listParam(search.origin).filter((o) => o === 'manual' || o === 'schedule')),
     template: toParam(listParam(search.template)),

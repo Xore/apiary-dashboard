@@ -7,8 +7,10 @@ import { RecordList } from '#/components/RecordList'
 import { getProblemReports } from '#/data/queries'
 import type { ProblemReport, ProblemStatus } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { healthTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/problem-reports/')({
+  staticData: { viewTabs: healthTabs },
   loader: () => getProblemReports(),
   component: ProblemReportsPage,
 })

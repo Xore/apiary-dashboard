@@ -15,8 +15,10 @@ import type { GeneratedReport, ReportDefinition } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
+import { reportTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/reports/library')({
+  staticData: { viewTabs: reportTabs },
   loader: () => getReports(),
   component: LibraryPage,
 })

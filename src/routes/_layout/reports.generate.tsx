@@ -3,8 +3,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { PageFrame } from '#/components/PageFrame'
 import { ReportWizard, emptyDraft } from '#/components/reports/ReportWizard'
 import { getFacets, getReports } from '#/data/queries'
+import { reportTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/reports/generate')({
+  staticData: { viewTabs: reportTabs },
   // ?template= starts from a template, ?from= re-opens a Library definition.
   validateSearch: (search: Record<string, unknown>): { template?: string; from?: string } => ({
     template: typeof search.template === 'string' && search.template ? search.template : undefined,

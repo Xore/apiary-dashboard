@@ -9,8 +9,10 @@ import { Panel } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
 import { getSandboxLiveStatus } from '#/data/queries'
 import { formatDateTime } from '#/lib/format'
+import { analysisTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/sandbox/vnc')({
+  staticData: { viewTabs: analysisTabs() },
   loader: () => getSandboxLiveStatus(),
   component: SandboxLivePage,
 })

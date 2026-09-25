@@ -15,8 +15,10 @@ import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import type { DeadLetter } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { healthTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/dead-letters/')({
+  staticData: { viewTabs: healthTabs },
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
     q: typeof search.q === 'string' && search.q ? search.q : undefined,
   }),

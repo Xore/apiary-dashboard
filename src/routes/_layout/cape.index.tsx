@@ -8,9 +8,11 @@ import { RecordList } from '#/components/RecordList'
 import { getCapeRuns } from '#/data/queries'
 import type { CapeRun } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { analysisTabs } from '#/lib/navFamilies'
 
 // Index leaf so cape/$sha is not swallowed by a parent component.
 export const Route = createFileRoute('/_layout/cape/')({
+  staticData: { viewTabs: analysisTabs() },
   loader: () => getCapeRuns(),
   component: CapeIndexPage,
 })

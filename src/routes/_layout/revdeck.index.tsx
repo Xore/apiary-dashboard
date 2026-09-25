@@ -8,10 +8,12 @@ import { RecordList } from '#/components/RecordList'
 import { getRevDeckRuns } from '#/data/queries'
 import type { RevDeckRun } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { analysisTabs } from '#/lib/navFamilies'
 
 // An index leaf, not revdeck.tsx: a parent route with a component would
 // swallow revdeck/$sha.
 export const Route = createFileRoute('/_layout/revdeck/')({
+  staticData: { viewTabs: analysisTabs() },
   loader: () => getRevDeckRuns(),
   component: RevDeckIndexPage,
 })

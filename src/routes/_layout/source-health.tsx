@@ -18,8 +18,10 @@ import { useCallback, useEffect } from 'react'
 import { HEALTH_CHANGED } from '#/data/mock/incidents'
 import { useLiveInterval } from '#/lib/live'
 import { usePreferences } from '#/lib/prefs'
+import { healthTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/source-health')({
+  staticData: { viewTabs: healthTabs },
   loader: () => getSourceHealth(),
   component: SourceHealthPage,
 })

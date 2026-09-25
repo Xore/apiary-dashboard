@@ -4,7 +4,7 @@ import { NAV_SECTIONS, navHrefFor, navItemFor, pageFor, sectionFor } from './nav
 describe('navigation metadata', () => {
   it('matches the canonical information architecture', () => {
     expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Monitor', 'Investigate', 'Operations', 'Reports', 'Tools', 'Evidence'])
-    expect(NAV_SECTIONS.flatMap((s) => s.items)).toHaveLength(27)
+    expect(NAV_SECTIONS.flatMap((s) => s.items)).toHaveLength(24)
   })
 
   it('has one entry per route', () => {
@@ -36,8 +36,9 @@ describe('navHrefFor', () => {
     ['/tty-replay/abc', '/recordings'],
     ['/ioc/cve/CVE-2017-0144/sources', '/iocs'],
     ['/commands', '/iocs'],
-    ['/reports/generated/rpt-1', '/reports/history'],
-    ['/reports/definitions/def-1', '/reports/library'],
+    ['/reports/generated/rpt-1', '/reports/generate'],
+    ['/reports/definitions/def-1', '/reports/generate'],
+    ['/reports/history', '/reports/generate'],
     ['/reports', '/reports/generate'],
     ['/recordings/abc/attacker', '/recordings'],
     ['/alerts/yara%7Cx/members', '/alerts'],
@@ -46,7 +47,9 @@ describe('navHrefFor', () => {
     ['/agent-campaigns/c1/rules', '/agent-campaigns'],
     ['/canarytokens/triggers/t1', '/canarytokens'],
     ['/credentials/b1', '/credentials'],
-    ['/dead-letters/d1', '/dead-letters'],
+    ['/dead-letters', '/source-health'],
+    ['/dead-letters/d1', '/source-health'],
+    ['/problem-reports/p1', '/source-health'],
     ['/payload-analysis/abc', '/payloads'],
     ['/sandbox/abc', '/payload-workbench/results'],
     ['/sandbox/vnc', '/payload-workbench/results'],
