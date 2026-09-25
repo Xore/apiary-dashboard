@@ -143,6 +143,7 @@ import type {
   DashboardConfig,
 } from './types'
 import { validateSection } from './mock/config'
+import { withIncidents } from './mock/incidents'
 
 const HOUR = 3_600_000
 
@@ -154,8 +155,10 @@ async function mockDelay({ canFail = true } = {}): Promise<void> {
   if (canFail && import.meta.env.VITE_MOCK_FAIL === '1') throw new Error('Mock backend unavailable (VITE_MOCK_FAIL=1)')
 }
 
+/** The hourly bucket of the last 24 h a timestamp falls in. Live events
+ * arrive after the mock clock; they belong to the current hour. */
 function hourIndex(timestamp: string): number {
-  return 23 - Math.floor((MOCK_NOW - Date.parse(timestamp)) / HOUR)
+  return Math.min(23, 23 - Math.floor((MOCK_NOW - Date.parse(timestamp)) / HOUR))
 }
 
 function hourly(events: HoneypotEvent[]): number[] {
@@ -521,7 +524,7 @@ export async function acknowledgeAllAlerts(): Promise<number> {
 
 export async function getSourceHealth(): Promise<SourceHealth> {
   await mockDelay()
-  return SOURCE_HEALTH
+  return withIncidents(SOURCE_HEALTH)
 }
 
 export async function getTopology(): Promise<Topology> {

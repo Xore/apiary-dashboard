@@ -18,6 +18,7 @@ import type { EventFilters, EventKind, Facets, HoneypotEvent } from '#/data/type
 import { downloadCsv, downloadJson } from '#/lib/export'
 import { formatClock, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
+import { useLiveRefresh } from '#/lib/live'
 
 const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http', 'protocol', 'alert']
 const SINCE = ['1h', '6h', '24h']
@@ -106,6 +107,8 @@ function EventsPage() {
   const data = Route.useLoaderData()
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
+  // New events join the list as they arrive, a few seconds at a time.
+  const arrived = useLiveRefresh(3000)
 
   const setFilter = (patch: EventFilters) => void navigate({ search: (prev) => ({ ...prev, ...patch }) })
   const active = FILTER_KEYS.filter((key) => search[key] !== undefined)
@@ -116,7 +119,7 @@ function EventsPage() {
       description="Every normalized honeypot event, newest first. Filter by source, sensor, service, or time window."
       actions={
         <>
-          <Text type="supporting">{formatNumber(data.total)} events</Text>
+          <Text type="supporting">{`${formatNumber(data.total)} events${arrived ? ` · ${formatNumber(arrived)} arrived live` : ''}`}</Text>
           <Button
             label="CSV"
             size="sm"

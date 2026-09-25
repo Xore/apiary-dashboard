@@ -43,6 +43,8 @@ Every page reads through `src/data/queries.ts`: the seeded implementation in `sr
 | `expired` | Every call answers 401: session expired |
 | `viewer` | Signed in without admin: admin actions are disabled and refused with 403 |
 
+**Live data**: while the dashboard is open, new events arrive in the fleet's proportions (one shared stream, like the real `/api/live`); the Event explorer and the overview follow it, and the **Live** badge in the top bar pauses and resumes every refresh path (the choice is kept in this browser) and turns **Stalled** when the stream breaks. The same menu can **simulate an incident** (a sensor goes silent, ingest stalls, the cluster goes red, Filebeat drops, dead letters arrive, everything recovers) to see the operational toasts raise and resolve; like other mock writes it lives in the tab.
+
 `bun scripts/crawl.ts <url> 1 --scenarios` opens one page of every route shape under each scenario and fails on a page that crashes or shows the wrong state; smoke runs it. The scenario is process state on the dev server, so it is a single-designer tool, not something to share.
 
 ```bash

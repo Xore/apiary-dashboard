@@ -20,6 +20,7 @@ import type { CapturedPayload, HoneypotEvent, NetworkCampaign, OverviewViews, Se
 import { formatClock, formatDateTime, formatNumber, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { FilterSelect } from '#/components/FilterSelect'
+import { useLiveRefresh } from '#/lib/live'
 
 const THREAT_SECTIONS = [
   { id: 'who', label: 'Who', icon: UserGroupIcon },
@@ -292,6 +293,8 @@ function EvidenceView({ views }: { views: OverviewViews }) {
 function OverviewPage() {
   const { overview, views } = Route.useLoaderData()
   const { view = 'live', section } = Route.useSearch()
+  // The numbers follow the live stream, not more often than every 10 s.
+  useLiveRefresh(10_000)
   return (
     <PageFrame title="Overview" description={`Last 24 hours · generated ${formatDateTime(overview.generatedAt)}`}>
       <VStack gap={5}>
