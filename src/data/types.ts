@@ -947,6 +947,10 @@ export interface DashboardConfig {
 
 export type ConfigSection = Exclude<keyof DashboardConfig, 'revision'>
 
+/** What the shell itself needs of the configuration: labels, the banner,
+ * notices, and the switches that change every page. */
+export type ShellConfig = Pick<DashboardConfig, 'presentation' | 'behavior'>
+
 /** What validation found wrong, field name → message. Empty when valid. */
 export type ConfigProblems = Record<string, string>
 

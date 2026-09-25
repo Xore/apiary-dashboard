@@ -46,6 +46,7 @@ import { formatNumber } from '#/lib/format'
 import { FilterSelect } from '../FilterSelect'
 import { WEEKDAYS, WINDOWS, describeSchedule } from '../details/Report'
 import { ReportPreviewPages } from './ReportPreviewPages'
+import { useGuardedAction } from '#/lib/useGuardedAction'
 
 const STEP_META = [
   { kind: 'human', label: 'Template' },
@@ -107,6 +108,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
   const [preview, setPreview] = useState<ReportPreview | null>(null)
   const [keep, setKeep] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const { error, guard } = useGuardedAction()
   const [result, setResult] = useState<{ report: GeneratedReport; definition?: ReportDefinition } | null>(null)
 
   const update = (patch: Partial<ReportDefinition>) => setDraft((d) => ({ ...d, ...patch }))
@@ -202,7 +204,10 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
     if (active === STEP_META.length - 1) {
       setGenerating(true)
       try {
-        setResult(await generateReportFrom(draft, keep || draft.schedule !== null))
+        const generated = await guard(() => generateReportFrom(draft, keep || draft.schedule !== null))
+        // A failed generate stays on this step, saying why.
+        if (!generated) return
+        setResult(generated)
         await router.invalidate()
       } finally {
         setGenerating(false)
@@ -257,6 +262,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
         <Button label={label} variant="primary" isLoading={generating} onClick={() => void confirmStep()} />
         {index > 0 && <Button label="Back" variant="ghost" onClick={() => goToStep(index - 1)} />}
         {count > 0 && <FieldStatus type="error" variant="detached" message={count === 1 ? 'One problem above needs fixing first.' : `${count} problems above need fixing first.`} />}
+        {error && index === STEP_META.length - 1 && <FieldStatus type="error" variant="detached" message={error} />}
       </HStack>
     )
   }

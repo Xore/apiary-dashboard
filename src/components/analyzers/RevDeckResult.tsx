@@ -11,6 +11,7 @@ import { AnalyzerSection } from './AnalyzerSection'
 
 import { formatDateTime } from '#/lib/format'
 import { EntityLink } from '../EntityLink'
+import { AiGenerated } from '../AiGenerated'
 
 export function RevDeckResult({ run }: { run: RevDeckRun }) {
   return (
@@ -29,7 +30,7 @@ export function RevDeckResult({ run }: { run: RevDeckRun }) {
           <Banner status="error" title="This run did not complete" description={run.error} />
         ) : (
           <>
-            <Panel title="Workflow verdict" action={<Token size="sm" label="AI-generated" />}>
+            <Panel title="Workflow verdict" action={<AiGenerated />}>
               <Text weight="semibold">{run.verdict}</Text>
               <Text>{run.summary}</Text>
             </Panel>

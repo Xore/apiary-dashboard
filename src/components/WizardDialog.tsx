@@ -18,6 +18,7 @@ import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { Layout, LayoutContent, LayoutFooter, LayoutHeader } from '@astryxdesign/core/Layout'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Step, Stepper } from '@astryxdesign/core/Stepper'
+import { describeError } from '#/lib/actionError'
 
 export type WizardStep = {
   label: string
@@ -45,11 +46,13 @@ export function WizardDialog({ title, isOpen, onOpenChange, steps, finishLabel, 
   const [step, setStep] = useState(0)
   const [attempted, setAttempted] = useState<ReadonlySet<number>>(new Set())
   const [busy, setBusy] = useState(false)
+  const [failure, setFailure] = useState<string>()
 
   const close = (open: boolean) => {
     if (!open) {
       setStep(0)
       setAttempted(new Set())
+      setFailure(undefined)
     }
     onOpenChange(open)
   }
@@ -66,9 +69,13 @@ export function WizardDialog({ title, isOpen, onOpenChange, steps, finishLabel, 
       return
     }
     setBusy(true)
+    setFailure(undefined)
     try {
       await onFinish()
       close(false)
+    } catch (e) {
+      // The draft stays, so the operator can retry without re-entering it.
+      setFailure(describeError(e))
     } finally {
       setBusy(false)
     }
@@ -103,6 +110,7 @@ export function WizardDialog({ title, isOpen, onOpenChange, steps, finishLabel, 
               <Button label="Back" variant="secondary" isDisabled={current === 0 || busy} onClick={() => setStep(Math.max(0, current - 1))} />
               <StackItem size="fill" />
               {Object.keys(currentErrors).length > 0 && <FieldStatus type="error" variant="detached" message={blockedMessage(Object.keys(currentErrors).length)} />}
+              {failure && isLast && <FieldStatus type="error" variant="detached" message={failure} />}
               <Button label={isLast ? finishLabel : 'Continue'} variant="primary" isLoading={busy} onClick={() => void next()} />
             </HStack>
           </LayoutFooter>

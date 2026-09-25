@@ -2,9 +2,9 @@
 // operator's next step differs: wait and retry, sign in again, ask an
 // admin, or accept that the thing is gone.
 
-export type ApiErrorKind = 'unavailable' | 'overloaded' | 'expired' | 'forbidden'
+export type ApiErrorKind = 'unavailable' | 'overloaded' | 'expired' | 'forbidden' | 'locked'
 
-const STATUS: Record<ApiErrorKind, number> = { unavailable: 502, overloaded: 503, expired: 401, forbidden: 403 }
+const STATUS: Record<ApiErrorKind, number> = { unavailable: 502, overloaded: 503, expired: 401, forbidden: 403, locked: 423 }
 
 export class ApiError extends Error {
   readonly kind: ApiErrorKind
@@ -26,7 +26,7 @@ export class ApiError extends Error {
   }
 }
 
-const MESSAGE = /^(\w+): \d{3} (unavailable|overloaded|expired|forbidden)(?: retry-after=(\d+))?/
+const MESSAGE = /^(\w+): \d{3} (unavailable|overloaded|expired|forbidden|locked)(?: retry-after=(\d+))?/
 
 /** An ApiError, or one rebuilt from its message: errors thrown in a
  * server-side loader reach the client as plain errors. */

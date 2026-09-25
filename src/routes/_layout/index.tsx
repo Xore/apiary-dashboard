@@ -21,6 +21,7 @@ import { formatClock, formatDateTime, formatNumber, formatTime } from '#/lib/for
 import { EntityLink } from '#/components/EntityLink'
 import { FilterSelect } from '#/components/FilterSelect'
 import { useLiveRefresh } from '#/lib/live'
+import { useShellConfig } from '#/lib/session'
 
 const THREAT_SECTIONS = [
   { id: 'who', label: 'Who', icon: UserGroupIcon },
@@ -139,6 +140,7 @@ const feedColumns: TableColumn<SensorFeed>[] = [
 ]
 
 function HealthView({ views }: { views: OverviewViews }) {
+  const showMl = useShellConfig().behavior.showMlPanels
   return (
     <VStack gap={4}>
       <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
@@ -147,9 +149,11 @@ function HealthView({ views }: { views: OverviewViews }) {
         </Panel>
         <MiniTable title="Protocols probed" header="Protocol" rows={views.protocols} linkTo={(p) => `/events?proto=${p}`} />
       </Grid>
-      <Panel title="ML classification backlog, last 7 days" action={<Link href="/ml-anomalies">ML anomalies</Link>}>
-        <SeriesLines data={views.mlBacklog} series={[{ key: 'classified', label: 'Classified' }, { key: 'pending', label: 'Pending' }]} dayTicks />
-      </Panel>
+      {showMl && (
+        <Panel title="ML classification backlog, last 7 days" action={<Link href="/ml-anomalies">ML anomalies</Link>}>
+          <SeriesLines data={views.mlBacklog} series={[{ key: 'classified', label: 'Classified' }, { key: 'pending', label: 'Pending' }]} dayTicks />
+        </Panel>
+      )}
     </VStack>
   )
 }

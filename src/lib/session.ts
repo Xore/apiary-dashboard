@@ -1,11 +1,14 @@
 // Who is signed in, for pages that gate what they offer. The layout loads
 // the session once; everything below it reads it from there.
 import { getRouteApi } from '@tanstack/react-router'
-import type { SessionUser } from '#/data/types'
+import type { SessionUser, ShellConfig } from '#/data/types'
 
 const layout = getRouteApi('/_layout')
 
-export const useSessionUser = (): SessionUser => layout.useLoaderData()
+export const useSessionUser = (): SessionUser => layout.useLoaderData().user
+
+/** The configuration every page renders with (labels, notices, switches). */
+export const useShellConfig = (): ShellConfig => layout.useLoaderData().config
 
 /** Writes that change the deployment (block, purge, rotate, run, publish)
  * need the admin role; the backend refuses them for anyone else too. */

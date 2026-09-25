@@ -4,12 +4,13 @@ import { AppShell } from '@astryxdesign/core/AppShell'
 import { CommandPalette } from '@astryxdesign/core/CommandPalette'
 import { ToastViewport } from '@astryxdesign/core/Toast'
 import { createStaticSource } from '@astryxdesign/core/Typeahead'
-import type { SessionUser } from '#/data/types'
+import type { SessionUser, ShellConfig } from '#/data/types'
 import { NAV_SECTIONS } from '#/lib/nav'
 import { LiveToasts } from './LiveToasts'
 import { ProblemReportButton } from './ProblemReportButton'
 import { SettingsDialog } from './SettingsDialog'
 import type { PaneId } from './SettingsDialog'
+import { ShellBanners, ShellFooter } from './ShellNotices'
 import { ShellSideNav } from './ShellSideNav'
 import { ShellTopNav } from './ShellTopNav'
 
@@ -36,12 +37,13 @@ const PAGES = [
  * region, and the global command palette. */
 type ShellProps = {
   user: SessionUser
+  config: ShellConfig
   /** The open settings pane, if the settings modal is showing. */
   settingsPane?: PaneId
   onSettingsPane: (pane: PaneId | undefined) => void
 }
 
-export function ShellAppShell({ user, settingsPane, onSettingsPane }: ShellProps) {
+export function ShellAppShell({ user, config, settingsPane, onSettingsPane }: ShellProps) {
   const navigate = useNavigate()
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
   const searchSource = useMemo(() => createStaticSource(PAGES), [])
@@ -63,10 +65,16 @@ export function ShellAppShell({ user, settingsPane, onSettingsPane }: ShellProps
     <ToastViewport position="topEnd" inset={{ top: 64, end: 16 }} maxVisible={4}>
       <AppShell
         contentPadding={0}
-        topNav={<ShellTopNav onOpenPalette={() => setIsPaletteOpen(true)} />}
-        sideNav={<ShellSideNav user={user} onOpenSettings={() => onSettingsPane('account')} />}
+        topNav={<ShellTopNav config={config} onOpenPalette={() => setIsPaletteOpen(true)} />}
+        sideNav={<ShellSideNav user={user} config={config} onOpenSettings={() => onSettingsPane('account')} />}
       >
-        <Outlet />
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+          <ShellBanners config={config} />
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <Outlet />
+          </div>
+          <ShellFooter config={config} />
+        </div>
       </AppShell>
       <CommandPalette
         isOpen={isPaletteOpen}

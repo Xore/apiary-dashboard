@@ -17,6 +17,7 @@ import type { LlmAnalysis, SemanticHit, SemanticSearchResult } from '#/data/type
 import { formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { EvidenceLink } from '#/components/details/LlmAnalysis'
+import { useShellConfig } from '#/lib/session'
 
 export const Route = createFileRoute('/_layout/llm-analysis/')({
   loader: () => getLlmAnalyses(),
@@ -107,6 +108,7 @@ function SemanticSearch() {
 }
 
 function LlmAnalysisPage() {
+  const aiDisclaimer = useShellConfig().presentation.aiDisclaimer
   const rows = Route.useLoaderData()
   return (
     <RecordList
@@ -119,7 +121,7 @@ function LlmAnalysisPage() {
           <Banner
             status="warning"
             title="AI-generated content"
-            description="Every row below is model output about attacker-controlled input. Review it before treating it as fact."
+            description={`Every row below is model output about attacker-controlled input. ${aiDisclaimer}`}
           />
         </VStack>
       }

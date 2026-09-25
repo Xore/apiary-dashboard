@@ -15,6 +15,8 @@ import { acknowledgeAllAlerts, alertKeyOf, getAlerts } from '#/data/queries'
 import type { AlertGroup } from '#/data/types'
 import { formatNumber, formatTime } from '#/lib/format'
 import { AckButton } from '#/components/details/Alert'
+import { useGuardedAction } from '#/lib/useGuardedAction'
+import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 
 type View = 'new' | 'acknowledged'
 
@@ -52,6 +54,7 @@ function AlertsPage() {
   const router = useRouter()
   const [filter, setFilter] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const { error, guard } = useGuardedAction()
   const [acking, setAcking] = useState(false)
 
   const open = groups.filter((g) => !g.acknowledged)
@@ -68,13 +71,16 @@ function AlertsPage() {
         title="Alerts"
         description="Persistent alert state, cooldowns, and acknowledgments. Acknowledging moves an alert from New to Acknowledged until it is reopened."
         actions={
-          <Button
+          <HStack gap={2} vAlign="center">
+            {error && <FieldStatus type="error" variant="detached" message={error} />}
+            <Button
             label="Acknowledge all"
             size="sm"
             variant="secondary"
             isDisabled={openRecords === 0}
             onClick={() => setConfirmOpen(true)}
-          />
+            />
+          </HStack>
         }
         toolbar={
           <HStack gap={3} vAlign="center" wrap="wrap">
@@ -102,8 +108,10 @@ function AlertsPage() {
         onAction={async () => {
           setAcking(true)
           try {
-            await acknowledgeAllAlerts()
-            await router.invalidate()
+            await guard(async () => {
+              await acknowledgeAllAlerts()
+              await router.invalidate()
+            })
           } finally {
             setAcking(false)
             setConfirmOpen(false)

@@ -12,6 +12,8 @@ import { RecordList } from '#/components/RecordList'
 import { deleteGeneratedReport, getReports } from '#/data/queries'
 import type { GeneratedReport } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { useGuardedAction } from '#/lib/useGuardedAction'
+import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 
 export const Route = createFileRoute('/_layout/reports/history')({
   validateSearch: (search: Record<string, unknown>): { origin?: string; template?: string } => ({
@@ -33,6 +35,7 @@ function HistoryPage() {
   const router = useRouter()
   const [confirm, setConfirm] = useState<GeneratedReport | null>(null)
   const [busy, setBusy] = useState(false)
+  const { error, guard } = useGuardedAction()
   const templateName = (id: string) => data.templates.find((t) => t.id === id)?.name ?? id
   const definitionName = (id: string) => data.definitions.find((d) => d.id === id)?.name
   const rows = data.generated.filter((r) => (!origins.length || origins.includes(r.origin)) && (!templates.length || templates.includes(r.template)))
@@ -53,7 +56,12 @@ function HistoryPage() {
       <RecordList
         title="Report history"
         description="Every PDF the studio produced, by hand or on a schedule."
-        actions={<Button label="Generate a report" size="sm" onClick={() => void router.navigate({ href: '/reports/generate' })} />}
+        actions={
+          <HStack gap={2} vAlign="center">
+            {error && <FieldStatus type="error" variant="detached" message={error} />}
+            <Button label="Generate a report" size="sm" onClick={() => void router.navigate({ href: '/reports/generate' })} />
+          </HStack>
+        }
         toolbar={
           <HStack gap={2} wrap="wrap">
             <FilterSelect
@@ -98,8 +106,10 @@ function HistoryPage() {
           if (!confirm) return
           setBusy(true)
           try {
-            await deleteGeneratedReport(confirm.id)
-            await router.invalidate()
+            await guard(async () => {
+              await deleteGeneratedReport(confirm.id)
+              await router.invalidate()
+            })
           } finally {
             setBusy(false)
             setConfirm(null)

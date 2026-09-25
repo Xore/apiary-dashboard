@@ -141,6 +141,7 @@ import type {
   RelatedGroup,
   CapturedMail,
   ConfigProblems,
+  ShellConfig,
   ConfigSection,
   DashboardConfig,
 } from './types'
@@ -1090,6 +1091,16 @@ function audit(action: string, fields: string[], result: 'ok' | 'rejected' = 'ok
 }
 
 /** Mock write: stages an admin config section and records a revision. */
+/** The configuration the shell renders with on every page. */
+export async function getShellConfig(): Promise<ShellConfig> {
+  await mockDelay({ canFail: false })
+  return { presentation: { ...CONFIG.presentation }, behavior: { ...CONFIG.behavior } }
+}
+
+/** Read-only mode: every write refused for everyone, except the switches
+ * that turn it off again and the operator's own preferences. */
+export const isReadOnly = () => CONFIG.behavior.readOnly
+
 /** Section values as they were before each revision, for rollback. */
 const SNAPSHOTS = new Map<string, { section: ConfigSection; value: unknown }>()
 

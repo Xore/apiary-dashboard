@@ -4,7 +4,7 @@ import type { RangeId } from '#/lib/range'
 import { PANE_IDS } from '#/components/SettingsDialog'
 import type { PaneId } from '#/components/SettingsDialog'
 import { ShellAppShell } from '#/components/ShellAppShell'
-import { getSessionUser } from '#/data/queries'
+import { getSessionUser, getShellConfig } from '#/data/queries'
 import { isScenario, setMockScenario } from '#/data/scenario'
 import type { MockScenario } from '#/data/scenario'
 
@@ -20,17 +20,20 @@ export const Route = createFileRoute('/_layout')({
   search: { middlewares: [retainSearchParams(['range', 'mock'])] },
   // Before any loader below runs, so every query of this navigation sees it.
   beforeLoad: ({ search }) => setMockScenario(search.mock),
-  loader: () => getSessionUser(),
+  loader: async () => {
+    const [user, config] = await Promise.all([getSessionUser(), getShellConfig()])
+    return { user, config }
+  },
   component: LayoutComponent,
 })
 
 function LayoutComponent() {
-  const user = Route.useLoaderData()
+  const { user, config } = Route.useLoaderData()
   const { settings } = Route.useSearch()
   // Router-level navigate: '.' is the current page, so the modal opens over
   // it (the route-bound one would resolve '.' to this layout's '/').
   const navigate = useNavigate()
   const setSettings = (pane: PaneId | undefined) =>
     void navigate({ to: '.', search: (prev: Record<string, unknown>) => ({ ...prev, settings: pane }) })
-  return <ShellAppShell user={user} settingsPane={settings} onSettingsPane={setSettings} />
+  return <ShellAppShell user={user} config={config} settingsPane={settings} onSettingsPane={setSettings} />
 }

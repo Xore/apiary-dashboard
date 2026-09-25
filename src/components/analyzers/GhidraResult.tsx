@@ -25,6 +25,7 @@ import type { GhidraAnalysis, GhidraFunction, IocEvidence } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 import { useGuardedAction } from '#/lib/useGuardedAction'
+import { AiGenerated } from '../AiGenerated'
 
 /** The sections of the Ghidra tab, as the top bar lists them. */
 export const GHIDRA_SECTIONS = [
@@ -38,14 +39,8 @@ export type GhidraSection = (typeof GHIDRA_SECTIONS)[number]['id']
 
 const code = (value: string) => <Text type="code">{value}</Text>
 
-/** Model-written text says so, and says it can be wrong. */
-function AiAdvisory() {
-  return (
-    <span title="Written by a model from the decompiled code. It can be wrong; check it against the code before acting on it.">
-      <Token size="sm" color="purple" label="AI-generated" />
-    </span>
-  )
-}
+/** Model-written text says so, with the deployment's disclaimer. */
+const AiAdvisory = AiGenerated
 
 // ---- Overview: what this binary is ------------------------------------------
 

@@ -23,6 +23,8 @@ import { FilterSelect, listParam, toParam } from '#/components/FilterSelect'
 import type { FilterOption } from '#/components/FilterSelect'
 import { PageFrame } from '#/components/PageFrame'
 import { searchTabs } from '#/components/ViewTabs'
+import { useGuardedAction } from '#/lib/useGuardedAction'
+import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
 const STATUSES: AnomalyStatus[] = ['open', 'acknowledged', ...DISPOSITIONS]
@@ -151,6 +153,7 @@ function MlAnomaliesPage() {
   const navigate = Route.useNavigate()
   const router = useRouter()
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const { error, guard } = useGuardedAction()
   const [acking, setAcking] = useState(false)
 
   const anyOf = (list: string | undefined, value: string) => !list || list.split(',').includes(value)
@@ -168,13 +171,16 @@ function MlAnomaliesPage() {
         title="ML anomalies"
         description="Statistical outliers across sensor traffic: isolation forest, HBOS, and LSTM autoencoder scores combined into one score per event."
         actions={
-          <Button
+          <HStack gap={2} vAlign="center">
+            {error && <FieldStatus type="error" variant="detached" message={error} />}
+            <Button
             label="Acknowledge all open"
             variant="secondary"
             size="sm"
             isDisabled={data.openBacklog === 0}
             onClick={() => setConfirmOpen(true)}
-          />
+            />
+          </HStack>
         }
         summary={
           <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
@@ -221,8 +227,10 @@ function MlAnomaliesPage() {
         onAction={async () => {
           setAcking(true)
           try {
-            await acknowledgeAllAnomalies()
-            await router.invalidate()
+            await guard(async () => {
+              await acknowledgeAllAnomalies()
+              await router.invalidate()
+            })
           } finally {
             setAcking(false)
             setConfirmOpen(false)

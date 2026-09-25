@@ -11,12 +11,15 @@ import { Panel } from '#/components/DashboardBlocks'
 import { setAlertsAcknowledged } from '#/data/queries'
 import type { AlertGroup } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
+import { useGuardedAction } from '#/lib/useGuardedAction'
+import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 
 export function AckButton({ group }: { group: AlertGroup }) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
+  const { error, guard } = useGuardedAction()
   const keys = group.members.map((m) => m.key)
-  return (
+  const button = (
     <Button
       label={
         group.acknowledged
@@ -31,13 +34,23 @@ export function AckButton({ group }: { group: AlertGroup }) {
       onClick={async () => {
         setBusy(true)
         try {
-          await setAlertsAcknowledged(keys, !group.acknowledged)
-          await router.invalidate()
+          await guard(async () => {
+            await setAlertsAcknowledged(keys, !group.acknowledged)
+            await router.invalidate()
+          })
         } finally {
           setBusy(false)
         }
       }}
     />
+  )
+  return error ? (
+    <HStack gap={2} vAlign="center">
+      {button}
+      <FieldStatus type="error" variant="detached" message={error} />
+    </HStack>
+  ) : (
+    button
   )
 }
 

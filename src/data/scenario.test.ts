@@ -71,3 +71,21 @@ describe('mock scenarios', () => {
     expect(asApiError(new Error('something else'))).toBeUndefined()
   })
 })
+
+describe('read-only mode', () => {
+  it('freezes every write except turning it off and one’s own preferences', async () => {
+    const { config, preferences } = await q.getSettings()
+    expect((await q.saveConfigSection('behavior', { ...config.behavior, readOnly: true })).ok).toBe(true)
+    try {
+      expect((await q.getShellConfig()).behavior.readOnly).toBe(true)
+      expect((await failure(() => q.setAlertsAcknowledged([], true)))?.kind).toBe('locked')
+      expect((await failure(() => q.setIpBlocked('198.51.100.1', true)))?.kind).toBe('locked')
+      // Reads, preferences and problem reports go through.
+      expect((await q.getEvents({})).total).toBeGreaterThan(0)
+      expect(await failure(() => q.savePreferences(preferences))).toBeUndefined()
+    } finally {
+      expect((await q.saveConfigSection('behavior', { ...config.behavior, readOnly: false })).ok).toBe(true)
+    }
+    expect(await failure(() => q.setAlertsAcknowledged([], true))).toBeUndefined()
+  })
+})
