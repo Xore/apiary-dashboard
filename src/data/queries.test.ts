@@ -314,3 +314,24 @@ describe('dashboard configuration', () => {
     expect((await q.getSettings()).config.honeypot.alertCooldown).toBe(before.honeypot.alertCooldown)
   })
 })
+
+describe('problem reports', () => {
+  it('a filed report is stored with every secret removed', async () => {
+    const { id } = await q.submitProblemReport({
+      page: '/events',
+      expected: 'The table loads',
+      actual: 'It failed; my token=abc123def456 was in the URL',
+      actionTrail: ['12:00:01 open /events?session=s3cr3tvalue'],
+      consoleErrors: ['Authorization: Bearer abcdefghijklmnop', 'cookie=sid=xyz; password: hunter2'],
+      networkFailures: ['getEvents -> 502'],
+      apiCalls: [{ method: 'GET', path: 'getEvents', status: 502 }],
+      domSnapshot: '<html></html>',
+      userAgent: 'test',
+    })
+    const report = (await q.getProblemReports()).find((r) => r.id === id)!
+    expect(report).toMatchObject({ status: 'open', page: '/events', hasSnapshot: true })
+    const stored = JSON.stringify(report)
+    for (const secret of ['abc123def456', 's3cr3tvalue', 'abcdefghijklmnop', 'xyz', 'hunter2']) expect(stored).not.toContain(secret)
+    expect(report.networkFailures).toEqual(['getEvents -> 502'])
+  })
+})

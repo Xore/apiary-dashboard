@@ -84,8 +84,32 @@ function failsPartly(name: string): boolean {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-/** One query, run through the active scenario. */
+/** Every call, as the browser sees it: the mock of the fetch log the
+ * report-a-problem capture keeps (name, outcome, status, duration). */
+export const API_CALL = 'apiary-api-call'
+export type ApiCallRecord = { name: string; ok: boolean; status: number; ms: number; error?: string }
+
+function announce(record: ApiCallRecord) {
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent<ApiCallRecord>(API_CALL, { detail: record }))
+}
+
+/** One query, run through the active scenario, and announced. */
 export function withScenario<TArgs extends unknown[], TResult>(name: string, query: (...args: TArgs) => Promise<TResult>): (...args: TArgs) => Promise<TResult> {
+  const scenarioQuery = runScenario(name, query)
+  return async (...args) => {
+    const started = Date.now()
+    try {
+      const result = await scenarioQuery(...args)
+      announce({ name, ok: true, status: 200, ms: Date.now() - started })
+      return result
+    } catch (error) {
+      announce({ name, ok: false, status: error instanceof ApiError ? error.status : 500, ms: Date.now() - started, error: error instanceof Error ? error.message : String(error) })
+      throw error
+    }
+  }
+}
+
+function runScenario<TArgs extends unknown[], TResult>(name: string, query: (...args: TArgs) => Promise<TResult>): (...args: TArgs) => Promise<TResult> {
   return async (...args) => {
     const scenario = current
     // The session comes from the sign-in cookie, not the backend: it
