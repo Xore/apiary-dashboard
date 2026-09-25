@@ -129,6 +129,7 @@ import type {
   CampaignEntity,
   ClusterEntity,
   IdentityEntity,
+  IdentityFusion,
   NetworkEntity,
   SharedSignal,
   SourceGroup,
@@ -1433,6 +1434,27 @@ export async function getIdentity(id: string): Promise<IdentityEntity | null> {
       ]
     : []
   return { identity, group, shared: sharedSignals(group, extra) }
+}
+
+/** The fingerprint families the identity worker fuses on, in its order. */
+const FUSION_CATEGORIES = ['JA3', 'JA4', 'p0f OS', 'SSH client', 'Payload hash', 'JA4T', 'HASSH', 'JA4SSH', 'JA4S', 'TCP signature']
+
+export async function getIdentityFusion(id: string): Promise<IdentityFusion | null> {
+  await mockDelay()
+  const identity = ATTACKERS.find((a) => a.id === id)
+  if (!identity) return null
+  // Shared values need two members; a lone address shares nothing.
+  if (identity.ips.length < 2) return { categories: FUSION_CATEGORIES, values: FUSION_CATEGORIES.map(() => 0), ips: identity.ips }
+  const rng = createRng([...id].reduce((h, c) => (h * 33 + c.charCodeAt(0)) >>> 0, 5381))
+  const fingerprints = identity.fingerprints.length
+  const values = FUSION_CATEGORIES.map((category) => {
+    if (category === 'Payload hash') return identity.payloads.length
+    if (category === 'HASSH') return fingerprints
+    if (category === 'SSH client') return Math.min(fingerprints, 1 + Math.floor(rng() * 2))
+    // Sensors that are not deployed everywhere often contribute nothing.
+    return rng() < 0.45 ? 0 : Math.floor(rng() * 4) + 1
+  })
+  return { categories: FUSION_CATEGORIES, values, ips: identity.ips }
 }
 
 // ---- Remaining entities (epic #25, Phase D) ----------------------------------

@@ -352,3 +352,15 @@ describe('captured mail', () => {
     expect(await q.getMail('nosuchsession')).toBeNull()
   })
 })
+
+describe('attacker identity fusion', () => {
+  it('every identity reads its fusion over the same ten families; a lone address shares nothing', async () => {
+    for (const a of (await q.getAttackers()).slice(0, 20)) {
+      const fusion = (await q.getIdentityFusion(a.id))!
+      expect(fusion.categories).toHaveLength(10)
+      expect(fusion.values).toHaveLength(10)
+      if (a.ips.length < 2) expect(fusion.values.every((v) => v === 0)).toBe(true)
+    }
+    expect(await q.getIdentityFusion('nosuch')).toBeNull()
+  })
+})

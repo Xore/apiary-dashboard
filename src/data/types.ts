@@ -1261,6 +1261,15 @@ export interface ClusterEntity {
   group: SourceGroup
 }
 
+/** Why an identity merged: per signal category, how many distinct values
+ * two or more of its member addresses share. A category nothing produced is
+ * a zero, not missing. */
+export interface IdentityFusion {
+  categories: string[]
+  values: number[]
+  ips: string[]
+}
+
 export interface IdentityEntity {
   identity: AttackerEntity
   group: SourceGroup
