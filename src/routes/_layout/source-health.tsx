@@ -6,7 +6,7 @@ import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Heading, Text } from '@astryxdesign/core/Text'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { Panel, StatTile } from '#/components/DashboardBlocks'
 import { FeedStateLabel } from '#/components/FeedState'
 import { PageFrame } from '#/components/PageFrame'
@@ -14,6 +14,9 @@ import { getSourceHealth } from '#/data/queries'
 import type { SensorFeed, SourceHealth } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
+import { useCallback, useEffect } from 'react'
+import { HEALTH_CHANGED } from '#/data/mock/incidents'
+import { useLiveInterval } from '#/lib/live'
 
 export const Route = createFileRoute('/_layout/source-health')({
   loader: () => getSourceHealth(),
@@ -51,6 +54,15 @@ const feedColumns: TableColumn<SensorFeed>[] = [
 
 function SourceHealthPage() {
   const health = Route.useLoaderData()
+  const router = useRouter()
+  // Health moves in minutes: re-read it on the live interval, and at once
+  // when a simulated incident changes it.
+  const refresh = useCallback(() => void router.invalidate(), [router])
+  useLiveInterval(refresh, 30_000)
+  useEffect(() => {
+    window.addEventListener(HEALTH_CHANGED, refresh)
+    return () => window.removeEventListener(HEALTH_CHANGED, refresh)
+  }, [refresh])
   const { ingest, yara, runtime, pipeline } = health
   const unhealthy = health.feeds.filter((f) => f.state !== 'fresh').length
 

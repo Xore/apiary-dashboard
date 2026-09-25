@@ -39,7 +39,7 @@ function series(seed: number, days: number, stepHours: number, keys: Record<stri
 }
 
 function buildViews(): OverviewViews {
-  const hourOf = (ts: string) => 23 - Math.floor((MOCK_NOW - Date.parse(ts)) / HOUR)
+  const hourOf = (ts: string) => Math.min(23, 23 - Math.floor((MOCK_NOW - Date.parse(ts)) / HOUR))
   const heatmap = SENSORS.map((s) => {
     const cells = new Array<number>(24).fill(0)
     for (const e of EVENTS) if (e.sensor === s.id) cells[hourOf(e.timestamp)] += 1

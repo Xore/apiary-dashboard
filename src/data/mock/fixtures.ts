@@ -2,7 +2,9 @@
 // documentation ranges so mock data never names a real host.
 import type { AttackSource, HoneypotEvent, ProviderClass, Sensor, SensorFields, SessionUser } from '../types'
 import { FLEET } from './fleet'
+import type { SensorSpec } from './fleet'
 import { createRng, hex, int, isoMinutesAgo, pick, pickSkewed } from './random'
+import type { Rng } from './random'
 
 export const MOCK_USER: SessionUser = {
   name: 'Operator',
@@ -142,6 +144,42 @@ function pivotsOf(fields: SensorFields): Pick<HoneypotEvent, 'fingerprint' | 'fi
   }
 }
 
+/** One event from a sensor's generator, with the decoy identity and the
+ * pivots the pipeline adds. The live stream builds its events here too. */
+export function eventFrom(spec: SensorSpec, source: AttackSource, sessionId: string, timestamp: string, rng: Rng, decoy: Rng): HoneypotEvent {
+  const { type, severity, protocol, dstPort, eventName, summary, fields: own, username, password, command } = spec.generate(rng, sessionId)
+  // The decoy identity rides along in the sensor's own fields, as the
+  // enrichment step writes it.
+  const persona = spec.persona && decoy() < (spec.persona.share ?? 1) ? spec.persona : undefined
+  const asset = persona ? (persona.assetFor?.(own) ?? persona.assets[0]) : undefined
+  const fields: SensorFields = persona && asset ? { ...own, persona_id: persona.id, site_id: persona.site, asset_id: asset, organization: persona.organization } : own
+  return {
+    id: `evt-${hex(rng, 10)}`,
+    timestamp,
+    sensor: spec.id,
+    protocol,
+    type,
+    severity,
+    srcIp: source.ip,
+    srcPort: int(rng, 1024, 65535),
+    dstPort,
+    country: source.country,
+    asn: source.asn,
+    sessionId,
+    summary,
+    eventName,
+    fields,
+    ...(persona && asset ? { persona: persona.id, site: persona.site, asset, organization: persona.organization } : {}),
+    ...pivotsOf(fields),
+    org: source.org,
+    provider: source.provider,
+    city: source.city,
+    ...(username !== undefined ? { username } : {}),
+    ...(password !== undefined ? { password } : {}),
+    ...(command !== undefined ? { command } : {}),
+  }
+}
+
 function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
   const rng = createRng(0xbee5)
   const decoy = createRng(0xdec0)
@@ -162,37 +200,7 @@ function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
       const minutesAgo = Math.max(spec.lastSeenMinutes, burst || int(rng, 0, 59) + hour * 60)
       const source = pickSkewed(rng, sources)
       const sessionId = sessionIdFor(`${spec.id}#${source.ip}#${int(rng, 1, 6)}`)
-      const { type, severity, protocol, dstPort, eventName, summary, fields: own, username, password, command } = spec.generate(rng, sessionId)
-      // The decoy identity rides along in the sensor's own fields, as the
-      // enrichment step writes it.
-      const persona = spec.persona && decoy() < (spec.persona.share ?? 1) ? spec.persona : undefined
-      const asset = persona ? (persona.assetFor?.(own) ?? persona.assets[0]) : undefined
-      const fields: SensorFields = persona && asset ? { ...own, persona_id: persona.id, site_id: persona.site, asset_id: asset, organization: persona.organization } : own
-      events.push({
-        id: `evt-${hex(rng, 10)}`,
-        timestamp: isoMinutesAgo(Math.min(minutesAgo, 24 * 60 - 1)),
-        sensor: spec.id,
-        protocol,
-        type,
-        severity,
-        srcIp: source.ip,
-        srcPort: int(rng, 1024, 65535),
-        dstPort,
-        country: source.country,
-        asn: source.asn,
-        sessionId,
-        summary,
-        eventName,
-        fields,
-        ...(persona && asset ? { persona: persona.id, site: persona.site, asset, organization: persona.organization } : {}),
-        ...pivotsOf(fields),
-        org: source.org,
-        provider: source.provider,
-        city: source.city,
-        ...(username !== undefined ? { username } : {}),
-        ...(password !== undefined ? { password } : {}),
-        ...(command !== undefined ? { command } : {}),
-      })
+      events.push(eventFrom(spec, source, sessionId, isoMinutesAgo(Math.min(minutesAgo, 24 * 60 - 1)), rng, decoy))
     }
   }
   events.sort((a, b) => b.timestamp.localeCompare(a.timestamp))

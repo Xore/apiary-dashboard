@@ -5,6 +5,7 @@ import { CommandPalette } from '@astryxdesign/core/CommandPalette'
 import { createStaticSource } from '@astryxdesign/core/Typeahead'
 import type { SessionUser } from '#/data/types'
 import { NAV_SECTIONS } from '#/lib/nav'
+import { LiveToasts } from './LiveToasts'
 import { SettingsDialog } from './SettingsDialog'
 import type { PaneId } from './SettingsDialog'
 import { ShellSideNav } from './ShellSideNav'
@@ -75,6 +76,7 @@ export function ShellAppShell({ user, settingsPane, onSettingsPane }: ShellProps
           else void navigate({ to })
         }}
       />
+      <LiveToasts />
       {settingsPane && <SettingsDialog pane={settingsPane} onPane={onSettingsPane} onClose={() => onSettingsPane(undefined)} />}
     </>
   )
