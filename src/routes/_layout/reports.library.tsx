@@ -13,6 +13,8 @@ import { RecordList } from '#/components/RecordList'
 import { deleteReportDefinition, generateReport, getReports } from '#/data/queries'
 import type { GeneratedReport, ReportDefinition } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
+import { useGuardedAction } from '#/lib/useGuardedAction'
+import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 
 export const Route = createFileRoute('/_layout/reports/library')({
   loader: () => getReports(),
@@ -25,6 +27,7 @@ function LibraryPage() {
   const router = useRouter()
   const navigate = useNavigate()
   const [busy, setBusy] = useState<string | null>(null)
+  const { error, guard } = useGuardedAction()
   const [confirm, setConfirm] = useState<ReportDefinition | null>(null)
   const [generated, setGenerated] = useState<GeneratedReport | null>(null)
   const lastRun = (id: string) => data.generated.find((r) => r.definitionId === id)?.createdAt
@@ -32,8 +35,10 @@ function LibraryPage() {
   const act = async (id: string, write: () => Promise<unknown>) => {
     setBusy(id)
     try {
-      await write()
-      await router.invalidate()
+      await guard(async () => {
+        await write()
+        await router.invalidate()
+      })
     } finally {
       setBusy(null)
     }
@@ -63,7 +68,12 @@ function LibraryPage() {
       <RecordList
         title="Report library"
         description="Definitions kept for reuse. Scheduled ones run on their own; any of them can be generated now or reopened in the wizard."
-        actions={<Button label="New definition" size="sm" onClick={() => void navigate({ href: '/reports/generate' })} />}
+        actions={
+          <HStack gap={2} vAlign="center">
+            {error && <FieldStatus type="error" variant="detached" message={error} />}
+            <Button label="New definition" size="sm" onClick={() => void navigate({ href: '/reports/generate' })} />
+          </HStack>
+        }
         summary={
           generated && (
             <Banner

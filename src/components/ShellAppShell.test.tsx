@@ -19,6 +19,7 @@ import { neutralTheme } from '#/themes/neutral/neutral'
 import { RouterLink } from './RouterLink'
 import { ShellAppShell } from './ShellAppShell'
 import { searchTabs } from './ViewTabs'
+import { CONFIG } from '#/data/mock/details'
 
 function TabbedPage() {
   const second = useLocation({ select: (location) => location.searchStr.includes('view=two') })
@@ -28,7 +29,7 @@ function TabbedPage() {
 const user = { name: 'Test Operator', email: 'op@example.test', roles: ['admin'] }
 
 function renderShell(path: string) {
-  const root = createRootRoute({ component: () => <ShellAppShell user={user} onSettingsPane={() => {}} /> })
+  const root = createRootRoute({ component: () => <ShellAppShell user={user} config={CONFIG} onSettingsPane={() => {}} /> })
   const page = (routePath: string, text: string) =>
     createRoute({ getParentRoute: () => root, path: routePath, component: () => <p>{text}</p> })
   const router = createRouter({

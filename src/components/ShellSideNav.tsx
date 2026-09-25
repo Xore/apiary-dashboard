@@ -12,7 +12,7 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline'
 import { useLocation } from '@tanstack/react-router'
-import type { SessionUser } from '#/data/types'
+import type { SessionUser, ShellConfig } from '#/data/types'
 import { NAV_SECTIONS, navHrefFor } from '#/lib/nav'
 
 function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettings: () => void }) {
@@ -40,7 +40,7 @@ function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettin
   )
 }
 
-export function ShellSideNav({ user, onOpenSettings }: { user: SessionUser; onOpenSettings: () => void }) {
+export function ShellSideNav({ user, config, onOpenSettings }: { user: SessionUser; config: ShellConfig; onOpenSettings: () => void }) {
   const pathname = useLocation({ select: (location) => location.pathname })
   const activeHref = navHrefFor(pathname)
 
@@ -56,7 +56,8 @@ export function ShellSideNav({ user, onOpenSettings }: { user: SessionUser; onOp
     >
       {NAV_SECTIONS.map((section) => (
         <SideNavSection key={section.label} title={section.label}>
-          {section.items.map((item) => (
+          {/* ML pages hide with the ML panels switch. */}
+          {section.items.filter((item) => config.behavior.showMlPanels || item.to !== '/ml-anomalies').map((item) => (
             <SideNavItem
               key={item.to}
               label={item.label}

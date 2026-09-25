@@ -15,6 +15,7 @@ import { Selector } from '@astryxdesign/core/Selector'
 import { useLocation, useNavigate, useSearch } from '@tanstack/react-router'
 import { DEFAULT_RANGE, RANGES, isRange } from '#/lib/range'
 import type { RangeId } from '#/lib/range'
+import type { ShellConfig } from '#/data/types'
 
 /** The app-wide time range; every page reads it from ?range=. */
 function RangePicker() {
@@ -51,15 +52,15 @@ function ShellBreadcrumbs() {
   )
 }
 
-export function ShellTopNav({ onOpenPalette }: { onOpenPalette: () => void }) {
+export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; onOpenPalette: () => void }) {
   return (
     <TopNav
       label="Page header"
       heading={
         <TopNavHeading
           logo={<NavIcon icon={<Icon icon={ShieldCheckIcon} size="sm" />} />}
-          heading="APIARY"
-          subheading="Honeypot dashboard"
+          heading={config.presentation.appName}
+          subheading={config.presentation.productLabel}
           headingHref="/"
         />
       }

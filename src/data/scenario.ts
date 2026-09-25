@@ -7,6 +7,7 @@
 // runs. On the dev server that state is per process, which is fine for a
 // single designer and wrong for anything shared: this is a mock-only seam.
 import { ApiError } from './errors'
+import { CONFIG } from './mock/details'
 import type { SessionUser } from './types'
 
 export type MockScenario = 'normal' | 'empty' | 'slow' | 'partial' | 'unavailable' | 'overloaded' | 'expired' | 'viewer'
@@ -49,6 +50,12 @@ export const ADMIN_WRITES: ReadonlySet<string> = new Set([
   'abortGpuJob',
   'queuePayloadAction',
 ])
+
+/** Writes read-only mode still allows: turning it off, and one's own
+ * preferences and problem reports. */
+const READ_ONLY_EXEMPT: ReadonlySet<string> = new Set(['saveConfigSection', 'rollbackConfig', 'savePreferences', 'submitProblemReport'])
+
+const readOnly = () => CONFIG.behavior.readOnly
 
 const isRead = (name: string) => /^(get|search|semanticSearch|preview|resolve|validate)/.test(name)
 
@@ -114,6 +121,8 @@ function runScenario<TArgs extends unknown[], TResult>(name: string, query: (...
     const scenario = current
     // The session comes from the sign-in cookie, not the backend: it
     // survives a backend outage, and only the role changes.
+    // Cached configuration, like the session: it outlives a backend outage.
+    if (name === 'getShellConfig') return query(...args)
     if (name === 'getSessionUser') {
       const user = (await query(...args)) as SessionUser
       return (scenario === 'viewer' ? { ...user, name: 'Analyst', roles: ['viewer'] } : user) as TResult
@@ -123,6 +132,7 @@ function runScenario<TArgs extends unknown[], TResult>(name: string, query: (...
     if (scenario === 'overloaded') throw new ApiError('overloaded', name, { retryAfter: 30 })
     if (scenario === 'expired') throw new ApiError('expired', name)
     if (scenario === 'viewer' && ADMIN_WRITES.has(name)) throw new ApiError('forbidden', name)
+    if (!isRead(name) && !READ_ONLY_EXEMPT.has(name) && readOnly()) throw new ApiError('locked', name)
     const result = await query(...args)
     return scenario === 'empty' && isRead(name) ? emptied(result, KEEP_WHEN_EMPTY[name], ZERO_ITEMS[name]) : result
   }

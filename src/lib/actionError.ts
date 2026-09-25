@@ -7,6 +7,8 @@ export function describeError(error: unknown): string {
   switch (api?.kind) {
     case 'forbidden':
       return 'Admin role required.'
+    case 'locked':
+      return 'The dashboard is read-only right now. Nothing was changed.'
     case 'expired':
       return 'Your session expired. Sign in again, then retry.'
     case 'overloaded':

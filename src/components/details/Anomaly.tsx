@@ -14,6 +14,8 @@ import { Panel } from '#/components/DashboardBlocks'
 import type { AnomalyStatus, Disposition, MlAnomaly } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
+import { useGuardedAction } from '#/lib/useGuardedAction'
+import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 
 export const statusLabel = (status: AnomalyStatus) => status.replace('_', ' ')
 
@@ -89,6 +91,7 @@ export function AnomalyFacts({ anomaly }: { anomaly: MlAnomaly }) {
 export function AnomalyTriage({ anomaly }: { anomaly: MlAnomaly }) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
+  const { error, guard } = useGuardedAction()
   const [verdict, setVerdict] = useState<Disposition>('true_positive')
   const [reason, setReason] = useState('')
   const isDisposed = (DISPOSITIONS as readonly string[]).includes(
@@ -97,8 +100,10 @@ export function AnomalyTriage({ anomaly }: { anomaly: MlAnomaly }) {
   const run = async (write: () => Promise<unknown>) => {
     setBusy(true)
     try {
-      await write()
-      await router.invalidate()
+      await guard(async () => {
+        await write()
+        await router.invalidate()
+      })
     } finally {
       setBusy(false)
     }
@@ -155,6 +160,7 @@ export function AnomalyTriage({ anomaly }: { anomaly: MlAnomaly }) {
             onClick={() => run(() => setAnomalyDisposition(ids, 'open', ''))}
           />
         )}
+        {error && <FieldStatus type="error" variant="detached" message={error} />}
       </HStack>
     </Panel>
   )

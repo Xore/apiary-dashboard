@@ -19,6 +19,7 @@ const READING: Record<ApiErrorKind | 'unknown', Reading> = {
   unavailable: { icon: SignalSlashIcon, title: 'The backend did not answer', description: 'The data service is unreachable (502). Nothing here is cached, so retrying asks again.' },
   overloaded: { icon: ClockIcon, title: 'The backend is busy', description: 'The request was shed to protect the service (503).' },
   expired: { icon: ArrowRightEndOnRectangleIcon, title: 'Your session expired', description: 'Sign in again to continue; you come back to this page.' },
+  locked: { icon: LockClosedIcon, title: 'The dashboard is read-only', description: 'An admin has frozen changes for everyone. Reading still works.' },
   forbidden: { icon: LockClosedIcon, title: 'Not available to your role', description: 'This needs the admin role. Ask an admin, or open a page your role can see.' },
   unknown: { icon: ExclamationTriangleIcon, title: 'This page failed to load', description: 'The request failed. Nothing here is cached, so retrying asks again.' },
 }

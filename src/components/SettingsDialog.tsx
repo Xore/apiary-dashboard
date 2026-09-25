@@ -30,7 +30,7 @@ import { Token } from '@astryxdesign/core/Token'
 import { IconButton } from '@astryxdesign/core/IconButton'
 import { Icon } from '@astryxdesign/core/Icon'
 import { useMediaQuery } from '@astryxdesign/core/hooks'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { ContainerStateLabel } from './FeedState'
 import { CONTROL_WIDTH, PanelColumn, PinnedClose, SettingsCard, SettingsPanelHeading, SettingsPanelTabs, SettingsRow, SettingsSearchInput, SettingsSearchResults, SettingsSideNav, ThemeChoiceCards, useSettingsSearch } from './settings/parts'
 import { isAdminPanel, panelOf } from './settings/registry'
@@ -67,6 +67,7 @@ const useSettings = () => useContext(SettingsContext)!
  * (the config store's persist-nothing preview), revert and save. */
 function useStagedForm<TSection extends ConfigSection>(panel: PaneId, section: TSection) {
   const { data, reload, setDirty } = useSettings()
+  const router = useRouter()
   const saved = data.config[section]
   const [form, setForm] = useState(saved)
   const [problems, setProblems] = useState<ConfigProblems>({})
@@ -113,7 +114,8 @@ function useStagedForm<TSection extends ConfigSection>(panel: PaneId, section: T
           try {
             await guard(async () => {
               const result = await saveConfigSection(section, form)
-              if (result.ok) await reload()
+              // The shell renders with this config too: refresh it at once.
+              if (result.ok) await Promise.all([reload(), router.invalidate()])
               else setProblems(result.problems)
             })
           } finally {
@@ -604,6 +606,7 @@ function ServicesPanel() {
 }
 
 function HistoryPanel() {
+  const router = useRouter()
   const { data, reload } = useSettings()
   const [target, setTarget] = useState<ConfigRevision | null>(null)
   const [busy, setBusy] = useState(false)
@@ -643,7 +646,7 @@ function HistoryPanel() {
                         try {
                           await guard(async () => {
                             await rollbackConfig(target.id)
-                            await reload()
+                            await Promise.all([reload(), router.invalidate()])
                           })
                         } finally {
                           setBusy(false)
@@ -738,7 +741,7 @@ export function SettingsDialog({ pane, onPane, onClose }: { pane: PaneId; onPane
   const isNarrow = useMediaQuery(NARROW_VIEWPORT)
   const [data, setData] = useState<SettingsData | null>(null)
   const [prefs, setPrefs] = useState<Preferences | null>(null)
-  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
   const [dirtyPanels, setDirtyPanels] = useState<ReadonlySet<PaneId>>(new Set())
   // A navigation or close waiting on "discard unsaved changes?".
   const [pending, setPending] = useState<{ run: () => void; label: string } | null>(null)
@@ -771,7 +774,9 @@ export function SettingsDialog({ pane, onPane, onClose }: { pane: PaneId; onPane
       clearTimeout(saveTimer.current)
       setSaveState('saving')
       saveTimer.current = setTimeout(() => {
-        void savePreferences(next).then(() => setSaveState('saved'))
+        void savePreferences(next)
+          .then(() => setSaveState('saved'))
+          .catch(() => setSaveState('failed'))
       }, 400)
       return next
     })
@@ -797,7 +802,7 @@ export function SettingsDialog({ pane, onPane, onClose }: { pane: PaneId; onPane
   const status =
     isAdminPanel(pane) || saveState === 'idle' ? undefined : (
       <Text type="supporting" color="secondary">
-        {saveState === 'saving' ? 'Saving…' : 'Saved'}
+        {saveState === 'saving' ? 'Saving…' : saveState === 'failed' ? 'Not saved: the backend did not answer' : 'Saved'}
       </Text>
     )
   const discardBanner = pending && (
