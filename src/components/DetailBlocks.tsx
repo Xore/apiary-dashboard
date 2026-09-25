@@ -40,7 +40,7 @@ export function EventsPanel({ title, events, showSource = false, action, empty =
   )
 }
 
-const attckUrl = (id: string) => `https://attack.mitre.org/techniques/${id.replaceAll('.', '/')}/`
+export const attckUrl = (id: string) => `https://attack.mitre.org/techniques/${id.replaceAll('.', '/')}/`
 
 const techniqueColumns: TableColumn<Technique>[] = [
   { key: 'tactic', header: 'Tactic', width: pixel(184) },

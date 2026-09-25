@@ -1,4 +1,5 @@
 import { Link } from '@astryxdesign/core/Link'
+import { attckUrl } from '#/components/DetailBlocks'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -16,7 +17,6 @@ export const Route = createFileRoute('/_layout/identities/$id/')({
   component: IdentityOverview,
 })
 
-const attckUrl = (id: string) => `https://attack.mitre.org/techniques/${id.replaceAll('.', '/')}/`
 
 function IdentityOverview() {
   const { identity: a, group } = parent.useLoaderData()

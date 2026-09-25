@@ -96,6 +96,9 @@ CHECKS=(
   "/api/raw-report/github-analysis/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37 200"
   "/api/artifact/ghidra/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/decompiled.c 200"
   "/api/artifact/sandbox/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/host.pcap 200"
+  "/api/artifact/ghidra/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/call-graph.svg 200"
+  "/api/report/rpt-payload-320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37-x/pdf 200"
+  "/api/report/rpt-unknown/pdf 404"
 )
 
 step "HTTP checks"

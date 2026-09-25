@@ -45,6 +45,7 @@ export const generateReport = withScenario('generateReport', impl.generateReport
 export const deleteGeneratedReport = withScenario('deleteGeneratedReport', impl.deleteGeneratedReport)
 export const getFacets = withScenario('getFacets', impl.getFacets)
 export const previewReport = withScenario('previewReport', impl.previewReport)
+export const generatePayloadReport = withScenario('generatePayloadReport', impl.generatePayloadReport)
 export const generateReportFrom = withScenario('generateReportFrom', impl.generateReportFrom)
 export const getCanarytokens = withScenario('getCanarytokens', impl.getCanarytokens)
 export const createCanarytoken = withScenario('createCanarytoken', impl.createCanarytoken)

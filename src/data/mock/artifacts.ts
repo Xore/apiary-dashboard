@@ -2,6 +2,7 @@
 // Ghidra's exports per sample, the sandbox's per job. Each file's content is
 // built from the run itself, so what downloads matches what the page shows.
 import type { GhidraAnalysis, SandboxRun } from '../types'
+import { callGraphSvg } from '#/lib/callGraphLayout'
 
 export type ArtifactKind = 'ghidra' | 'sandbox'
 
@@ -28,7 +29,8 @@ function emptyPcap(): Uint8Array {
 export function ghidraArtifacts(a: GhidraAnalysis): ArtifactFile[] {
   return [
     { filename: 'decompiled.c', kind: 'decompilation', contentType: 'text/x-c', body: a.functions.map((f) => `// ${f.name} @ ${f.address}\n${f.decompiled}\n`).join('\n') },
-    { filename: 'functions.json', kind: 'call graph', contentType: 'application/json', body: json(a.functions.map(({ decompiled: _, ...f }) => f)) },
+    { filename: 'call-graph.svg', kind: 'call graph', contentType: 'image/svg+xml', body: callGraphSvg(a.functions) },
+    { filename: 'functions.json', kind: 'functions', contentType: 'application/json', body: json(a.functions.map(({ decompiled: _, ...f }) => f)) },
     { filename: 'capa.json', kind: 'capabilities', contentType: 'application/json', body: json({ capabilities: a.capa, attack: a.capaAttack, mbc: a.capaMbc }) },
     { filename: 'floss-strings.txt', kind: 'strings', contentType: 'text/plain', body: (['decoded', 'stack', 'tight', 'static'] as const).map((k) => `# ${k}\n${a.floss[k].join('\n')}\n`).join('\n') },
     { filename: 'lief.json', kind: 'binary format', contentType: 'application/json', body: json({ ...a.lief, fuzzy: a.fuzzy }) },

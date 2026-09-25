@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { virusTotalLink } from '#/lib/toolLinks'
+import { OpenInMenu } from '#/components/OpenInMenu'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -267,6 +269,7 @@ const payloadColumns: TableColumn<CapturedPayload>[] = [
   { key: 'sources', header: 'Source', width: pixel(120), renderCell: (row) => row.sources.join(' ') },
   { key: 'copies', header: 'Copies', width: pixel(72), align: 'end' },
   { key: 'verdict', header: 'Verdict', width: pixel(112), renderCell: (row) => (row.verdict ? <Token size="sm" label={row.verdict.family ?? row.verdict.label} color={row.verdict.label === 'malicious' ? 'red' : row.verdict.label === 'suspicious' ? 'orange' : 'green'} /> : '—') },
+  { key: 'lookup', header: '', width: pixel(56), renderCell: (row) => <OpenInMenu compact links={[virusTotalLink(row.hash)]} /> },
 ]
 
 const campaignColumns: TableColumn<NetworkCampaign>[] = [

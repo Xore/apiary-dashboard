@@ -1,12 +1,11 @@
-import { Button } from '@astryxdesign/core/Button'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
+import { RecordingDownloads } from '#/components/RecordingDownloads'
 import { EntityFrame } from '#/components/EntityFrame'
 import { entityTabs } from '#/components/ViewTabs'
 import type { ViewTab } from '#/components/ViewTabs'
 import { EntityLink } from '#/components/EntityLink'
 import { NotFound } from '#/components/NotFound'
 import { getReplayDetail } from '#/data/queries'
-import { apiHref } from '#/lib/apiHref'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/recordings/$shasum')({
@@ -36,10 +35,7 @@ function RecordingLayout() {
       title={`${shasum.slice(0, 16)}…`}
       basePath={`/recordings/${shasum}`}
       actions={
-        <>
-          <Button label="Download .cast" size="sm" variant="secondary" tooltip="For asciinema play" href={apiHref(`/api/recording/${shasum}/cast`)} />
-          <Button label="Raw TTY log" size="sm" variant="secondary" tooltip="The sensor's own terminal log" href={apiHref(`/api/recording/${shasum}/raw`)} />
-        </>
+        <RecordingDownloads shasum={shasum} />
       }
       facts={[
         {

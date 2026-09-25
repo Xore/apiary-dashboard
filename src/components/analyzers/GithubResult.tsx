@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from '@astryxdesign/core/Link'
 import { apiHref } from '#/lib/apiHref'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Banner } from '@astryxdesign/core/Banner'
@@ -66,6 +67,7 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
               { key: 'engine', header: 'Engine', width: pixel(160) },
               { key: 'verdict', header: 'Verdict', width: pixel(120), renderCell: (row) => <Token size="sm" color={VERDICT_COLOR[row.verdict]} label={row.verdict} /> },
               { key: 'label', header: 'Label', width: proportional(2), renderCell: (row) => (row.label ? <Text type="code">{row.label}</Text> : '—') },
+              { key: 'permalink', header: '', width: pixel(96), renderCell: (row) => (row.permalink ? <Link href={row.permalink} target="_blank" rel="noopener noreferrer">Report</Link> : null) },
             ]}
             idKey="id"
             density="compact"
@@ -78,6 +80,18 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
               <MetadataListItem label="Repository">
                 <Text type="code">{g.repoPath}</Text>
               </MetadataListItem>
+              {g.commit && (
+                <MetadataListItem label="Commit">
+                  <Link href={g.commit.url} target="_blank" rel="noopener noreferrer">
+                    <Text type="code">{g.commit.sha.slice(0, 12)}</Text>
+                  </Link>
+                </MetadataListItem>
+              )}
+              {g.runUrl && (
+                <MetadataListItem label="Scan">
+                  <Link href={g.runUrl} target="_blank" rel="noopener noreferrer">Actions run</Link>
+                </MetadataListItem>
+              )}
             </MetadataList>
           </Panel>
           <Panel title="Auto-generated YARA rules">

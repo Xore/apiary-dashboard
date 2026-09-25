@@ -8,7 +8,7 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
 import { Panel } from '#/components/DashboardBlocks'
-import { EventsPanel } from '#/components/DetailBlocks'
+import { EventsPanel, attckUrl } from '#/components/DetailBlocks'
 import { EntityLink } from '#/components/EntityLink'
 import { fieldBlock, readField } from '#/lib/sensorFields'
 
@@ -66,7 +66,7 @@ function EventOverview() {
               <MetadataListItem label="ATT&CK">
                 <HStack gap={1} wrap="wrap">
                   {event.techniques.map((t) => (
-                    <Token key={t} size="sm" label={t} />
+                    <Token key={t} size="sm" color="blue" label={t} href={attckUrl(t)} />
                   ))}
                 </HStack>
               </MetadataListItem>

@@ -8,41 +8,11 @@ import { TextInput } from '@astryxdesign/core/TextInput'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import type { GhidraFunction } from '#/data/types'
-
-const NODE_W = 132
-const NODE_H = 26
-const GAP_X = 20
-const GAP_Y = 56
-const PAD = 16
-
-/** Layer = longest distance from an entry point, so every edge points down. */
-function layers(functions: GhidraFunction[]): string[][] {
-  const byName = new Map(functions.map((f) => [f.name, f]))
-  const depth = new Map<string, number>()
-  const visit = (name: string, d: number, seen: Set<string>) => {
-    if (seen.has(name)) return // recursion: stop at the cycle
-    if ((depth.get(name) ?? -1) >= d) return
-    depth.set(name, d)
-    for (const callee of byName.get(name)?.callees ?? []) if (byName.has(callee)) visit(callee, d + 1, new Set(seen).add(name))
-  }
-  const roots = functions.filter((f) => f.callers.every((c) => !byName.has(c)))
-  for (const root of roots.length ? roots : functions.slice(0, 1)) visit(root.name, 0, new Set())
-  for (const f of functions) if (!depth.has(f.name)) depth.set(f.name, 0)
-  const out: string[][] = []
-  for (const [name, d] of depth) (out[d] ??= []).push(name)
-  return out.map((row) => row.sort())
-}
+import { NODE_H, NODE_W, layout, shortName } from '#/lib/callGraphLayout'
 
 export function CallGraph({ functions, selected, onSelect }: { functions: GhidraFunction[]; selected?: string; onSelect: (name: string) => void }) {
   const [filter, setFilter] = useState('')
-  const rows = useMemo(() => layers(functions), [functions])
-  const width = Math.max(...rows.map((r) => r.length)) * (NODE_W + GAP_X) - GAP_X + PAD * 2
-  const height = rows.length * (NODE_H + GAP_Y) - GAP_Y + PAD * 2
-  const pos = new Map<string, { x: number; y: number }>()
-  rows.forEach((row, d) => {
-    const rowWidth = row.length * (NODE_W + GAP_X) - GAP_X
-    row.forEach((name, i) => pos.set(name, { x: (width - rowWidth) / 2 + i * (NODE_W + GAP_X), y: PAD + d * (NODE_H + GAP_Y) }))
-  })
+  const { width, height, pos } = useMemo(() => layout(functions), [functions])
   const byName = new Map(functions.map((f) => [f.name, f]))
   const focus = selected ? byName.get(selected) : undefined
   const near = focus ? new Set([focus.name, ...focus.callers, ...focus.callees]) : undefined
@@ -77,7 +47,7 @@ export function CallGraph({ functions, selected, onSelect }: { functions: Ghidra
               <g key={f.name} role="button" tabIndex={0} aria-pressed={isSelected} aria-label={`Function ${f.name}`} style={{ cursor: 'pointer' }} opacity={on ? 1 : 0.25} onClick={() => onSelect(f.name)} onKeyDown={(e) => e.key === 'Enter' && onSelect(f.name)}>
                 <rect x={p.x} y={p.y} width={NODE_W} height={NODE_H} rx={6} fill={isSelected ? 'var(--color-data-categorical-blue)' : 'var(--color-background-muted)'} stroke={isSelected ? 'var(--color-data-categorical-blue)' : 'var(--color-border-emphasized)'} />
                 <text x={p.x + NODE_W / 2} y={p.y + 17} textAnchor="middle" fontSize={11} fill={isSelected ? 'var(--color-background-card)' : 'var(--color-text-primary)'} style={{ fontFamily: 'var(--font-family-code, monospace)' }}>
-                  {f.name.length > 18 ? `${f.name.slice(0, 17)}…` : f.name}
+                  {shortName(f.name)}
                 </text>
               </g>
             )

@@ -752,6 +752,8 @@ export interface EventDetail {
   connection: HoneypotEvent[]
   source: HoneypotEvent[]
   hashes: string[]
+  /** The session's terminal recording, when it has one. */
+  recordingShasum?: string
   /** How to read the capturing sensor's own fields. */
   reading: SensorReading
 }
@@ -1206,9 +1208,13 @@ export interface GithubAnalysis extends Record<string, unknown> {
   engines: number
   risk: 'high' | 'medium' | 'low'
   family?: string
-  results: Array<{ engine: string; verdict: 'malicious' | 'suspicious' | 'undetected'; label?: string }>
+  /** Each scanner's verdict, and its own report page when it gives one. */
+  results: Array<{ engine: string; verdict: 'malicious' | 'suspicious' | 'undetected'; label?: string; permalink?: string }>
   yaraRules: string[]
   repoPath: string
+  /** The commit that published the sample, and the Actions run that scanned it. */
+  commit?: { sha: string; url: string }
+  runUrl?: string
 }
 
 // ---- Overview views --------------------------------------------------------

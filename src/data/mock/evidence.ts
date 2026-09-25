@@ -456,6 +456,9 @@ export const CAPE_RUNS: CapeRun[] = CAPE_SAMPLES.map((payload, i): CapeRun => {
   }
 })
 
+/** The public analysis repository (a placeholder host: this repo is public). */
+const GITHUB_REPO = 'https://github.example.test/apiary/samples'
+
 export const GITHUB_ANALYSES: GithubAnalysis[] = PAYLOADS.filter((p) => githubStatusFor(p)).map((payload) => {
   const rng = createRng(seedFor(payload.hash) ^ 0x61a1)
   const status = githubStatusFor(payload)!
@@ -472,9 +475,17 @@ export const GITHUB_ANALYSES: GithubAnalysis[] = PAYLOADS.filter((p) => githubSt
     family: payload.verdict?.family,
     results: engineNames.map((engine) => {
       const hit = status === 'published' && rng() < detections / engines + 0.3
-      return { engine, verdict: hit ? 'malicious' : rng() < 0.1 ? 'suspicious' : 'undetected', label: hit ? `Linux/${payload.verdict?.family ?? 'Agent'}.${hex(rng, 2).toUpperCase()}` : undefined }
+      const verdict = hit ? 'malicious' : rng() < 0.1 ? 'suspicious' : 'undetected'
+      return {
+        engine,
+        verdict,
+        label: hit ? `Linux/${payload.verdict?.family ?? 'Agent'}.${hex(rng, 2).toUpperCase()}` : undefined,
+        permalink: status === 'published' ? `https://scanners.example.test/${engine.toLowerCase()}/file/${payload.hash}` : undefined,
+      }
     }),
     yaraRules: status === 'published' ? [`auto_${payload.hash.slice(0, 8)}_strings`, `auto_${payload.hash.slice(0, 8)}_opcodes`] : [],
     repoPath: `samples/${payload.hash.slice(0, 2)}/${payload.hash}`,
+    // Derived from the hash, not drawn: the seeded draws above stay as they were.
+    ...(status === 'published' ? { commit: { sha: payload.hash.slice(24, 64), url: `${GITHUB_REPO}/commit/${payload.hash.slice(24, 64)}` }, runUrl: `${GITHUB_REPO}/actions/runs/${parseInt(payload.hash.slice(0, 8), 16)}` } : {}),
   }
 })
