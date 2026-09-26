@@ -32,6 +32,9 @@ export const Route = createRootRoute({
         rel: 'stylesheet',
         href: appCss,
       },
+      // The app's mark; with an icon declared, browsers stop asking for
+      // /favicon.ico (which 404ed on every page).
+      { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
     ],
   }),
   // The operator's preferences shape the whole document: theme mode,

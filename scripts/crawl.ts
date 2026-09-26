@@ -107,7 +107,7 @@ while (queue.length) {
   if (!samples.has(key)) samples.set(key, path)
   for (const match of html.matchAll(/href="(\/[^"#]*)"/g)) {
     const href = match[1].replaceAll('&amp;', '&')
-    if (/^\/(assets|@[\w-]+|node_modules|src)\//.test(href) || href.split('?')[0].endsWith('.css')) continue
+    if (/^\/(assets|@[\w-]+|node_modules|src)\//.test(href) || /\.(css|svg|ico|png)$/.test(href.split('?')[0])) continue
     queue.push(href)
   }
   // Every tab of an entity page, from its base path.
