@@ -127,6 +127,14 @@ step "every kind of page at phone, tablet, laptop and 4K"
 bun scripts/responsive.ts "http://localhost:$PORT"
 case $? in 0 | 2) ;; *) failed=1 ;; esac
 
+step "accessibility: WCAG 2.1 A/AA on every kind of page (docs/baselines)"
+bun scripts/a11y.ts "http://localhost:$PORT"
+case $? in 0 | 2) ;; *) failed=1 ;; esac
+
+step "performance: page weight within the baseline (docs/baselines)"
+bun scripts/perf.ts "http://localhost:$PORT"
+case $? in 0 | 2) ;; *) failed=1 ;; esac
+
 if [[ "$failed" -ne 0 ]]; then
   echo; echo "server log:"; tail -20 "$WORK/server.log"
   exit 1

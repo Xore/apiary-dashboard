@@ -68,14 +68,25 @@ export function WorldMap({ points }: { points: MapPoint[] }) {
   const busiest = new Set([...markers].sort((a, b) => b.events - a.events).slice(0, PULSING).map((m) => m.key))
 
   return (
-    <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} width="100%" role="img" aria-label="Map of attack origins by country">
+    // A group, not an image: each marker is a link a keyboard reaches.
+    <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} width="100%" role="group" aria-label="Map of attack origins by country">
       <g fill="var(--color-background-muted)" stroke="var(--color-border)" strokeWidth={0.5}>
         {outlines.map((o) => (
           <path key={o.id} d={o.d} />
         ))}
       </g>
       {markers.map((m) => (
-        <g key={m.key} cursor="pointer" onClick={() => void navigate({ to: '/events', search: { country: m.countries.join(',') } })}>
+        <a
+          key={m.key}
+          href={`/events?country=${m.countries.join(',')}`}
+          aria-label={`${m.countries.join(', ')}: ${formatNumber(m.events)} events`}
+          onClick={(event) => {
+            // Plain clicks route in the app; modified ones open a tab.
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
+            event.preventDefault()
+            void navigate({ to: '/events', search: { country: m.countries.join(',') } })
+          }}
+        >
           {animate && busiest.has(m.key) && (
             <circle cx={m.x} cy={m.y} r={m.r} fill="none" stroke="var(--color-data-categorical-blue)" strokeWidth={2}>
               <animate attributeName="r" from={m.r} to={m.r + 14} dur="2.4s" repeatCount="indefinite" />
@@ -90,7 +101,7 @@ export function WorldMap({ points }: { points: MapPoint[] }) {
               {m.countries.length}
             </text>
           )}
-        </g>
+        </a>
       ))}
     </svg>
   )

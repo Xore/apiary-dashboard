@@ -1,0 +1,13 @@
+{
+  "standard": "WCAG 2.1 A and AA, as axe-core tags them (wcag2a, wcag2aa, wcag21a, wcag21aa)",
+  "exemptions": [
+    {
+      "rule": "color-contrast",
+      "match": [
+        ".astryx-step-label",
+        "data-disabled"
+      ],
+      "reason": "The report wizard's steps that cannot be reached yet: WCAG 1.4.3 exempts text of inactive user-interface components. The colour is the Astryx Stepper's own disabled style."
+    }
+  ]
+}

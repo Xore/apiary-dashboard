@@ -41,7 +41,7 @@ export function AttackerGraph({ id, ips, membersHref }: { id: string; ips: strin
   }
   return (
     <div>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: 720, display: 'block', margin: '0 auto' }} role="img" aria-label={`Attacker identity ${id.slice(0, 8)} and its ${ips.length} member addresses`}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: 720, display: 'block', margin: '0 auto' }} role="group" aria-label={`Attacker identity ${id.slice(0, 8)} and its ${ips.length} member addresses`}>
         {spokes.map((spoke, i) => {
           const { x, y } = position(i)
           return <line key={`e-${spoke.key}`} x1={CX} y1={CY} x2={x} y2={y} stroke="var(--color-border-emphasized)" strokeWidth={hover === spoke.key ? 2 : 1} />
