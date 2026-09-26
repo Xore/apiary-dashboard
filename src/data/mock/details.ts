@@ -42,7 +42,9 @@ export function techniquesFor(events: HoneypotEvent[]): Technique[] {
 
 // ---- IP blocklist ----------------------------------------------------------
 
-export const BLOCKED_IPS = new Set<string>()
+/** Addresses an operator blocked by hand; the VPS firewall pulls them from
+ * /export/portbridge-manual-blackhole.txt. Two of the mock's busiest sources. */
+export const BLOCKED_IPS = new Set<string>(['198.51.100.13', '192.0.2.35'])
 
 // ---- Dead letters ----------------------------------------------------------
 

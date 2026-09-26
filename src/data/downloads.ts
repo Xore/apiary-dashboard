@@ -9,6 +9,7 @@
 import { asApiError } from './errors'
 import {
   getArtifactFile,
+  getBlockedIps,
   getCanarytokens,
   getCapeRun,
   getCommands,
@@ -215,6 +216,17 @@ export const rawReport = (kind: string, sha: string) => async () => {
   if (report === undefined) return text(404, 'unknown report kind')
   if (!report) return text(404, 'raw report unavailable')
   return file(`${JSON.stringify(report, null, 2)}\n`, 'application/json', `${kind}-${sha}.json`)
+}
+
+// ---- The firewall's blocklist ------------------------------------------------
+
+/** The manual blackhole list the VPS firewall pulls every five minutes: one
+ * address per line, sorted, a trailing newline, empty when none. Byte for
+ * byte what production serves; an outage answers 5xx so the puller keeps
+ * its rules instead of clearing them. */
+export const blackholeExport = () => async () => {
+  const ips = [...(await getBlockedIps())].sort()
+  return new Response(ips.length ? `${ips.join('\n')}\n` : '', { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } })
 }
 
 // ---- Artifacts, canarytokens -----------------------------------------------

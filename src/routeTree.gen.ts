@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutRouteImport } from './routes/_layout'
+import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutAttackersRouteImport } from './routes/_layout/attackers'
 import { Route as LayoutCommandsRouteImport } from './routes/_layout/commands'
@@ -25,6 +26,7 @@ import { Route as LayoutWatchlistRouteImport } from './routes/_layout/watchlist'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthLogoutRouteImport } from './routes/auth.logout'
+import { Route as ExportPortbridgeManualBlackholeDottxtRouteImport } from './routes/export.portbridge-manual-blackhole[.]txt'
 import { Route as LayoutAgentCampaignsIndexRouteImport } from './routes/_layout/agent-campaigns.index'
 import { Route as LayoutAgentCampaignsIdRouteImport } from './routes/_layout/agent-campaigns.$id'
 import { Route as LayoutAlertsIndexRouteImport } from './routes/_layout/alerts.index'
@@ -195,6 +197,11 @@ const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HealthzRoute = HealthzRouteImport.update({
+  id: '/healthz',
+  path: '/healthz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -270,6 +277,12 @@ const AuthLogoutRoute = AuthLogoutRouteImport.update({
   path: '/auth/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExportPortbridgeManualBlackholeDottxtRoute =
+  ExportPortbridgeManualBlackholeDottxtRouteImport.update({
+    id: '/export/portbridge-manual-blackhole.txt',
+    path: '/export/portbridge-manual-blackhole.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LayoutAgentCampaignsIndexRoute =
   LayoutAgentCampaignsIndexRouteImport.update({
     id: '/agent-campaigns/',
@@ -1172,6 +1185,7 @@ const ApiArtifactKindKeyFilenameRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
+  '/healthz': typeof HealthzRoute
   '/attackers': typeof LayoutAttackersRoute
   '/commands': typeof LayoutCommandsRoute
   '/history': typeof LayoutHistoryRoute
@@ -1186,6 +1200,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
+  '/export/portbridge-manual-blackhole.txt': typeof ExportPortbridgeManualBlackholeDottxtRoute
   '/agent-campaigns/$id': typeof LayoutAgentCampaignsIdRouteWithChildren
   '/alerts/$key': typeof LayoutAlertsKeyRouteWithChildren
   '/asn/$asn': typeof LayoutAsnAsnRouteWithChildren
@@ -1353,6 +1368,7 @@ export interface FileRoutesByFullPath {
   '/ioc/$kind/$value/': typeof LayoutIocKindValueIndexRoute
 }
 export interface FileRoutesByTo {
+  '/healthz': typeof HealthzRoute
   '/attackers': typeof LayoutAttackersRoute
   '/commands': typeof LayoutCommandsRoute
   '/history': typeof LayoutHistoryRoute
@@ -1367,6 +1383,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
+  '/export/portbridge-manual-blackhole.txt': typeof ExportPortbridgeManualBlackholeDottxtRoute
   '/': typeof LayoutIndexRoute
   '/auth-events/$id': typeof LayoutAuthEventsIdRoute
   '/canarytokens/$id': typeof LayoutCanarytokensIdRoute
@@ -1521,6 +1538,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
+  '/healthz': typeof HealthzRoute
   '/_layout/attackers': typeof LayoutAttackersRoute
   '/_layout/commands': typeof LayoutCommandsRoute
   '/_layout/history': typeof LayoutHistoryRoute
@@ -1535,6 +1553,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
+  '/export/portbridge-manual-blackhole.txt': typeof ExportPortbridgeManualBlackholeDottxtRoute
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/agent-campaigns/$id': typeof LayoutAgentCampaignsIdRouteWithChildren
   '/_layout/alerts/$key': typeof LayoutAlertsKeyRouteWithChildren
@@ -1706,6 +1725,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/healthz'
     | '/attackers'
     | '/commands'
     | '/history'
@@ -1720,6 +1740,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
+    | '/export/portbridge-manual-blackhole.txt'
     | '/agent-campaigns/$id'
     | '/alerts/$key'
     | '/asn/$asn'
@@ -1887,6 +1908,7 @@ export interface FileRouteTypes {
     | '/ioc/$kind/$value/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/healthz'
     | '/attackers'
     | '/commands'
     | '/history'
@@ -1901,6 +1923,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
+    | '/export/portbridge-manual-blackhole.txt'
     | '/'
     | '/auth-events/$id'
     | '/canarytokens/$id'
@@ -2054,6 +2077,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_layout'
+    | '/healthz'
     | '/_layout/attackers'
     | '/_layout/commands'
     | '/_layout/history'
@@ -2068,6 +2092,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
+    | '/export/portbridge-manual-blackhole.txt'
     | '/_layout/'
     | '/_layout/agent-campaigns/$id'
     | '/_layout/alerts/$key'
@@ -2238,9 +2263,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
+  HealthzRoute: typeof HealthzRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthLogoutRoute: typeof AuthLogoutRoute
+  ExportPortbridgeManualBlackholeDottxtRoute: typeof ExportPortbridgeManualBlackholeDottxtRoute
   ApiExportNameRoute: typeof ApiExportNameRoute
   ApiCanarytokenIdDownloadRoute: typeof ApiCanarytokenIdDownloadRoute
   ApiPayloadHashDownloadRoute: typeof ApiPayloadHashDownloadRoute
@@ -2257,6 +2284,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof LayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/healthz': {
+      id: '/healthz'
+      path: '/healthz'
+      fullPath: '/healthz'
+      preLoaderRoute: typeof HealthzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout/': {
@@ -2362,6 +2396,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/logout'
       fullPath: '/auth/logout'
       preLoaderRoute: typeof AuthLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/export/portbridge-manual-blackhole.txt': {
+      id: '/export/portbridge-manual-blackhole.txt'
+      path: '/export/portbridge-manual-blackhole.txt'
+      fullPath: '/export/portbridge-manual-blackhole.txt'
+      preLoaderRoute: typeof ExportPortbridgeManualBlackholeDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout/agent-campaigns/': {
@@ -4031,9 +4072,12 @@ const LayoutRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
+  HealthzRoute: HealthzRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthLogoutRoute: AuthLogoutRoute,
+  ExportPortbridgeManualBlackholeDottxtRoute:
+    ExportPortbridgeManualBlackholeDottxtRoute,
   ApiExportNameRoute: ApiExportNameRoute,
   ApiCanarytokenIdDownloadRoute: ApiCanarytokenIdDownloadRoute,
   ApiPayloadHashDownloadRoute: ApiPayloadHashDownloadRoute,
