@@ -392,7 +392,8 @@ export function CoverageHeatmap({ tactics, cells }: { tactics: string[]; cells: 
   const height = headH + rows * (cellH + 6)
   return (
     <VStack gap={3}>
-      <div ref={ref} style={{ overflowX: 'auto' }}>
+      {/* Scrolls sideways when narrow, so a keyboard can reach and scroll it. */}
+      <div ref={ref} style={{ overflowX: 'auto' }} tabIndex={0} role="region" aria-label="ATT&CK technique coverage, scrollable">
       <svg viewBox={`0 0 ${width} ${height}`} width={measured ? width : '100%'} height={measured ? height : undefined} role="img" aria-label="ATT&CK technique coverage by tactic">
         {columns.map((column, ci) => (
           <g key={tactics[ci]} transform={`translate(${ci * (cellW + 6)}, 0)`}>
@@ -459,7 +460,8 @@ export function SensorHeatmap({ rows, startIso }: { rows: HeatmapRow[]; startIso
   const start = Date.parse(startIso)
   return (
     <VStack gap={2}>
-      <div ref={ref} style={{ overflowX: 'auto' }}>
+      {/* Scrolls sideways when narrow, so a keyboard can reach and scroll it. */}
+      <div ref={ref} style={{ overflowX: 'auto' }} tabIndex={0} role="region" aria-label="Hourly events per sensor, scrollable">
       <svg viewBox={`0 0 ${width} ${rows.length * (cellH + gap) + 22}`} width={measured ? width : '100%'} role="img" aria-label="Hourly events per sensor, last 24 hours">
         {rows.map((row, ri) => (
           <g key={row.sensor} transform={`translate(0, ${ri * (cellH + gap)})`}>

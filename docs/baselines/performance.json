@@ -1,0 +1,86 @@
+{
+  "measuredOn": "production build, cold load, 1440x900",
+  "growthAllowed": 1.25,
+  "pages": {
+    "/": {
+      "htmlKb": 509.4,
+      "jsKb": 623.4,
+      "cssKb": 34.7,
+      "requests": 92,
+      "domContentLoadedMs": 128,
+      "loadMs": 419
+    },
+    "/events": {
+      "htmlKb": 373.6,
+      "jsKb": 578.5,
+      "cssKb": 34.7,
+      "requests": 94,
+      "domContentLoadedMs": 275,
+      "loadMs": 489
+    },
+    "/sources/198.51.100.13": {
+      "htmlKb": 423.3,
+      "jsKb": 577.2,
+      "cssKb": 34.7,
+      "requests": 96,
+      "domContentLoadedMs": 243,
+      "loadMs": 452
+    },
+    "/payloads/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37": {
+      "htmlKb": 130.9,
+      "jsKb": 594.4,
+      "cssKb": 34.7,
+      "requests": 104,
+      "domContentLoadedMs": 201,
+      "loadMs": 397
+    },
+    "/payloads/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/ghidra?section=code": {
+      "htmlKb": 145.1,
+      "jsKb": 592.2,
+      "cssKb": 34.7,
+      "requests": 103,
+      "domContentLoadedMs": 203,
+      "loadMs": 408
+    },
+    "/kill-chain": {
+      "htmlKb": 77.6,
+      "jsKb": 571.2,
+      "cssKb": 34.7,
+      "requests": 89,
+      "domContentLoadedMs": 171,
+      "loadMs": 353
+    },
+    "/alerts": {
+      "htmlKb": 112.1,
+      "jsKb": 577.6,
+      "cssKb": 34.7,
+      "requests": 92,
+      "domContentLoadedMs": 62,
+      "loadMs": 361
+    },
+    "/reports/generate": {
+      "htmlKb": 99.4,
+      "jsKb": 586.9,
+      "cssKb": 34.7,
+      "requests": 93,
+      "domContentLoadedMs": 185,
+      "loadMs": 379
+    },
+    "/source-health": {
+      "htmlKb": 136.3,
+      "jsKb": 572.4,
+      "cssKb": 34.7,
+      "requests": 89,
+      "domContentLoadedMs": 206,
+      "loadMs": 400
+    },
+    "/auth/login": {
+      "htmlKb": 12,
+      "jsKb": 544.6,
+      "cssKb": 34.7,
+      "requests": 86,
+      "domContentLoadedMs": 118,
+      "loadMs": 310
+    }
+  }
+}

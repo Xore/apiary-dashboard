@@ -109,6 +109,9 @@ export function ReportPreviewPages({ draft, preview, templateName }: { draft: Re
       <Theme theme={neutralTheme} mode={draft.theme}>
         <div
           ref={strip}
+          // A scroll region a keyboard can reach and scroll.
+          tabIndex={0}
+          role="region"
           aria-label="Report preview"
           style={{ display: 'flex', gap: PAGE_GAP, overflowX: 'auto', scrollSnapType: 'x mandatory', padding: 12, borderRadius: 8, backgroundColor: 'var(--color-background-muted)' }}
         >

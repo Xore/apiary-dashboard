@@ -2,7 +2,8 @@
 // layers from the entry points down. Selecting a function keeps it and its
 // direct neighbours lit and dims the rest; the filter dims every function
 // whose name does not match. Function names come from the sample, so they
-// are drawn as SVG text, never as markup.
+// are drawn as SVG text, never as markup. The graph is a group, not an
+// image: its functions are buttons a keyboard and a screen reader reach.
 import { useMemo, useState } from 'react'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { VStack } from '@astryxdesign/core/Stack'
@@ -23,7 +24,7 @@ export function CallGraph({ functions, selected, onSelect }: { functions: Ghidra
     <VStack gap={2}>
       <TextInput label="Filter functions" isLabelHidden placeholder="Filter by name" size="sm" width={240} value={filter} onChange={setFilter} />
       <div style={{ overflowX: 'auto' }}>
-        <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label="Call graph of the decompiled functions">
+        <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="group" aria-label="Call graph of the decompiled functions">
           <defs>
             <marker id="cg-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
               <path d="M0,0 L8,4 L0,8 z" fill="var(--color-border-emphasized)" />
