@@ -1,6 +1,7 @@
 // Every kind of page at phone, tablet, laptop and 4K widths: nothing may
 // scroll sideways, no top-bar control may leave the screen or overlap
-// another, the shell must fit the window, and no page may throw.
+// another, the shell must fit the window, and no page may throw or log a
+// console error.
 //
 //   bun scripts/responsive.ts http://localhost:3000
 //
@@ -54,6 +55,10 @@ for (const size of SIZES) {
   const page = await context.newPage()
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message.slice(0, 160)))
+  // Every console error counts, 404s included: nothing is filtered out.
+  page.on('console', (m) => {
+    if (m.type() === 'error') errors.push(`console: ${m.text().slice(0, 160)}`)
+  })
   for (const path of PAGES) {
     errors.length = 0
     await page.goto(base + path, { waitUntil: 'load' })

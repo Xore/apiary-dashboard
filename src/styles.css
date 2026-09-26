@@ -79,3 +79,11 @@ html[data-motion="reduced"] *::after {
 @media (max-width: 1023px) {
   .apiary-desktop-start { display: none !important; }
 }
+
+/* Phones (below 640 px): the page's views and the range leave the top bar
+   for a row of their own under it. */
+.apiary-phone-only { display: none !important; }
+@media (max-width: 639px) {
+  .apiary-phone-only { display: flex !important; }
+  .apiary-not-phone { display: none !important; }
+}

@@ -12,15 +12,15 @@ import { MagnifyingGlassIcon, ShieldCheckIcon } from '@heroicons/react/24/outlin
 import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
 import { TOP_NAV_END_ID, ViewTabsBar, ViewTabsMenu, useViewTabs } from './ViewTabs'
 import { useAppShellMobile } from '@astryxdesign/core/AppShell'
-import { useMediaQuery } from '@astryxdesign/core/hooks'
 import { Selector } from '@astryxdesign/core/Selector'
 import { useLocation, useNavigate, useSearch } from '@tanstack/react-router'
 import { DEFAULT_RANGE, RANGES, isRange } from '#/lib/range'
 import type { RangeId } from '#/lib/range'
 import type { ShellConfig } from '#/data/types'
 
-/** Phones get a second row for the page's views and the time range. */
-export const PHONE_QUERY = '(max-width: 639px)'
+// Phones get a second row for the page's views and the time range. Which
+// row shows them is decided in CSS (styles.css, 640 px), so the server's
+// render is already right before any script runs.
 
 /** The app-wide time range; every page reads it from ?range=. Compact
  * shows the short names (24h, 7d). */
@@ -65,7 +65,6 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
   // In the drawer layout the tabs become one Views menu and the controls
   // their icons; on a phone the views and range move to a row of their own.
   const { isMobile } = useAppShellMobile()
-  const isPhone = useMediaQuery(PHONE_QUERY)
   return (
     <TopNav
       label="Page header"
@@ -93,8 +92,14 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
       endContent={
         // The tab strip measures up to here, so tabs never run under it.
         <HStack id={TOP_NAV_END_ID} gap={2} vAlign="center">
-          {isMobile && !isPhone && <ViewTabsMenu />}
-          {!isPhone && <RangePicker compact={isMobile} />}
+          {isMobile && (
+            <span className="apiary-not-phone">
+              <ViewTabsMenu />
+            </span>
+          )}
+          <span className="apiary-not-phone">
+            <RangePicker compact={isMobile} />
+          </span>
           {isMobile ? (
             <Button label="Search" variant="secondary" size="sm" isIconOnly tooltip="Search (⌘K)" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette} />
           ) : (
@@ -106,7 +111,7 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
             </Button>
           )}
           <MockScenarioMenu compact={isMobile} />
-          <LiveBadge compact={isPhone} />
+          <LiveBadge compact={isMobile} />
         </HStack>
       }
     />
@@ -116,10 +121,8 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
 /** A phone's second row: the page's views and the time range, under the
  * top bar where there is room for them. */
 export function PhoneViewBar() {
-  const isPhone = useMediaQuery(PHONE_QUERY)
-  if (!isPhone) return null
   return (
-    <HStack gap={2} vAlign="center" hAlign="between" style={{ padding: '8px 16px', borderBottom: '1px solid var(--color-border-default, transparent)' }}>
+    <HStack gap={2} vAlign="center" hAlign="between" className="apiary-phone-only" style={{ padding: '8px 16px', borderBottom: '1px solid var(--color-border-default, transparent)' }}>
       <ViewTabsMenu />
       <StackItem size="fill" />
       <RangePicker compact />
