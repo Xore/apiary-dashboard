@@ -86,11 +86,11 @@ const EXPORTS: Partial<Record<string, (search: URLSearchParams) => Promise<Respo
     const { rows } = await getEvents(filters)
     return file(toCsv(await cap(rows), ['timestamp', 'sensor', 'persona', 'asset', 'srcIp', 'country', 'city', 'org', 'provider', 'protocol', 'dstPort', 'type', 'severity', 'summary', 'fingerprint', 'communityId', 'sessionId']), 'text/csv', 'events.csv')
   },
-  'commands.csv': async () => file(toCsv(await cap(await getCommands()), ['timestamp', 'sensor', 'srcIp', 'command', 'sessionId']), 'text/csv', 'commands.csv'),
+  'commands.csv': async () => file(toCsv(await cap((await getCommands()).rows), ['timestamp', 'sensor', 'srcIp', 'command', 'sessionId']), 'text/csv', 'commands.csv'),
   'ips.csv': async () => file(toCsv(await cap((await getSourceProfiles()).sources), ['ip', 'country', 'org', 'events', 'logins', 'sessions', 'sensors', 'first', 'last']), 'text/csv', 'ips.csv'),
   'campaigns.csv': async () => file(toCsv(await cap((await getNetworkCampaigns()).campaigns), ['cidr', 'score', 'events', 'uniqueIps', 'sensors', 'ports', 'creds', 'payloads', 'alerts', 'first', 'last']), 'text/csv', 'campaigns.csv'),
   'clusters.csv': async () => file(toCsv(await cap(await getInfraClusters()), ['kind', 'value', 'sources', 'events', 'sensors']), 'text/csv', 'clusters.csv'),
-  'history.json': async (search) => file(`${JSON.stringify(await cap(await searchHistory(search.get('q') ?? '')), null, 2)}\n`, 'application/json', 'history.json'),
+  'history.json': async (search) => file(`${JSON.stringify(await cap((await searchHistory(search.get('q') ?? '')).rows), null, 2)}\n`, 'application/json', 'history.json'),
 }
 
 export const exportFile = (name: string) => (search: URLSearchParams) => EXPORTS[name]?.(search) ?? Promise.resolve(text(404, 'unknown export'))

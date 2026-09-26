@@ -319,9 +319,21 @@ export interface EventFilters {
   since?: string
 }
 
-export interface EventsPage {
-  rows: HoneypotEvent[]
+/** One page of a list the backend filters and pages: the rows, where they
+ * start, and how many match in all (the real API's `{ total, offset, rows }`). */
+export interface Paged<T> {
+  rows: T[]
   total: number
+  offset: number
+}
+
+/** Which page to fetch. Without a limit, every matching row (exports). */
+export interface PageRequest {
+  offset?: number
+  limit?: number
+}
+
+export interface EventsPage extends Paged<HoneypotEvent> {
   values: { sensors: string[]; countries: string[]; protos: Protocol[]; ports: number[] }
 }
 

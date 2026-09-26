@@ -65,6 +65,8 @@ import type {
   AgentCampaign,
   CapeRun,
   GhidraAnalysis,
+  PageRequest,
+  Paged,
   GithubAnalysis,
   PayloadAnalysis,
   RevDeckRun,
@@ -346,7 +348,14 @@ function sinceMs(since?: string): number | undefined {
   return Number(match[1]) * { m: 60_000, h: HOUR, d: DAY }[match[2] as 'm' | 'h' | 'd']
 }
 
-export async function getEvents(filters: EventFilters): Promise<EventsPage> {
+/** The page a request asks for, out of every matching row. */
+function pageOf<T>(rows: T[], { offset = 0, limit }: PageRequest = {}): Paged<T> {
+  const start = Math.max(0, Math.floor(offset))
+  return { rows: limit === undefined ? rows.slice(start) : rows.slice(start, start + Math.max(0, limit)), total: rows.length, offset: start }
+}
+
+/** Events matching the filters, newest first, one page at a time. */
+export async function getEvents(filters: EventFilters & PageRequest): Promise<EventsPage> {
   await mockDelay()
   const window = sinceMs(filters.since)
   const anyOf = (list: string | number | undefined, value: string) => list === undefined || String(list).split(',').includes(value)
@@ -370,8 +379,7 @@ export async function getEvents(filters: EventFilters): Promise<EventsPage> {
       (window === undefined || MOCK_NOW - Date.parse(e.timestamp) <= window),
   )
   return {
-    rows,
-    total: rows.length,
+    ...pageOf(rows, filters),
     values: {
       sensors: SENSORS.map((s) => s.id),
       countries: [...new Set(EVENTS.map((e) => e.country))].sort(),
@@ -411,9 +419,12 @@ export async function getKillChain(): Promise<KillChainData> {
   return KILL_CHAIN
 }
 
-export async function getCommands(): Promise<HoneypotEvent[]> {
+export async function getCommands(page?: PageRequest): Promise<Paged<HoneypotEvent>> {
   await mockDelay()
-  return EVENTS.filter((e) => e.type === 'command.input')
+  return pageOf(
+    EVENTS.filter((e) => e.type === 'command.input'),
+    page,
+  )
 }
 
 /** Sensors ordered busiest first. */
@@ -562,13 +573,14 @@ const HISTORY_FIELDS: Record<string, (e: HoneypotEvent) => string> = {
 
 /** Mock of the archive's Lucene passthrough: `field:value` terms and free
  * text, joined with AND. Unknown fields match nothing. */
-export async function searchHistory(query: string): Promise<HoneypotEvent[]> {
+/** Archive search: at most 500 matches, like the real endpoint, paged. */
+export async function searchHistory(query: string, page?: PageRequest): Promise<Paged<HoneypotEvent>> {
   await mockDelay()
   const terms = query
     .split(/\s+AND\s+/i)
     .map((t) => t.trim())
     .filter(Boolean)
-  return EVENTS.filter((event) =>
+  const matches = EVENTS.filter((event) =>
     terms.every((term) => {
       const match = term.match(/^([\w.]+):"?([^"]*)"?$/)
       if (match) {
@@ -578,6 +590,7 @@ export async function searchHistory(query: string): Promise<HoneypotEvent[]> {
       return JSON.stringify(event).toLowerCase().includes(term.toLowerCase())
     }),
   ).slice(0, 500)
+  return pageOf(matches, page)
 }
 
 // ---- Reports ---------------------------------------------------------------

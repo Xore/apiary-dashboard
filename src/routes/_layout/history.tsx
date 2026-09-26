@@ -15,13 +15,15 @@ import { searchHistory } from '#/data/queries'
 import type { HoneypotEvent } from '#/data/types'
 import { apiHref } from '#/lib/apiHref'
 import { formatDateTime, formatNumber } from '#/lib/format'
+import { pageParam, pageRequest } from '#/lib/paging'
 
 export const Route = createFileRoute('/_layout/history')({
-  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { q?: string; page?: number } => ({
     q: typeof search.q === 'string' && search.q ? search.q : undefined,
+    page: pageParam(search.page),
   }),
-  loaderDeps: ({ search }) => ({ q: search.q ?? '' }),
-  loader: ({ deps }) => searchHistory(deps.q),
+  loaderDeps: ({ search }) => ({ q: search.q ?? '', page: search.page }),
+  loader: async ({ deps }) => searchHistory(deps.q, await pageRequest(deps.page)),
   component: HistoryPage,
 })
 
@@ -36,7 +38,7 @@ const columns: TableColumn<HoneypotEvent>[] = [
 ]
 
 function HistoryPage() {
-  const rows = Route.useLoaderData()
+  const result = Route.useLoaderData()
   const { q } = Route.useSearch()
   const navigate = Route.useNavigate()
   const [draft, setDraft] = useState(q ?? '')
@@ -48,7 +50,7 @@ function HistoryPage() {
       description="Raw search across the full event archive: Lucene-style field:value terms joined with AND, 90-day window, exportable."
       actions={
         <>
-          <Text type="supporting">{formatNumber(rows.length)} matches{rows.length === 500 ? ' (capped)' : ''}</Text>
+          <Text type="supporting">{formatNumber(result.total)} matches{result.total === 500 ? ' (capped)' : ''}</Text>
           <Button
             label="JSON"
             size="sm"
@@ -89,7 +91,8 @@ function HistoryPage() {
           </HStack>
         </VStack>
       }
-      rows={rows}
+      rows={result.rows}
+      paging={result}
       columns={columns}
       getHref={(row) => entityHref('event', row.id)!}
       getId={(row) => row.id}
