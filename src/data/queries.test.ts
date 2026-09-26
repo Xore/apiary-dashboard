@@ -197,10 +197,24 @@ describe('filters and search', () => {
   })
 
   it('applies every term of an AND history query', async () => {
-    const rows = await q.searchHistory('sensor:cowrie AND username:root')
+    const { rows } = await q.searchHistory('sensor:cowrie AND username:root')
     expect(rows.length).toBeGreaterThan(0)
     expect(rows.every((e) => e.sensor === 'cowrie' && e.username?.includes('root'))).toBe(true)
-    expect(await q.searchHistory('nosuchfield:x')).toEqual([])
+    expect((await q.searchHistory('nosuchfield:x')).rows).toEqual([])
+  })
+
+  it('pages a list: the requested slice, where it starts, and how many match in all', async () => {
+    const all = await q.getEvents({ sensor: 'cowrie' })
+    const second = await q.getEvents({ sensor: 'cowrie', offset: 25, limit: 25 })
+    expect(second.total).toBe(all.total)
+    expect(second.offset).toBe(25)
+    expect(second.rows).toEqual(all.rows.slice(25, 50))
+    const past = await q.getEvents({ sensor: 'cowrie', offset: all.total + 10, limit: 25 })
+    expect(past.rows).toEqual([])
+    expect(past.total).toBe(all.total)
+    const commands = await q.getCommands({ offset: 0, limit: 5 })
+    expect(commands.rows).toHaveLength(5)
+    expect(commands.rows.every((e) => e.type === 'command.input')).toBe(true)
   })
 
   it('groups search results and returns nothing for an empty query', async () => {

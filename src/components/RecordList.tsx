@@ -31,6 +31,10 @@ type RecordListProps<T extends Record<string, unknown>> = {
   getHref: (row: T) => string
   emptyState: { title: string; description: string }
   pageSize?: number
+  /** Server-paged: `rows` is one page of `total` matches, starting at
+   * `offset`. The page lives in `?page=`, so the loader fetches only it;
+   * without this, `rows` is the whole list and pages are cut here. */
+  paging?: { total: number; offset: number }
 }
 
 /** A store-backed record page: summary band, filter row, and a paged
@@ -47,6 +51,7 @@ export function RecordList<T extends Record<string, unknown>>({
   getHref,
   emptyState,
   pageSize: pageSizeProp,
+  paging,
 }: RecordListProps<T>) {
   const prefs = usePreferences()
   const pageSize = pageSizeProp ?? prefs?.rowsPerPage ?? 25
@@ -70,9 +75,20 @@ export function RecordList<T extends Record<string, unknown>>({
     }
   }
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
-  const currentPage = Math.min(page, pageCount)
-  const visible = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const total = paging ? paging.total : rows.length
+  const pageCount = Math.max(1, Math.ceil(total / pageSize))
+  const currentPage = paging ? Math.floor(paging.offset / pageSize) + 1 : Math.min(page, pageCount)
+  const visible = paging ? rows : rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const goToPage = (next: number) => {
+    if (!paging) return setPage(next)
+    // Any list route may be paged, so the typed routes do not all know ?page=.
+    void navigate({ to: '.', search: ((prev: Record<string, unknown>) => ({ ...prev, page: next > 1 ? next : undefined })) as never })
+  }
+  // A page past the end (the filters now match fewer rows): go to the last.
+  const pastTheEnd = paging !== undefined && rows.length === 0 && total > 0
+  useEffect(() => {
+    if (pastTheEnd) void navigate({ to: '.', search: ((prev: Record<string, unknown>) => ({ ...prev, page: pageCount > 1 ? pageCount : undefined })) as never, replace: true })
+  }, [pastTheEnd, pageCount, navigate])
   const openRow = (row: T, { newTab: modified }: { newTab: boolean }) => {
     const href = getHref(row)
     // With "open detail pages in a new tab", a plain click opens one and a
@@ -84,6 +100,7 @@ export function RecordList<T extends Record<string, unknown>>({
       window.open(range ? `${href}${href.includes('?') ? '&' : '?'}range=${range}` : href, '_blank', 'noopener')
       return
     }
+    // Prev/next steps through the rows at hand: the whole list, or this page.
     saveListContext({ listHref, listTitle: title, hrefs: rows.map(getHref) })
     void navigate({ href })
   }
@@ -113,14 +130,14 @@ export function RecordList<T extends Record<string, unknown>>({
           <VStack gap={5}>
             {summary}
             {toolbar}
-            {rows.length === 0 ? (
+            {total === 0 ? (
               <EmptyState icon={<Icon icon={InboxIcon} size="lg" />} {...emptyState} />
             ) : (
               <VStack gap={3}>
                 {/* Also keeps the table from being the content's first child,
                     which Astryx bleeds up under the page header. */}
                 <Text type="supporting">
-                  {formatNumber(rows.length)} {rows.length === 1 ? 'record' : 'records'}
+                  {formatNumber(total)} {total === 1 ? 'record' : 'records'}
                   {pageCount > 1 ? ` · page ${currentPage} of ${pageCount}` : ''}
                 </Text>
                 <Table
@@ -136,8 +153,8 @@ export function RecordList<T extends Record<string, unknown>>({
                   <HStack hAlign="end">
                     <Pagination
                       page={currentPage}
-                      onChange={setPage}
-                      totalItems={rows.length}
+                      onChange={goToPage}
+                      totalItems={total}
                       pageSize={pageSize}
                       variant="count"
                     />

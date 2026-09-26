@@ -8,7 +8,7 @@
 // single designer and wrong for anything shared: this is a mock-only seam.
 import { ApiError } from './errors'
 import { CONFIG } from './mock/details'
-import { enlarged, originalArgs } from './mock/large'
+import { enlargedRead, originalArgs } from './mock/large'
 import type { SessionUser } from './types'
 
 export type MockScenario = 'normal' | 'empty' | 'large' | 'slow' | 'partial' | 'unavailable' | 'overloaded' | 'expired' | 'viewer'
@@ -135,7 +135,10 @@ function runScenario<TArgs extends unknown[], TResult>(name: string, query: (...
     if (scenario === 'expired') throw new ApiError('expired', name)
     if (scenario === 'viewer' && ADMIN_WRITES.has(name)) throw new ApiError('forbidden', name)
     if (!isRead(name) && !READ_ONLY_EXEMPT.has(name) && readOnly()) throw new ApiError('locked', name)
-    if (scenario === 'large' && isRead(name)) return enlarged(await query(...(originalArgs(args) as TArgs)))
+    if (scenario === 'large' && isRead(name)) {
+      const base = originalArgs(args) as TArgs
+      return (await enlargedRead(await query(...base), base, (next) => query(...(next as TArgs)))) as TResult
+    }
     const result = await query(...args)
     return scenario === 'empty' && isRead(name) ? emptied(result, KEEP_WHEN_EMPTY[name], ZERO_ITEMS[name]) : result
   }

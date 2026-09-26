@@ -24,6 +24,7 @@ import { ZoneHeader } from '#/components/ZoneHeader'
 import { OpenInMenu } from '#/components/OpenInMenu'
 import { useShellConfig } from '#/lib/session'
 import { eventToolLinks } from '#/lib/toolLinks'
+import { pageParam, pageRequest } from '#/lib/paging'
 
 const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http', 'protocol', 'alert']
 const SINCE = ['1h', '6h', '24h']
@@ -47,7 +48,7 @@ const FILTERS: Array<{ key: 'ip' | 'sensor' | 'persona' | 'provider' | 'country'
 export const Route = createFileRoute('/_layout/events/')({
   // Deep links from other pages arrive here pre-scoped, e.g.
   // /events?ip=…, ?kind=login, ?country=CN, ?since=24h.
-  validateSearch: (search: Record<string, unknown>): EventFilters => {
+  validateSearch: (search: Record<string, unknown>): EventFilters & { page?: number } => {
     // Comma lists, so ?sensor=a,b picks several and ?port=22 still works.
     const list = (key: string) => toParam(listParam(search[key]))
     return {
@@ -66,13 +67,15 @@ export const Route = createFileRoute('/_layout/events/')({
       port: toNumericParam(listParam(search.port)),
       kind: toParam(listParam(search.kind).filter((k) => KINDS.includes(k as EventKind))),
       since: typeof search.since === 'string' && SINCE.includes(search.since) ? search.since : undefined,
+      page: pageParam(search.page),
     }
   },
   // An explicit ?since= wins; otherwise the app-wide range applies.
   loaderDeps: ({ search }) => ({ ...search, since: search.since ?? search.range }),
-  loader: async ({ deps }) => {
-    const [page, facets] = await Promise.all([getEvents(deps), getFacets()])
-    return { ...page, facets }
+  // One page at a time: the query filters and pages, as the real API does.
+  loader: async ({ deps: { page, ...filters } }) => {
+    const [events, facets] = await Promise.all([pageRequest(page).then((request) => getEvents({ ...filters, ...request })), getFacets()])
+    return { ...events, facets }
   },
   component: EventsPage,
 })
@@ -120,7 +123,8 @@ function EventsPage() {
   // New events join the list as they arrive, a few seconds at a time.
   const arrived = useLiveRefresh(3000)
 
-  const setFilter = (patch: EventFilters) => void navigate({ search: (prev) => ({ ...prev, ...patch }) })
+  // A new filter starts again at the first page.
+  const setFilter = (patch: EventFilters) => void navigate({ search: (prev) => ({ ...prev, ...patch, page: undefined }) })
   const active = FILTER_KEYS.filter((key) => search[key] !== undefined)
 
   return (
@@ -199,6 +203,7 @@ function EventsPage() {
         </VStack>
       }
       rows={data.rows}
+      paging={data}
       columns={columns}
       getHref={(row) => entityHref('event', row.id)!}
       getId={(row) => row.id}

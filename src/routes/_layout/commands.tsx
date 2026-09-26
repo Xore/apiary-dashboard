@@ -15,10 +15,14 @@ import { formatClock, formatNumber } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { ZoneHeader } from '#/components/ZoneHeader'
 import { indicatorTabs } from '#/lib/navFamilies'
+import { pageParam, pageRequest } from '#/lib/paging'
 
 export const Route = createFileRoute('/_layout/commands')({
   staticData: { viewTabs: indicatorTabs },
-  loader: () => getCommands(),
+  validateSearch: (search: Record<string, unknown>): { page?: number } => ({ page: pageParam(search.page) }),
+  loaderDeps: ({ search }) => ({ page: search.page }),
+  // One page at a time: every execution is unbounded.
+  loader: async ({ deps }) => getCommands(await pageRequest(deps.page)),
   component: CommandsPage,
 })
 
@@ -38,7 +42,7 @@ function CommandsPage() {
       description="Every shell command attackers typed into interactive honeypots, newest first."
       actions={
         <>
-          <Text type="supporting">{formatNumber(commands.length)} commands</Text>
+          <Text type="supporting">{formatNumber(commands.total)} commands</Text>
           <Button
             label="CSV"
             size="sm"
@@ -48,7 +52,8 @@ function CommandsPage() {
           />
         </>
       }
-      rows={commands}
+      rows={commands.rows}
+      paging={commands}
       columns={columns}
       getHref={(row) => entityHref('event', row.id)!}
       getId={(row) => row.id}

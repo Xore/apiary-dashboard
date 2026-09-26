@@ -74,3 +74,32 @@ export function enlarged<T>(value: T, key = '', allCounts = false): T {
 
 /** A lookup by a copy's id is a lookup by its original's. */
 export const originalArgs = (args: unknown[]): unknown[] => args.map((arg) => (typeof arg === 'string' ? arg.replace(/~\d+$/, '') : arg))
+
+type PagedResult = { rows: Array<{ id: string }>; total: number; offset: number }
+
+const isPaged = (value: unknown): value is PagedResult =>
+  value !== null && typeof value === 'object' && Array.isArray((value as PagedResult).rows) && typeof (value as PagedResult).total === 'number' && typeof (value as PagedResult).offset === 'number'
+
+/** A paged read at scale: the total grows like every count, and any page of
+ * it has rows, cycling through the real ones as copies (`<id>~<lap>`) that
+ * open their originals. `run` repeats the read with other paging. */
+export async function enlargedRead(result: unknown, args: unknown[], run: (args: unknown[]) => Promise<unknown>): Promise<unknown> {
+  const at = args.findIndex((arg) => arg !== null && typeof arg === 'object' && 'limit' in arg)
+  const request = at >= 0 ? (args[at] as { offset?: number; limit?: number }) : undefined
+  if (!isPaged(result) || !request?.limit || result.total === 0) return enlarged(result)
+  const real = result.total
+  const offset = request.offset ?? 0
+  const total = real * FACTOR
+  const withPaging = (next: { offset: number; limit: number }) => args.map((arg, i) => (i === at ? { ...(arg as object), ...next } : arg))
+  const rows: Array<{ id: string }> = []
+  // A page can straddle two laps of the real rows.
+  for (let position = offset; rows.length < request.limit && position < total; ) {
+    const lap = Math.floor(position / real)
+    const page = (await run(withPaging({ offset: position % real, limit: request.limit - rows.length }))) as PagedResult
+    if (page.rows.length === 0) break
+    rows.push(...page.rows.map((row) => (lap === 0 ? row : { ...row, id: `${row.id}~${lap}` })))
+    position += page.rows.length
+  }
+  // Counts and long values as everywhere else; paging stays as computed.
+  return { ...enlarged({ ...result, rows: [] }), rows: rows.map((row) => enlarged(row)), total, offset }
+}
