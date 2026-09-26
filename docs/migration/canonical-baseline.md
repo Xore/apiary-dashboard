@@ -61,7 +61,7 @@ The destination baseline must prove:
 - [x] Confirm route and server-function scale.
 - [x] Confirm root, shell, and navigation ownership.
 - [x] Confirm global and direct-route security layers.
-- [ ] Record every route and direct handler.
+- [x] Record every route and direct handler: [route-matrix.md](route-matrix.md) (63 routes: 42 implemented, 15 replaced by a redirect, 6 pending for Phase 2).
 - [ ] Record every server function, caller, input/output, backend dependency, and permission.
 - [ ] Record every shell behavior and destination owner.
 - [ ] Record route data fields, mutations, and user-visible states.

@@ -977,6 +977,12 @@ export async function getIpProfile(ip: string): Promise<IpProfile | null> {
 }
 
 /** Mock write: adds/removes the address on the portbridge manual blackhole. */
+/** Every manually blocked address, as the VPS firewall pulls them. */
+export async function getBlockedIps(): Promise<string[]> {
+  await mockDelay()
+  return [...BLOCKED_IPS]
+}
+
 export async function setIpBlocked(ip: string, blocked: boolean): Promise<void> {
   await mockDelay()
   if (blocked) BLOCKED_IPS.add(ip)
