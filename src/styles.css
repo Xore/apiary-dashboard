@@ -61,10 +61,10 @@ html[data-motion="reduced"] *::after {
    scale in the OS (the usual 200 % on 4K) report a normal width and are
    unaffected. */
 @media (min-width: 2560px) {
-  :root { --ui-zoom: 1.25; }
+  :root { --ui-zoom: 1.1; }
 }
 @media (min-width: 3200px) {
-  :root { --ui-zoom: 1.5; }
+  :root { --ui-zoom: 1.25; }
 }
 @media (min-width: 2560px) {
   html { zoom: var(--ui-zoom); }
