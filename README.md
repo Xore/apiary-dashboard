@@ -71,6 +71,8 @@ Mock writes (acknowledge, block, save, mint, …) change the server's in-memory 
 
 **Live data:** `/api/live` streams new events as Server-Sent Events while the dashboard is open, in the fleet's proportions, from one generator on the server. The Event explorer and the overview follow it. The **Live** badge in the top bar pauses and resumes every refresh path (the choice is kept in this browser) and turns **Stalled** when the stream breaks.
 
+**Chart and topology payloads:** `/api/chart/{name}` (the 21 allowlisted charts) and `/api/topology/flow` answer in the Rust tier's wire shapes, typed in `src/data/contracts/charts.ts`, built from the same mock data and scenarios the pages read. They are what production's proxies pass through, for the operational checks that call them; the pages themselves read through server functions.
+
 The same menu can **simulate an incident** to see the operational toasts raise and resolve: a sensor goes silent, ingest stalls, the cluster goes red, Filebeat drops, dead letters arrive, or everything recovers. Every open tab hears it through the stream.
 
 `bun scripts/crawl.ts <url> 1 --scenarios` signs in, opens one page of every route shape under each scenario, and fails on a page that crashes or shows the wrong state; smoke runs it.
