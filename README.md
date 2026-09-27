@@ -42,7 +42,7 @@ GitHub Actions, on GitHub-hosted runners:
 | `assistant.yml` | `@claude` in a comment | answers or makes the change on a branch; owner and collaborators only |
 | `dependabot-auto-merge.yml` | Dependabot PRs | patch and minor updates merge once every required check is green; majors and 0.x minors wait for a person |
 
-Dependabot proposes GitHub Actions, Bun and base-image updates weekly; TanStack packages are pinned to exact versions and update as one group. A ruleset on `main` requires every check above except the automated review, and blocks force pushes and deletion.
+Dependabot proposes GitHub Actions and base-image updates weekly. It cannot read Bun 1.4's `bun.lock` yet, so npm packages are updated by hand for now; TanStack packages are pinned to exact versions and move together. A ruleset on `main` requires every check above except the automated review, and blocks force pushes and deletion.
 
 To release: `git tag v0.1.0 && git push origin v0.1.0`.
 

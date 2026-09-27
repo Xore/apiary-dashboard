@@ -13,22 +13,9 @@ updates:
         update-types: [minor, patch]
     labels: [dependencies]
 
-  - package-ecosystem: bun
-    directory: /
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:15"
-      timezone: Europe/Berlin
-    groups:
-      # TanStack's packages move together (CI demands exact pins).
-      tanstack:
-        patterns: ["@tanstack/*"]
-      compatible:
-        patterns: ["*"]
-        exclude-patterns: ["@tanstack/*"]
-        update-types: [minor, patch]
-    labels: [dependencies]
+  # No `bun` entry: Dependabot's Bun updater reads bun.lock format 1 only,
+  # and Bun 1.4 writes format 2 (see the tracking issue). Security
+  # advisories still arrive through the dependency graph.
 
   - package-ecosystem: docker
     directory: /
