@@ -1,6 +1,7 @@
 // Per-sample analysis fixtures. Each is generated from the payload hash, so a
 // sample always shows the same results wherever it is opened.
 import type {
+  GoldenImageStatus,
   CapeRun,
   CapturedPayload,
   GhidraAnalysis,
@@ -84,6 +85,18 @@ function sandboxVerdict(risk: number): SandboxRun['verdict'] {
   return risk > 70 ? 'malicious' : risk > 40 ? 'suspicious' : 'benign'
 }
 
+/** The Windows guest's golden image: built 34 days before the mock's now,
+ * so past the monthly rebuild but inside the ISO's 90 days. */
+const GOLDEN_IMAGE: GoldenImageStatus = {
+  builtAt: '2026-08-20T03:10:00Z',
+  ageDays: 34,
+  checksumWritten: true,
+  checksumVerified: true,
+  staleMonthly: true,
+  staleIsoEval: false,
+  checkedAt: isoMinutesAgo(42),
+}
+
 export function buildSandboxRun(payload: CapturedPayload): SandboxRun {
   const rng = createRng(seedFor(payload.hash) ^ 0x5a5a)
   const risk = ANALYSIS_RESULTS.find((r) => r.analyzer === 'sandbox' && r.hash === payload.hash)?.risk ?? int(rng, 20, 90)
@@ -122,7 +135,7 @@ export function buildSandboxRun(payload: CapturedPayload): SandboxRun {
           processesAdded: ['svchost.exe (from Temp)', 'schtasks.exe'],
           iocsStatic: [host, `http://${host}/update.bin`],
           output: '',
-          diagnostics: { vm: 'win10-22h2-x64 (KVM)', snapshot: 'golden-2026-09-10', 'packet capture': 'complete', 'guest agent': 'ok', network: 'sinkholed (fake DNS + INetSim)' },
+          diagnostics: { vm: 'win10-22h2-x64 (KVM)', snapshot: 'golden-2026-08-20', 'packet capture': 'complete', 'guest agent': 'ok', network: 'sinkholed (fake DNS + INetSim)' },
         }
       : {}),
   }
@@ -139,7 +152,8 @@ function sandboxForensics(payload: CapturedPayload, host: string): Omit<SandboxR
   const guestIp = '10.0.2.15'
   const tcpdumpLine = (i: number, proto: string, dst: string) => `12:0${Math.floor(i / 10)}:${String(10 + (i % 50)).padStart(2, '0')}.${hex(rng, 6)} IP ${guestIp}.${40000 + i} > ${dst}: ${proto}`
   return {
-    route: windows ? { name: 'windows-kvm', vm: 'win10-22h2-x64', snapshot: 'golden-2026-09-10' } : { name: 'linux-qemu', vm: `qemu-${payload.platform.includes('arm') ? 'arm' : payload.platform.includes('mips') ? 'mips' : 'x86_64'}`, snapshot: 'clean-2026-09-01' },
+    ...(windows ? { goldenImage: { ...GOLDEN_IMAGE } } : {}),
+    route: windows ? { name: 'windows-kvm', vm: 'win10-22h2-x64', snapshot: 'golden-2026-08-20' } : { name: 'linux-qemu', vm: `qemu-${payload.platform.includes('arm') ? 'arm' : payload.platform.includes('mips') ? 'mips' : 'x86_64'}`, snapshot: 'clean-2026-09-01' },
     processes: windows ? { added: ['C:\\Users\\user\\AppData\\Local\\Temp\\svchost.exe', 'cmd.exe /c schtasks /create /tn Update /tr ...'], removed: [] } : { added: ['/tmp/.x', 'sh -c ./x', 'kworker/0:1 (masquerade)'].slice(0, int(rng, 1, 3)), removed: ['telnetd'] },
     sockets: windows
       ? { before: ['TCP 0.0.0.0:135 LISTEN', 'TCP 0.0.0.0:445 LISTEN'], after: ['TCP 0.0.0.0:135 LISTEN', 'TCP 0.0.0.0:445 LISTEN', `TCP ${guestIp}:49712 ${host}:${port} ESTABLISHED`] }
@@ -429,6 +443,7 @@ export const REVDECK_RUNS: RevDeckRun[] = PAYLOADS.filter((p) => p.kind !== 'she
         ],
     citations: { valid: failed ? [] : ['main@0x401000', 'handle_commands@0x401a20'], invalid: failed ? [] : rng() < 0.4 ? ['attack_http@0x402000'] : [] },
     error: failed ? 'Ghidra REST service timed out after 600s' : undefined,
+    workflow: i % 3 === 0 ? 'triage-v2' : 'deep-walk-v1',
   }
 })
 
@@ -454,6 +469,12 @@ export const CAPE_RUNS: CapeRun[] = CAPE_SAMPLES.map((payload, i): CapeRun => {
     dumps: failed ? [] : [`${hex(rng, 64)} (injected PE)`],
     config: failed ? {} : { family: pick(rng, ['AgentTesla', 'Remcos', 'AsyncRAT']), c2: pick(rng, C2_HOSTS), mutex: `Global\\${hex(rng, 8)}` },
     log: failed ? 'Analysis aborted: guest did not respond within timeout' : 'Task completed; 2 processes traced; 1 dump extracted',
+    taskId: 4180 + i * 7,
+    capeStatus: failed ? 'failed_analysis' : 'reported',
+    malstatus: failed ? 'Unknown' : 'Malicious',
+    totalCalls: failed ? 0 : int(rng, 4_000, 90_000),
+    sections: failed ? ['info', 'debug'] : ['info', 'behavior', 'network', 'signatures', 'CAPE', 'procdump', 'debug'],
+    debugErrors: failed ? ['Analysis timeout exceeded, terminating analysis', 'Guest agent did not respond to status poll'] : [],
   }
 })
 
@@ -488,5 +509,8 @@ export const GITHUB_ANALYSES: GithubAnalysis[] = PAYLOADS.filter((p) => githubSt
     repoPath: `samples/${payload.hash.slice(0, 2)}/${payload.hash}`,
     // Derived from the hash, not drawn: the seeded draws above stay as they were.
     ...(status === 'published' ? { commit: { sha: payload.hash.slice(24, 64), url: `${GITHUB_REPO}/commit/${payload.hash.slice(24, 64)}` }, runUrl: `${GITHUB_REPO}/actions/runs/${parseInt(payload.hash.slice(0, 8), 16)}` } : {}),
+    requestedBy: parseInt(payload.hash.slice(8, 10), 16) % 2 ? 'Operator' : 'Analyst',
+    ...(status === 'quota_exceeded' ? { dailyCap: 20 } : {}),
+    ...(status === 'published' ? { reportPdf: `reports/${payload.hash}.pdf`, viewUrl: `${GITHUB_REPO}/blob/main/reports/${payload.hash}.md` } : {}),
   }
 })

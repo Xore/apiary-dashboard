@@ -25,14 +25,15 @@ export function CapeResult({ run }: { run: CapeRun }) {
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap">
           <EntityLink kind="payload" id={run.sha}><Text type="code">{`${run.sha.slice(0, 24)}…`}</Text></EntityLink>
-          <Text type="supporting">{formatDateTime(run.at)}</Text>
+          <Text type="supporting">{`task ${run.taskId} · ${formatDateTime(run.at)} · CAPE status ${run.capeStatus}`}</Text>
         </HStack>
         {run.status === 'failed_analysis' ? (
           <Banner status="error" title="This run did not complete" description={run.log} />
         ) : (
           <>
             <Grid columns={{ minWidth: 170, repeat: 'fit' }} gap={4}>
-              <StatTile label="Malscore" value={run.malscore} caption="out of 10" />
+              <StatTile label="Malscore" value={run.malscore} caption={`out of 10 · ${run.malstatus}`} />
+              <StatTile label="API calls" value={run.totalCalls} />
               <StatTile label="Signatures" value={run.signatures.length} />
               <StatTile label="Processes traced" value={run.processes.length} />
               <StatTile label="Dumps" value={run.dumps.length} />
@@ -74,7 +75,16 @@ export function CapeResult({ run }: { run: CapeRun }) {
           </>
         )}
         <Panel title="Analyzer log">
-          <CodeBlock code={run.log} hasCopyButton={false} />
+          <VStack gap={3}>
+            <HStack gap={1} wrap="wrap" vAlign="center">
+              <Text type="supporting">Report sections:</Text>
+              {run.sections.map((section) => <Token key={section} size="sm" label={section} />)}
+            </HStack>
+            {run.debugErrors.length > 0 && (
+              <Banner status="warning" title={`${run.debugErrors.length} ${run.debugErrors.length === 1 ? 'error' : 'errors'} in CAPE's log`} description={run.debugErrors.join(' · ')} />
+            )}
+            <CodeBlock code={run.log} hasCopyButton={false} />
+          </VStack>
         </Panel>
       </VStack>
     </AnalyzerSection>

@@ -24,7 +24,7 @@ export function RevDeckResult({ run }: { run: RevDeckRun }) {
         <HStack gap={3} wrap="wrap">
           <EntityLink kind="payload" id={run.sha}><Text type="code">{`${run.sha.slice(0, 24)}…`}</Text></EntityLink>
           <ActionLink href={`/ghidra/${run.sha}`}>Ghidra result</ActionLink>
-          <Text type="supporting">{formatDateTime(run.at)}</Text>
+          <Text type="supporting">{`${formatDateTime(run.at)} · workflow ${run.workflow} · ${run.steps.length} tool calls`}</Text>
         </HStack>
         {run.status === 'failed' ? (
           <Banner status="error" title="This run did not complete" description={run.error} />

@@ -23,7 +23,7 @@ import { useGuardedAction } from '#/lib/useGuardedAction'
 const STATUS_BANNER: Record<Exclude<GithubStatus, 'published'>, { title: string; description: string }> = {
   dry_run: { title: 'Dry run', description: 'The pipeline ran without publishing; no scanner results were collected.' },
   denylist_blocked: { title: 'Blocked by the denylist', description: 'This sample matched the publication denylist and was not published.' },
-  quota_exceeded: { title: 'Scanner quota exceeded', description: 'Publication stopped because the daily scanner quota ran out. Resubmit later.' },
+  quota_exceeded: { title: 'Daily publish quota exceeded', description: 'This sample was not published; resubmit tomorrow or raise the daily cap.' },
 }
 
 const VERDICT_COLOR = { malicious: 'red', suspicious: 'orange', undetected: 'gray' } as const
@@ -49,7 +49,7 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
           <EntityLink kind="payload" id={g.sha}><Text type="code">{`${g.sha.slice(0, 24)}…`}</Text></EntityLink>
           <Text type="supporting">{formatDateTime(g.at)}</Text>
         </HStack>
-        {g.status !== 'published' && <Banner status="warning" {...STATUS_BANNER[g.status]} />}
+        {g.status !== 'published' && <Banner status="warning" title={STATUS_BANNER[g.status].title} description={g.dailyCap ? `The cap is ${g.dailyCap} publications per day. ${STATUS_BANNER[g.status].description}` : STATUS_BANNER[g.status].description} />}
         {queued && <Banner status="success" title={queued} description="Mock: nothing was actually submitted." isDismissable onDismiss={() => setQueued(null)} />}
         <Grid columns={{ minWidth: 170, repeat: 'fit' }} gap={4}>
           <StatTile label="Detections" value={g.detections} caption={`of ${g.engines} engines`} />
@@ -78,6 +78,7 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
           <Panel title="Publication record">
             <MetadataList label={{ position: 'start', width: 96 }}>
               <MetadataListItem label="Status">{g.status}</MetadataListItem>
+              <MetadataListItem label="Requested by">{g.requestedBy}</MetadataListItem>
               <MetadataListItem label="Repository">
                 <Text type="code">{g.repoPath}</Text>
               </MetadataListItem>
@@ -91,6 +92,16 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
               {g.runUrl && (
                 <MetadataListItem label="Scan">
                   <ActionLink href={g.runUrl} external>Actions run</ActionLink>
+                </MetadataListItem>
+              )}
+              {g.reportPdf && (
+                <MetadataListItem label="Report">
+                  <Text type="code">{g.reportPdf}</Text>
+                </MetadataListItem>
+              )}
+              {g.viewUrl && (
+                <MetadataListItem label="Published">
+                  <ActionLink href={g.viewUrl} external>Read the report</ActionLink>
                 </MetadataListItem>
               )}
             </MetadataList>
