@@ -735,16 +735,107 @@ export interface AnalysisResult extends Record<string, unknown> {
 export interface GpuJob extends Record<string, unknown> {
   jobId: string
   requestedAt: string
+  startedAt?: string
+  finishedAt?: string
+  /** Why a failed job failed. */
+  error?: string
   jobType: string
   model: string
   status: 'queued' | 'running' | 'done' | 'failed' | 'aborted'
   attempts: number
   abortRequested: boolean
   ref: string
+  /** The VRAM the job is expected to hold (the queue admits by it). */
   vramMib: number
 }
 
-export type AnalyzerId = 'static' | 'yara' | 'sandbox' | 'cape' | 'ghidra' | 'revdeck'
+export type AnalyzerId = 'static' | 'yara' | 'sandbox' | 'cape' | 'ghidra' | 'revdeck' | 'github'
+
+/** One analyzer as the workbench offers it, and what running it means. */
+export interface AnalyzerInfo {
+  id: AnalyzerId
+  label: string
+  description: string
+  /** Holds a GPU: waits on the GPU queue. */
+  gpu: boolean
+  /** Payload kinds it takes (ELF, PE32, shell script, …). */
+  acceptedKinds: string[]
+  /** Whether its service is up right now, and why not. */
+  availability: 'available' | 'degraded' | 'unavailable'
+  availabilityNote?: string
+  requiredRole: 'viewer' | 'admin'
+  /** Runs the sample live (in an isolated guest). */
+  detonates: boolean
+  /** What the operator confirms before it runs, when anything. */
+  confirmation?: string
+  /** Everything stays on our hosts; false when it publishes or calls out. */
+  localOnly: boolean
+  /** Never picked by default or by a recipe: the operator ticks it. */
+  requiresOptIn: boolean
+}
+
+/** How the pipeline classified a sample, which decides its analysis path. */
+export interface PayloadClassification {
+  code: string
+  label: string
+  platform: string
+  category: 'executable' | 'script' | 'document' | 'archive'
+  /** The route a dynamic analysis takes, or `static only`. */
+  analysisPath: string
+  dynamic: boolean
+}
+
+/** The analyzers for one sample: which apply, and why not. */
+export interface AnalyzerCatalog {
+  classification: PayloadClassification
+  analyzers: Array<AnalyzerInfo & { applicable: boolean; reason?: string }>
+}
+
+export type RunState = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'skipped'
+
+/** One analyzer's part of a workbench run. */
+export interface WorkbenchRunChild {
+  analyzerId: AnalyzerId
+  label: string
+  state: RunState
+  /** Why it failed or was skipped. */
+  reason?: string
+  summary?: string
+  /** Where its result reads, once there is one. */
+  resultHref?: string
+  createdAt: string
+  updatedAt: string
+  attempts: number
+  retryable: boolean
+  cancelable: boolean
+}
+
+/** A run of several analyzers over one sample, as its owner sees it. */
+export interface WorkbenchRun extends Record<string, unknown> {
+  id: string
+  hash: string
+  payloadKind: string
+  owner: string
+  label: string
+  recipeId?: string
+  recipeName?: string
+  state: RunState
+  createdAt: string
+  updatedAt: string
+  children: WorkbenchRunChild[]
+}
+
+/** A saved set of analyzers and their options, to start runs from. */
+export interface WorkbenchRecipe {
+  id: string
+  revision: number
+  name: string
+  description: string
+  owner: string
+  scope: 'personal' | 'shared'
+  createdAt: string
+  analyzers: Array<{ analyzerId: AnalyzerId; options: Record<string, string | number | boolean | string[]> }>
+}
 
 /** Everything one analysis run can be told, per analyzer. Only the options of
  * the analyzers in `analyzers` apply. */
@@ -757,6 +848,7 @@ export interface AnalysisRunConfig {
   cape: { image: string; durationSeconds: number; package: 'auto' | 'exe' | 'dll'; network: 'none' | 'simulated' | 'tor'; humanInteraction: boolean }
   ghidra: { depth: 'standard' | 'aggressive'; maxFunctions: number; model: string; capa: boolean; floss: boolean }
   revdeck: { model: string; maxSteps: number; requireCitations: boolean }
+  github: { dryRun: boolean }
   run: { priority: 'normal' | 'high'; label: string; notify: boolean; force: boolean }
 }
 
@@ -765,7 +857,10 @@ export interface AnalysisResultsData {
   gpuQueue: GpuJob[]
   /** Latest retrain outcome per approved local model. */
   modelHealth: ModelHealth[]
-  analyzers: Array<{ id: AnalyzerId; label: string; description: string; gpu: boolean }>
+  analyzers: AnalyzerInfo[]
+  /** The signed-in operator's own runs, newest first. */
+  runs: WorkbenchRun[]
+  recipes: WorkbenchRecipe[]
 }
 
 // ---- Detail pages ----------------------------------------------------------

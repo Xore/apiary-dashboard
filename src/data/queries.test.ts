@@ -163,16 +163,50 @@ describe('link integrity', () => {
       cape: { image: 'win10-22h2', durationSeconds: 120, package: 'auto', network: 'none', humanInteraction: false },
       ghidra: { depth: 'aggressive', maxFunctions: 50, model: 'llama3.1:8b', capa: true, floss: false },
       revdeck: { model: 'llama3.1:8b', maxSteps: 10, requireCitations: true },
+      github: { dryRun: true },
       run: { priority: 'high', label: 'Test run', notify: false, force: true },
     }
-    const run = await q.startAnalysisRun(config)
-    expect(run).toMatchObject({ summary: 'Test run', recipe: 'static+ghidra', state: 'queued' })
-    expect(run!.detail).toMatchObject({ priority: 'high', options: { static: { minStringLength: 8 }, ghidra: { depth: 'aggressive', model: 'llama3.1:8b' } } })
-    expect(Object.keys(run!.detail.options as object)).toEqual(['static', 'ghidra'])
+    const queued = await q.startAnalysisRun(config)
+    expect(queued).toMatchObject({ reused: false, run: { label: 'Test run', state: 'queued', owner: 'Operator' } })
+    expect(queued!.run.children.map((c) => [c.analyzerId, c.state, c.cancelable])).toEqual([['static', 'queued', true], ['ghidra', 'queued', true]])
+    // The options travel with the run's record in Analysis results.
+    const record = (await q.getAnalysisResults()).results.find((r) => r.id === queued!.run.id)!
+    expect(record.detail).toMatchObject({ priority: 'high', options: { static: { minStringLength: 8 }, ghidra: { depth: 'aggressive', model: 'llama3.1:8b' } } })
+    expect(Object.keys(record.detail.options as object)).toEqual(['static', 'ghidra'])
     const after = (await q.getAnalysisResults()).gpuQueue
     expect(after.length).toBe(before + 1)
     expect(after[0]).toMatchObject({ jobType: 'ghidra-summary', model: 'llama3.1:8b', status: 'queued' })
     expect(await q.startAnalysisRun({ ...config, hash: 'deadbeef' })).toBeNull()
+
+    // The same run again while it is in flight is reused, unless forced.
+    const again = await q.startAnalysisRun({ ...config, run: { ...config.run, force: false } })
+    expect(again).toMatchObject({ reused: true, run: { id: queued!.run.id } })
+    // What the sample cannot take is refused, with the reason.
+    await expect(q.startAnalysisRun({ ...config, analyzers: ['cape'] })).rejects.toMatchObject({ status: 400, detail: expect.stringMatching(/^CAPE \(Windows\): Takes PE32/) })
+  })
+
+  it('says which analyzers apply to a sample, and why not', async () => {
+    const payloads = (await q.getPayloads()).payloads
+    const script = payloads.find((p) => p.kind === 'shell script')!
+    const catalog = (await q.getAnalyzerCatalog(script.hash))!
+    expect(catalog.classification).toMatchObject({ category: 'script', analysisPath: 'static only' })
+    const byId = Object.fromEntries(catalog.analyzers.map((a) => [a.id, a]))
+    expect(byId.static.applicable).toBe(true)
+    expect(byId.ghidra).toMatchObject({ applicable: false, reason: expect.stringContaining('shell script') })
+    expect(byId.github).toMatchObject({ requiresOptIn: true, localOnly: false, requiredRole: 'admin' })
+    expect(await q.getAnalyzerCatalog('nope')).toBeNull()
+  })
+
+  it('retries a failed analyzer of a run and cancels a queued one', async () => {
+    const runs = (await q.getAnalysisResults()).runs
+    const failed = runs.find((r) => r.children.some((c) => c.state === 'failed'))!
+    const child = failed.children.find((c) => c.state === 'failed')!
+    const retried = (await q.setRunChild(failed.id, child.analyzerId, 'retry'))!
+    expect(retried.children.find((c) => c.analyzerId === child.analyzerId)).toMatchObject({ state: 'queued', cancelable: true, retryable: false })
+    expect(retried.state).toBe('queued')
+    const cancelled = (await q.setRunChild(failed.id, child.analyzerId, 'cancel'))!
+    expect(cancelled.children.find((c) => c.analyzerId === child.analyzerId)).toMatchObject({ state: 'cancelled', retryable: true })
+    await expect(q.setRunChild(failed.id, child.analyzerId, 'cancel')).rejects.toMatchObject({ status: 400 })
   })
 
   it('unknown ids resolve to null (rendered as 404)', async () => {

@@ -106,6 +106,12 @@ const getAnalysisResultsFn = createServerFn({ method: 'GET' })
   .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAnalysisResults', data, context.mock)) as Json)
 export const getAnalysisResults = announced('getAnalysisResults', getAnalysisResultsFn) as Rpc<typeof impl.getAnalysisResults>
 
+const getAnalyzerCatalogFn = createServerFn({ method: 'GET' })
+  .middleware([mockScenarioMiddleware])
+  .validator((args: unknown[]) => args)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAnalyzerCatalog', data, context.mock)) as Json)
+export const getAnalyzerCatalog = announced('getAnalyzerCatalog', getAnalyzerCatalogFn) as Rpc<typeof impl.getAnalyzerCatalog>
+
 const getAnomalyFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
@@ -627,6 +633,12 @@ const setProblemStatusFn = createServerFn({ method: 'POST' })
   .validator((args: unknown[]) => args)
   .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('setProblemStatus', data, context.mock)) as Json)
 export const setProblemStatus = announced('setProblemStatus', setProblemStatusFn) as Rpc<typeof impl.setProblemStatus>
+
+const setRunChildFn = createServerFn({ method: 'POST' })
+  .middleware([mockScenarioMiddleware])
+  .validator((args: unknown[]) => args)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('setRunChild', data, context.mock)) as Json)
+export const setRunChild = announced('setRunChild', setRunChildFn) as Rpc<typeof impl.setRunChild>
 
 const simulateIncidentFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])

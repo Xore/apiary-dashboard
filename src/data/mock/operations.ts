@@ -16,6 +16,12 @@ import type {
   SourceHealth,
   Topology,
   AnalyzerId,
+  AnalyzerInfo,
+  PayloadClassification,
+  RunState,
+  WorkbenchRecipe,
+  WorkbenchRun,
+  WorkbenchRunChild,
 } from '../types'
 import { EVENTS, SENSORS, SOURCES } from './fixtures'
 import { FLEET } from './fleet'
@@ -338,14 +344,53 @@ export const DOWNLOAD_HASH: ReadonlyMap<string, string> = (() => {
 
 // ---- Analysis results ------------------------------------------------------
 
-export const ANALYZERS = [
-  { id: 'static', label: 'Static analysis', description: 'File type, strings, imports, entropy.', gpu: false },
-  { id: 'yara', label: 'YARA', description: 'Match against the deployed rule set.', gpu: false },
-  { id: 'sandbox', label: 'Sandbox detonation', description: 'Run in an isolated VM and record behavior.', gpu: false },
-  { id: 'cape', label: 'CAPE (Windows)', description: 'Detonate a Windows PE under a debugger-instrumented guest.', gpu: false },
-  { id: 'ghidra', label: 'Ghidra decompilation', description: 'Decompile and summarise with a local model.', gpu: true },
-  { id: 'revdeck', label: 'RevDeck', description: 'Model-driven reverse engineering that cites its tool output.', gpu: true },
-] satisfies Array<{ id: AnalyzerId; label: string; description: string; gpu: boolean }>
+const DETONATES = 'Runs live malware in an isolated guest with its network sinkholed. The sample executes for real; the host and our address stay out of reach.'
+
+/** The analyzers the workbench offers, with what running each one means
+ * (canonical's analyzer catalogue). */
+export const ANALYZERS: AnalyzerInfo[] = [
+  { id: 'static', label: 'Static analysis', description: 'File type, strings, imports, entropy.', gpu: false, acceptedKinds: ['ELF', 'PE32', 'shell script', 'Mach-O'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false },
+  { id: 'yara', label: 'YARA', description: 'Match against the deployed rule set.', gpu: false, acceptedKinds: ['ELF', 'PE32', 'shell script', 'Mach-O'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false },
+  { id: 'sandbox', label: 'Sandbox detonation', description: 'Run in an isolated VM and record behavior.', gpu: false, acceptedKinds: ['ELF'], availability: 'available', requiredRole: 'admin', detonates: true, confirmation: DETONATES, localOnly: true, requiresOptIn: false },
+  { id: 'cape', label: 'CAPE (Windows)', description: 'Detonate a Windows PE under a debugger-instrumented guest.', gpu: false, acceptedKinds: ['PE32'], availability: 'degraded', availabilityNote: 'One of two guests is rebuilding; runs queue behind the other.', requiredRole: 'admin', detonates: true, confirmation: DETONATES, localOnly: true, requiresOptIn: false },
+  { id: 'ghidra', label: 'Ghidra decompilation', description: 'Decompile and summarise with a local model.', gpu: true, acceptedKinds: ['ELF', 'PE32', 'Mach-O'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false },
+  { id: 'revdeck', label: 'RevDeck', description: 'Model-driven reverse engineering that cites its tool output.', gpu: true, acceptedKinds: ['ELF', 'PE32'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false },
+  {
+    id: 'github',
+    label: 'GitHub scanners',
+    description: 'Publish the sample to the analysis repository, where public scanners and YARA auto-rules run on it.',
+    gpu: false,
+    acceptedKinds: ['ELF', 'PE32', 'shell script'],
+    availability: 'available',
+    requiredRole: 'admin',
+    detonates: false,
+    confirmation: 'Publishes the sample to a public repository: anyone, including its author, can then see that we caught it. Samples on the denylist are refused.',
+    localOnly: false,
+    requiresOptIn: true,
+  },
+]
+
+/** How the pipeline classified a sample, and the route its analysis takes. */
+export function classificationOf(p: CapturedPayload): PayloadClassification {
+  const script = p.kind === 'shell script'
+  const windows = p.kind === 'PE32'
+  return {
+    code: script ? 'script/sh' : windows ? `pe/${p.platform}` : `elf/${p.platform}`,
+    label: `${p.kind}, ${p.platform}`,
+    platform: p.platform,
+    category: script ? 'script' : 'executable',
+    analysisPath: !p.dynamic ? 'static only' : windows ? 'windows-kvm (CAPE, sandbox)' : `linux-qemu (${p.platform})`,
+    dynamic: p.dynamic,
+  }
+}
+
+/** Why an analyzer does not apply to a sample, or undefined when it does. */
+export function inapplicableReason(a: AnalyzerInfo, p: CapturedPayload): string | undefined {
+  if (!a.acceptedKinds.includes(p.kind)) return `Takes ${a.acceptedKinds.join(', ')}; this is ${p.kind}.`
+  if (a.id === 'sandbox' && !p.dynamic) return 'No dynamic route for this sample (static only).'
+  if (a.availability === 'unavailable') return a.availabilityNote ?? 'The service is down.'
+  return undefined
+}
 
 export const ANALYSIS_RESULTS: AnalysisResult[] = (() => {
   const rng = createRng(0x9e5b)
@@ -374,8 +419,68 @@ export const ANALYSIS_RESULTS: AnalysisResult[] = (() => {
 })()
 
 export const GPU_QUEUE: GpuJob[] = [
-  { jobId: 'gpu-7f31', requestedAt: isoMinutesAgo(4), jobType: 'ghidra-summary', model: 'qwen2.5-coder:14b', status: 'running', attempts: 1, abortRequested: false, ref: PAYLOADS[0].hash.slice(0, 16), vramMib: 10_240 },
+  { jobId: 'gpu-7f31', requestedAt: isoMinutesAgo(4), jobType: 'ghidra-summary', model: 'qwen2.5-coder:14b', status: 'running', attempts: 1, abortRequested: false, startedAt: isoMinutesAgo(3), ref: PAYLOADS[0].hash.slice(0, 16), vramMib: 10_240 },
   { jobId: 'gpu-7f32', requestedAt: isoMinutesAgo(3), jobType: 'ghidra-summary', model: 'qwen2.5-coder:14b', status: 'queued', attempts: 0, abortRequested: false, ref: PAYLOADS[3].hash.slice(0, 16), vramMib: 10_240 },
   { jobId: 'gpu-7f33', requestedAt: isoMinutesAgo(2), jobType: 'llm-session', model: 'qwen2.5:14b-instruct', status: 'queued', attempts: 0, abortRequested: false, ref: 'session batch 18', vramMib: 9_800 },
-  { jobId: 'gpu-7f2e', requestedAt: isoMinutesAgo(40), jobType: 'ghidra-summary', model: 'qwen2.5-coder:14b', status: 'failed', attempts: 3, abortRequested: false, ref: PAYLOADS[6].hash.slice(0, 16), vramMib: 10_240 },
+  { jobId: 'gpu-7f2e', requestedAt: isoMinutesAgo(40), jobType: 'ghidra-summary', model: 'qwen2.5-coder:14b', status: 'failed', attempts: 3, abortRequested: false, startedAt: isoMinutesAgo(38), finishedAt: isoMinutesAgo(21), error: 'Model ran out of VRAM on the third attempt (context 32k).', ref: PAYLOADS[6].hash.slice(0, 16), vramMib: 10_240 },
 ]
+
+export const WORKBENCH_RECIPES: WorkbenchRecipe[] = [
+  { id: 'rcp-triage', revision: 3, name: 'Quick triage', description: 'Static analysis and YARA: seconds, no GPU, nothing runs.', owner: 'Operator', scope: 'shared', createdAt: isoMinutesAgo(60 * 24 * 30), analyzers: [{ analyzerId: 'static', options: { minStringLength: 6 } }, { analyzerId: 'yara', options: { stopAtFirstMatch: true } }] },
+  { id: 'rcp-linux-full', revision: 5, name: 'Linux bot, full', description: 'Static, YARA, a sandbox detonation with simulated internet, and a Ghidra summary.', owner: 'Operator', scope: 'shared', createdAt: isoMinutesAgo(60 * 24 * 21), analyzers: [{ analyzerId: 'static', options: {} }, { analyzerId: 'yara', options: {} }, { analyzerId: 'sandbox', options: { network: 'simulated', durationSeconds: 180 } }, { analyzerId: 'ghidra', options: { depth: 'standard' } }] },
+  { id: 'rcp-windows', revision: 1, name: 'Windows dropper', description: 'Static, YARA and CAPE with human interaction.', owner: 'Analyst', scope: 'personal', createdAt: isoMinutesAgo(60 * 24 * 6), analyzers: [{ analyzerId: 'static', options: {} }, { analyzerId: 'yara', options: {} }, { analyzerId: 'cape', options: { humanInteraction: true } }] },
+]
+
+const RESULT_TAB: Record<AnalyzerId, string> = { static: 'static', yara: 'static', sandbox: 'sandbox', cape: 'cape', ghidra: 'ghidra', revdeck: 'revdeck', github: 'github' }
+export const resultHrefFor = (hash: string, analyzer: AnalyzerId) => `/payloads/${hash}/${RESULT_TAB[analyzer]}`
+
+/** The overall state of a run from its children's. */
+export function runStateOf(children: WorkbenchRunChild[]): RunState {
+  if (children.some((c) => c.state === 'running')) return 'running'
+  if (children.some((c) => c.state === 'queued')) return 'queued'
+  if (children.some((c) => c.state === 'failed')) return 'failed'
+  if (children.every((c) => c.state === 'cancelled' || c.state === 'skipped')) return 'cancelled'
+  return 'succeeded'
+}
+
+/** The operator's recent workbench runs: from a recipe or by hand, some
+ * done, one still running, one with a failed child to retry. */
+export const WORKBENCH_RUNS: WorkbenchRun[] = (() => {
+  const plans: Array<{ payload: CapturedPayload; recipe?: WorkbenchRecipe; label: string; minutes: number; states: RunState[] }> = [
+    { payload: PAYLOADS[0], recipe: WORKBENCH_RECIPES[1], label: 'Mirai variant from the cowrie wave', minutes: 6, states: ['succeeded', 'succeeded', 'running', 'queued'] },
+    { payload: PAYLOADS[2], recipe: WORKBENCH_RECIPES[0], label: 'Workbench run', minutes: 95, states: ['succeeded', 'succeeded'] },
+    { payload: PAYLOADS[4], recipe: WORKBENCH_RECIPES[1], label: 'Second look at the arm build', minutes: 260, states: ['succeeded', 'succeeded', 'failed', 'succeeded'] },
+    { payload: PAYLOADS[5], label: 'Static and RevDeck', minutes: 1300, states: ['succeeded', 'cancelled'] },
+  ]
+  return plans.map(({ payload, recipe, label, minutes, states }, i) => {
+    const ids: AnalyzerId[] = recipe ? recipe.analyzers.map((a) => a.analyzerId) : ['static', 'revdeck']
+    const children: WorkbenchRunChild[] = ids.map((analyzerId, k) => {
+      const state = states[k] ?? 'succeeded'
+      const info = ANALYZERS.find((a) => a.id === analyzerId)!
+      return {
+        analyzerId,
+        label: info.label,
+        state,
+        ...(state === 'failed' ? { reason: 'Guest did not report within 180 s; the run was stopped.' } : state === 'cancelled' ? { reason: 'Cancelled by its owner.' } : {}),
+        ...(state === 'succeeded' ? { summary: analyzerId === 'yara' ? '2 rules matched' : analyzerId === 'static' ? `${payload.kind}, ${payload.platform}, ${payload.sizeBytes.toLocaleString('en-US')} bytes` : 'Result ready', resultHref: resultHrefFor(payload.hash, analyzerId) } : {}),
+        createdAt: isoMinutesAgo(minutes),
+        updatedAt: isoMinutesAgo(Math.max(0, minutes - 2 - k)),
+        attempts: state === 'failed' ? 2 : state === 'queued' ? 0 : 1,
+        retryable: state === 'failed' || state === 'cancelled',
+        cancelable: state === 'queued' || state === 'running',
+      }
+    })
+    return {
+      id: `run-${payload.hash.slice(0, 8)}-${i}`,
+      hash: payload.hash,
+      payloadKind: payload.kind,
+      owner: 'Operator',
+      label,
+      ...(recipe ? { recipeId: recipe.id, recipeName: recipe.name } : {}),
+      state: runStateOf(children),
+      createdAt: isoMinutesAgo(minutes),
+      updatedAt: children.map((c) => c.updatedAt).sort().at(-1)!,
+      children,
+    }
+  })
+})()

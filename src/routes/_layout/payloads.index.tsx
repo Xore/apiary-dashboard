@@ -16,7 +16,8 @@ import { virusTotalLink } from '#/lib/toolLinks'
 import { apiHref } from '#/lib/apiHref'
 import { RecordList } from '#/components/RecordList'
 import { getPayloads } from '#/data/queries'
-import type { AnalysisResult, CapturedPayload } from '#/data/types'
+import type { CapturedPayload, WorkbenchRun } from '#/data/types'
+import { queuedMessage } from '#/components/analyzers/WorkbenchRuns'
 import { entityHref } from '#/lib/entities'
 import { formatTime } from '#/lib/format'
 import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
@@ -91,7 +92,7 @@ function PayloadsPage() {
   const [published, setPublished] = useState<string | null>(null)
   // undefined: closed; '' opens with no sample picked; a hash opens with it.
   const [analyzing, setAnalyzing] = useState<string | undefined>(undefined)
-  const [queued, setQueued] = useState<AnalysisResult | null>(null)
+  const [queued, setQueued] = useState<{ run: WorkbenchRun; reused: boolean } | null>(null)
   const navigate = useNavigate()
   const picked = listParam(source)
   const visible = picked.length ? payloads.filter((p) => p.sources.some((s) => picked.includes(s))) : payloads
@@ -106,7 +107,7 @@ function PayloadsPage() {
           (published || queued) && (
             <VStack gap={2}>
               {published && <Banner status="success" title="Submitted for publication" description={`${published.slice(0, 16)}… was queued for the public analysis repository (mock).`} isDismissable onDismiss={() => setPublished(null)} />}
-              {queued && <Banner status="success" title={`Analysis run ${queued.id} queued`} description={`${queued.recipe ?? ''} on ${queued.file}…`} isDismissable onDismiss={() => setQueued(null)} endContent={<ActionLink href="/payload-workbench/results">Analysis results</ActionLink>} />}
+              {queued && <Banner status={queued.reused ? 'info' : 'success'} {...queuedMessage(queued)} isDismissable onDismiss={() => setQueued(null)} endContent={<ActionLink href="/payload-workbench/results">Analysis results</ActionLink>} />}
             </VStack>
           )
         }

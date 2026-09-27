@@ -47,6 +47,11 @@ import {
   ALERTS,
   ANALYSIS_RESULTS,
   ANALYZERS,
+  WORKBENCH_RECIPES,
+  WORKBENCH_RUNS,
+  classificationOf,
+  inapplicableReason,
+  runStateOf,
   BAIT_CREDENTIALS,
   CANARY_TOKENS,
   CANARY_TRIGGERS,
@@ -92,6 +97,10 @@ import type {
   AnalysisResult,
   AnalysisResultsData,
   AnalysisRunConfig,
+  AnalyzerCatalog,
+  AnalyzerId,
+  WorkbenchRun,
+  WorkbenchRunChild,
   BaitCredential,
   CanaryToken,
   CanaryTokenType,
@@ -882,15 +891,46 @@ export async function getPayloads(): Promise<{ payloads: CapturedPayload[]; sour
 
 export async function getAnalysisResults(): Promise<AnalysisResultsData> {
   await mockDelay()
-  return { results: [...ANALYSIS_RESULTS], gpuQueue: GPU_QUEUE.map((j) => ({ ...j })), modelHealth: MODEL_HEALTH, analyzers: ANALYZERS }
+  return {
+    results: [...ANALYSIS_RESULTS],
+    gpuQueue: GPU_QUEUE.map((j) => ({ ...j })),
+    modelHealth: MODEL_HEALTH,
+    analyzers: ANALYZERS,
+    runs: WORKBENCH_RUNS.filter((r) => r.owner === MOCK_USER.name).map((r) => structuredClone(r)),
+    recipes: WORKBENCH_RECIPES,
+  }
+}
+
+/** The analyzers for one sample: its classification, and which analyzers
+ * apply to it and why not. */
+export async function getAnalyzerCatalog(hash: string): Promise<AnalyzerCatalog | null> {
+  await mockDelay()
+  const payload = PAYLOADS.find((p) => p.hash === hash.toLowerCase())
+  if (!payload) return null
+  return {
+    classification: classificationOf(payload),
+    analyzers: ANALYZERS.map((a) => {
+      const reason = inapplicableReason(a, payload)
+      return { ...a, applicable: !reason, ...(reason ? { reason } : {}) }
+    }),
+  }
 }
 
 /** Mock write: queues an analysis run of a captured payload with every
- * option the operator set; GPU analyzers also land on the GPU queue. */
-export async function startAnalysisRun(config: AnalysisRunConfig): Promise<AnalysisResult | null> {
+ * option the operator set; GPU analyzers also land on the GPU queue. An
+ * identical run still in flight is reused instead, unless `force`. */
+export async function startAnalysisRun(config: AnalysisRunConfig): Promise<{ run: WorkbenchRun; reused: boolean } | null> {
   await mockDelay()
   const payload = PAYLOADS.find((p) => p.hash === config.hash.toLowerCase())
   if (!payload) return null
+  for (const id of config.analyzers) {
+    const info = ANALYZERS.find((a) => a.id === id)
+    const reason = info ? inapplicableReason(info, payload) : 'Unknown analyzer.'
+    if (reason) throw new ApiError('invalid', 'startAnalysisRun', { detail: `${info?.label ?? id}: ${reason}` })
+  }
+  const same = (r: WorkbenchRun) => r.hash === payload.hash && (r.state === 'queued' || r.state === 'running') && r.children.map((c) => c.analyzerId).sort().join() === [...config.analyzers].sort().join()
+  const inFlight = WORKBENCH_RUNS.find(same)
+  if (inFlight && !config.run.force) return { run: structuredClone(inFlight), reused: true }
   const options = Object.fromEntries(config.analyzers.map((id) => [id, config[id]]))
   const run: AnalysisResult = {
     id: `wb-${Date.now().toString(36)}`,
@@ -905,6 +945,11 @@ export async function startAnalysisRun(config: AnalysisRunConfig): Promise<Analy
     detail: { analyzers: config.analyzers, options, priority: config.run.priority, notify: config.run.notify, force: config.run.force },
   }
   ANALYSIS_RESULTS.unshift(run)
+  const now = new Date(MOCK_NOW).toISOString()
+  const children: WorkbenchRunChild[] = config.analyzers.map((analyzerId) => ({ analyzerId, label: ANALYZERS.find((a) => a.id === analyzerId)!.label, state: 'queued', createdAt: now, updatedAt: now, attempts: 0, retryable: false, cancelable: true }))
+  const recipe = WORKBENCH_RECIPES.find((r) => r.analyzers.map((a) => a.analyzerId).sort().join() === [...config.analyzers].sort().join())
+  const workbenchRun: WorkbenchRun = { id: run.id, hash: payload.hash, payloadKind: payload.kind, owner: MOCK_USER.name, label: run.summary, ...(recipe ? { recipeId: recipe.id, recipeName: recipe.name } : {}), state: 'queued', createdAt: now, updatedAt: now, children }
+  WORKBENCH_RUNS.unshift(workbenchRun)
   for (const id of config.analyzers.filter((a) => a === 'ghidra' || a === 'revdeck')) {
     GPU_QUEUE.unshift({
       jobId: `gpu-${Date.now().toString(36).slice(-4)}${id[0]}`,
@@ -918,7 +963,23 @@ export async function startAnalysisRun(config: AnalysisRunConfig): Promise<Analy
       vramMib: 10_240,
     })
   }
-  return run
+  return { run: structuredClone(workbenchRun), reused: false }
+}
+
+/** Mock write: its owner retries a failed or cancelled analyzer of a run,
+ * or cancels one still queued or running. */
+export async function setRunChild(runId: string, analyzerId: AnalyzerId, action: 'retry' | 'cancel'): Promise<WorkbenchRun | null> {
+  await mockDelay()
+  const run = WORKBENCH_RUNS.find((r) => r.id === runId && r.owner === MOCK_USER.name)
+  const child = run?.children.find((c) => c.analyzerId === analyzerId)
+  if (!run || !child) return null
+  if (action === 'retry' ? !child.retryable : !child.cancelable) throw new ApiError('invalid', 'setRunChild', { detail: `${child.label} cannot be ${action === 'retry' ? 'retried' : 'cancelled'} now.` })
+  const now = new Date().toISOString()
+  if (action === 'retry') Object.assign(child, { state: 'queued', reason: undefined, retryable: false, cancelable: true, updatedAt: now })
+  else Object.assign(child, { state: 'cancelled', reason: 'Cancelled by its owner.', retryable: true, cancelable: false, updatedAt: now })
+  run.state = runStateOf(run.children)
+  run.updatedAt = now
+  return structuredClone(run)
 }
 
 /** Mock write: only a still-queued job can be aborted. */

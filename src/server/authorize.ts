@@ -30,6 +30,7 @@ export const ADMIN_QUERIES: ReadonlySet<string> = new Set([
   'deleteGeneratedReport',
   // Evidence and analysis
   'startAnalysisRun',
+  'setRunChild',
   'abortGpuJob',
   'queuePayloadAction',
   'generatePayloadReport',
