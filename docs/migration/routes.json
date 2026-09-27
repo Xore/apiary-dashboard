@@ -1,0 +1,3495 @@
+[
+  {
+    "route": "agent-campaigns.tsx",
+    "files": [
+      "routes/agent-campaigns.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/StoreList.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/store/agent-campaigns"
+    ],
+    "reads": [
+      {
+        "fn": "routes/agent-campaigns.tsx#fetchPage",
+        "output": "StorePage<AgentCampaignRow> | null",
+        "fields": [
+          "total",
+          "rows[].@timestamp",
+          "rows[].campaign_id",
+          "rows[].start",
+          "rows[].end",
+          "rows[].severity",
+          "rows[].matched_categories",
+          "rows[].correlation_identifiers",
+          "rows[].event_count",
+          "rows[].events[].event_id",
+          "rows[].events[].source_index",
+          "rows[].events[].timestamp",
+          "rows[].events[].matched_rules"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "alerts.tsx",
+    "files": [
+      "routes/alerts.tsx",
+      "components/ConfirmDialog.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/Tabs.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/alerts",
+      "/api/v1/alerts/{…}/ack"
+    ],
+    "reads": [
+      {
+        "fn": "routes/alerts.tsx#fetchAlerts",
+        "output": "BoardFetch",
+        "fields": [
+          "rows[].Key",
+          "rows[].Message",
+          "rows[].Link",
+          "rows[].FirstSeen",
+          "rows[].LastSeen",
+          "rows[].LastNotified",
+          "rows[].Count",
+          "rows[].Acknowledged",
+          "complete"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/alerts.tsx#acknowledgeAlert",
+        "permission": "session+",
+        "backend": [
+          "POST /api/v1/alerts/{key}/ack"
+        ]
+      },
+      {
+        "fn": "routes/alerts.tsx#acknowledgeAll",
+        "permission": "session+",
+        "backend": [
+          "GET /api/v1/alerts?offset={offset}&size=100",
+          "POST /api/v1/alerts/{key}/ack"
+        ]
+      },
+      {
+        "fn": "routes/alerts.tsx#acknowledgeKeys",
+        "permission": "session+",
+        "backend": [
+          "POST /api/v1/alerts/{key}/ack"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "confirmation before a destructive action",
+      "copy feedback",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend request failed — an outage looks like silence here, so it names itself instead."
+    ]
+  },
+  {
+    "route": "attackers.tsx",
+    "files": [
+      "routes/attackers.tsx",
+      "components/Investigate.tsx",
+      "components/EChart.tsx",
+      "components/AttackerGraph.tsx",
+      "components/ErrorState.tsx",
+      "components/Tabs.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/chart/attacker-fusion",
+      "/api/v1/attackers",
+      "/api/v1/attackers-graph"
+    ],
+    "reads": [
+      {
+        "fn": "components/AttackerGraph.tsx#fetchGraph",
+        "output": "Graph | null",
+        "fields": [
+          "nodes[].id",
+          "nodes[].label",
+          "nodes[].kind",
+          "edges[].source",
+          "edges[].target"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/attackers.tsx#fetchAttackers",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "rows[].id",
+          "rows[].ips",
+          "rows[].fingerprints",
+          "rows[].payloads",
+          "rows[].credentials",
+          "rows[].sensors",
+          "rows[].events",
+          "rows[].first",
+          "rows[].last",
+          "rows[].updated",
+          "rows[].verdicts",
+          "rows[].techniques",
+          "rows[].scan",
+          "rows[].dest_ips",
+          "rows[].ports_touched"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "copy feedback",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "auth-events.tsx",
+    "files": [
+      "routes/auth-events.tsx",
+      "components/StoreList.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/store/auth-events"
+    ],
+    "reads": [
+      {
+        "fn": "routes/auth-events.tsx#fetchPage",
+        "output": "StorePage | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/auth-events.tsx#fetchStatsWindow",
+        "output": "StorePage | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "campaigns.tsx",
+    "files": [
+      "routes/campaigns.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/export/campaigns.csv",
+      "/api/v1/campaigns",
+      "/api/v1/cred-reuse"
+    ],
+    "reads": [
+      {
+        "fn": "routes/campaigns.tsx#fetchCampaigns",
+        "output": "{ total: number; rows: CampaignRow[]; } | null",
+        "fields": [
+          "total",
+          "rows[].cidr",
+          "rows[].score",
+          "rows[].events",
+          "rows[].unique_ips",
+          "rows[].sensors",
+          "rows[].ports",
+          "rows[].creds",
+          "rows[].payloads",
+          "rows[].alerts",
+          "rows[].providers",
+          "rows[].fingerprints",
+          "rows[].explanation",
+          "rows[].first",
+          "rows[].last",
+          "rows[].asns",
+          "rows[].sequence",
+          "rows[].generated",
+          "rows[].scan",
+          "rows[].dst_ips_touched",
+          "rows[].ports_touched_counted"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/campaigns.tsx#fetchCredReuse",
+        "output": "CredEdge[] | null",
+        "fields": [
+          "[].user",
+          "[].pass",
+          "[].unique_ips",
+          "[].ips",
+          "[].sensors",
+          "[].events",
+          "[].first",
+          "[].last"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "canarytokens.tsx",
+    "files": [
+      "routes/canarytokens.tsx",
+      "components/StoreList.tsx",
+      "components/Investigate.tsx",
+      "components/Tabs.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/canarytoken/${encodeURIComponent(str(row,",
+      "/api/v1/canarytokens",
+      "/api/v1/canarytokens/types",
+      "/api/v1/events",
+      "/api/v1/store/canarytokens"
+    ],
+    "reads": [
+      {
+        "fn": "routes/canarytokens.tsx#fetchFired",
+        "output": "FiredPage | null",
+        "fields": [
+          "total",
+          "rows[].time",
+          "rows[].src_ip",
+          "rows[].country",
+          "rows[].detail",
+          "rows[].record"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/canarytokens.tsx#fetchPage",
+        "output": "StorePage | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/canarytokens.tsx#fetchTypes",
+        "output": "TokenType[] | null",
+        "fields": [
+          "[].token_type",
+          "[].label",
+          "[].description",
+          "[].requires_upload",
+          "[].supports_snippet"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/canarytokens.tsx#createToken",
+        "permission": "session+",
+        "backend": [
+          "POST /api/v1/canarytokens"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "copy feedback",
+      "paging (view more / offset)",
+      "live refresh",
+      "download or export"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "cape.$sha.tsx",
+    "files": [
+      "routes/cape.$sha.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/raw-report/cape/{…}",
+      "/api/v1/cape/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "routes/cape.$sha.tsx#fetchRun",
+        "output": "RunFetch",
+        "fields": [
+          "state",
+          "run.sha256",
+          "run.requested_at",
+          "run.started_at",
+          "run.completed_at",
+          "run.exit_status",
+          "run.error",
+          "run.task_id",
+          "run.cape_status",
+          "run.route",
+          "run.score",
+          "run.category",
+          "run.signatures[].name",
+          "run.signatures[].description",
+          "run.signatures[].severity",
+          "run.report_summary.machine",
+          "run.report_summary.package",
+          "run.report_summary.route",
+          "run.report_summary.timeout",
+          "run.report_summary.duration",
+          "run.report_summary.malscore",
+          "run.report_summary.malstatus",
+          "run.report_summary.summary",
+          "run.report_summary.summary_keys",
+          "run.report_summary.processes",
+          "run.report_summary.total_calls",
+          "run.report_summary.payloads",
+          "run.report_summary.configs",
+          "run.report_summary.debug_log",
+          "run.report_summary.debug_errors"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether a run exists for this hash."
+    ]
+  },
+  {
+    "route": "cape.index.tsx",
+    "files": [
+      "routes/cape.index.tsx",
+      "components/StoreList.tsx",
+      "components/Investigate.tsx",
+      "components/CardIcons.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/store/cape"
+    ],
+    "reads": [
+      {
+        "fn": "routes/cape.index.tsx#fetchPage",
+        "output": "StorePage | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "clusters.tsx",
+    "files": [
+      "routes/clusters.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/export/clusters.csv",
+      "/api/v1/clusters"
+    ],
+    "reads": [
+      {
+        "fn": "routes/clusters.tsx#fetchClusters",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "rows[].kind",
+          "rows[].value",
+          "rows[].sources",
+          "rows[].events",
+          "rows[].sensors",
+          "rows[].generated"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "commands.tsx",
+    "files": [
+      "routes/commands.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/export/commands.csv",
+      "/api/v1/events"
+    ],
+    "reads": [
+      {
+        "fn": "routes/commands.tsx#fetchCommands",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "offset",
+          "rows[].time",
+          "rows[].sensor",
+          "rows[].src_ip",
+          "rows[].country",
+          "rows[].port",
+          "rows[].proto",
+          "rows[].detail",
+          "rows[].session",
+          "rows[].record"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "credentials.tsx",
+    "files": [
+      "routes/credentials.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/StoreList.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/canarytokens",
+      "/api/v1/credentials",
+      "/api/v1/credentials/{…}/link-token",
+      "/api/v1/credentials/{…}/rotate"
+    ],
+    "reads": [
+      {
+        "fn": "lib/auth.ts#getSessionUser",
+        "output": "User | null",
+        "fields": [
+          "sub",
+          "username",
+          "displayName",
+          "role"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/credentials.tsx#fetchCredentials",
+        "output": "CredentialsResponse | null",
+        "fields": [
+          "available",
+          "error",
+          "credentials[].id",
+          "credentials[].target",
+          "credentials[].path",
+          "credentials[].username",
+          "credentials[].password",
+          "credentials[].content_template",
+          "credentials[].memo",
+          "credentials[].linked_token_id",
+          "credentials[].created_by",
+          "credentials[].created_at",
+          "credentials[].rotated_by",
+          "credentials[].rotated_at"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/credentials.tsx#fetchLinkableTokens",
+        "output": "TokenRecord[]",
+        "fields": [
+          "[].id",
+          "[].token_type",
+          "[].memo"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/credentials.tsx#createCredential",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/credentials"
+        ]
+      },
+      {
+        "fn": "routes/credentials.tsx#linkCredentialToken",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/credentials/{id}/link-token"
+        ]
+      },
+      {
+        "fn": "routes/credentials.tsx#rotateCredential",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/credentials/{id}/rotate"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "admin-only controls",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend request failed — provisioned bait itself is untouched; this page just can't list it right now."
+    ]
+  },
+  {
+    "route": "dead-letters.tsx",
+    "files": [
+      "routes/dead-letters.tsx",
+      "components/ConfirmDialog.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/StoreList.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/store/dead-letters"
+    ],
+    "reads": [
+      {
+        "fn": "routes/dead-letters.tsx#fetchPage",
+        "output": "StorePage | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/dead-letters.tsx#purgeDeadLetters",
+        "permission": "admin",
+        "backend": [
+          "DELETE /api/v1/store/dead-letters?{query}"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "confirmation before a destructive action",
+      "copy feedback",
+      "admin-only controls",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The store read failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "event.$id.tsx",
+    "files": [
+      "routes/event.$id.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/event/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "routes/event.$id.tsx#fetchEvent",
+        "output": "EventFetch",
+        "fields": [
+          "state",
+          "event.id",
+          "event.index",
+          "event.time",
+          "event.sensor",
+          "event.src_ip",
+          "event.session",
+          "event.community_id",
+          "event.hashes",
+          "event.record",
+          "event.session_events.key",
+          "event.session_events.total",
+          "event.session_events.rows",
+          "event.flow_events.key",
+          "event.flow_events.total",
+          "event.flow_events.rows",
+          "event.source_events.key",
+          "event.source_events.total",
+          "event.source_events.rows",
+          "event.flow_link.community_id",
+          "event.flow_link.families",
+          "event.flow_link.sensors",
+          "event.flow_link.src_ip",
+          "event.flow_link.dst_ip",
+          "event.flow_link.dst_port",
+          "event.flow_link.first",
+          "event.flow_link.last",
+          "event.flow_link.events",
+          "event.flow_link.event_ids"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "copy feedback",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether the event exists.",
+      "Every event sharing session",
+      "Every sensor that saw the flow",
+      "Last 24 hours from"
+    ]
+  },
+  {
+    "route": "events.tsx",
+    "files": [
+      "routes/events.tsx",
+      "components/ErrorState.tsx",
+      "components/FiltersModal.tsx",
+      "components/Investigate.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/export/events.csv",
+      "/api/recording/{…}/cast",
+      "/api/recording/{…}/raw",
+      "/api/v1/events",
+      "/api/v1/filter-values"
+    ],
+    "reads": [
+      {
+        "fn": "routes/events.tsx#fetchEvents",
+        "output": "EventsPage | null",
+        "fields": [
+          "total",
+          "offset",
+          "rows[].src_ip_claimed",
+          "rows[].id",
+          "rows[].time",
+          "rows[].sensor",
+          "rows[].src_ip",
+          "rows[].country",
+          "rows[].port",
+          "rows[].proto",
+          "rows[].detail",
+          "rows[].session",
+          "rows[].pivots.persona",
+          "rows[].pivots.site",
+          "rows[].pivots.asset",
+          "rows[].pivots.fingerprint",
+          "rows[].pivots.fingerprint_kind",
+          "rows[].pivots.command",
+          "rows[].pivots.user",
+          "rows[].pivots.pass",
+          "rows[].pivots.path",
+          "rows[].pivots.shasum",
+          "rows[].pivots.asn",
+          "rows[].pivots.org",
+          "rows[].pivots.provider",
+          "rows[].pivots.alert",
+          "rows[].pivots.category",
+          "rows[].pivots.tty_replay",
+          "rows[].pivots.ics_severity",
+          "rows[].pivots.payload_class",
+          "rows[].record",
+          "fingerprint_ips[].ip",
+          "fingerprint_ips[].count",
+          "fingerprint_ips[].checked"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/events.tsx#fetchFilterValues",
+        "output": "FilterValues | null",
+        "fields": [
+          "sensors",
+          "countries",
+          "cities",
+          "protos",
+          "ports",
+          "kinds"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/events.tsx#fetchInvestigationConfig",
+        "output": "InvestigationConfig",
+        "fields": [
+          "kibana",
+          "evebox",
+          "arkime"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "copy feedback",
+      "paging (view more / offset)",
+      "live refresh",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether events exist in the window."
+    ]
+  },
+  {
+    "route": "ghidra.$sha.tsx",
+    "files": [
+      "routes/ghidra.$sha.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/ArtifactList.tsx",
+      "components/GhidraCallGraph.tsx",
+      "components/ConfirmDialog.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/artifact/ghidra/{…}/{…}",
+      "/api/artifact/{…}/{…}/{…}",
+      "/api/v1/artifacts/{…}/{…}",
+      "/api/v1/ghidra-callgraph/{…}",
+      "/api/v1/ghidra/submit",
+      "/api/v1/ghidra/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "components/ArtifactList.tsx#fetchArtifacts",
+        "output": "{ rows: ArtifactRow[] } | null",
+        "fields": [
+          "rows[].filename",
+          "rows[].kind",
+          "rows[].content_type",
+          "rows[].size_bytes",
+          "rows[].imported_at"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "components/GhidraCallGraph.tsx#fetchCallGraph",
+        "output": "Graph | null",
+        "fields": [
+          "nodes[].id",
+          "nodes[].label",
+          "nodes[].kind",
+          "edges[].source",
+          "edges[].target",
+          "truncated"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/ghidra.$sha.tsx#fetchRun",
+        "output": "RunFetch",
+        "fields": [
+          "state",
+          "run"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/ghidra.$sha.tsx#submitReanalysis",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/ghidra/submit (mounted)"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "confirmation before a destructive action",
+      "copy feedback",
+      "admin-only controls",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether an analysis exists for this hash."
+    ]
+  },
+  {
+    "route": "github-analysis.$sha.tsx",
+    "files": [
+      "routes/github-analysis.$sha.tsx",
+      "components/ConfirmDialog.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/raw-report/github-analysis/{…}",
+      "/api/v1/github-analysis/submit",
+      "/api/v1/github-analysis/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "routes/github-analysis.$sha.tsx#fetchRun",
+        "output": "RunFetch",
+        "fields": [
+          "state",
+          "run.sha256",
+          "run.requested_at",
+          "run.started_at",
+          "run.completed_at",
+          "run.exit_status",
+          "run.reason",
+          "run.daily_cap",
+          "run.error",
+          "run.commit",
+          "run.report_commit",
+          "run.run_id",
+          "run.run_url",
+          "run.sample_path",
+          "run.family",
+          "run.verdict.malicious",
+          "run.verdict.suspicious",
+          "run.verdict.total",
+          "run.verdict.level",
+          "run.scanners[].source",
+          "run.scanners[].ok",
+          "run.scanners[].positives",
+          "run.scanners[].total",
+          "run.scanners[].suspicious",
+          "run.scanners[].permalink",
+          "run.scanners[].error",
+          "run.yara_auto_rules",
+          "run.report_pdf",
+          "run.requested_by",
+          "run.view_url"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/github-analysis.$sha.tsx#resubmitAnalysis",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/github-analysis/submit (mounted)"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "confirmation before a destructive action",
+      "copy feedback",
+      "admin-only controls",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether a publication exists for this hash."
+    ]
+  },
+  {
+    "route": "github-analysis.index.tsx",
+    "files": [
+      "routes/github-analysis.index.tsx",
+      "components/StoreList.tsx",
+      "components/Investigate.tsx",
+      "components/CardIcons.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/store/github-analysis"
+    ],
+    "reads": [
+      {
+        "fn": "routes/github-analysis.index.tsx#fetchPage",
+        "output": "StorePage | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "history.tsx",
+    "files": [
+      "routes/history.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/export/history.json${activeQuery.current",
+      "/api/v1/events"
+    ],
+    "reads": [
+      {
+        "fn": "routes/history.tsx#fetchHistory",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "offset",
+          "rows[].time",
+          "rows[].sensor",
+          "rows[].src_ip",
+          "rows[].country",
+          "rows[].port",
+          "rows[].proto",
+          "rows[].detail",
+          "rows[].session",
+          "rows[].record"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The search request failed — results are never cached here."
+    ]
+  },
+  {
+    "route": "index.tsx",
+    "files": [
+      "routes/index.tsx",
+      "components/OverviewPanels.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx",
+      "components/EChart.tsx"
+    ],
+    "handlers": [
+      "/api/chart/anomaly-trend",
+      "/api/chart/decoy-client-fingerprints",
+      "/api/chart/decoy-requests",
+      "/api/chart/dionaea-cves",
+      "/api/chart/endlessh-held-histogram",
+      "/api/chart/ics-functions",
+      "/api/chart/ja4h-fingerprints",
+      "/api/chart/ja4l-fingerprints",
+      "/api/chart/ja4x-fingerprints",
+      "/api/chart/ml-backlog",
+      "/api/chart/netflow-bytes",
+      "/api/chart/netflow-packets",
+      "/api/chart/os-distribution",
+      "/api/chart/ssh-fingerprints",
+      "/api/chart/tcp-stack-clusters",
+      "/api/chart/tls-fingerprints",
+      "/api/v1/attack-vectors",
+      "/api/v1/campaigns",
+      "/api/v1/config",
+      "/api/v1/events",
+      "/api/v1/overview/dashboard{…}",
+      "/api/v1/overview/kpis",
+      "/api/v1/payloads"
+    ],
+    "reads": [
+      {
+        "fn": "components/OverviewPanels.tsx#fetchVectors",
+        "output": "Vectors | null",
+        "fields": [
+          "sensor",
+          "ports[].key",
+          "ports[].count",
+          "ports[].link",
+          "protocols[].key",
+          "protocols[].count",
+          "protocols[].link"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/index.tsx#fetchCampaignsSummary",
+        "output": "{ total: number; rows: StoreRow[]; } | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/index.tsx#fetchDashboard",
+        "output": "Dashboard | null",
+        "fields": [
+          "protocols[].key",
+          "protocols[].count",
+          "protocols[].link",
+          "top_ports[].key",
+          "top_ports[].count",
+          "top_ports[].link",
+          "countries[].key",
+          "countries[].count",
+          "countries[].link",
+          "asns[].key",
+          "asns[].count",
+          "asns[].link",
+          "providers[].key",
+          "providers[].count",
+          "providers[].link",
+          "top_ips[].key",
+          "top_ips[].count",
+          "top_ips[].link",
+          "top_paths[].key",
+          "top_paths[].count",
+          "top_paths[].link",
+          "top_creds[].key",
+          "top_creds[].count",
+          "top_creds[].link",
+          "top_commands[].key",
+          "top_commands[].count",
+          "top_commands[].link",
+          "clients[].key",
+          "clients[].count",
+          "clients[].link",
+          "fingerprints[].key",
+          "fingerprints[].count",
+          "fingerprints[].link",
+          "alerts[].key",
+          "alerts[].count",
+          "alerts[].link",
+          "alert_cats[].key",
+          "alert_cats[].count",
+          "alert_cats[].link",
+          "payloads[].shasum",
+          "payloads[].download",
+          "payloads[].count",
+          "payloads[].link",
+          "payloads[].vt",
+          "logins",
+          "heatmap[].sensor",
+          "heatmap[].cells[].label",
+          "heatmap[].cells[].count",
+          "heatmap[].cells[].pct",
+          "map_points[].city",
+          "map_points[].country",
+          "map_points[].lat",
+          "map_points[].lon",
+          "map_points[].events",
+          "map_points[].ips",
+          "map_points[].url",
+          "sensors[].name",
+          "sensors[].count",
+          "sensors[].last_seen",
+          "sensors[].state"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/index.tsx#fetchKpis",
+        "output": "OverviewKpis | null",
+        "fields": [
+          "total",
+          "last24h",
+          "previous24h",
+          "change24h",
+          "unique_ips",
+          "hourly",
+          "logins",
+          "ready"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/index.tsx#fetchPayloadsSummary",
+        "output": "{ total: number; rows: StoreRow[]; } | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/index.tsx#fetchPresentation",
+        "output": "Presentation | null",
+        "fields": [
+          "dashboard_title",
+          "dashboard_subtitle",
+          "footer_text",
+          "banner_text",
+          "banner_severity"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/index.tsx#fetchRecent",
+        "output": "{ total: number; rows: EventRow[]; } | null",
+        "fields": [
+          "total",
+          "rows[].id",
+          "rows[].time",
+          "rows[].sensor",
+          "rows[].src_ip",
+          "rows[].country",
+          "rows[].port",
+          "rows[].detail",
+          "rows[].proto",
+          "rows[].session",
+          "rows[].record"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "copy feedback",
+      "live refresh"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this panel is never cached.",
+      "authentication events only",
+      "No shell commands captured yet — fed by cowrie and multipot sessions.",
+      "No client banners yet — fed by cowrie.",
+      "No protocol or client fingerprints captured yet.",
+      "No web probes yet — fed by http-honeypot and tanner."
+    ]
+  },
+  {
+    "route": "investigate.cidr.$cidr.tsx",
+    "files": [
+      "routes/investigate.cidr.$cidr.tsx",
+      "components/Investigate.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/investigate/cidr/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "routes/investigate.cidr.$cidr.tsx#fetchCorrelation",
+        "output": "CidrCorrelation | null",
+        "fields": [
+          "cidr",
+          "correlation.total",
+          "correlation.truncated",
+          "correlation.sensors[].key",
+          "correlation.sensors[].count",
+          "correlation.tunnel_connections",
+          "correlation.tunnel_os_guesses",
+          "correlation.records[].time",
+          "correlation.records[].sensor",
+          "correlation.records[].src_ip",
+          "correlation.records[].country",
+          "correlation.records[].port",
+          "correlation.records[].proto",
+          "correlation.records[].detail",
+          "correlation.records[].session",
+          "correlation.records[].record"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "investigate.cluster.tsx",
+    "files": [
+      "routes/investigate.cluster.tsx",
+      "components/Investigate.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/investigate/cluster"
+    ],
+    "reads": [
+      {
+        "fn": "routes/investigate.cluster.tsx#fetchCorrelation",
+        "output": "ClusterCorrelation | null",
+        "fields": [
+          "kind",
+          "value",
+          "ip_count",
+          "correlation.total",
+          "correlation.truncated",
+          "correlation.sensors[].key",
+          "correlation.sensors[].count",
+          "correlation.tunnel_connections",
+          "correlation.tunnel_os_guesses",
+          "correlation.records[].time",
+          "correlation.records[].sensor",
+          "correlation.records[].src_ip",
+          "correlation.records[].country",
+          "correlation.records[].port",
+          "correlation.records[].proto",
+          "correlation.records[].detail",
+          "correlation.records[].session",
+          "correlation.records[].record"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "investigate.ip.$ip.tsx",
+    "files": [
+      "routes/investigate.ip.$ip.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/Tabs.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/export/events.csv",
+      "/api/v1/investigate/ip/{…}",
+      "/api/v1/ip-block",
+      "/api/v1/ip-block/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "routes/investigate.ip.$ip.tsx#fetchBlockState",
+        "output": "BlockState | null",
+        "fields": [
+          "IP",
+          "Blocked",
+          "Active",
+          "BlockedBy",
+          "ExpiresAt"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/investigate.ip.$ip.tsx#fetchProfile",
+        "output": "ProfileFetch",
+        "fields": [
+          "state",
+          "profile.ip",
+          "profile.total",
+          "profile.first",
+          "profile.last",
+          "profile.country",
+          "profile.asn",
+          "profile.sensors[].key",
+          "profile.sensors[].count",
+          "profile.ports[].key",
+          "profile.ports[].count",
+          "profile.protos[].key",
+          "profile.protos[].count",
+          "profile.credentials[].key",
+          "profile.credentials[].count",
+          "profile.commands[].key",
+          "profile.commands[].count",
+          "profile.sessions[].key",
+          "profile.sessions[].count",
+          "profile.techniques[].id",
+          "profile.techniques[].name",
+          "profile.techniques[].domain",
+          "profile.techniques[].evidence",
+          "profile.techniques[].count",
+          "profile.techniques[].url",
+          "profile.confirmed_malicious",
+          "profile.payloads[].key",
+          "profile.payloads[].count",
+          "profile.alerts[].key",
+          "profile.alerts[].count",
+          "profile.fingerprints[].key",
+          "profile.fingerprints[].count",
+          "profile.paths[].key",
+          "profile.paths[].count",
+          "profile.events[].time",
+          "profile.events[].sensor",
+          "profile.events[].src_ip",
+          "profile.events[].country",
+          "profile.events[].port",
+          "profile.events[].proto",
+          "profile.events[].detail",
+          "profile.events[].session",
+          "profile.events[].record",
+          "profile.correlation.total",
+          "profile.correlation.truncated",
+          "profile.correlation.sensors",
+          "profile.correlation.tunnel_connections",
+          "profile.correlation.tunnel_os_guesses",
+          "profile.correlation.records"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/investigate.ip.$ip.tsx#setBlock",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/ip-block"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "admin-only controls",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether the address has history. Do not treat it as an empty profile."
+    ]
+  },
+  {
+    "route": "investigate.lookup.tsx",
+    "files": [
+      "routes/investigate.lookup.tsx",
+      "components/Investigate.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/investigate/cluster"
+    ],
+    "reads": [
+      {
+        "fn": "routes/investigate.lookup.tsx#resolveHashKind",
+        "output": "HashKindFetch",
+        "fields": [
+          "state",
+          "kind"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "ips.tsx",
+    "files": [
+      "routes/ips.tsx",
+      "components/Investigate.tsx",
+      "components/OverviewPanels.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/export/ips.csv",
+      "/api/v1/attack-vectors",
+      "/api/v1/overview/dashboard",
+      "/api/v1/sources"
+    ],
+    "reads": [
+      {
+        "fn": "components/OverviewPanels.tsx#fetchVectors",
+        "output": "Vectors | null",
+        "fields": [
+          "sensor",
+          "ports[].key",
+          "ports[].count",
+          "ports[].link",
+          "protocols[].key",
+          "protocols[].count",
+          "protocols[].link"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/ips.tsx#fetchMapPoints",
+        "output": "MapPoint[] | null",
+        "fields": [
+          "[].city",
+          "[].country",
+          "[].lat",
+          "[].lon",
+          "[].events",
+          "[].ips",
+          "[].url"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/ips.tsx#fetchSources",
+        "output": "SourcesPage | null",
+        "fields": [
+          "total_unique",
+          "rows[].ip",
+          "rows[].country",
+          "rows[].events",
+          "rows[].logins",
+          "rows[].sessions",
+          "rows[].sensors",
+          "rows[].first",
+          "rows[].last"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "kill-chain.tsx",
+    "files": [
+      "routes/kill-chain.tsx",
+      "components/Investigate.tsx",
+      "components/EChart.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/chart/attck-coverage",
+      "/api/chart/campaign-timeline",
+      "/api/chart/kill-chain-sankey"
+    ],
+    "reads": [],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "empty state",
+      "copy feedback",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "llm-analysis.tsx",
+    "files": [
+      "routes/llm-analysis.tsx",
+      "components/StoreList.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/llm-search",
+      "/api/v1/store/llm-analysis"
+    ],
+    "reads": [
+      {
+        "fn": "routes/llm-analysis.tsx#fetchPage",
+        "output": "StorePage | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/llm-analysis.tsx#semanticSearch",
+        "output": "SemanticResult | null",
+        "fields": [
+          "available",
+          "reason",
+          "hits"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "ml-anomalies.tsx",
+    "files": [
+      "routes/ml-anomalies.tsx",
+      "components/StoreList.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/ConfirmDialog.tsx",
+      "components/EChart.tsx",
+      "components/FiltersModal.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/chart/ml-anomaly-scores",
+      "/api/v1/ml-anomalies/ack",
+      "/api/v1/ml-anomalies/ack-all",
+      "/api/v1/ml-anomalies/acks",
+      "/api/v1/ml-anomalies/disposition",
+      "/api/v1/ml-anomalies/stats",
+      "/api/v1/ml-health",
+      "/api/v1/store/ml-anomalies"
+    ],
+    "reads": [
+      {
+        "fn": "routes/ml-anomalies.tsx#fetchAcks",
+        "output": "Record<string, AckRecord> | null",
+        "fields": [],
+        "loader": false
+      },
+      {
+        "fn": "routes/ml-anomalies.tsx#fetchBacklog",
+        "output": "Backlog | null",
+        "fields": [
+          "total",
+          "open"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/ml-anomalies.tsx#fetchModelHealth",
+        "output": "ModelHealth[] | null",
+        "fields": [
+          "[].model",
+          "[].timestamp",
+          "[].accepted",
+          "[].reason",
+          "[].anomaly_rate_new",
+          "[].anomaly_rate_previous",
+          "[].train_samples"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/ml-anomalies.tsx#fetchPage",
+        "output": "StorePage | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/ml-anomalies.tsx#fetchStats",
+        "output": "KpiStats | null",
+        "fields": [
+          "total24h",
+          "scanned",
+          "bySeverity[].key",
+          "bySeverity[].count",
+          "topSrcIPs[].key",
+          "topSrcIPs[].count"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/ml-anomalies.tsx#ackAll",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/ml-anomalies/ack-all"
+        ]
+      },
+      {
+        "fn": "routes/ml-anomalies.tsx#setAck",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/ml-anomalies/ack"
+        ]
+      },
+      {
+        "fn": "routes/ml-anomalies.tsx#setDisposition",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/ml-anomalies/disposition"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "confirmation before a destructive action",
+      "copy feedback",
+      "admin-only controls",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether models are healthy.",
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "payload-analysis.$hash.tsx",
+    "files": [
+      "routes/payload-analysis.$hash.tsx",
+      "components/ConfirmDialog.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/payload/{…}/download",
+      "/api/report/{…}/pdf",
+      "/api/v1/events",
+      "/api/v1/ghidra/submit",
+      "/api/v1/github-analysis/submit",
+      "/api/v1/payloads/{…}",
+      "/api/v1/payloads/{…}/report",
+      "/api/v1/sandbox/golden-image-status",
+      "/api/v1/sandbox/submit",
+      "/api/v1/store/ghidra-runs",
+      "/api/v1/store/github-analysis",
+      "/api/v1/store/sandbox-runs"
+    ],
+    "reads": [
+      {
+        "fn": "lib/auth.ts#getSessionUser",
+        "output": "User | null",
+        "fields": [
+          "sub",
+          "username",
+          "displayName",
+          "role"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payload-analysis.$hash.tsx#fetchCorrelation",
+        "output": "CorrelationFetch",
+        "fields": [
+          "state",
+          "correlation.sandbox_runs[].job",
+          "correlation.sandbox_runs[].completed_at",
+          "correlation.sandbox_runs[].exit_status",
+          "correlation.sandbox_runs[].changed",
+          "correlation.github.sha256",
+          "correlation.github.exit_status",
+          "correlation.github.malicious",
+          "correlation.github.total",
+          "correlation.github.level",
+          "correlation.github.family",
+          "correlation.ghidra.exit_status",
+          "correlation.ghidra.completed_at"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/payload-analysis.$hash.tsx#fetchDetail",
+        "output": "DetailFetch",
+        "fields": [
+          "state",
+          "detail.hash",
+          "detail.inventory",
+          "detail.analysis",
+          "detail.yara",
+          "detail.size_bytes",
+          "detail.hex_preview"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payload-analysis.$hash.tsx#fetchGoldenImageStatus",
+        "output": "GoldenImageFetch",
+        "fields": [
+          "state",
+          "status.configured",
+          "status.built_at",
+          "status.age_days",
+          "status.checksum_written",
+          "status.checksum_verified",
+          "status.stale_monthly",
+          "status.stale_iso_eval",
+          "status.checked_at",
+          "status.error"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payload-analysis.$hash.tsx#fetchRelatedEvents",
+        "output": "RelatedFetch",
+        "fields": [
+          "state",
+          "related.total",
+          "related.earliest.time",
+          "related.earliest.sensor",
+          "related.earliest.session"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/payload-analysis.$hash.tsx#generatePdfReport",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/payloads/{hash}/report (mounted)"
+        ]
+      },
+      {
+        "fn": "routes/payload-analysis.$hash.tsx#submitGhidra",
+        "permission": "admin",
+        "backend": [
+          "POST ‹path› (mounted)"
+        ]
+      },
+      {
+        "fn": "routes/payload-analysis.$hash.tsx#submitGithubAnalysis",
+        "permission": "admin",
+        "backend": [
+          "POST ‹path› (mounted)"
+        ]
+      },
+      {
+        "fn": "routes/payload-analysis.$hash.tsx#submitSandbox",
+        "permission": "admin",
+        "backend": [
+          "POST ‹path› (mounted)"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "confirmation before a destructive action",
+      "copy feedback",
+      "admin-only controls",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether an analysis exists for this hash."
+    ]
+  },
+  {
+    "route": "payload-workbench.results.tsx",
+    "files": [
+      "routes/payload-workbench.results.tsx",
+      "components/ConfirmDialog.tsx",
+      "components/Investigate.tsx",
+      "components/ArtifactList.tsx",
+      "components/ErrorState.tsx",
+      "components/CardIcons.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/artifact/{…}/{…}/{…}",
+      "/api/v1/artifacts/{…}/{…}",
+      "/api/v1/gpu-queue",
+      "/api/v1/gpu-queue/{…}/abort",
+      "/api/v1/ml-health",
+      "/api/v1/store/ghidra-runs",
+      "/api/v1/store/sandbox-runs",
+      "/api/v1/store/static-analysis",
+      "/api/v1/store/workbench-runs",
+      "/api/v1/store/yara",
+      "/api/v1/workbench/analyzers",
+      "/api/v1/workbench/recipes",
+      "/api/v1/workbench/runs",
+      "/api/v1/workbench/runs/{…}",
+      "/api/v1/workbench/runs/{…}/children/{…}/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "components/ArtifactList.tsx#fetchArtifacts",
+        "output": "{ rows: ArtifactRow[] } | null",
+        "fields": [
+          "rows[].filename",
+          "rows[].kind",
+          "rows[].content_type",
+          "rows[].size_bytes",
+          "rows[].imported_at"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "lib/auth.ts#getSessionUser",
+        "output": "User | null",
+        "fields": [
+          "sub",
+          "username",
+          "displayName",
+          "role"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#fetchAnalyzerCatalog",
+        "output": "CatalogFetch",
+        "fields": [
+          "state",
+          "catalog.classification.code",
+          "catalog.classification.label",
+          "catalog.classification.platform",
+          "catalog.classification.category",
+          "catalog.classification.analysis_path",
+          "catalog.classification.dynamic",
+          "catalog.analyzers[].id",
+          "catalog.analyzers[].display_name",
+          "catalog.analyzers[].description",
+          "catalog.analyzers[].accepted_kinds",
+          "catalog.analyzers[].availability",
+          "catalog.analyzers[].available",
+          "catalog.analyzers[].applicable",
+          "catalog.analyzers[].reason",
+          "catalog.analyzers[].required_role",
+          "catalog.analyzers[].confirmation",
+          "catalog.analyzers[].local_only",
+          "catalog.analyzers[].detonates",
+          "catalog.analyzers[].gpu_consuming",
+          "catalog.analyzers[].requires_opt_in",
+          "catalog.analyzers[].default_options",
+          "catalog.analyzers[].option_schema"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#fetchGhidra",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#fetchGpuQueue",
+        "output": "GpuJob[] | null",
+        "fields": [
+          "[].job_id",
+          "[].job_type",
+          "[].ref",
+          "[].model",
+          "[].estimated_vram_mib",
+          "[].status",
+          "[].requested_at",
+          "[].started_at",
+          "[].finished_at",
+          "[].abort_requested",
+          "[].error",
+          "[].attempts"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#fetchModelHealth",
+        "output": "ModelHealth[] | null",
+        "fields": [
+          "[].model",
+          "[].timestamp",
+          "[].accepted",
+          "[].reason",
+          "[].anomaly_rate_new",
+          "[].anomaly_rate_previous",
+          "[].train_samples"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#fetchOwnRuns",
+        "output": "{ runs: WorkbenchRun[] } | null",
+        "fields": [
+          "runs[].id",
+          "runs[].payload_sha256",
+          "runs[].payload_kind",
+          "runs[].owner",
+          "runs[].recipe_id",
+          "runs[].recipe_name",
+          "runs[].state",
+          "runs[].created_at",
+          "runs[].updated_at",
+          "runs[].children[].analyzer_id",
+          "runs[].children[].display_name",
+          "runs[].children[].state",
+          "runs[].children[].reason",
+          "runs[].children[].summary",
+          "runs[].children[].result_url",
+          "runs[].children[].created_at",
+          "runs[].children[].updated_at",
+          "runs[].children[].attempts",
+          "runs[].children[].retryable",
+          "runs[].children[].cancelable"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#fetchRecipes",
+        "output": "{ recipes: WorkbenchRecipe[] } | null",
+        "fields": [
+          "recipes[].id",
+          "recipes[].revision",
+          "recipes[].name",
+          "recipes[].description",
+          "recipes[].owner",
+          "recipes[].scope",
+          "recipes[].created_at",
+          "recipes[].analyzers[].analyzer_id",
+          "recipes[].analyzers[].options"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#fetchSandbox",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#fetchStatic",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#fetchWorkbench",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#fetchYara",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#refreshRunFn",
+        "output": "RunResult",
+        "fields": [
+          "ok",
+          "run.id",
+          "run.payload_sha256",
+          "run.payload_kind",
+          "run.owner",
+          "run.recipe_id",
+          "run.recipe_name",
+          "run.state",
+          "run.created_at",
+          "run.updated_at",
+          "run.children[].analyzer_id",
+          "run.children[].display_name",
+          "run.children[].state",
+          "run.children[].reason",
+          "run.children[].summary",
+          "run.children[].result_url",
+          "run.children[].created_at",
+          "run.children[].updated_at",
+          "run.children[].attempts",
+          "run.children[].retryable",
+          "run.children[].cancelable",
+          "reused",
+          "error"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/payload-workbench.results.tsx#abortGpuJob",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/gpu-queue/{job_id}/abort (mounted)"
+        ]
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#childActionFn",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/workbench/runs/{runId}/children/{analyzerId}/{action} (mounted)"
+        ]
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#saveRecipeFn",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/workbench/recipes (mounted)"
+        ]
+      },
+      {
+        "fn": "routes/payload-workbench.results.tsx#submitRun",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/workbench/runs (mounted)"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "confirmation before a destructive action",
+      "copy feedback",
+      "admin-only controls",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "payloads.tsx",
+    "files": [
+      "routes/payloads.tsx",
+      "components/ConfirmDialog.tsx",
+      "components/ErrorState.tsx",
+      "components/Investigate.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/payload/{…}/download",
+      "/api/v1/github-analysis/submit",
+      "/api/v1/payloads",
+      "/api/v1/store/github-analysis"
+    ],
+    "reads": [
+      {
+        "fn": "routes/payloads.tsx#fetchGithubVerdicts",
+        "output": "VerdictScan | null",
+        "fields": [
+          "badges[].sha256",
+          "badges[].label",
+          "badges[].family",
+          "scanned",
+          "total"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/payloads.tsx#fetchPayloads",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "rows[].Hash",
+          "rows[].Size",
+          "rows[].SizeH",
+          "rows[].MtimeUTC",
+          "rows[].MIME",
+          "rows[].Kind",
+          "rows[].Platform",
+          "rows[].AnalysisPath",
+          "rows[].Dynamic",
+          "rows[].Sources",
+          "rows[].Copies",
+          "rows[].Preview",
+          "rows[].PreviewTruncated"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/payloads.tsx#fetchSourceCounts",
+        "output": "SourceCensus | null",
+        "fields": [
+          "counts",
+          "other"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/payloads.tsx#submitGithubAnalysis",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/github-analysis/submit (mounted)"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "confirmation before a destructive action",
+      "copy feedback",
+      "admin-only controls",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about what has been captured."
+    ]
+  },
+  {
+    "route": "problem-reports.tsx",
+    "files": [
+      "routes/problem-reports.tsx",
+      "components/Investigate.tsx",
+      "components/StoreList.tsx",
+      "components/RowActions.tsx",
+      "components/ErrorState.tsx"
+    ],
+    "handlers": [
+      "/api/v1/problem-reports/{…}",
+      "/api/v1/store/problem-reports"
+    ],
+    "reads": [
+      {
+        "fn": "routes/problem-reports.tsx#fetchPage",
+        "output": "StorePage | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/problem-reports.tsx#setStatus",
+        "permission": "admin",
+        "backend": [
+          "PATCH /api/v1/problem-reports/{id}"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "admin-only controls",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "recordings.tsx",
+    "files": [
+      "routes/recordings.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/recordings",
+      "/api/v1/recordings/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "routes/recordings.tsx#fetchRecordings",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "rows[].when",
+          "rows[].src_ip",
+          "rows[].country",
+          "rows[].session",
+          "rows[].shasum",
+          "rows[].size_bytes",
+          "rows[].duration_ms"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/recordings.tsx#fetchReplay",
+        "output": "Replay | null",
+        "fields": [
+          "shasum",
+          "frames",
+          "duration_seconds",
+          "transcript"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "reports.tsx",
+    "files": [
+      "routes/reports.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/CardIcons.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/report/${encodeURIComponent(str(row,",
+      "/api/report/{…}/pdf",
+      "/api/v1/payloads",
+      "/api/v1/reports/definitions",
+      "/api/v1/reports/definitions/{…}",
+      "/api/v1/reports/definitions/{…}/generate",
+      "/api/v1/reports/generated/{…}",
+      "/api/v1/reports/templates",
+      "/api/v1/store/generated-reports",
+      "/api/v1/store/sandbox-runs"
+    ],
+    "reads": [
+      {
+        "fn": "lib/auth.ts#getSessionUser",
+        "output": "User | null",
+        "fields": [
+          "sub",
+          "username",
+          "displayName",
+          "role"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/reports.tsx#fetchDefinitions",
+        "output": "DefinitionsResponse | null",
+        "fields": [
+          "definitions[].id",
+          "definitions[].name",
+          "definitions[].template",
+          "definitions[].theme",
+          "definitions[].branding.title",
+          "definitions[].branding.author",
+          "definitions[].branding.header_left",
+          "definitions[].branding.header_right",
+          "definitions[].branding.footer_left",
+          "definitions[].branding.classification",
+          "definitions[].scope.window",
+          "definitions[].scope.ip",
+          "definitions[].scope.network",
+          "definitions[].scope.sensor",
+          "definitions[].scope.port",
+          "definitions[].scope.signature",
+          "definitions[].scope.country",
+          "definitions[].scope.asn",
+          "definitions[].scope.text",
+          "definitions[].scope.type",
+          "definitions[].scope.session",
+          "definitions[].scope.job",
+          "definitions[].scope.hash",
+          "definitions[].elements",
+          "definitions[].appendix_limit",
+          "definitions[].schedule.enabled",
+          "definitions[].schedule.frequency",
+          "definitions[].schedule.hour",
+          "definitions[].schedule.minute",
+          "definitions[].schedule.weekday",
+          "definitions[].schedule.month_day",
+          "definitions[].schedule.last_run_at",
+          "definitions[].schedule.next_run_at",
+          "definitions[].created",
+          "definitions[].updated"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/reports.tsx#fetchGenerated",
+        "output": "Page | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/reports.tsx#fetchSandboxJobs",
+        "output": "SandboxJobOption[] | null",
+        "fields": [
+          "[].job",
+          "[].sha256",
+          "[].risk"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/reports.tsx#fetchTemplates",
+        "output": "TemplatesResponse | null",
+        "fields": [
+          "templates[].id",
+          "templates[].name",
+          "templates[].description",
+          "templates[].title",
+          "templates[].theme",
+          "templates[].window",
+          "templates[].elements",
+          "templates[].sandbox",
+          "templates[].payload",
+          "templates[].ghidra",
+          "elements[].id",
+          "elements[].label",
+          "elements[].description"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/reports.tsx#searchPayloads",
+        "output": "PayloadOption[] | null",
+        "fields": [
+          "[].hash",
+          "[].kind",
+          "[].size",
+          "[].sources"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/reports.tsx#createDefinition",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/reports/definitions"
+        ]
+      },
+      {
+        "fn": "routes/reports.tsx#deleteDefinition",
+        "permission": "admin",
+        "backend": [
+          "DELETE /api/v1/reports/definitions/{id}"
+        ]
+      },
+      {
+        "fn": "routes/reports.tsx#deleteGenerated",
+        "permission": "admin",
+        "backend": [
+          "DELETE /api/v1/reports/generated/{id}"
+        ]
+      },
+      {
+        "fn": "routes/reports.tsx#generateDefinition",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/reports/definitions/{id}/generate"
+        ]
+      },
+      {
+        "fn": "routes/reports.tsx#updateDefinition",
+        "permission": "admin",
+        "backend": [
+          "PUT /api/v1/reports/definitions/{id}"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "admin-only controls",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The designer needs its template catalog — the request failed.",
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "revdeck.$sha.tsx",
+    "files": [
+      "routes/revdeck.$sha.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/revdeck/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "routes/revdeck.$sha.tsx#fetchRun",
+        "output": "RunFetch",
+        "fields": [
+          "state",
+          "run.sha256",
+          "run.exit_status",
+          "run.error",
+          "run.revdeck.workflow",
+          "run.revdeck.status",
+          "run.revdeck.answer",
+          "run.revdeck.steps",
+          "run.revdeck.tool_calls",
+          "run.revdeck.citations",
+          "run.revdeck.warnings"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether an analysis exists for this hash."
+    ]
+  },
+  {
+    "route": "revdeck.index.tsx",
+    "files": [
+      "routes/revdeck.index.tsx",
+      "components/StoreList.tsx",
+      "components/Investigate.tsx",
+      "components/CardIcons.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/store/revdeck"
+    ],
+    "reads": [
+      {
+        "fn": "routes/revdeck.index.tsx#fetchPage",
+        "output": "StorePage | null",
+        "fields": [
+          "total",
+          "rows"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "sandbox.$job.tsx",
+    "files": [
+      "routes/sandbox.$job.tsx",
+      "components/ArtifactList.tsx",
+      "components/ConfirmDialog.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/artifact/{…}/{…}/{…}",
+      "/api/v1/artifacts/{…}/{…}",
+      "/api/v1/sandbox/submit",
+      "/api/v1/sandbox/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "components/ArtifactList.tsx#fetchArtifacts",
+        "output": "{ rows: ArtifactRow[] } | null",
+        "fields": [
+          "rows[].filename",
+          "rows[].kind",
+          "rows[].content_type",
+          "rows[].size_bytes",
+          "rows[].imported_at"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/sandbox.$job.tsx#fetchRun",
+        "output": "RunFetch",
+        "fields": [
+          "state",
+          "run"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/sandbox.$job.tsx#resubmitSandbox",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/sandbox/submit (mounted)"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "confirmation before a destructive action",
+      "copy feedback",
+      "admin-only controls",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether a run exists for this job id."
+    ]
+  },
+  {
+    "route": "sandbox.vnc.tsx",
+    "files": [
+      "routes/sandbox.vnc.tsx",
+      "components/Investigate.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/sandbox/vnc"
+    ],
+    "reads": [
+      {
+        "fn": "routes/sandbox.vnc.tsx#fetchVncStatus",
+        "output": "{ status: VncStatus | null; error: string | null }",
+        "fields": [
+          "status.sha256",
+          "status.bridge_ws",
+          "error"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "empty state",
+      "admin-only controls",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "search.tsx",
+    "files": [
+      "routes/search.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/search"
+    ],
+    "reads": [
+      {
+        "fn": "routes/search.tsx#searchFn",
+        "output": "SearchResult | null",
+        "fields": [
+          "query",
+          "redirect",
+          "groups[].title",
+          "groups[].hits[].label",
+          "groups[].hits[].count",
+          "groups[].hits[].url",
+          "groups[].more",
+          "groups[].more_url",
+          "total"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend did not answer — results here are never cached. Re-submitting the query re-runs the search."
+    ]
+  },
+  {
+    "route": "sensors.$sensor.tsx",
+    "files": [
+      "routes/sensors.$sensor.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/SensorEvents.tsx",
+      "components/CuratedSensorViews.tsx",
+      "components/RowActions.tsx",
+      "components/CapturedMail.tsx"
+    ],
+    "handlers": [
+      "/api/v1/mail/{…}",
+      "/api/v1/sensors",
+      "/api/v1/sensors/catalog",
+      "/api/v1/sensors/{…}/events",
+      "/api/v1/sensors/{…}/overview"
+    ],
+    "reads": [
+      {
+        "fn": "components/CapturedMail.tsx#fetchMailDetailed",
+        "output": "MailFetch",
+        "fields": [
+          "state",
+          "mail.session_id",
+          "mail.body_path",
+          "mail.size_bytes",
+          "mail.imported_at",
+          "mail.from.name",
+          "mail.from.address",
+          "mail.to[].name",
+          "mail.to[].address",
+          "mail.subject",
+          "mail.date",
+          "mail.message_id",
+          "mail.body_text",
+          "mail.attachments[].filename",
+          "mail.attachments[].content_type",
+          "mail.attachments[].size_bytes",
+          "mail.attachments[].sha256"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "components/CuratedSensorViews.tsx#fetchSensors",
+        "output": "SensorDetail | null",
+        "fields": [
+          "mailoney[].session_id",
+          "mailoney[].when",
+          "mailoney[].ip",
+          "mailoney[].port",
+          "mailoney[].logged_in",
+          "mailoney[].user",
+          "mailoney[].pass",
+          "mailoney[].mail_from",
+          "mailoney[].rcpt_to",
+          "mailoney[].body_size",
+          "mailoney[].truncated",
+          "mailoney[].body_path",
+          "mailoney[].body_preview",
+          "http_requests[].id",
+          "http_requests[].when",
+          "http_requests[].ip",
+          "http_requests[].method",
+          "http_requests[].host",
+          "http_requests[].path",
+          "http_requests[].query",
+          "http_requests[].user_agent",
+          "http_requests[].headers",
+          "http_requests[].body",
+          "http_requests[].username",
+          "http_requests[].password",
+          "http_requests[].auth_type",
+          "http_requests[].status",
+          "http_requests[].category",
+          "http_requests[].tarpitted",
+          "http_requests[].tarpit_bytes",
+          "http_requests[].tarpit_ms",
+          "tanner[].id",
+          "tanner[].when",
+          "tanner[].ip",
+          "tanner[].method",
+          "tanner[].path",
+          "tanner[].user_agent",
+          "tanner[].headers",
+          "tanner[].username",
+          "tanner[].password",
+          "tanner[].tarpitted",
+          "tanner[].tarpit_bytes",
+          "tanner[].tarpit_ms",
+          "tanner[].post_data",
+          "tanner[].cookies",
+          "tanner[].detection_name",
+          "tanner[].detection_payload"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/sensors.$sensor.tsx#fetchCatalog",
+        "output": "{ sensors: SensorSummary[] } | null",
+        "fields": [
+          "sensors[].sensor",
+          "sensors[].events",
+          "sensors[].last_seen"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/sensors.$sensor.tsx#fetchEvents",
+        "output": "{ sensor: string; total: number; rows: SensorEventRow[] } | null",
+        "fields": [
+          "sensor",
+          "total",
+          "rows[].id",
+          "rows[].when",
+          "rows[].src_ip",
+          "rows[].src_port",
+          "rows[].dst_port",
+          "rows[].fields"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/sensors.$sensor.tsx#fetchOverview",
+        "output": "Overview | null",
+        "fields": [
+          "sensor",
+          "window",
+          "events",
+          "unique_sources",
+          "first_seen",
+          "last_seen",
+          "hourly",
+          "top_sources[].key",
+          "top_sources[].count",
+          "top_countries[].key",
+          "top_countries[].count",
+          "top_lists[].label",
+          "top_lists[].rows[].key",
+          "top_lists[].rows[].count",
+          "measures[].label",
+          "measures[].total",
+          "measures[].max",
+          "measures[].unit"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about how active the sensor is.",
+      "The backend request failed — the event list below this page normally rides here."
+    ]
+  },
+  {
+    "route": "sensors.index.tsx",
+    "files": [
+      "routes/sensors.index.tsx"
+    ],
+    "handlers": [
+      "/api/v1/sensors/catalog"
+    ],
+    "reads": [
+      {
+        "fn": "routes/sensors.index.tsx#fetchCatalog",
+        "output": "{ sensors: SensorSummary[] } | null",
+        "fields": [
+          "sensors[].sensor",
+          "sensors[].events"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "redirect"
+    ],
+    "emptyMessages": []
+  },
+  {
+    "route": "sessions.$id.tsx",
+    "files": [
+      "routes/sessions.$id.tsx",
+      "components/Investigate.tsx",
+      "components/CapturedMail.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/export/events.csv",
+      "/api/v1/mail/{…}",
+      "/api/v1/sessions/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "components/CapturedMail.tsx#fetchMailDetailed",
+        "output": "MailFetch",
+        "fields": [
+          "state",
+          "mail.session_id",
+          "mail.body_path",
+          "mail.size_bytes",
+          "mail.imported_at",
+          "mail.from.name",
+          "mail.from.address",
+          "mail.to[].name",
+          "mail.to[].address",
+          "mail.subject",
+          "mail.date",
+          "mail.message_id",
+          "mail.body_text",
+          "mail.attachments[].filename",
+          "mail.attachments[].content_type",
+          "mail.attachments[].size_bytes",
+          "mail.attachments[].sha256"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/sessions.$id.tsx#fetchSession",
+        "output": "SessionFetch",
+        "fields": [
+          "state",
+          "session.id",
+          "session.ip",
+          "session.country",
+          "session.first",
+          "session.last",
+          "session.total",
+          "session.sensors[].key",
+          "session.sensors[].count",
+          "session.commands[].key",
+          "session.commands[].count",
+          "session.credentials[].key",
+          "session.credentials[].count",
+          "session.payloads[].key",
+          "session.payloads[].count",
+          "session.techniques[].id",
+          "session.techniques[].name",
+          "session.techniques[].domain",
+          "session.techniques[].evidence",
+          "session.techniques[].count",
+          "session.techniques[].url",
+          "session.sequences[].name",
+          "session.sequences[].severity",
+          "session.sequences[].summary",
+          "session.events[].time",
+          "session.events[].sensor",
+          "session.events[].src_ip",
+          "session.events[].country",
+          "session.events[].port",
+          "session.events[].proto",
+          "session.events[].detail",
+          "session.events[].session",
+          "session.events[].record"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether the session exists in the window."
+    ]
+  },
+  {
+    "route": "settings.tsx",
+    "files": [
+      "routes/settings.tsx",
+      "components/ConfirmDialog.tsx",
+      "components/ErrorState.tsx",
+      "components/EsHistoryConsole.tsx",
+      "components/StoreList.tsx",
+      "components/ThemeGallery.tsx",
+      "components/Investigate.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/export/history.json${activeQuery",
+      "/api/v1/audit{…}",
+      "/api/v1/config",
+      "/api/v1/config/history",
+      "/api/v1/config/presentation",
+      "/api/v1/config/rollback",
+      "/api/v1/config/validate",
+      "/api/v1/config/{…}",
+      "/api/v1/events",
+      "/api/v1/preferences",
+      "/api/v1/preferences/reset",
+      "/api/v1/reporter-stats",
+      "/api/v1/reports/templates",
+      "/api/v1/services",
+      "/api/v1/services/{…}/logs",
+      "/api/v1/services/{…}/{…}",
+      "/api/v1/settings/storage",
+      "/api/v1/users"
+    ],
+    "reads": [
+      {
+        "fn": "components/EsHistoryConsole.tsx#fetchConsoleHistory",
+        "output": "ConsolePage | null",
+        "fields": [
+          "total",
+          "rows[].record"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "lib/auth.ts#getAccountActions",
+        "output": "AccountActions",
+        "fields": [
+          "manageAccount",
+          "profile",
+          "security",
+          "sessions"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "lib/auth.ts#getSessionUser",
+        "output": "User | null",
+        "fields": [
+          "sub",
+          "username",
+          "displayName",
+          "role"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/settings.tsx#fetchAdminData",
+        "output": "AdminConfig | null",
+        "fields": [
+          "revision",
+          "presentation.app_name",
+          "presentation.product_label",
+          "presentation.dashboard_title",
+          "presentation.dashboard_subtitle",
+          "presentation.org_name",
+          "presentation.overview_intro",
+          "presentation.help_link_label",
+          "presentation.help_link_url",
+          "presentation.banner_text",
+          "presentation.banner_severity",
+          "presentation.banner_expires",
+          "presentation.footer_text",
+          "presentation.ai_disclaimer",
+          "presentation.privacy_notice",
+          "honeypot.alert_cooldown",
+          "honeypot.alert_campaign_score",
+          "honeypot.sandbox_alert_risk_score",
+          "honeypot.ml_alert_threshold",
+          "honeypot.yara_scan_interval_seconds",
+          "honeypot.yara_max_bytes",
+          "honeypot.payload_dedupe_interval_seconds",
+          "behavior.default_landing",
+          "behavior.default_time_window",
+          "behavior.rows_per_page_options",
+          "behavior.max_export_rows",
+          "behavior.refresh_interval_seconds_options",
+          "behavior.source_stale_minutes",
+          "behavior.map_provider",
+          "behavior.default_timezone",
+          "behavior.show_ml_panels",
+          "behavior.maintenance_mode",
+          "behavior.read_only",
+          "behavior.show_problem_report_button",
+          "reportPresets",
+          "reportTemplates[].id",
+          "reportTemplates[].name",
+          "reportTemplates[].description",
+          "users[].subject",
+          "users[].username",
+          "users[].role",
+          "users[].first_seen_at",
+          "users[].last_seen_at"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/settings.tsx#fetchAudit",
+        "output": "AuditResponse | null",
+        "fields": [
+          "events[].time",
+          "events[].actor_subject",
+          "events[].actor_username",
+          "events[].action",
+          "events[].fields",
+          "events[].revision",
+          "events[].result"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/settings.tsx#fetchHistory",
+        "output": "HistoryResponse | null",
+        "fields": [
+          "entries[].revision",
+          "entries[].time",
+          "entries[].actor_subject",
+          "entries[].actor_username",
+          "entries[].action",
+          "entries[].fields"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/settings.tsx#fetchPreferences",
+        "output": "Prefs | null",
+        "fields": [
+          "theme",
+          "palette",
+          "density",
+          "reduced_motion",
+          "collapsed_sidebar",
+          "landing_page",
+          "remember_filters",
+          "rows_per_page",
+          "wrap_long_values",
+          "timezone",
+          "clock",
+          "timestamps",
+          "auto_refresh",
+          "refresh_interval_seconds",
+          "live_toasts",
+          "live_toast_interval_seconds",
+          "map_basemap",
+          "map_clustering",
+          "map_animation",
+          "high_contrast",
+          "large_evidence_text",
+          "notify_severity",
+          "notify_sound",
+          "notify_desktop",
+          "default_event_window",
+          "preserve_filters",
+          "open_details_new_tab"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/settings.tsx#fetchReporterStats",
+        "output": "ReporterStats | null",
+        "fields": [
+          "available",
+          "stats",
+          "reason"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/settings.tsx#fetchServiceLogs",
+        "output": "{ name: string; lines: number; log: string } | null",
+        "fields": [
+          "name",
+          "lines",
+          "log"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/settings.tsx#fetchServices",
+        "output": "ServicesResponse | null",
+        "fields": [
+          "available",
+          "services",
+          "reason"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/settings.tsx#fetchStorage",
+        "output": "EsStorage | null",
+        "fields": [
+          "cluster_status",
+          "index_count",
+          "doc_count",
+          "store_bytes"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [
+      {
+        "fn": "routes/settings.tsx#putPreferences",
+        "permission": "session+",
+        "backend": [
+          "GET /api/v1/preferences?{query}",
+          "PUT /api/v1/preferences"
+        ]
+      },
+      {
+        "fn": "routes/settings.tsx#resetPreferences",
+        "permission": "session+",
+        "backend": [
+          "POST /api/v1/preferences/reset"
+        ]
+      },
+      {
+        "fn": "routes/settings.tsx#rollbackConfig",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/config/rollback"
+        ]
+      },
+      {
+        "fn": "routes/settings.tsx#runServiceAction",
+        "permission": "admin",
+        "backend": [
+          "POST /api/v1/services/{name}/{action}?{query}"
+        ]
+      },
+      {
+        "fn": "routes/settings.tsx#saveConfigSection",
+        "permission": "admin",
+        "backend": [
+          "PUT /api/v1/config/{section}?{query}"
+        ]
+      },
+      {
+        "fn": "routes/settings.tsx#savePresentation",
+        "permission": "admin",
+        "backend": [
+          "PUT /api/v1/config/presentation?{query}"
+        ]
+      },
+      {
+        "fn": "routes/settings.tsx#validateConfig",
+        "permission": "session",
+        "backend": [
+          "POST /api/v1/config/validate"
+        ]
+      }
+    ],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "confirmation before a destructive action",
+      "copy feedback",
+      "admin-only controls",
+      "paging (view more / offset)",
+      "download or export"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about what has been recorded.",
+      "The backend request failed — nothing on these panes reflects real configuration, so saving is unavailable."
+    ]
+  },
+  {
+    "route": "source-health.tsx",
+    "files": [
+      "routes/source-health.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/source-health"
+    ],
+    "reads": [
+      {
+        "fn": "routes/source-health.tsx#fetchHealth",
+        "output": "SourceHealth | null",
+        "fields": [
+          "cluster_status",
+          "total_documents",
+          "sensors[].sensor",
+          "sensors[].documents",
+          "sensors[].last_seen",
+          "sensors[].state",
+          "yara.enabled",
+          "yara.last_scan",
+          "yara.rules_sha256",
+          "yara.samples",
+          "yara.matched",
+          "yara.errors",
+          "runtime.uptime_seconds",
+          "runtime.rss_bytes",
+          "runtime.vm_bytes",
+          "ingest.state",
+          "ingest.last_ingest",
+          "ingest.age_seconds",
+          "ingest.recent_dead_letters",
+          "dead_letters",
+          "unattributed_24h",
+          "pipeline.state",
+          "pipeline.acked",
+          "pipeline.failed",
+          "pipeline.dropped",
+          "pipeline.active",
+          "pipeline.decode_failures"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)",
+      "live refresh"
+    ],
+    "emptyMessages": [
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "topology.tsx",
+    "files": [
+      "routes/topology.tsx",
+      "components/EChart.tsx",
+      "components/ErrorState.tsx",
+      "components/Investigate.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/topology/flow",
+      "/api/v1/services",
+      "/api/v1/source-health",
+      "/api/v1/topology"
+    ],
+    "reads": [
+      {
+        "fn": "routes/topology.tsx#fetchHealth",
+        "output": "SensorFreshness[] | null",
+        "fields": [
+          "[].sensor",
+          "[].last_seen",
+          "[].state"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/topology.tsx#fetchServices",
+        "output": "ContainerState[] | null",
+        "fields": [
+          "[].name",
+          "[].state",
+          "[].exit_code",
+          "[].health"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/topology.tsx#fetchTopology",
+        "output": "Topology | null",
+        "fields": [
+          "generated_at",
+          "sensors[].sensor",
+          "sensors[].stack",
+          "sensors[].containers",
+          "sensors[].ingress",
+          "sensors[].hostnames",
+          "sensors[].ports[].proto",
+          "sensors[].ports[].public",
+          "sensors[].ports[].host",
+          "sensors[].ports[].proxy",
+          "sensors[].raw_index",
+          "stacks[].stack",
+          "stacks[].containers[].name",
+          "stacks[].containers[].adapter_visible"
+        ],
+        "loader": true
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "copy feedback",
+      "paging (view more / offset)",
+      "live refresh"
+    ],
+    "emptyMessages": [
+      "The backend request failed — nothing here is cached."
+    ]
+  },
+  {
+    "route": "tty-replay.$shasum.tsx",
+    "files": [
+      "routes/tty-replay.$shasum.tsx",
+      "components/Investigate.tsx",
+      "components/ErrorState.tsx",
+      "components/Tabs.tsx",
+      "components/RowActions.tsx"
+    ],
+    "handlers": [
+      "/api/v1/events",
+      "/api/v1/investigate/ip/{…}",
+      "/api/v1/recordings/{…}"
+    ],
+    "reads": [
+      {
+        "fn": "routes/tty-replay.$shasum.tsx#fetchProfile",
+        "output": "ProfileFetch",
+        "fields": [
+          "state",
+          "profile.ip",
+          "profile.total",
+          "profile.country",
+          "profile.asn",
+          "profile.sensors[].key",
+          "profile.sensors[].count",
+          "profile.commands[].key",
+          "profile.commands[].count",
+          "profile.credentials[].key",
+          "profile.credentials[].count",
+          "profile.sessions[].key",
+          "profile.sessions[].count",
+          "profile.techniques[].key",
+          "profile.techniques[].count",
+          "profile.events[].time",
+          "profile.events[].sensor",
+          "profile.events[].detail",
+          "profile.events[].proto"
+        ],
+        "loader": false
+      },
+      {
+        "fn": "routes/tty-replay.$shasum.tsx#fetchReplay",
+        "output": "ReplayFetch",
+        "fields": [
+          "state",
+          "replay.shasum",
+          "replay.size_bytes",
+          "replay.imported_at",
+          "replay.frames",
+          "replay.duration_seconds",
+          "replay.transcript",
+          "replay.ttylog_base64"
+        ],
+        "loader": true
+      },
+      {
+        "fn": "routes/tty-replay.$shasum.tsx#fetchSourceIp",
+        "output": "SourceIpFetch",
+        "fields": [
+          "state",
+          "ip"
+        ],
+        "loader": false
+      }
+    ],
+    "mutations": [],
+    "states": [
+      "loading skeleton",
+      "error with retry",
+      "empty state",
+      "paging (view more / offset)"
+    ],
+    "emptyMessages": [
+      "The backend request failed — this says nothing about whether attacker context exists for this recording.",
+      "The backend request failed — this says nothing about whether a recording exists for this id."
+    ]
+  }
+]

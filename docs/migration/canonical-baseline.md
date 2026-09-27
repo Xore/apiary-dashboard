@@ -14,7 +14,7 @@ The local `/home/xore/Desktop/dashboard-rewrite` copy is not the deployment sour
 - 63 non-root route modules.
 - 10 direct `/api/*` route modules.
 - 3 `/auth/*` routes.
-- 155 `createServerFn` declarations across routes, components, and shared libraries.
+- 153 `createServerFn` declarations across routes, components, and shared libraries, counted from the syntax tree. An earlier text count of 155 also matched a comment in `lib/json.ts` and a test file.
 - Direct BFF, mounted-BFF, health, metrics, download, and streaming handlers outside the navigation-only guard.
 
 These numbers are completeness checks, not migration units. Routes will be grouped into operator workflows after their dependencies are mapped.
@@ -62,7 +62,9 @@ The destination baseline must prove:
 - [x] Confirm root, shell, and navigation ownership.
 - [x] Confirm global and direct-route security layers.
 - [x] Record every route and direct handler: [route-matrix.md](route-matrix.md) (63 routes: 42 implemented, 15 replaced by a redirect, 6 pending for Phase 2).
-- [ ] Record every server function, caller, input/output, backend dependency, and permission.
-- [ ] Record every shell behavior and destination owner.
-- [ ] Record route data fields, mutations, and user-visible states.
-- [ ] Link each inventory row to a bounded migration issue.
+- [x] Record every server function, caller, input/output, backend dependency, and permission: [server-functions.md](server-functions.md) (153 functions: 106 behind the global session gate only, 15 that re-check the session, 30 admin-only, 2 pre-authentication).
+- [x] Record every shell behavior and destination owner: [shell.md](shell.md) (27 behaviors: 15 implemented, 4 replaced, 5 gaps in #73, 3 for Phase 2).
+- [x] Record route data fields, mutations, and user-visible states: [routes.md](routes.md) (45 page routes).
+- [x] Link each inventory row to a bounded migration issue: [slices.md](slices.md) (#74–#83, and #5 for security).
+
+The inventory is generated from the pinned tree by `bun scripts/inventory/all.ts <frontend-next dir>`; `src/test/route-matrix.test.ts` keeps it complete.

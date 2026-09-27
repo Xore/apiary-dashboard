@@ -8,6 +8,8 @@
 // when a destination is not in the route tree, or when the document is
 // stale.
 
+import { sliceOfRoute, sliceRef } from './inventory/slice-map'
+
 export type Status = 'implemented' | 'replaced' | 'pending'
 
 export type Row = {
@@ -112,11 +114,11 @@ export function renderMatrix(rows: Row[] = ROWS): string {
     '',
     ...(['implemented', 'replaced', 'pending'] as const).map((s) => `- **${s}**: ${LEGEND[s]}`),
     '',
-    '| Canonical module | Rewrite | Status | Note |',
-    '|---|---|---|---|',
-    ...rows.map((r) => `| \`${cell(r.source)}\` | ${r.destination.map((d) => `\`${cell(d)}\``).join('<br>') || '—'} | ${r.status} | ${cell(r.note)} |`),
+    '| Canonical module | Rewrite | Status | Note | Slice |',
+    '|---|---|---|---|---|',
+    ...rows.map((r) => `| \`${cell(r.source)}\` | ${r.destination.map((d) => `\`${cell(d)}\``).join('<br>') || '—'} | ${r.status} | ${cell(r.note)} | ${sliceRef(sliceOfRoute(r.source))} |`),
     '',
-    'Server functions, data fields and security owners, the rest of #2, follow in Phase 2.',
+    'Each row links its Phase 2 slice (`slices.md`). Server functions with their permissions and data fields: `server-functions.md`; per-route data, mutations and states: `routes.md`; the shell: `shell.md`.',
     '',
   ]
   return lines.join('\n')

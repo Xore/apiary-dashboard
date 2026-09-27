@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { ROWS, renderMatrix } from '../../scripts/route-matrix'
+import { issueNumbers, sliceOfFn, sliceOfRoute } from '../../scripts/inventory/slice-map'
+import type { RouteInventory } from '../../scripts/inventory/routes'
+import type { ServerFn } from '../../scripts/inventory/server-functions'
 
 const root = join(import.meta.dirname, '..', '..')
 const canonical = readFileSync(join(root, 'docs/migration/canonical-routes.txt'), 'utf8')
@@ -33,6 +36,14 @@ describe('route matrix', () => {
   it('gives every pending route a note saying what stands in', () => {
     expect(ROWS.filter((r) => r.status === 'pending' && !r.note)).toEqual([])
     expect(ROWS.filter((r) => r.status !== 'pending' && r.destination.length === 0)).toEqual([])
+  })
+
+  it('links every route and server function to a slice issue', () => {
+    const numbers = issueNumbers()
+    const fns = JSON.parse(readFileSync(join(root, 'docs/migration/server-functions.json'), 'utf8')) as ServerFn[]
+    const routes = JSON.parse(readFileSync(join(root, 'docs/migration/routes.json'), 'utf8')) as RouteInventory[]
+    expect(ROWS.filter((r) => !numbers[sliceOfRoute(r.source) ?? ''])).toEqual([])
+    expect(fns.filter((f) => !numbers[sliceOfFn(f, routes)])).toEqual([])
   })
 
   it('is written down as generated', () => {
