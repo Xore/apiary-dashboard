@@ -33,6 +33,10 @@ describe('route matrix', () => {
     expect(missing).toEqual([])
   })
 
+  it('names the security owner of every direct handler and auth route', () => {
+    expect(ROWS.filter((r) => r.source.endsWith('.ts') && !r.security).map((r) => r.source)).toEqual([])
+  })
+
   it('gives every pending route a note saying what stands in', () => {
     expect(ROWS.filter((r) => r.status === 'pending' && !r.note)).toEqual([])
     expect(ROWS.filter((r) => r.status !== 'pending' && r.destination.length === 0)).toEqual([])
