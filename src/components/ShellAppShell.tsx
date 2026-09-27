@@ -104,7 +104,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           <div key={timeKey} style={{ flex: 1, minHeight: 0 }}>
             <Outlet />
           </div>
-          <ShellFooter config={config} />
+          <ShellFooter config={config} problemReport={<ProblemReportButton enabled={config.behavior.showProblemReportButton} />} />
         </div>
       </AppShell>
       <CommandPalette
@@ -124,7 +124,6 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
       />
       <LiveToasts />
       <EventNotifications />
-      <ProblemReportButton />
       {settingsPane && <SettingsDialog pane={settingsPane} onPane={onSettingsPane} onClose={() => onSettingsPane(undefined)} />}
     </ToastViewport>
   )
