@@ -39,6 +39,7 @@ import { getSettings, rollbackConfig, runServiceAction, saveConfigSection, saveP
 import type { AuditEntry, ConfigProblems, ConfigRevision, ConfigSection, DashboardConfig, EsStorage, Palette, Preferences, ServiceStatus, SettingsData } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { NAV_SECTIONS } from '#/lib/nav'
+import { APIARY_PALETTES } from '#/themes/neutral/apiaryPalettes.generated'
 import { prefetchEnabled, setPrefetchEnabled } from '#/lib/prefetch'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { DEFAULT_TITLE_FORMAT, formatTitle } from '#/lib/title'
@@ -161,18 +162,20 @@ function AccountPanel() {
   )
 }
 
-const PALETTES: Array<{ value: Palette; label: string; color: string }> = [
-  { value: 'claude', label: 'Claude', color: '#d97757' },
-  { value: 'amber', label: 'Amber', color: '#d99a1e' },
-  { value: 'lavender', label: 'Lavender', color: '#8c7ae6' },
-  { value: 'lime', label: 'Lime', color: '#7cb518' },
-  { value: 'neon', label: 'Neon', color: '#00c2a8' },
-  { value: 'ocean', label: 'Ocean', color: '#1f78d1' },
-  { value: 'rose', label: 'Rose', color: '#d6557d' },
-  { value: 'slate', label: 'Slate', color: '#64748b' },
-]
+/** The palettes in APIARY's order; each is a whole theme, so the swatch
+ * shows its ground with its accent on it. */
+const PALETTES = (Object.keys(APIARY_PALETTES) as Palette[]).map((value) => ({
+  value,
+  label: value[0].toUpperCase() + value.slice(1),
+  ground: APIARY_PALETTES[value].light['bg-000'],
+  accent: APIARY_PALETTES[value].light.accent,
+}))
 
-const swatch = (color: string) => <span aria-hidden style={{ display: 'inline-block', width: 12, height: 12, borderRadius: 999, backgroundColor: color }} />
+const swatch = (ground: string, accent: string) => (
+  <span aria-hidden style={{ display: 'inline-grid', placeItems: 'center', width: 14, height: 14, borderRadius: 999, backgroundColor: ground, boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.15)' }}>
+    <span style={{ width: 8, height: 8, borderRadius: 999, backgroundColor: accent }} />
+  </span>
+)
 
 function AppearancePanel() {
   const { prefs, setPref } = useSettings()
@@ -184,12 +187,12 @@ function AppearancePanel() {
           setting="palette"
           control={
             <Selector
-              label="Accent palette"
+              label="Palette"
               isLabelHidden
               width={CONTROL_WIDTH}
               value={prefs.palette}
               onChange={(palette) => setPref({ palette: palette as Palette })}
-              options={PALETTES.map((p) => ({ value: p.value, label: p.label, icon: swatch(p.color) }))}
+              options={PALETTES.map((p) => ({ value: p.value, label: p.label, icon: swatch(p.ground, p.accent) }))}
             />
           }
         />
