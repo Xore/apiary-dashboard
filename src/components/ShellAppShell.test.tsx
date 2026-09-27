@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 // Shell composition (#4): one shell, one content region, navigation metadata
 // driving active item and breadcrumbs, and the palette's keyboard contract.
-import { describe, expect, it } from 'vitest'
-import { act, render, screen, within } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LinkProvider } from '@astryxdesign/core/Link'
 import { Theme } from '@astryxdesign/core/theme'
@@ -21,6 +21,10 @@ import { ShellAppShell } from './ShellAppShell'
 import { searchTabs } from './ViewTabs'
 import { CONFIG, DEPLOYMENT_LINKS } from '#/data/mock/details'
 
+// The shell reads the open-alert count and palette search through the data
+// seam; here that runs on the mock backend directly.
+vi.mock('#/data/queries', () => import('#/test/queriesOnBackend').then((m) => m.queriesOnBackend()))
+
 function TabbedPage() {
   const second = useLocation({ select: (location) => location.searchStr.includes('view=two') })
   return <p>{second ? 'second view' : 'first view'}</p>
@@ -38,6 +42,7 @@ function renderShell(path: string) {
       page('/events', 'events content'),
       page('/events/$id', 'event detail content'),
       page('/alerts', 'alerts content'),
+      page('/sources/$ip', 'source content'),
       page('/settings', 'settings content'),
       createRoute({
         getParentRoute: () => root,
@@ -87,7 +92,7 @@ describe('ShellAppShell', () => {
     }
     const sidebar = screen.getByRole('navigation', { name: 'Side navigation' })
     for (const item of NAV_SECTIONS.flatMap((section) => section.items)) {
-      expect(within(sidebar).getByRole('link', { name: item.label }).getAttribute('href')).toBe(item.to)
+      expect(within(sidebar).getByRole('link', { name: item.to === '/alerts' ? /^Alerts(, \d+ open)?$/ : item.label }).getAttribute('href')).toBe(item.to)
     }
   })
 
@@ -120,6 +125,40 @@ describe('ShellAppShell', () => {
     await act(async () => {})
     expect(router.state.location.pathname).toBe('/alerts')
     expect(await screen.findByText('alerts content')).toBeTruthy()
+  })
+
+  it('opens the palette with / outside a field, and not while typing', async () => {
+    renderShell('/')
+    await screen.findByText('overview content')
+    const field = document.createElement('input')
+    document.body.append(field)
+    // Typed into a field, / is just a character.
+    expect(fireEvent.keyDown(field, { key: '/' })).toBe(true)
+    expect(screen.queryByRole('dialog')).toBeNull()
+    field.remove()
+    // Anywhere else it opens the palette, and is not typed into it.
+    expect(fireEvent.keyDown(document.body, { key: '/' })).toBe(false)
+    expect(await screen.findByRole('dialog')).toBeTruthy()
+  })
+
+  it('finds entities from the palette and opens their page', async () => {
+    const router = renderShell('/')
+    await screen.findByText('overview content')
+    const u = userEvent.setup()
+    await u.keyboard('{Control>}k{/Control}')
+    const dialog = await screen.findByRole('dialog')
+    await u.keyboard('192.0.2')
+    const hit = await within(dialog).findAllByText(/^192\.0\.2\.\d+ · /, {}, { timeout: 3000 })
+    await u.click(hit[0])
+    await act(async () => {})
+    expect(router.state.location.pathname).toMatch(/^\/sources\/192\.0\.2\.\d+$/)
+    expect(await screen.findByText('source content')).toBeTruthy()
+  })
+
+  it('counts open alerts on the Alerts entry', async () => {
+    renderShell('/')
+    await screen.findByText('overview content')
+    expect(await screen.findByLabelText(/^, \d+ open$/, {}, { timeout: 3000 })).toBeTruthy()
   })
 
   it("puts a page's views in the top bar and switches between them", async () => {

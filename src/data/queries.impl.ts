@@ -529,6 +529,13 @@ export async function getAlerts(): Promise<AlertGroup[]> {
     .sort((a, b) => b.lastSeen.localeCompare(a.lastSeen))
 }
 
+/** Open (unacknowledged) alert records: the sidebar's count, polled by
+ * the shell, so it stays one cheap number rather than the grouped list. */
+export async function getOpenAlertCount(): Promise<number> {
+  await mockDelay()
+  return ALERTS.filter((alert) => !alert.acknowledged).length
+}
+
 /** Mock write: acknowledges (or reopens) the given alert keys. */
 export async function setAlertsAcknowledged(keys: string[], acknowledged: boolean): Promise<number> {
   await mockDelay()

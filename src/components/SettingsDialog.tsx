@@ -39,6 +39,7 @@ import { getSettings, rollbackConfig, runServiceAction, saveConfigSection, saveP
 import type { AuditEntry, ConfigProblems, ConfigRevision, ConfigSection, DashboardConfig, EsStorage, Palette, Preferences, ServiceStatus, SettingsData } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { NAV_SECTIONS } from '#/lib/nav'
+import { prefetchEnabled, setPrefetchEnabled } from '#/lib/prefetch'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { ADMIN_REQUIRED, useIsAdmin, useShellConfig } from '#/lib/session'
 import { accountLinks } from '#/lib/toolLinks'
@@ -220,6 +221,24 @@ function AppearancePanel() {
   )
 }
 
+/** Per browser, like the canonical switch: prefetch is about this device's
+ * bandwidth, not the operator's preferences. Applies at once. */
+function PrefetchSwitch() {
+  const [on, setOn] = useState(true)
+  useEffect(() => setOn(prefetchEnabled()), [])
+  return (
+    <Switch
+      label="Load likely next pages early"
+      isLabelHidden
+      value={on}
+      onChange={(next) => {
+        setPrefetchEnabled(next)
+        setOn(next)
+      }}
+    />
+  )
+}
+
 function NavigationPanel() {
   const { prefs, setPref } = useSettings()
   return (
@@ -232,6 +251,7 @@ function NavigationPanel() {
       <SettingsRow setting="newTab" control={<Switch label="Open detail pages in a new tab" isLabelHidden value={prefs.openDetailsInNewTab} onChange={(openDetailsInNewTab) => setPref({ openDetailsInNewTab })} />} />
       <SettingsRow setting="rememberFilters" control={<Switch label="Remember filters" isLabelHidden value={prefs.rememberFilters} onChange={(rememberFilters) => setPref({ rememberFilters })} />} />
       <SettingsRow setting="collapsedSidebar" control={<Switch label="Start with the sidebar collapsed" isLabelHidden value={prefs.collapsedSidebar} onChange={(collapsedSidebar) => setPref({ collapsedSidebar })} />} />
+      <SettingsRow setting="prefetch" control={<PrefetchSwitch />} />
     </SettingsCard>
   )
 }

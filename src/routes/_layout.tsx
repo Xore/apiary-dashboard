@@ -11,6 +11,7 @@ import { isScenario } from '#/data/scenarios'
 import { setNavigationScenario } from '#/data/serverFn'
 import type { MockScenario } from '#/data/scenarios'
 import { isNarrowViewport } from '#/lib/viewport'
+import { pageFor } from '#/lib/nav'
 
 export const Route = createFileRoute('/_layout')({
   // `?settings=<pane>` opens the settings modal over any page; `?range=` is
@@ -48,6 +49,14 @@ export const Route = createFileRoute('/_layout')({
     return { user }
   },
   loader: async ({ context }) => ({ user: context.user, config: await getShellConfig(), narrow: isNarrowViewport() }),
+  // The document title follows navigation (WCAG 2.4.2): it is what a
+  // screen reader announces on arrival and what tells tabs apart.
+  head: ({ matches, loaderData }) => {
+    // Index routes match with a trailing slash; the nav metadata has none.
+    const pathname = (matches.at(-1)?.pathname ?? '/').replace(/(.)\/$/, '$1')
+    const app = loaderData?.config.presentation.appName || 'APIARY'
+    return { meta: [{ title: `${pageFor(pathname)} — ${app}` }] }
+  },
   component: LayoutComponent,
 })
 

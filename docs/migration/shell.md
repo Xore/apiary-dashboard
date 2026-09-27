@@ -17,19 +17,19 @@ Every behavior of the canonical dashboard's shell (`Xore/APIARY@62ee45d`) and wh
 | 2 | Sidebar collapse on desktop, persisted (`AppShell`, `localStorage hp-sidebar-collapsed`) | Astryx `SideNav` collapsible; `ShellSideNav` | implemented | Starts collapsed from the *collapsed sidebar* preference. A toggle is not remembered across loads (the preference is). |
 | 3 | Mobile off-canvas drawer with scrim, closes on navigation and Escape (`AppShell`, ≤520 px) | Astryx `mobileNav` drawer, below 1024 px | implemented | Server renders the drawer layout from a width cookie or the User-Agent (#68). |
 | 4 | Skip link to the main content (`AppShell`) | Astryx `AppShell` “Skip to content” | implemented | |
-| 5 | Document title follows navigation, the screen reader's cue (`AppShell`, WCAG 2.4.2) | — | **gap** | Every page is titled `APIARY`. |
+| 5 | Document title follows navigation, the screen reader's cue (`AppShell`, WCAG 2.4.2) | `_layout` `head` ← `lib/nav.ts` `pageFor` | implemented | `<page> — <app name>`, rendered by the server too. |
 | 6 | Settings as a modal from anywhere; navigating dismisses it (`AppShell` → `SettingsModal`) | `SettingsDialog`, opened by `?settings=<pane>` | implemented | Search, deep links per pane, dirty-leave guard. |
-| 7 | Recent investigations: the last five targets in the sidebar, built from `{kind, value}` so a stored entry cannot become an unsafe link (`lib/recent.ts`, `Sidebar`) | — | **gap** | Same storage key and shape as the Go shell, so the list follows the operator across tiers. |
+| 7 | Recent investigations: the last five targets in the sidebar, built from `{kind, value}` so a stored entry cannot become an unsafe link (`lib/recent.ts`, `Sidebar`) | `lib/recent.ts`, *Recent* in `ShellSideNav` | implemented | Same storage key and shape as the Go shell, so the list follows the operator across tiers. |
 | 8 | Predictive prefetch, layer 1: intent preload on hover and touch (`router defaultPreload`) | `router.tsx` `defaultPreload: 'intent'`, `RouterLink` | implemented | |
-| 9 | Predictive prefetch, layer 2: warm the likely next routes when idle, switchable off (`lib/prefetch.ts`) | — | **gap** | |
-| 10 | Command palette on `/` and ⌘K; multi-line field; arrow keys cycle rows; focus returns to the opener (`CommandPalette`) | Astryx `CommandPalette` on ⌘K/Ctrl+K | implemented | The `/` shortcut is a **gap**. |
-| 11 | Palette searches IPs, sessions, hashes, credentials, commands and signatures live, grouped (`CommandPalette` → `/api/v1/search`) | Palette jumps to pages; entity search is `/search` (`searchAll`) | **gap** | Wire `searchAll` results into the palette. |
+| 9 | Predictive prefetch, layer 2: warm the likely next routes when idle, switchable off (`lib/prefetch.ts`) | `lib/prefetch.ts` in `ShellAppShell` | implemented | Same predictions and `hp-prefetch` switch; Settings → Navigation & tables. |
+| 10 | Command palette on `/` and ⌘K; multi-line field; arrow keys cycle rows; focus returns to the opener (`CommandPalette`) | Astryx `CommandPalette` on ⌘K/Ctrl+K and `/` | implemented | `/` is ignored while typing in a field. |
+| 11 | Palette searches IPs, sessions, hashes, credentials, commands and signatures live, grouped (`CommandPalette` → `/api/v1/search`) | `lib/paletteSource.ts` → `searchAll` | implemented | Pages at once, entities from two characters on; a stale answer is dropped. |
 | 12 | Report a problem: floating button behind the admin switch, rolling capture (clicks and navigation, console errors, failed calls, DOM snapshot), redacted twice (`ProblemReportButton`) | `ProblemReportButton` | implemented | Server-side redaction runs in the mock `submitProblemReport`; the real trust boundary is the backend (Phase 2). |
 | 13 | Confirmation before destructive actions (`ConfirmHost`, `confirmAction`) | Astryx `AlertDialog` per action | replaced | Each action owns its dialog instead of one global host. |
 | 14 | Flash: one live region for outcomes, copy feedback and notices (`FlashHost`) | Astryx `ToastViewport` + banners, `useGuardedAction` | replaced | |
 | 15 | Operational toasts: sensor stale, ingest stalled or behind, cluster yellow or red, pipeline unreachable (`LiveToasts` → source health) | `LiveToasts`, `lib/healthConditions.ts` | implemented | Same conditions; simulated in the Mock data menu. |
 | 16 | LIVE badge: pause and resume every refresh path, stalled state (`Topbar` → `lib/live.ts`) | `LiveBadge`, `lib/live.ts` | implemented | The SSE proxy is Phase 2 (`route-matrix.md`, `api/live.ts`). |
-| 17 | Alerts bell with the open-alert count, polled every 60 s (`Topbar`) | — | **gap** | Alerts is a sidebar entry without a count. |
+| 17 | Alerts bell with the open-alert count, polled every 60 s (`Topbar`) | Count on the *Alerts* sidebar entry, `getOpenAlertCount` | implemented | Every 60 s while live is on, and after each navigation. |
 | 18 | Theme cycler in the top bar (`Topbar`) | Theme in Settings → Appearance | replaced | One click further; the top bar keeps room for the page's views. |
 | 19 | Breadcrumb from the navigation metadata (`Topbar` ← `lib/nav.ts`) | `ShellBreadcrumbs` ← `lib/nav.ts` | implemented | Left out on pages with view tabs, where the tabs say which view (#67). |
 | 20 | Account menu: settings, sign out, role badge (`Sidebar`) | `ShellSideNav` account menu; Settings → Account | implemented | Role shown in Settings → Account; sign-out also there (#60, #62). |
@@ -41,4 +41,4 @@ Every behavior of the canonical dashboard's shell (`Xore/APIARY@62ee45d`) and wh
 | 26 | Session expiry noticed on return to a hidden tab, and a 401 goes through sign-in once (`lib/useSessionWatch.ts`, `lib/reauth.ts`) | Expired-session boundary with *Sign in again* (#50, #60) | Phase 2 | Detecting expiry needs the real session. |
 | 27 | CSP nonce on every script, versioned stylesheet URL (`__root` head) | Astryx stylesheet bundled by Vite | Phase 2 | Content-hashed assets cover the stylesheet; the nonce is #5. |
 
-**Totals:** 16 implemented, 4 replaced, 5 gaps (rows 5, 7, 9, 11 and 17; the `/` shortcut in row 10 is a sixth, smaller one), 2 Phase 2.
+**Totals:** 21 implemented, 4 replaced, no gaps, 2 Phase 2.

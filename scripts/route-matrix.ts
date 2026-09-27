@@ -77,7 +77,7 @@ export const ROWS: Row[] = [
 
   // ---- Sign-in ----------------------------------------------------------------
   { source: 'auth/login.ts', destination: ['/auth/login'], status: 'implemented', note: `Mock identity provider (real sessions) and the unavailable page; Keycloak PKCE in ${P2} (#5).` , security: 'public; PKCE state and verifier kept one-time in Redis; safe `return_to`; the dev bypass only with `OIDC_DISABLED`' },
-  { source: 'auth/callback.ts', destination: ['/auth/callback'], status: 'implemented', note: `Creates the session for the mock provider\'s answer; renders the three failures production tells apart. The code exchange and the Redis store in ${P2} (#5).` , security: 'public; completes the PKCE exchange against the one-time state; provider errors render as pages' },
+  { source: 'auth/callback.ts', destination: ['/auth/callback'], status: 'implemented', note: `Creates the session for the mock provider's answer; renders the three failures production tells apart. The code exchange and the Redis store in ${P2} (#5).` , security: 'public; completes the PKCE exchange against the one-time state; provider errors render as pages' },
   { source: 'auth/logout.ts', destination: ['/auth/logout'], status: 'implemented', note: `Destroys the session and clears the cookie, 403 cross-site; Keycloak RP-initiated logout in ${P2} (#5).` , security: 'same-origin `Origin`/`Referer` required (cross-origin 403, #3153); destroys the Redis session, then Keycloak end-session' },
 
   // ---- Direct handlers ----------------------------------------------------------
