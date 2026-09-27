@@ -16,7 +16,7 @@ Current stage: the dashboard runs on its real architecture against a **mock back
 
 ```bash
 bun install
-bun run dev          # vite dev server on :3009 (sets APIARY_ALLOW_UNAUTH_DEV=1)
+bun run dev          # vite dev server on 0.0.0.0:3009, usable from the LAN (development settings)
 bunx tsc --noEmit    # typecheck
 bun run lint
 bun run test
@@ -72,6 +72,7 @@ The server refuses to boot in an environment that would open it:
 | `SERVICE_TOKEN` | Shared secret with the backend. Required, unless `APIARY_ALLOW_UNAUTH_DEV=1` says this is a local instance (`E-SERVICE-TOKEN`). |
 | `APIARY_ALLOW_UNAUTH_DEV` | Exactly `1`: a local development instance. `bun run dev` sets it. |
 | `OIDC_DISABLED` | `1` skips sign-in: everyone is a fixture admin. Only with `NODE_ENV=development` or `APIARY_ALLOW_UNAUTH_DEV=1` (`E-OIDC-DISABLED`). |
+| `APIARY_DEV_HTTP_COOKIE` | Exactly `1`: the session cookie works over plain HTTP (`apiary_bff_dev`, not Secure), so a dev server can be used from another machine by its LAN address. Only with `NODE_ENV=development` or `APIARY_ALLOW_UNAUTH_DEV=1` (`E-DEV-HTTP-COOKIE`). `bun run dev` sets it and listens on 0.0.0.0. |
 | `EXTERNAL_URL` | The public origin, when a proxy in front changes the Host the server sees (same-origin check). |
 | `APIARY_MOCK_FAULTS` | Mock only: `session-store` and/or `identity-provider` (comma-separated) stop answering, to exercise the outage paths. Pages then go to sign-in, direct handlers answer 401, and the sign-in pages say sign-in is unavailable or failed; smoke checks both. |
 

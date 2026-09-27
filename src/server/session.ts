@@ -4,6 +4,7 @@
 // the navigation guard and every role check run for real. Server-only.
 import { randomBytes } from 'node:crypto'
 import { Unavailable, faulty } from './faults'
+import { DEV_HTTP_COOKIE_ENV } from './policy'
 
 export type Role = 'admin' | 'viewer'
 
@@ -60,14 +61,25 @@ export class MemorySessionStore implements SessionStore {
 /** The process's store. Swapped for the Redis one with the real sign-in. */
 export const sessions: SessionStore = new MemorySessionStore()
 
-export const sessionCookie = (sid: string) => `${SESSION_COOKIE}=${sid}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`
+/** Development over plain HTTP from another machine: browsers refuse a
+ * Secure (and so a `__Host-`) cookie there, and sign-in would loop. With
+ * APIARY_DEV_HTTP_COOKIE=1 (development only, see policy.ts) the session
+ * rides in this cookie instead: same HttpOnly and SameSite, not Secure. */
+export const DEV_SESSION_COOKIE = 'apiary_bff_dev'
 
-export const clearSessionCookie = () => `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
+const devHttp = () => process.env[DEV_HTTP_COOKIE_ENV] === '1'
+const cookieName = () => (devHttp() ? DEV_SESSION_COOKIE : SESSION_COOKIE)
+const attributes = (maxAge: number) => `Path=/; HttpOnly; ${devHttp() ? '' : 'Secure; '}SameSite=Lax; Max-Age=${maxAge}`
+
+export const sessionCookie = (sid: string) => `${cookieName()}=${sid}; ${attributes(SESSION_TTL_SECONDS)}`
+
+export const clearSessionCookie = () => `${cookieName()}=; ${attributes(0)}`
 
 export function sidFrom(request: Request): string | undefined {
+  const wanted = cookieName()
   for (const part of (request.headers.get('cookie') ?? '').split(';')) {
     const [name, ...rest] = part.trim().split('=')
-    if (name === SESSION_COOKIE) return rest.join('=')
+    if (name === wanted) return rest.join('=')
   }
   return undefined
 }

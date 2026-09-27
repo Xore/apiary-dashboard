@@ -8,6 +8,10 @@
 export const DEV_UNAUTH_OVERRIDE_ENV = 'APIARY_ALLOW_UNAUTH_DEV'
 export const SERVICE_TOKEN_GATE_CODE = 'E-SERVICE-TOKEN'
 export const OIDC_DISABLED_GATE_CODE = 'E-OIDC-DISABLED'
+export const DEV_HTTP_COOKIE_GATE_CODE = 'E-DEV-HTTP-COOKIE'
+/** "1": the session cookie works over plain HTTP (a dev server reached by
+ * its LAN address). Never on a deployed instance. */
+export const DEV_HTTP_COOKIE_ENV = 'APIARY_DEV_HTTP_COOKIE'
 
 type Env = Record<string, string | undefined>
 type Policy<T extends string> = { kind: T } | { kind: 'refuse'; message: string }
@@ -32,9 +36,20 @@ export function oidcDisabledPolicy(env: Env = process.env): Policy<'enforced' | 
   }
 }
 
+/** A session cookie without Secure travels in clear text: only for a local
+ * development instance, said out loud. */
+export function devHttpCookiePolicy(env: Env = process.env): Policy<'secure' | 'dev-override'> {
+  if (env[DEV_HTTP_COOKIE_ENV] !== '1') return { kind: 'secure' }
+  if (env.NODE_ENV === 'development' || env[DEV_UNAUTH_OVERRIDE_ENV] === '1') return { kind: 'dev-override' }
+  return {
+    kind: 'refuse',
+    message: `[${DEV_HTTP_COOKIE_GATE_CODE}] refusing to start: ${DEV_HTTP_COOKIE_ENV}=1 is set outside development (NODE_ENV=${env.NODE_ENV ?? 'unset'}), which would send session cookies in clear text. Unset it, or set NODE_ENV=development or ${DEV_UNAUTH_OVERRIDE_ENV}=1 to confirm this is a local instance.`,
+  }
+}
+
 /** Throws the first refusal; silent when the environment is sound. */
 export function assertBootPolicies(env: Env = process.env): void {
-  for (const policy of [serviceTokenPolicy(env), oidcDisabledPolicy(env)]) {
+  for (const policy of [serviceTokenPolicy(env), oidcDisabledPolicy(env), devHttpCookiePolicy(env)]) {
     if (policy.kind === 'refuse') throw new Error(policy.message)
   }
 }

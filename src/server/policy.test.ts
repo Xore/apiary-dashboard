@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assertBootPolicies, oidcDisabledPolicy, serviceTokenPolicy } from './policy'
+import { assertBootPolicies, devHttpCookiePolicy, oidcDisabledPolicy, serviceTokenPolicy } from './policy'
 
 describe('boot policies', () => {
   it('needs a service token, or the explicit development override', () => {
@@ -13,6 +13,13 @@ describe('boot policies', () => {
     expect(oidcDisabledPolicy({ OIDC_DISABLED: '1', NODE_ENV: 'development' }).kind).toBe('dev-override')
     expect(oidcDisabledPolicy({ OIDC_DISABLED: '1', APIARY_ALLOW_UNAUTH_DEV: '1' }).kind).toBe('dev-override')
     expect(oidcDisabledPolicy({ OIDC_DISABLED: '1', NODE_ENV: 'production' }).kind).toBe('refuse')
+  })
+
+  it('allows a clear-text session cookie only in development', () => {
+    expect(devHttpCookiePolicy({}).kind).toBe('secure')
+    expect(devHttpCookiePolicy({ APIARY_DEV_HTTP_COOKIE: '1', APIARY_ALLOW_UNAUTH_DEV: '1' }).kind).toBe('dev-override')
+    expect(devHttpCookiePolicy({ APIARY_DEV_HTTP_COOKIE: '1', NODE_ENV: 'development' }).kind).toBe('dev-override')
+    expect(() => assertBootPolicies({ SERVICE_TOKEN: 'x', APIARY_DEV_HTTP_COOKIE: '1', NODE_ENV: 'production' })).toThrow('E-DEV-HTTP-COOKIE')
   })
 
   it('refuses to boot with the canonical codes', () => {
