@@ -15,7 +15,7 @@ What #7 asks as proof that the rewrite can replace the canonical dashboard witho
 | Identity provider (Keycloak) unavailable | `APIARY_MOCK_FAULTS=identity-provider`: the sign-in page says sign-in is temporarily unavailable; the callback renders the failed exchange. Provider refusals and expired attempts render their own pages. | On mock. Real discovery and token-exchange failures in #5. |
 | Invalid environment | The server refuses to boot without `SERVICE_TOKEN` (`E-SERVICE-TOKEN`) or with `OIDC_DISABLED=1` outside development (`E-OIDC-DISABLED`). `src/server/policy.test.ts`; smoke starts the server both ways. | On mock. |
 | Unsafe cross-origin requests | Every server function passes the same-origin check; sign-out needs a same-origin Origin or Referer. `src/server/origin.test.ts`; smoke checks a cross-site sign-out (403). | On mock. CSP nonce: #5. |
-| Production build and clean clone | Smoke clones, installs from the frozen lockfile, typechecks, lints, tests, builds, and starts `bun run start`. | On mock. |
+| Production build and clean clone | Smoke clones, installs from the frozen lockfile, typechecks, lints, tests, builds, and starts `bun run start`; CI runs it on every pull request. The container image is built, boot-checked and scanned on every pull request (`container.yml`). | On mock. |
 | Performance and accessibility baseline | `docs/baselines/`: axe (WCAG 2.1 A/AA) over 34 views; page weight and timings per page, within 25 %. Both in smoke. | On mock. Re-recorded once pages read real data. |
 | Deployment, environment, cutover, rollback and legacy-removal runbooks | — | **Not started.** Needs the decisions below. |
 | Rollback tested before traffic moves | — | Phase 2. |

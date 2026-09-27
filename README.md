@@ -25,6 +25,24 @@ SERVICE_TOKEN=… bun run start   # Bun production server (server.ts)
 bun run smoke        # clean clone → install → every gate → start → HTTP and browser checks
 ```
 
+### CI and the container image
+
+GitHub Actions, on GitHub-hosted runners:
+
+| Workflow | When | What |
+|---|---|---|
+| `ci.yml` | every pull request, pushes to main | public-repository safety (`scripts/check-public-leaks.ts`: no secrets, no real deployment addresses, mock data in documentation ranges only); typecheck, lint, tests, theme and generated-file freshness, build; the release gate `scripts/smoke.sh` with the runner's Chrome; `actionlint` over the workflows |
+| `container.yml` | every pull request, pushes to main, `v*` tags | builds the `Dockerfile`, checks the image refuses to boot without `SERVICE_TOKEN` and serves once given one, scans it with Trivy (critical, fixable); on main and tags pushes it to `ghcr.io/xore/apiary-dashboard` (`latest`, `sha-…`, the tag). Nothing deploys it yet. |
+| `codeql.yml` | pull requests, main, weekly | CodeQL `security-extended` over the TypeScript |
+| `dependency-review.yml` | pull requests | fails on a new dependency with a moderate or worse advisory |
+
+Dependabot proposes GitHub Actions, Bun and base-image updates weekly; TanStack packages are pinned to exact versions and update as one group.
+
+```bash
+docker build -t apiary-dashboard .
+docker run -p 3000:3000 -e SERVICE_TOKEN=… apiary-dashboard
+```
+
 `bun run test` covers the authorization matrix, the boot policies, sessions, nav roll-ups, formatters, and invariants over the mock backend: numbers shown on different pages must agree, and every id one page links to must resolve on its target page.
 
 ### Signing in and security
