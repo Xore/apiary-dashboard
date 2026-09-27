@@ -198,7 +198,9 @@ function kpi(id: string, label: string, events: HoneypotEvent[], value = events.
   return { id, label, value, previous: Math.round(value * (0.65 + rng() * 0.7)), trend: hourly(events) }
 }
 
-export async function getSessionUser(): Promise<SessionUser> {
+/** Who is signed in: answered from the request's session by the backend
+ * (src/data/backend.ts); the fixture operator for internal callers. */
+export async function getSessionUser(): Promise<SessionUser | null> {
   // The session comes from the auth layer, not the data backend; keeping it
   // up lets page errors render inside the shell.
   await mockDelay({ canFail: false })

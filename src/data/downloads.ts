@@ -8,6 +8,7 @@
 // file saying so. Nothing that downloads from the mock is executable.
 import { asApiError } from './errors'
 import { backend } from './backend'
+import { resolveUser } from '#/server/identity'
 import type { Backend } from './backend'
 import { isScenario } from './scenarios'
 import type { EventFilters, ReportDefinition } from './types'
@@ -37,11 +38,16 @@ const text = (status: number, message: string) => new Response(message, { status
 
 /** Runs one download under the scenario the link carries; a failed backend
  * call answers with its own status, as the proxy in front of it would. */
-export async function serveDownload(request: Request, build: (search: URLSearchParams, q: Backend) => Promise<Response>): Promise<Response> {
+export async function serveDownload(request: Request, build: (search: URLSearchParams, q: Backend) => Promise<Response>, { session = true }: { session?: boolean } = {}): Promise<Response> {
   const search = new URL(request.url).searchParams
   const mock = search.get('mock')
-  // The mock backend in the scenario the link carries, for this request only.
-  const q = backend(isScenario(mock) ? mock : 'normal')
+  // Direct handlers pass neither the navigation guard nor the function
+  // middleware: each checks the session itself, as canonical's do.
+  const user = session ? await resolveUser(request) : undefined
+  if (session && !user) return text(401, 'unauthorized')
+  // The mock backend in the scenario the link carries, for this request's
+  // user (the unguarded ones answer as the trusted internal caller).
+  const q = backend(isScenario(mock) ? mock : 'normal', user)
   try {
     return await build(search, q)
   } catch (error) {
@@ -83,7 +89,7 @@ export const exportFile = (name: string) => (search: URLSearchParams, q: Backend
 
 export const payloadFile = (hash: string) => async (_search: URLSearchParams, q: Backend) => {
   const user = await q.getSessionUser()
-  if (!user.roles.includes('admin')) return text(403, 'administrator role required')
+  if (!user?.roles.includes('admin')) return text(403, 'administrator role required')
   if (!HASH.test(hash)) return text(400, 'invalid payload id')
   const analysis = await q.getPayloadAnalysis(hash)
   if (!analysis) return text(404, 'payload unavailable')

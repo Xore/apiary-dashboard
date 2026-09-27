@@ -16,6 +16,7 @@ import { formatDateTime } from '#/lib/format'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { reportTabs } from '#/lib/navFamilies'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 
 export const Route = createFileRoute('/_layout/reports/library')({
   staticData: { viewTabs: reportTabs },
@@ -31,6 +32,7 @@ function LibraryPage() {
   const [busy, setBusy] = useState<string | null>(null)
   const { error, guard } = useGuardedAction()
   const [confirm, setConfirm] = useState<ReportDefinition | null>(null)
+  const isAdmin = useIsAdmin()
   const [generated, setGenerated] = useState<GeneratedReport | null>(null)
   const lastRun = (id: string) => data.generated.find((r) => r.definitionId === id)?.createdAt
 
@@ -57,9 +59,9 @@ function LibraryPage() {
       width: pixel(256),
       renderCell: (row) => (
         <HStack gap={1}>
-          <Button label="Generate now" size="sm" isLoading={busy === row.id} onClick={() => void act(row.id, async () => setGenerated(await generateReport(row.id)))} />
+          <Button label="Generate now" size="sm" isLoading={busy === row.id} isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => void act(row.id, async () => setGenerated(await generateReport(row.id)))} />
           <Button label="Edit" size="sm" variant="secondary" onClick={() => void navigate({ href: `/reports/generate?from=${row.id}` })} />
-          <Button label="Delete" size="sm" variant="ghost" onClick={() => setConfirm(row)} />
+          <Button label="Delete" size="sm" variant="ghost" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirm(row)} />
         </HStack>
       ),
     },

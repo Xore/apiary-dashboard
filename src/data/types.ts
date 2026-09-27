@@ -25,7 +25,7 @@ export type SensorFields = Record<string, FieldValue>
 
 export type SensorStatus = 'online' | 'degraded' | 'offline'
 
-export interface SessionUser extends Record<string, unknown> {
+export interface SessionUser {
   name: string
   email: string
   roles: string[]

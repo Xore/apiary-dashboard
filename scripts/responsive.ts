@@ -10,6 +10,7 @@
 import { existsSync } from 'node:fs'
 import { chromium, devices } from 'playwright-core'
 import type { Browser } from 'playwright-core'
+import { signInContext } from './lib/signIn'
 
 const base = process.argv[2] ?? 'http://localhost:3000'
 
@@ -52,6 +53,7 @@ const findings: string[] = []
 let checked = 0
 for (const size of SIZES) {
   const context = await browser.newContext(size.options)
+  await signInContext(context, base)
   const page = await context.newPage()
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message.slice(0, 160)))

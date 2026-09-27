@@ -14,11 +14,14 @@ import { readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { backend } from '../src/data/backend'
 import { alertKeyOf } from '../src/data/shared'
+import { sessionCookie } from './lib/signIn'
 
 // The mock backend itself: tests and scripts call it directly.
 const q = backend()
 
 const base = process.argv[2] ?? 'http://localhost:3000'
+// Signed in as the operator, like anyone reading these pages.
+const cookie = (await sessionCookie(base)).header
 const maxPerShape = Number(process.argv[3] ?? 3)
 const withScenarios = process.argv.includes('--scenarios')
 const enc = encodeURIComponent
@@ -94,7 +97,7 @@ while (queue.length) {
   const key = shape(path)
   if ((perShape.get(key) ?? 0) >= maxPerShape) continue
   perShape.set(key, (perShape.get(key) ?? 0) + 1)
-  const res = await fetch(base + path, { redirect: 'manual' })
+  const res = await fetch(base + path, { redirect: 'manual', headers: { cookie } })
   fetched++
   if (res.status >= 400) {
     broken.push(`${res.status} ${path}`)
@@ -150,7 +153,7 @@ if (withScenarios) {
     for (const path of samples.values()) {
       if (noBackend.has(path) && !ok.includes('page')) continue
       const url = `${base}${path}${path.includes('?') ? '&' : '?'}mock=${scenario}`
-      const res = await fetch(url, { redirect: 'manual' })
+      const res = await fetch(url, { redirect: 'manual', headers: { cookie } })
       checked++
       if (res.status >= 300 && res.status < 500) continue // a redirect or not-found is a page's own answer
       // A failed loader answers 5xx with the error state rendered; read it.

@@ -14,7 +14,6 @@ import { getCanarytokens } from '#/data/queries'
 import type { CanaryToken, CanaryTrigger } from '#/data/types'
 import { formatDateTime, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 
 type View = 'deployed' | 'fired'
 
@@ -52,7 +51,6 @@ const triggerColumns: TableColumn<CanaryTrigger>[] = [
 ]
 
 function CanarytokensPage() {
-  const isAdmin = useIsAdmin()
   const { types, tokens, triggers } = Route.useLoaderData()
   const { view = 'deployed' } = Route.useSearch()
   const router = useRouter()
@@ -60,7 +58,8 @@ function CanarytokensPage() {
   const [minted, setMinted] = useState<CanaryToken | null>(null)
   const create = (
     <>
-      <Button label="Create token" size="sm" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setCreating(true)} />
+      {/* Any signed-in operator may plant a token, as in the canonical dashboard. */}
+      <Button label="Create token" size="sm" onClick={() => setCreating(true)} />
       <CanaryTokenDialog
         types={types}
         isOpen={creating}

@@ -12,6 +12,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
+import { signInContext } from './lib/signIn'
 
 const base = process.argv[2] ?? 'http://localhost:3000'
 const update = process.argv.includes('--update')
@@ -44,7 +45,10 @@ const measured: Record<string, Measure> = {}
 for (const path of PAGES) {
   // A fresh context per page: a cold load, nothing cached.
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+  await signInContext(context, base)
   const page = await context.newPage()
+  // The sign-in visit cached the app's assets; measure a cold load anyway.
+  await (await context.newCDPSession(page)).send('Network.setCacheDisabled', { cacheDisabled: true })
   await page.goto(base + path, { waitUntil: 'load' })
   await page.waitForTimeout(500)
   measured[path] = await page.evaluate(() => {

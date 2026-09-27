@@ -9,11 +9,11 @@ export function safeReturnTo(value: unknown): string {
   return value
 }
 
-/** The return path as the mock identity signs in: the viewer scenario for
- * the viewer, otherwise none (signing in again leaves "session expired"). */
-export function returnAs(returnTo: string, role: 'admin' | 'viewer'): string {
+/** Where a fresh sign-in lands: the return path, without the mock
+ * scenarios a session replaces (the role now comes from the session, and
+ * signing in again leaves "session expired"). */
+export function returnAfterSignIn(returnTo: string): string {
   const url = new URL(safeReturnTo(returnTo), 'http://dashboard.invalid')
-  if (role === 'viewer') url.searchParams.set('mock', 'viewer')
-  else url.searchParams.delete('mock')
+  if (['expired', 'viewer'].includes(url.searchParams.get('mock') ?? '')) url.searchParams.delete('mock')
   return `${url.pathname}${url.search}${url.hash}`
 }

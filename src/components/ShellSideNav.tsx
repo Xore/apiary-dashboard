@@ -11,7 +11,7 @@ import {
   Cog6ToothIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline'
-import { useLocation, useNavigate } from '@tanstack/react-router'
+import { useLocation } from '@tanstack/react-router'
 import type { SessionUser, ShellConfig } from '#/data/types'
 import { NAV_SECTIONS, navHrefFor } from '#/lib/nav'
 import { usePreferences } from '#/lib/prefs'
@@ -19,7 +19,6 @@ import { usePreferences } from '#/lib/prefs'
 function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettings: () => void }) {
   // A collapsed sidebar has room for the icon only; the name stays the label.
   const { isCollapsed } = useSideNavCollapse()
-  const navigate = useNavigate()
 
   return (
     <DropdownMenu
@@ -36,7 +35,7 @@ function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettin
         icon={Cog6ToothIcon}
         onClick={onOpenSettings}
       />
-      <DropdownMenuItem label="Sign out" icon={ArrowRightStartOnRectangleIcon} onClick={() => void navigate({ to: '/auth/logout' })} />
+      <DropdownMenuItem label="Sign out" icon={ArrowRightStartOnRectangleIcon} onClick={() => window.location.assign('/auth/logout')} />
     </DropdownMenu>
   )
 }

@@ -9,7 +9,7 @@
     "theme": "neutral"
   },
   "scripts": {
-    "dev": "vite dev --port 3009 --host",
+    "dev": "APIARY_ALLOW_UNAUTH_DEV=1 vite dev --port 3009 --host",
     "generate-routes": "tsr generate",
     "watch-routes": "tsr watch",
     "start": "bun run server.ts",

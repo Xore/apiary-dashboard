@@ -26,6 +26,7 @@ import { searchTabs } from '#/components/ViewTabs'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { ZoneHeader } from '#/components/ZoneHeader'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
 const STATUSES: AnomalyStatus[] = ['open', 'acknowledged', ...DISPOSITIONS]
@@ -163,6 +164,7 @@ function MlAnomaliesPage() {
     values.map((value) => ({ value, label: label(value), count: data.anomalies.filter((row) => of(row) === value).length }))
   const setFilter = (patch: Search) => void navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true })
   const severityCount = (severity: Severity) => data.bySeverity.find((row) => row.label === severity)?.count ?? 0
+  const isAdmin = useIsAdmin()
 
   if (search.view === 'models') return <ModelHealthView data={data} />
 
@@ -178,7 +180,8 @@ function MlAnomaliesPage() {
             label="Acknowledge all open"
             variant="secondary"
             size="sm"
-            isDisabled={data.openBacklog === 0}
+            isDisabled={data.openBacklog === 0 || !isAdmin}
+            tooltip={isAdmin ? undefined : ADMIN_REQUIRED}
             onClick={() => setConfirmOpen(true)}
             />
           </HStack>

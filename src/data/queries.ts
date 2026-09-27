@@ -19,629 +19,629 @@ type Rpc<TQuery> = TQuery
 const abortGpuJobFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('abortGpuJob', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('abortGpuJob', data, context.mock)) as Json)
 export const abortGpuJob = announced('abortGpuJob', abortGpuJobFn) as Rpc<typeof impl.abortGpuJob>
 
 const acknowledgeAllAlertsFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('acknowledgeAllAlerts', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('acknowledgeAllAlerts', data, context.mock)) as Json)
 export const acknowledgeAllAlerts = announced('acknowledgeAllAlerts', acknowledgeAllAlertsFn) as Rpc<typeof impl.acknowledgeAllAlerts>
 
 const acknowledgeAllAnomaliesFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('acknowledgeAllAnomalies', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('acknowledgeAllAnomalies', data, context.mock)) as Json)
 export const acknowledgeAllAnomalies = announced('acknowledgeAllAnomalies', acknowledgeAllAnomaliesFn) as Rpc<typeof impl.acknowledgeAllAnomalies>
 
 const acknowledgeAnomaliesFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('acknowledgeAnomalies', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('acknowledgeAnomalies', data, context.mock)) as Json)
 export const acknowledgeAnomalies = announced('acknowledgeAnomalies', acknowledgeAnomaliesFn) as Rpc<typeof impl.acknowledgeAnomalies>
 
 const createCanarytokenFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('createCanarytoken', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('createCanarytoken', data, context.mock)) as Json)
 export const createCanarytoken = announced('createCanarytoken', createCanarytokenFn) as Rpc<typeof impl.createCanarytoken>
 
 const deleteGeneratedReportFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('deleteGeneratedReport', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('deleteGeneratedReport', data, context.mock)) as Json)
 export const deleteGeneratedReport = announced('deleteGeneratedReport', deleteGeneratedReportFn) as Rpc<typeof impl.deleteGeneratedReport>
 
 const deleteReportDefinitionFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('deleteReportDefinition', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('deleteReportDefinition', data, context.mock)) as Json)
 export const deleteReportDefinition = announced('deleteReportDefinition', deleteReportDefinitionFn) as Rpc<typeof impl.deleteReportDefinition>
 
 const generatePayloadReportFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('generatePayloadReport', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('generatePayloadReport', data, context.mock)) as Json)
 export const generatePayloadReport = announced('generatePayloadReport', generatePayloadReportFn) as Rpc<typeof impl.generatePayloadReport>
 
 const generateReportFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('generateReport', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('generateReport', data, context.mock)) as Json)
 export const generateReport = announced('generateReport', generateReportFn) as Rpc<typeof impl.generateReport>
 
 const generateReportFromFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('generateReportFrom', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('generateReportFrom', data, context.mock)) as Json)
 export const generateReportFrom = announced('generateReportFrom', generateReportFromFn) as Rpc<typeof impl.generateReportFrom>
 
 const getAgentCampaignFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getAgentCampaign', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAgentCampaign', data, context.mock)) as Json)
 export const getAgentCampaign = announced('getAgentCampaign', getAgentCampaignFn) as Rpc<typeof impl.getAgentCampaign>
 
 const getAgentCampaignsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getAgentCampaigns', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAgentCampaigns', data, context.mock)) as Json)
 export const getAgentCampaigns = announced('getAgentCampaigns', getAgentCampaignsFn) as Rpc<typeof impl.getAgentCampaigns>
 
 const getAlertDetailFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getAlertDetail', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAlertDetail', data, context.mock)) as Json)
 export const getAlertDetail = announced('getAlertDetail', getAlertDetailFn) as Rpc<typeof impl.getAlertDetail>
 
 const getAlertsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getAlerts', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAlerts', data, context.mock)) as Json)
 export const getAlerts = announced('getAlerts', getAlertsFn) as Rpc<typeof impl.getAlerts>
 
 const getAnalysisResultsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getAnalysisResults', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAnalysisResults', data, context.mock)) as Json)
 export const getAnalysisResults = announced('getAnalysisResults', getAnalysisResultsFn) as Rpc<typeof impl.getAnalysisResults>
 
 const getAnomalyFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getAnomaly', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAnomaly', data, context.mock)) as Json)
 export const getAnomaly = announced('getAnomaly', getAnomalyFn) as Rpc<typeof impl.getAnomaly>
 
 const getArtifactFileFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getArtifactFile', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getArtifactFile', data, context.mock)) as Json)
 export const getArtifactFile = announced('getArtifactFile', getArtifactFileFn) as Rpc<typeof impl.getArtifactFile>
 
 const getArtifactsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getArtifacts', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getArtifacts', data, context.mock)) as Json)
 export const getArtifacts = announced('getArtifacts', getArtifactsFn) as Rpc<typeof impl.getArtifacts>
 
 const getAsnFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getAsn', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAsn', data, context.mock)) as Json)
 export const getAsn = announced('getAsn', getAsnFn) as Rpc<typeof impl.getAsn>
 
 const getAttackersFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getAttackers', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAttackers', data, context.mock)) as Json)
 export const getAttackers = announced('getAttackers', getAttackersFn) as Rpc<typeof impl.getAttackers>
 
 const getAuthEventsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getAuthEvents', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getAuthEvents', data, context.mock)) as Json)
 export const getAuthEvents = announced('getAuthEvents', getAuthEventsFn) as Rpc<typeof impl.getAuthEvents>
 
 const getBlockedIpsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getBlockedIps', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getBlockedIps', data, context.mock)) as Json)
 export const getBlockedIps = announced('getBlockedIps', getBlockedIpsFn) as Rpc<typeof impl.getBlockedIps>
 
 const getCampaignFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getCampaign', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getCampaign', data, context.mock)) as Json)
 export const getCampaign = announced('getCampaign', getCampaignFn) as Rpc<typeof impl.getCampaign>
 
 const getCanarytokensFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getCanarytokens', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getCanarytokens', data, context.mock)) as Json)
 export const getCanarytokens = announced('getCanarytokens', getCanarytokensFn) as Rpc<typeof impl.getCanarytokens>
 
 const getCapeRunFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getCapeRun', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getCapeRun', data, context.mock)) as Json)
 export const getCapeRun = announced('getCapeRun', getCapeRunFn) as Rpc<typeof impl.getCapeRun>
 
 const getCapeRunsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getCapeRuns', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getCapeRuns', data, context.mock)) as Json)
 export const getCapeRuns = announced('getCapeRuns', getCapeRunsFn) as Rpc<typeof impl.getCapeRuns>
 
 const getClusterFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getCluster', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getCluster', data, context.mock)) as Json)
 export const getCluster = announced('getCluster', getClusterFn) as Rpc<typeof impl.getCluster>
 
 const getCommandsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getCommands', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getCommands', data, context.mock)) as Json)
 export const getCommands = announced('getCommands', getCommandsFn) as Rpc<typeof impl.getCommands>
 
 const getCredentialsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getCredentials', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getCredentials', data, context.mock)) as Json)
 export const getCredentials = announced('getCredentials', getCredentialsFn) as Rpc<typeof impl.getCredentials>
 
 const getDeadLettersFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getDeadLetters', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getDeadLetters', data, context.mock)) as Json)
 export const getDeadLetters = announced('getDeadLetters', getDeadLettersFn) as Rpc<typeof impl.getDeadLetters>
 
 const getEntityTimelineFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getEntityTimeline', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getEntityTimeline', data, context.mock)) as Json)
 export const getEntityTimeline = announced('getEntityTimeline', getEntityTimelineFn) as Rpc<typeof impl.getEntityTimeline>
 
 const getEventDetailFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getEventDetail', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getEventDetail', data, context.mock)) as Json)
 export const getEventDetail = announced('getEventDetail', getEventDetailFn) as Rpc<typeof impl.getEventDetail>
 
 const getEventsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getEvents', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getEvents', data, context.mock)) as Json)
 export const getEvents = announced('getEvents', getEventsFn) as Rpc<typeof impl.getEvents>
 
 const getFacetsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getFacets', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getFacets', data, context.mock)) as Json)
 export const getFacets = announced('getFacets', getFacetsFn) as Rpc<typeof impl.getFacets>
 
 const getGhidraAnalysisFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getGhidraAnalysis', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getGhidraAnalysis', data, context.mock)) as Json)
 export const getGhidraAnalysis = announced('getGhidraAnalysis', getGhidraAnalysisFn) as Rpc<typeof impl.getGhidraAnalysis>
 
 const getGithubAnalysesFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getGithubAnalyses', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getGithubAnalyses', data, context.mock)) as Json)
 export const getGithubAnalyses = announced('getGithubAnalyses', getGithubAnalysesFn) as Rpc<typeof impl.getGithubAnalyses>
 
 const getGithubAnalysisFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getGithubAnalysis', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getGithubAnalysis', data, context.mock)) as Json)
 export const getGithubAnalysis = announced('getGithubAnalysis', getGithubAnalysisFn) as Rpc<typeof impl.getGithubAnalysis>
 
 const getIdentityFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getIdentity', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getIdentity', data, context.mock)) as Json)
 export const getIdentity = announced('getIdentity', getIdentityFn) as Rpc<typeof impl.getIdentity>
 
 const getIdentityFusionFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getIdentityFusion', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getIdentityFusion', data, context.mock)) as Json)
 export const getIdentityFusion = announced('getIdentityFusion', getIdentityFusionFn) as Rpc<typeof impl.getIdentityFusion>
 
 const getInfraClustersFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getInfraClusters', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getInfraClusters', data, context.mock)) as Json)
 export const getInfraClusters = announced('getInfraClusters', getInfraClustersFn) as Rpc<typeof impl.getInfraClusters>
 
 const getIocFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getIoc', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getIoc', data, context.mock)) as Json)
 export const getIoc = announced('getIoc', getIocFn) as Rpc<typeof impl.getIoc>
 
 const getIocCatalogFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getIocCatalog', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getIocCatalog', data, context.mock)) as Json)
 export const getIocCatalog = announced('getIocCatalog', getIocCatalogFn) as Rpc<typeof impl.getIocCatalog>
 
 const getIpProfileFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getIpProfile', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getIpProfile', data, context.mock)) as Json)
 export const getIpProfile = announced('getIpProfile', getIpProfileFn) as Rpc<typeof impl.getIpProfile>
 
 const getKillChainFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getKillChain', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getKillChain', data, context.mock)) as Json)
 export const getKillChain = announced('getKillChain', getKillChainFn) as Rpc<typeof impl.getKillChain>
 
 const getLlmAnalysesFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getLlmAnalyses', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getLlmAnalyses', data, context.mock)) as Json)
 export const getLlmAnalyses = announced('getLlmAnalyses', getLlmAnalysesFn) as Rpc<typeof impl.getLlmAnalyses>
 
 const getLlmAnalysisFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getLlmAnalysis', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getLlmAnalysis', data, context.mock)) as Json)
 export const getLlmAnalysis = announced('getLlmAnalysis', getLlmAnalysisFn) as Rpc<typeof impl.getLlmAnalysis>
 
 const getMailFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getMail', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getMail', data, context.mock)) as Json)
 export const getMail = announced('getMail', getMailFn) as Rpc<typeof impl.getMail>
 
 const getMlAnomaliesFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getMlAnomalies', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getMlAnomalies', data, context.mock)) as Json)
 export const getMlAnomalies = announced('getMlAnomalies', getMlAnomaliesFn) as Rpc<typeof impl.getMlAnomalies>
 
 const getNetworkFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getNetwork', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getNetwork', data, context.mock)) as Json)
 export const getNetwork = announced('getNetwork', getNetworkFn) as Rpc<typeof impl.getNetwork>
 
 const getNetworkCampaignsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getNetworkCampaigns', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getNetworkCampaigns', data, context.mock)) as Json)
 export const getNetworkCampaigns = announced('getNetworkCampaigns', getNetworkCampaignsFn) as Rpc<typeof impl.getNetworkCampaigns>
 
 const getOverviewFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getOverview', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getOverview', data, context.mock)) as Json)
 export const getOverview = announced('getOverview', getOverviewFn) as Rpc<typeof impl.getOverview>
 
 const getOverviewViewsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getOverviewViews', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getOverviewViews', data, context.mock)) as Json)
 export const getOverviewViews = announced('getOverviewViews', getOverviewViewsFn) as Rpc<typeof impl.getOverviewViews>
 
 const getPayloadAnalysisFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getPayloadAnalysis', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getPayloadAnalysis', data, context.mock)) as Json)
 export const getPayloadAnalysis = announced('getPayloadAnalysis', getPayloadAnalysisFn) as Rpc<typeof impl.getPayloadAnalysis>
 
 const getPayloadDeliveryFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getPayloadDelivery', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getPayloadDelivery', data, context.mock)) as Json)
 export const getPayloadDelivery = announced('getPayloadDelivery', getPayloadDeliveryFn) as Rpc<typeof impl.getPayloadDelivery>
 
 const getPayloadsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getPayloads', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getPayloads', data, context.mock)) as Json)
 export const getPayloads = announced('getPayloads', getPayloadsFn) as Rpc<typeof impl.getPayloads>
 
 const getPreferencesFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getPreferences', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getPreferences', data, context.mock)) as Json)
 export const getPreferences = announced('getPreferences', getPreferencesFn) as Rpc<typeof impl.getPreferences>
 
 const getProblemReportsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getProblemReports', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getProblemReports', data, context.mock)) as Json)
 export const getProblemReports = announced('getProblemReports', getProblemReportsFn) as Rpc<typeof impl.getProblemReports>
 
 const getRecordingsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getRecordings', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getRecordings', data, context.mock)) as Json)
 export const getRecordings = announced('getRecordings', getRecordingsFn) as Rpc<typeof impl.getRecordings>
 
 const getRelatedFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getRelated', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getRelated', data, context.mock)) as Json)
 export const getRelated = announced('getRelated', getRelatedFn) as Rpc<typeof impl.getRelated>
 
 const getReplayFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getReplay', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getReplay', data, context.mock)) as Json)
 export const getReplay = announced('getReplay', getReplayFn) as Rpc<typeof impl.getReplay>
 
 const getReplayDetailFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getReplayDetail', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getReplayDetail', data, context.mock)) as Json)
 export const getReplayDetail = announced('getReplayDetail', getReplayDetailFn) as Rpc<typeof impl.getReplayDetail>
 
 const getReportsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getReports', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getReports', data, context.mock)) as Json)
 export const getReports = announced('getReports', getReportsFn) as Rpc<typeof impl.getReports>
 
 const getRevDeckRunFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getRevDeckRun', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getRevDeckRun', data, context.mock)) as Json)
 export const getRevDeckRun = announced('getRevDeckRun', getRevDeckRunFn) as Rpc<typeof impl.getRevDeckRun>
 
 const getRevDeckRunsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getRevDeckRuns', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getRevDeckRuns', data, context.mock)) as Json)
 export const getRevDeckRuns = announced('getRevDeckRuns', getRevDeckRunsFn) as Rpc<typeof impl.getRevDeckRuns>
 
 const getSandboxLiveStatusFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSandboxLiveStatus', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSandboxLiveStatus', data, context.mock)) as Json)
 export const getSandboxLiveStatus = announced('getSandboxLiveStatus', getSandboxLiveStatusFn) as Rpc<typeof impl.getSandboxLiveStatus>
 
 const getSandboxRunFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSandboxRun', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSandboxRun', data, context.mock)) as Json)
 export const getSandboxRun = announced('getSandboxRun', getSandboxRunFn) as Rpc<typeof impl.getSandboxRun>
 
 const getSensorCatalogFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSensorCatalog', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSensorCatalog', data, context.mock)) as Json)
 export const getSensorCatalog = announced('getSensorCatalog', getSensorCatalogFn) as Rpc<typeof impl.getSensorCatalog>
 
 const getSensorDetailFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSensorDetail', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSensorDetail', data, context.mock)) as Json)
 export const getSensorDetail = announced('getSensorDetail', getSensorDetailFn) as Rpc<typeof impl.getSensorDetail>
 
 const getSessionDetailFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSessionDetail', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSessionDetail', data, context.mock)) as Json)
 export const getSessionDetail = announced('getSessionDetail', getSessionDetailFn) as Rpc<typeof impl.getSessionDetail>
 
 const getSessionSummaryFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSessionSummary', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSessionSummary', data, context.mock)) as Json)
 export const getSessionSummary = announced('getSessionSummary', getSessionSummaryFn) as Rpc<typeof impl.getSessionSummary>
 
 const getSessionUserFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSessionUser', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSessionUser', data, context.mock)) as Json)
 export const getSessionUser = announced('getSessionUser', getSessionUserFn) as Rpc<typeof impl.getSessionUser>
 
 const getSettingsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSettings', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSettings', data, context.mock)) as Json)
 export const getSettings = announced('getSettings', getSettingsFn) as Rpc<typeof impl.getSettings>
 
 const getShellConfigFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getShellConfig', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getShellConfig', data, context.mock)) as Json)
 export const getShellConfig = announced('getShellConfig', getShellConfigFn) as Rpc<typeof impl.getShellConfig>
 
 const getSourceEventsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSourceEvents', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSourceEvents', data, context.mock)) as Json)
 export const getSourceEvents = announced('getSourceEvents', getSourceEventsFn) as Rpc<typeof impl.getSourceEvents>
 
 const getSourceHealthFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSourceHealth', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSourceHealth', data, context.mock)) as Json)
 export const getSourceHealth = announced('getSourceHealth', getSourceHealthFn) as Rpc<typeof impl.getSourceHealth>
 
 const getSourceIdentityFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSourceIdentity', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSourceIdentity', data, context.mock)) as Json)
 export const getSourceIdentity = announced('getSourceIdentity', getSourceIdentityFn) as Rpc<typeof impl.getSourceIdentity>
 
 const getSourceNetworkFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSourceNetwork', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSourceNetwork', data, context.mock)) as Json)
 export const getSourceNetwork = announced('getSourceNetwork', getSourceNetworkFn) as Rpc<typeof impl.getSourceNetwork>
 
 const getSourceProfilesFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSourceProfiles', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSourceProfiles', data, context.mock)) as Json)
 export const getSourceProfiles = announced('getSourceProfiles', getSourceProfilesFn) as Rpc<typeof impl.getSourceProfiles>
 
 const getSourceSessionsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSourceSessions', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSourceSessions', data, context.mock)) as Json)
 export const getSourceSessions = announced('getSourceSessions', getSourceSessionsFn) as Rpc<typeof impl.getSourceSessions>
 
 const getSourceTimelineFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getSourceTimeline', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSourceTimeline', data, context.mock)) as Json)
 export const getSourceTimeline = announced('getSourceTimeline', getSourceTimelineFn) as Rpc<typeof impl.getSourceTimeline>
 
 const getTopologyFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('getTopology', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getTopology', data, context.mock)) as Json)
 export const getTopology = announced('getTopology', getTopologyFn) as Rpc<typeof impl.getTopology>
 
 const linkCredentialTokenFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('linkCredentialToken', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('linkCredentialToken', data, context.mock)) as Json)
 export const linkCredentialToken = announced('linkCredentialToken', linkCredentialTokenFn) as Rpc<typeof impl.linkCredentialToken>
 
 const previewReportFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('previewReport', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('previewReport', data, context.mock)) as Json)
 export const previewReport = announced('previewReport', previewReportFn) as Rpc<typeof impl.previewReport>
 
 const provisionCredentialFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('provisionCredential', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('provisionCredential', data, context.mock)) as Json)
 export const provisionCredential = announced('provisionCredential', provisionCredentialFn) as Rpc<typeof impl.provisionCredential>
 
 const purgeDeadLettersFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('purgeDeadLetters', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('purgeDeadLetters', data, context.mock)) as Json)
 export const purgeDeadLetters = announced('purgeDeadLetters', purgeDeadLettersFn) as Rpc<typeof impl.purgeDeadLetters>
 
 const queuePayloadActionFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('queuePayloadAction', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('queuePayloadAction', data, context.mock)) as Json)
 export const queuePayloadAction = announced('queuePayloadAction', queuePayloadActionFn) as Rpc<typeof impl.queuePayloadAction>
 
 const resolveHashFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('resolveHash', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('resolveHash', data, context.mock)) as Json)
 export const resolveHash = announced('resolveHash', resolveHashFn) as Rpc<typeof impl.resolveHash>
 
 const resolveIncidentsFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('resolveIncidents', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('resolveIncidents', data, context.mock)) as Json)
 export const resolveIncidents = announced('resolveIncidents', resolveIncidentsFn) as Rpc<typeof impl.resolveIncidents>
 
 const rollbackConfigFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('rollbackConfig', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('rollbackConfig', data, context.mock)) as Json)
 export const rollbackConfig = announced('rollbackConfig', rollbackConfigFn) as Rpc<typeof impl.rollbackConfig>
 
 const rotateCredentialFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('rotateCredential', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('rotateCredential', data, context.mock)) as Json)
 export const rotateCredential = announced('rotateCredential', rotateCredentialFn) as Rpc<typeof impl.rotateCredential>
 
 const runServiceActionFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('runServiceAction', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('runServiceAction', data, context.mock)) as Json)
 export const runServiceAction = announced('runServiceAction', runServiceActionFn) as Rpc<typeof impl.runServiceAction>
 
 const saveConfigSectionFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('saveConfigSection', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('saveConfigSection', data, context.mock)) as Json)
 export const saveConfigSection = announced('saveConfigSection', saveConfigSectionFn) as Rpc<typeof impl.saveConfigSection>
 
 const savePreferencesFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('savePreferences', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('savePreferences', data, context.mock)) as Json)
 export const savePreferences = announced('savePreferences', savePreferencesFn) as Rpc<typeof impl.savePreferences>
 
 const saveReportDefinitionFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('saveReportDefinition', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('saveReportDefinition', data, context.mock)) as Json)
 export const saveReportDefinition = announced('saveReportDefinition', saveReportDefinitionFn) as Rpc<typeof impl.saveReportDefinition>
 
 const searchAllFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('searchAll', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('searchAll', data, context.mock)) as Json)
 export const searchAll = announced('searchAll', searchAllFn) as Rpc<typeof impl.searchAll>
 
 const searchHistoryFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('searchHistory', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('searchHistory', data, context.mock)) as Json)
 export const searchHistory = announced('searchHistory', searchHistoryFn) as Rpc<typeof impl.searchHistory>
 
 const semanticSearchFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('semanticSearch', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('semanticSearch', data, context.mock)) as Json)
 export const semanticSearch = announced('semanticSearch', semanticSearchFn) as Rpc<typeof impl.semanticSearch>
 
 const setAlertsAcknowledgedFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('setAlertsAcknowledged', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('setAlertsAcknowledged', data, context.mock)) as Json)
 export const setAlertsAcknowledged = announced('setAlertsAcknowledged', setAlertsAcknowledgedFn) as Rpc<typeof impl.setAlertsAcknowledged>
 
 const setAnomalyDispositionFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('setAnomalyDisposition', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('setAnomalyDisposition', data, context.mock)) as Json)
 export const setAnomalyDisposition = announced('setAnomalyDisposition', setAnomalyDispositionFn) as Rpc<typeof impl.setAnomalyDisposition>
 
 const setIpBlockedFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('setIpBlocked', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('setIpBlocked', data, context.mock)) as Json)
 export const setIpBlocked = announced('setIpBlocked', setIpBlockedFn) as Rpc<typeof impl.setIpBlocked>
 
 const setProblemStatusFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('setProblemStatus', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('setProblemStatus', data, context.mock)) as Json)
 export const setProblemStatus = announced('setProblemStatus', setProblemStatusFn) as Rpc<typeof impl.setProblemStatus>
 
 const simulateIncidentFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('simulateIncident', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('simulateIncident', data, context.mock)) as Json)
 export const simulateIncident = announced('simulateIncident', simulateIncidentFn) as Rpc<typeof impl.simulateIncident>
 
 const startAnalysisRunFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('startAnalysisRun', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('startAnalysisRun', data, context.mock)) as Json)
 export const startAnalysisRun = announced('startAnalysisRun', startAnalysisRunFn) as Rpc<typeof impl.startAnalysisRun>
 
 const submitProblemReportFn = createServerFn({ method: 'POST' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('submitProblemReport', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('submitProblemReport', data, context.mock)) as Json)
 export const submitProblemReport = announced('submitProblemReport', submitProblemReportFn) as Rpc<typeof impl.submitProblemReport>
 
 const validateConfigFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)
-  .handler(async ({ data, context }) => (await (await import('./backend')).run('validateConfig', data, context.mock)) as Json)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('validateConfig', data, context.mock)) as Json)
 export const validateConfig = announced('validateConfig', validateConfigFn) as Rpc<typeof impl.validateConfig>

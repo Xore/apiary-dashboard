@@ -16,6 +16,7 @@ import { formatDateTime } from '#/lib/format'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { reportTabs } from '#/lib/navFamilies'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 
 export const Route = createFileRoute('/_layout/reports/history')({
   staticData: { viewTabs: reportTabs },
@@ -44,6 +45,7 @@ function HistoryPage() {
   const rows = data.generated.filter((r) => (!origins.length || origins.includes(r.origin)) && (!templates.length || templates.includes(r.template)))
   const count = (of: (r: GeneratedReport) => string, value: string) => data.generated.filter((r) => of(r) === value).length
 
+  const isAdmin = useIsAdmin()
   const columns: TableColumn<GeneratedReport>[] = [
     { key: 'createdAt', header: 'Generated', width: pixel(184), renderCell: (row) => <Text type="supporting">{formatDateTime(row.createdAt)}</Text> },
     { key: 'title', header: 'Title', width: proportional(2), renderCell: (row) => <Text weight="semibold">{row.title}</Text> },
@@ -58,7 +60,7 @@ function HistoryPage() {
       renderCell: (row) => (
         <HStack gap={1}>
           <Button label="PDF" size="sm" variant="ghost" tooltip="Open the PDF in a new tab" href={reportPdfHref(row)} target="_blank" rel="noopener noreferrer" />
-          <Button label="Delete" size="sm" variant="ghost" onClick={() => setConfirm(row)} />
+          <Button label="Delete" size="sm" variant="ghost" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirm(row)} />
         </HStack>
       ),
     },

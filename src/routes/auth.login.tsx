@@ -8,14 +8,14 @@ import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
 import { AuthFrame, AuthProblem } from '#/components/auth/AuthFrame'
-import { returnAs, safeReturnTo } from '#/lib/returnTo'
+import { returnAfterSignIn, safeReturnTo } from '#/lib/returnTo'
 
 type LoginSearch = { return_to?: string; signed_out?: boolean; fail?: 'unavailable' }
 
 export const Route = createFileRoute('/auth/login')({
   validateSearch: (search: Record<string, unknown>): LoginSearch => ({
     return_to: typeof search.return_to === 'string' ? search.return_to : undefined,
-    signed_out: search.signed_out === true || search.signed_out === '1' || undefined,
+    signed_out: search.signed_out === true || search.signed_out === 1 || search.signed_out === '1' || undefined,
     fail: search.fail === 'unavailable' ? 'unavailable' : undefined,
   }),
   head: () => ({ meta: [{ title: 'Sign in · APIARY' }] }),
@@ -37,7 +37,7 @@ function Login() {
         <Button label="Continue as Operator (admin)" variant="primary" href={callback('admin')} width="100%" />
         <Button label="Continue as Analyst (viewer)" variant="secondary" href={callback('viewer')} width="100%" />
       </VStack>
-      {returnTo !== '/' && <Text type="supporting" color="secondary">{`Afterwards you go back to ${returnAs(returnTo, 'admin')}.`}</Text>}
+      {returnTo !== '/' && <Text type="supporting" color="secondary">{`Afterwards you go back to ${returnAfterSignIn(returnTo)}.`}</Text>}
     </AuthFrame>
   )
 }

@@ -8,25 +8,6 @@ import { ApiError } from './errors'
 import { CONFIG } from './mock/details'
 import { enlargedRead, originalArgs } from './mock/large'
 import type { MockScenario } from './scenarios'
-import type { SessionUser } from './types'
-
-/** Writes only an admin may make. The real tier refuses them for any other
- * role; the pages disable them with "Admin role required". */
-export const ADMIN_WRITES: ReadonlySet<string> = new Set([
-  'setIpBlocked',
-  'runServiceAction',
-  'rollbackConfig',
-  'saveConfigSection',
-  'purgeDeadLetters',
-  'setProblemStatus',
-  'createCanarytoken',
-  'provisionCredential',
-  'rotateCredential',
-  'linkCredentialToken',
-  'startAnalysisRun',
-  'abortGpuJob',
-  'queuePayloadAction',
-])
 
 /** Writes read-only mode still allows: turning it off, and one's own
  * preferences and problem reports. */
@@ -80,15 +61,10 @@ export function runScenario<TArgs extends unknown[], TResult>(name: string, quer
     if (name === 'getShellConfig' || name === 'getPreferences') return query(...args)
     // The Mock data menu's own controls work whatever the backend's state.
     if (MOCK_CONTROLS.has(name)) return query(...args)
-    if (name === 'getSessionUser') {
-      const user = (await query(...args)) as SessionUser
-      return (scenario === 'viewer' ? { ...user, name: 'Analyst', roles: ['viewer'] } : user) as TResult
-    }
     if (scenario === 'slow') await wait(2500)
     if (scenario === 'unavailable' || (scenario === 'partial' && isRead(name) && failsPartly(name))) throw new ApiError('unavailable', name)
     if (scenario === 'overloaded') throw new ApiError('overloaded', name, { retryAfter: 30 })
     if (scenario === 'expired') throw new ApiError('expired', name)
-    if (scenario === 'viewer' && ADMIN_WRITES.has(name)) throw new ApiError('forbidden', name)
     if (!isRead(name) && !READ_ONLY_EXEMPT.has(name) && readOnly()) throw new ApiError('locked', name)
     if (scenario === 'large' && isRead(name)) {
       const base = originalArgs(args) as TArgs

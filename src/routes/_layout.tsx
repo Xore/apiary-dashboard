@@ -26,6 +26,10 @@ export const Route = createFileRoute('/_layout')({
   // query of it carries that), then the landing and default-range redirects.
   beforeLoad: async ({ search, location }) => {
     setNavigationScenario(search.mock)
+    // The navigation guard: no session, no page. Sign-in brings the operator
+    // back here.
+    const user = await getSessionUser()
+    if (!user) throw redirect({ href: `/auth/login?return_to=${encodeURIComponent(location.href)}` })
     const prefs = await getPreferences()
     // A fresh page load: every server render is one; in the browser only
     // the very first navigation (hydration of that same page) is.
@@ -41,11 +45,9 @@ export const Route = createFileRoute('/_layout')({
       const saved = rememberedSearch(location.pathname)
       if (saved) throw redirect({ href: `${location.pathname}${saved}` })
     }
+    return { user }
   },
-  loader: async () => {
-    const [user, config] = await Promise.all([getSessionUser(), getShellConfig()])
-    return { user, config, narrow: isNarrowViewport() }
-  },
+  loader: async ({ context }) => ({ user: context.user, config: await getShellConfig(), narrow: isNarrowViewport() }),
   component: LayoutComponent,
 })
 
