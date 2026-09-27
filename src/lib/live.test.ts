@@ -3,8 +3,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { resolveAll, simulate } from '#/data/mock/incidents'
 import { nextLiveEvent } from '#/data/mock/live'
-import * as q from '#/data/queries'
+import { backend } from '#/data/backend'
 import { conditionsFrom, transitions } from './healthConditions'
+
+// The mock backend itself: tests and scripts call it directly.
+const q = backend()
 
 afterEach(resolveAll)
 

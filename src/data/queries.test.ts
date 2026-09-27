@@ -3,7 +3,10 @@
 // caught real bugs while the mock pages were built (#12's link crawl).
 import { describe, expect, it } from 'vitest'
 import { fieldText, readField } from '#/lib/sensorFields'
-import * as q from './queries'
+import { backend } from './backend'
+
+// The mock backend itself: tests and scripts call it directly.
+const q = backend()
 
 describe('cross-page consistency', () => {
   it('overview event KPI equals the event explorer total', async () => {

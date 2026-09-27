@@ -12,7 +12,11 @@
 // state, and nothing anywhere falls through to the generic crash state.
 import { readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import * as q from '../src/data/queries'
+import { backend } from '../src/data/backend'
+import { alertKeyOf } from '../src/data/shared'
+
+// The mock backend itself: tests and scripts call it directly.
+const q = backend()
 
 const base = process.argv[2] ?? 'http://localhost:3000'
 const maxPerShape = Number(process.argv[3] ?? 3)
@@ -47,7 +51,7 @@ async function seeds(): Promise<string[]> {
     q.getIocCatalog(),
   ])
   return [
-    ...take(alerts).map((g) => `/alerts/${enc(q.alertKeyOf(g))}`),
+    ...take(alerts).map((g) => `/alerts/${enc(alertKeyOf(g))}`),
     ...take(ml.anomalies).map((a) => `/ml-anomalies/${enc(a.id)}`),
     ...take(llm).map((a) => `/llm-analysis/${enc(a.id)}`),
     ...take(agent).map((c) => `/agent-campaigns/${enc(c.id)}`),

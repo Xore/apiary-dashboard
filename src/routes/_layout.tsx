@@ -7,8 +7,9 @@ import { PANE_IDS } from '#/components/SettingsDialog'
 import type { PaneId } from '#/components/SettingsDialog'
 import { ShellAppShell } from '#/components/ShellAppShell'
 import { getPreferences, getSessionUser, getShellConfig } from '#/data/queries'
-import { isScenario, setMockScenario } from '#/data/scenario'
-import type { MockScenario } from '#/data/scenario'
+import { isScenario } from '#/data/scenarios'
+import { setNavigationScenario } from '#/data/serverFn'
+import type { MockScenario } from '#/data/scenarios'
 import { isNarrowViewport } from '#/lib/viewport'
 
 export const Route = createFileRoute('/_layout')({
@@ -21,9 +22,10 @@ export const Route = createFileRoute('/_layout')({
     mock: isScenario(search.mock) && search.mock !== 'normal' ? search.mock : undefined,
   }),
   search: { middlewares: [retainSearchParams(['range', 'mock'])] },
-  // Before any loader below runs, so every query of this navigation sees it.
+  // Before any loader below runs: the navigation's mock scenario (every
+  // query of it carries that), then the landing and default-range redirects.
   beforeLoad: async ({ search, location }) => {
-    setMockScenario(search.mock)
+    setNavigationScenario(search.mock)
     const prefs = await getPreferences()
     // A fresh page load: every server render is one; in the browser only
     // the very first navigation (hydration of that same page) is.

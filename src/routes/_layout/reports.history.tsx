@@ -57,7 +57,7 @@ function HistoryPage() {
       width: pixel(160),
       renderCell: (row) => (
         <HStack gap={1}>
-          <Button label="PDF" size="sm" variant="ghost" tooltip="Open the PDF in a new tab" href={reportPdfHref(row, data.definitions.find((d) => d.id === row.definitionId))} target="_blank" rel="noopener noreferrer" />
+          <Button label="PDF" size="sm" variant="ghost" tooltip="Open the PDF in a new tab" href={reportPdfHref(row)} target="_blank" rel="noopener noreferrer" />
           <Button label="Delete" size="sm" variant="ghost" onClick={() => setConfirm(row)} />
         </HStack>
       ),

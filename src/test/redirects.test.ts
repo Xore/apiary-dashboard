@@ -1,10 +1,15 @@
 // @vitest-environment jsdom
 // Every pre-epic-#25 URL lands on its entity page (and tab), through the real
 // route tree, so a route rename cannot silently strand an old link.
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from '@tanstack/react-router'
 import { routeTree } from '#/routeTree.gen'
-import * as q from '#/data/queries'
+import { backend } from '#/data/backend'
+
+// The mock backend itself: tests and scripts call it directly; the routes'
+// own queries go to it in-process too.
+const q = backend()
+vi.mock('#/data/queries', () => import('#/test/queriesOnBackend').then((m) => m.queriesOnBackend()))
 
 async function land(path: string): Promise<string> {
   const router = createRouter({ routeTree, history: createMemoryHistory({ initialEntries: [path] }) })

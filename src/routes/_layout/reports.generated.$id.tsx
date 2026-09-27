@@ -31,7 +31,7 @@ export const Route = createFileRoute('/_layout/reports/generated/$id')({
 
 function GeneratedReportPage() {
   const { report: r, definition, template } = Route.useLoaderData()
-  const pdf = reportPdfHref(r, definition)
+  const pdf = reportPdfHref(r)
   return (
     <EntityFrame
       kind="Generated report"

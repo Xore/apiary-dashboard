@@ -7,32 +7,14 @@
 // A captured payload is live malware in production; here it is a small text
 // file saying so. Nothing that downloads from the mock is executable.
 import { asApiError } from './errors'
-import {
-  getArtifactFile,
-  getBlockedIps,
-  getCanarytokens,
-  getCapeRun,
-  getCommands,
-  getEvents,
-  getGithubAnalysis,
-  getInfraClusters,
-  getNetworkCampaigns,
-  getPayloadAnalysis,
-  getReplay,
-  getReports,
-  getSessionUser,
-  getShellConfig,
-  getSourceProfiles,
-  previewReport,
-  searchHistory,
-} from './queries'
-import { isScenario, setMockScenario } from './scenario'
+import { backend } from './backend'
+import type { Backend } from './backend'
+import { isScenario } from './scenarios'
 import type { EventFilters, ReportDefinition } from './types'
 import { toCsv } from '#/lib/export'
 import { formatNumber } from '#/lib/format'
 import { buildPdf } from '#/lib/pdf'
-import { fromBase64Url, payloadOfReport } from '#/lib/reportPdf'
-import type { ReportSpec } from '#/lib/reportPdf'
+import { payloadOfReport } from '#/lib/reportPdf'
 import type { PdfLine } from '#/lib/pdf'
 
 const HASH = /^[0-9a-fA-F]{32,64}$/
@@ -55,12 +37,13 @@ const text = (status: number, message: string) => new Response(message, { status
 
 /** Runs one download under the scenario the link carries; a failed backend
  * call answers with its own status, as the proxy in front of it would. */
-export async function serveDownload(request: Request, build: (search: URLSearchParams) => Promise<Response>): Promise<Response> {
+export async function serveDownload(request: Request, build: (search: URLSearchParams, q: Backend) => Promise<Response>): Promise<Response> {
   const search = new URL(request.url).searchParams
   const mock = search.get('mock')
-  setMockScenario(isScenario(mock) ? mock : undefined)
+  // The mock backend in the scenario the link carries, for this request only.
+  const q = backend(isScenario(mock) ? mock : 'normal')
   try {
-    return await build(search)
+    return await build(search, q)
   } catch (error) {
     const api = asApiError(error)
     if (api) return text(api.status, `${api.endpoint}: ${api.kind}`)
@@ -72,37 +55,37 @@ export async function serveDownload(request: Request, build: (search: URLSearchP
 
 const EVENT_FILTERS = ['ip', 'sensor', 'country', 'proto', 'port', 'persona', 'site', 'asset', 'org', 'provider', 'city', 'fingerprint', 'kind', 'since'] as const
 
-async function cap<T>(rows: T[]): Promise<T[]> {
-  const { behavior } = await getShellConfig()
+async function cap<T>(q: Backend, rows: T[]): Promise<T[]> {
+  const { behavior } = await q.getShellConfig()
   return rows.slice(0, behavior.maxExportRows)
 }
 
-const EXPORTS: Partial<Record<string, (search: URLSearchParams) => Promise<Response>>> = {
-  'events.csv': async (search) => {
+const EXPORTS: Partial<Record<string, (search: URLSearchParams, q: Backend) => Promise<Response>>> = {
+  'events.csv': async (search, q) => {
     const filters: EventFilters = {}
     for (const key of EVENT_FILTERS) {
       const value = search.get(key)
       if (value) filters[key] = value
     }
-    const { rows } = await getEvents(filters)
-    return file(toCsv(await cap(rows), ['timestamp', 'sensor', 'persona', 'asset', 'srcIp', 'country', 'city', 'org', 'provider', 'protocol', 'dstPort', 'type', 'severity', 'summary', 'fingerprint', 'communityId', 'sessionId']), 'text/csv', 'events.csv')
+    const { rows } = await q.getEvents(filters)
+    return file(toCsv(await cap(q, rows), ['timestamp', 'sensor', 'persona', 'asset', 'srcIp', 'country', 'city', 'org', 'provider', 'protocol', 'dstPort', 'type', 'severity', 'summary', 'fingerprint', 'communityId', 'sessionId']), 'text/csv', 'events.csv')
   },
-  'commands.csv': async () => file(toCsv(await cap((await getCommands()).rows), ['timestamp', 'sensor', 'srcIp', 'command', 'sessionId']), 'text/csv', 'commands.csv'),
-  'ips.csv': async () => file(toCsv(await cap((await getSourceProfiles()).sources), ['ip', 'country', 'org', 'events', 'logins', 'sessions', 'sensors', 'first', 'last']), 'text/csv', 'ips.csv'),
-  'campaigns.csv': async () => file(toCsv(await cap((await getNetworkCampaigns()).campaigns), ['cidr', 'score', 'events', 'uniqueIps', 'sensors', 'ports', 'creds', 'payloads', 'alerts', 'first', 'last']), 'text/csv', 'campaigns.csv'),
-  'clusters.csv': async () => file(toCsv(await cap(await getInfraClusters()), ['kind', 'value', 'sources', 'events', 'sensors']), 'text/csv', 'clusters.csv'),
-  'history.json': async (search) => file(`${JSON.stringify(await cap((await searchHistory(search.get('q') ?? '')).rows), null, 2)}\n`, 'application/json', 'history.json'),
+  'commands.csv': async (_search, q) => file(toCsv(await cap(q, (await q.getCommands()).rows), ['timestamp', 'sensor', 'srcIp', 'command', 'sessionId']), 'text/csv', 'commands.csv'),
+  'ips.csv': async (_search, q) => file(toCsv(await cap(q, (await q.getSourceProfiles()).sources), ['ip', 'country', 'org', 'events', 'logins', 'sessions', 'sensors', 'first', 'last']), 'text/csv', 'ips.csv'),
+  'campaigns.csv': async (_search, q) => file(toCsv(await cap(q, (await q.getNetworkCampaigns()).campaigns), ['cidr', 'score', 'events', 'uniqueIps', 'sensors', 'ports', 'creds', 'payloads', 'alerts', 'first', 'last']), 'text/csv', 'campaigns.csv'),
+  'clusters.csv': async (_search, q) => file(toCsv(await cap(q, await q.getInfraClusters()), ['kind', 'value', 'sources', 'events', 'sensors']), 'text/csv', 'clusters.csv'),
+  'history.json': async (search, q) => file(`${JSON.stringify(await cap(q, (await q.searchHistory(search.get('q') ?? '')).rows), null, 2)}\n`, 'application/json', 'history.json'),
 }
 
-export const exportFile = (name: string) => (search: URLSearchParams) => EXPORTS[name]?.(search) ?? Promise.resolve(text(404, 'unknown export'))
+export const exportFile = (name: string) => (search: URLSearchParams, q: Backend) => EXPORTS[name]?.(search, q) ?? Promise.resolve(text(404, 'unknown export'))
 
 // ---- Payloads, recordings --------------------------------------------------
 
-export const payloadFile = (hash: string) => async () => {
-  const user = await getSessionUser()
+export const payloadFile = (hash: string) => async (_search: URLSearchParams, q: Backend) => {
+  const user = await q.getSessionUser()
   if (!user.roles.includes('admin')) return text(403, 'administrator role required')
   if (!HASH.test(hash)) return text(400, 'invalid payload id')
-  const analysis = await getPayloadAnalysis(hash)
+  const analysis = await q.getPayloadAnalysis(hash)
   if (!analysis) return text(404, 'payload unavailable')
   const note = [
     'APIARY mock payload',
@@ -117,10 +100,10 @@ export const payloadFile = (hash: string) => async () => {
   return file(note, 'application/octet-stream', `${analysis.payload.hash}.bin`)
 }
 
-export const recordingFile = (shasum: string, format: string) => async () => {
+export const recordingFile = (shasum: string, format: string) => async (_search: URLSearchParams, q: Backend) => {
   if (!HASH.test(shasum)) return text(400, 'invalid recording id')
   if (format !== 'cast' && format !== 'raw') return text(404, 'unknown recording format')
-  const replay = await getReplay(shasum)
+  const replay = await q.getReplay(shasum)
   if (!replay) return text(404, 'recording unavailable')
   if (format === 'raw') return file(replay.transcript, 'application/octet-stream', `${shasum}.raw`)
   // asciicast v2: a header line, then one [time, "o", text] line per write.
@@ -136,8 +119,8 @@ export const recordingFile = (shasum: string, format: string) => async () => {
 // ---- Reports ---------------------------------------------------------------
 
 /** A payload's own report: what the sample is, and what each analysis found. */
-async function payloadReportPdf(hash: string): Promise<Response> {
-  const a = await getPayloadAnalysis(hash)
+async function payloadReportPdf(q: Backend, hash: string): Promise<Response> {
+  const a = await q.getPayloadAnalysis(hash)
   if (!a) return text(404, 'report unavailable')
   const p = a.payload
   const title = `Payload report ${p.hash.slice(0, 12)}`
@@ -163,24 +146,14 @@ async function payloadReportPdf(hash: string): Promise<Response> {
   return file(buildPdf(lines, title), 'application/pdf', `${title}.pdf`, 'inline')
 }
 
-export const reportPdf = (id: string) => async (search: URLSearchParams) => {
+export const reportPdf = (id: string) => async (_search: URLSearchParams, q: Backend) => {
   const payload = payloadOfReport(id)
-  if (payload) return payloadReportPdf(payload)
-  const data = await getReports()
-  // The server's own record first; a report made in another browser tab's
-  // mock state is described by the link instead.
-  const known = data.generated.find((g) => g.id === id)
-  let spec: ReportSpec | undefined
-  try {
-    const raw = search.get('spec')
-    spec = raw ? (JSON.parse(fromBase64Url(raw)) as ReportSpec) : undefined
-  } catch {
-    spec = undefined
-  }
-  const report = known ?? (spec ? { id, title: spec.title, template: spec.template, createdAt: spec.createdAt, definitionId: spec.definition?.id ?? '' } : undefined)
+  if (payload) return payloadReportPdf(q, payload)
+  const data = await q.getReports()
+  const report = data.generated.find((g) => g.id === id)
   if (!report) return text(404, 'report unavailable')
   const template = data.templates.find((t) => t.id === report.template)
-  const saved = data.definitions.find((d) => d.id === report.definitionId) ?? (known ? undefined : spec?.definition)
+  const saved = data.definitions.find((d) => d.id === report.definitionId)
   // A one-off report kept no definition: it covered its template's sections.
   const definition: ReportDefinition = saved ?? {
     id: report.id,
@@ -193,7 +166,7 @@ export const reportPdf = (id: string) => async (search: URLSearchParams) => {
     schedule: null,
     created: report.createdAt,
   }
-  const preview = await previewReport(definition)
+  const preview = await q.previewReport(definition)
   const lines: PdfLine[] = [
     { text: definition.branding.classification, size: 9, bold: true },
     { text: report.title, size: 22, bold: true, gap: 8 },
@@ -211,8 +184,8 @@ export const reportPdf = (id: string) => async (search: URLSearchParams) => {
   return file(buildPdf(lines, report.title), 'application/pdf', `${report.title}.pdf`, 'inline')
 }
 
-export const rawReport = (kind: string, sha: string) => async () => {
-  const report = kind === 'cape' ? await getCapeRun(sha) : kind === 'github-analysis' ? await getGithubAnalysis(sha) : undefined
+export const rawReport = (kind: string, sha: string) => async (_search: URLSearchParams, q: Backend) => {
+  const report = kind === 'cape' ? await q.getCapeRun(sha) : kind === 'github-analysis' ? await q.getGithubAnalysis(sha) : undefined
   if (report === undefined) return text(404, 'unknown report kind')
   if (!report) return text(404, 'raw report unavailable')
   return file(`${JSON.stringify(report, null, 2)}\n`, 'application/json', `${kind}-${sha}.json`)
@@ -224,15 +197,15 @@ export const rawReport = (kind: string, sha: string) => async () => {
  * address per line, sorted, a trailing newline, empty when none. Byte for
  * byte what production serves; an outage answers 5xx so the puller keeps
  * its rules instead of clearing them. */
-export const blackholeExport = () => async () => {
-  const ips = [...(await getBlockedIps())].sort()
+export const blackholeExport = () => async (_search: URLSearchParams, q: Backend) => {
+  const ips = [...(await q.getBlockedIps())].sort()
   return new Response(ips.length ? `${ips.join('\n')}\n` : '', { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } })
 }
 
 // ---- Artifacts, canarytokens -----------------------------------------------
 
-export const artifactFile = (kind: string, key: string, filename: string) => async () => {
-  const artifact = await getArtifactFile(kind, key, filename)
+export const artifactFile = (kind: string, key: string, filename: string) => async (_search: URLSearchParams, q: Backend) => {
+  const artifact = await q.getArtifactFile(kind, key, filename)
   if (!artifact) return text(404, 'artifact unavailable')
   return file(artifact.body, artifact.contentType, artifact.filename)
 }
@@ -257,8 +230,8 @@ const CANARY_FILES: Record<string, (memo: string, url: string, hostname: string)
   pdf: (memo, url) => ({ body: buildPdf([{ text: memo, size: 16, bold: true }, { text: `Canarytoken document: opening it calls ${url}.`, size: 10 }], memo), type: 'application/pdf', extension: 'pdf' }),
 }
 
-export const canarytokenFile = (id: string) => async () => {
-  const token = (await getCanarytokens()).tokens.find((t) => t.id === id)
+export const canarytokenFile = (id: string) => async (_search: URLSearchParams, q: Backend) => {
+  const token = (await q.getCanarytokens()).tokens.find((t) => t.id === id)
   const build = token?.artifact ? CANARY_FILES[token.type] : undefined
   if (!token?.artifact || !build) return text(404, 'artifact unavailable')
   const made = build(token.memo, token.url, token.hostname)
