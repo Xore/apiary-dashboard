@@ -14,13 +14,16 @@ on:
 permissions:
   contents: read
   packages: write
+  id-token: write
+  attestations: write
 
 concurrency:
   group: container-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  IMAGE: ghcr.io/${{ github.repository }}
+  # Registry names are lowercase.
+  IMAGE: ghcr.io/xore/apiary-dashboard
 
 jobs:
   image:
@@ -77,6 +80,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v7
+        id: push
         if: github.event_name != 'pull_request'
         with:
           context: .
@@ -84,3 +88,14 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
+          # An SBOM and SLSA provenance travel with the image.
+          sbom: true
+          provenance: mode=max
+      # A signed build-provenance attestation: `gh attestation verify
+      # oci://ghcr.io/xore/apiary-dashboard:<tag> --owner Xore`.
+      - uses: actions/attest-build-provenance@v4
+        if: github.event_name != 'pull_request'
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true

@@ -1,0 +1,46 @@
+name: Release
+
+# Pushing a version tag (v1.2.3) publishes a release: a GitHub Release with
+# notes generated from the merged pull requests, the production build as a
+# tarball with a build-provenance attestation, and (container.yml, same
+# tag) the image on ghcr.io tagged with the version.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+env:
+  BUN_VERSION: "1.4.2"
+
+jobs:
+  release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+      - run: bun run build
+      - name: Package the build
+        run: |
+          name="apiary-dashboard-${GITHUB_REF_NAME}"
+          tar -czf "$name.tar.gz" dist server.ts src/server/policy.ts package.json bun.lock
+          sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
+      - uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: apiary-dashboard-*.tar.gz
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" apiary-dashboard-*.tar.gz* --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
