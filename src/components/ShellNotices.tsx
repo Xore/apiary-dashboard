@@ -9,9 +9,9 @@ import { Icon } from '@astryxdesign/core/Icon'
 import { Popover } from '@astryxdesign/core/Popover'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
-import { ShieldCheckIcon } from '@heroicons/react/24/outline'
+import { ArrowTopRightOnSquareIcon, BookOpenIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
+import { useMediaQuery } from '@astryxdesign/core/hooks'
 import type { ShellConfig } from '#/data/types'
-import { ActionLink } from './ActionLink'
 
 const STATUS = { info: 'info', success: 'success', warning: 'warning', danger: 'error' } as const
 const DISMISSED_KEY = 'apiary-banner-dismissed'
@@ -57,18 +57,33 @@ export function ShellBanners({ config }: { config: ShellConfig }) {
 /** The shell's standing actions, floating over the content, pinned to the
  * bottom right: how evidence is handled, the help link, and reporting a
  * problem. One group, so they never overlap each other. */
-export function ShellFloatingActions({ config, problemReport }: { config: ShellConfig; problemReport?: ReactNode }) {
+export function ShellFloatingActions({ config, problemReport }: { config: ShellConfig; problemReport?: (compact: boolean) => ReactNode }) {
   const { presentation: p } = config
+  // On a phone the labels would run off the screen: icons, named for
+  // assistive tech and on hover.
+  const compact = useMediaQuery('(max-width: 640px)')
   if (!p.helpLinkUrl && !p.privacyNotice && !problemReport) return null
   return (
     <HStack gap={2} vAlign="center" style={{ position: 'fixed', insetInlineEnd: 16, insetBlockEnd: 16, zIndex: 20 }}>
       {p.privacyNotice && (
         <Popover label="Evidence handling" placement="above" content={<Text>{p.privacyNotice}</Text>}>
-          <Button label="Evidence handling" size="sm" variant="secondary" icon={<Icon icon={ShieldCheckIcon} size="sm" />} />
+          <Button label="Evidence handling" size="sm" variant="secondary" isIconOnly={compact} icon={<Icon icon={ShieldCheckIcon} size="sm" />} />
         </Popover>
       )}
-      {p.helpLinkUrl && <ActionLink href={p.helpLinkUrl} external>{p.helpLinkLabel || 'Help'}</ActionLink>}
-      {problemReport}
+      {p.helpLinkUrl && (
+        <Button
+          label={p.helpLinkLabel || 'Help'}
+          href={p.helpLinkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          size="sm"
+          variant="secondary"
+          isIconOnly={compact}
+          icon={compact ? <Icon icon={BookOpenIcon} size="sm" /> : undefined}
+          endContent={compact ? undefined : <Icon icon={ArrowTopRightOnSquareIcon} size="sm" />}
+        />
+      )}
+      {problemReport?.(compact)}
     </HStack>
   )
 }

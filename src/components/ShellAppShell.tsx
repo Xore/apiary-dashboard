@@ -101,9 +101,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           <ShellBanners config={config} />
           {/* Times are formatted from module state, so a change to how they
               read remounts the page; dialogs in the shell stay open. */}
-          {/* Room at the bottom, so the floating actions never hide a
-              page's last row for good. */}
-          <div key={timeKey} style={{ flex: 1, minHeight: 0, paddingBlockEnd: 64 }}>
+          <div key={timeKey} style={{ flex: 1, minHeight: 0 }}>
             <Outlet />
           </div>
 
@@ -124,7 +122,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           else void navigate({ to })
         }}
       />
-      <ShellFloatingActions config={config} problemReport={<ProblemReportButton enabled={config.behavior.showProblemReportButton} />} />
+      <ShellFloatingActions config={config} problemReport={(compact) => <ProblemReportButton enabled={config.behavior.showProblemReportButton} compact={compact} />} />
       <LiveToasts />
       <EventNotifications />
       {settingsPane && <SettingsDialog pane={settingsPane} onPane={onSettingsPane} onClose={() => onSettingsPane(undefined)} />}
