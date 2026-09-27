@@ -58,8 +58,11 @@ export class MemorySessionStore implements SessionStore {
   }
 }
 
-/** The process's store. Swapped for the Redis one with the real sign-in. */
-export const sessions: SessionStore = new MemorySessionStore()
+/** The process's store. Swapped for the Redis one with the real sign-in.
+ * Kept on the process, not the module: in development a code reload
+ * re-evaluates this module, and a fresh store would sign everyone out. */
+const holder = globalThis as typeof globalThis & { __apiarySessions?: SessionStore }
+export const sessions: SessionStore = (holder.__apiarySessions ??= new MemorySessionStore())
 
 /** Development over plain HTTP from another machine: browsers refuse a
  * Secure (and so a `__Host-`) cookie there, and sign-in would loop. With
