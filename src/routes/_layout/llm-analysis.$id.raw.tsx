@@ -1,5 +1,5 @@
+import { JsonBlock } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
-import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 
@@ -13,11 +13,7 @@ export const Route = createFileRoute('/_layout/llm-analysis/$id/raw')({
 function TabView() {
   return (
     <Panel title="The stored document">
-      <CodeBlock
-        code={JSON.stringify(orPending(parent.useLoaderData())?.analysis, null, 2)}
-        language="json"
-        maxHeight={640}
-      />
+      <JsonBlock value={orPending(parent.useLoaderData())?.analysis} />
     </Panel>
   )
 }

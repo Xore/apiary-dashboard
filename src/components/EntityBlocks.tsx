@@ -1,3 +1,4 @@
+import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { SkeletonTable } from './SkeletonTable'
 import { ActionLink } from '#/components/ActionLink'
@@ -297,4 +298,10 @@ export function SkeletonLines({ count = 4 }: { count?: number }) {
       ))}
     </VStack>
   )
+}
+
+/** A record as JSON, or a skeleton of its height while it loads. */
+export function JsonBlock({ value, maxHeight = 640 }: { value: unknown; maxHeight?: number }) {
+  if (value === undefined) return <Skeleton height={Math.min(maxHeight, 360)} />
+  return <CodeBlock code={JSON.stringify(value, null, 2)} language="json" maxHeight={maxHeight} />
 }

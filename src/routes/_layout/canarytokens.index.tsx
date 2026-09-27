@@ -63,7 +63,8 @@ function CanarytokensPage() {
     <>
       {/* Any signed-in operator may plant a token, as in the canonical dashboard. */}
       <Button label="Create token" size="sm" onClick={() => setCreating(true)} />
-      <CanaryTokenDialog
+      {/* The kinds come with the data; the dialog opens once they are here. */}
+      {data && <CanaryTokenDialog
         types={types}
         isOpen={creating}
         onOpenChange={setCreating}
@@ -71,7 +72,7 @@ function CanarytokensPage() {
           setMinted(token)
           void router.invalidate()
         }}
-      />
+      />}
     </>
   )
 

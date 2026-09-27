@@ -51,7 +51,7 @@ function CommandsPage() {
             size="sm"
             variant="secondary"
             icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-            href={apiHref('/api/export/commands?.csv')}
+            href={apiHref('/api/export/commands.csv')}
           />
         </>
       }

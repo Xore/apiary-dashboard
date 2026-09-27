@@ -56,7 +56,7 @@ function ClustersPage() {
             size="sm"
             variant="secondary"
             icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-            href={apiHref('/api/export/clusters?.csv')}
+            href={apiHref('/api/export/clusters.csv')}
           />
         </>
       }
