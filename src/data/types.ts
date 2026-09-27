@@ -1346,6 +1346,16 @@ export interface GhidraAnalysis {
   symbolRecovery: { matched: number; total: number; candidates: Array<{ address: string; recovered: string; confidence: number; source: string }> }
 }
 
+/** One turn of RevDeck's model loop, as the run records it: the workflow's
+ * system prompt, the request, then the model's turns and the tool calls
+ * each made against the Ghidra service. */
+export interface RevDeckMessage {
+  role: 'system' | 'user' | 'assistant'
+  at: string
+  text: string
+  toolCalls?: Array<{ tool: string; input: string; output: string; durationMs: number; error?: string }>
+}
+
 export interface RevDeckRun extends Record<string, unknown> {
   sha: string
   at: string
@@ -1357,6 +1367,8 @@ export interface RevDeckRun extends Record<string, unknown> {
   error?: string
   /** The RevDeck workflow that drove the walk (which prompt and tool set). */
   workflow: string
+  /** The whole conversation, in order; `steps` is its tool calls alone. */
+  transcript: RevDeckMessage[]
 }
 
 export interface CapeRun extends Record<string, unknown> {
