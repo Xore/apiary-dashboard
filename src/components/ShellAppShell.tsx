@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
+import { PagePending } from './PagePending'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { AppShell } from '@astryxdesign/core/AppShell'
 import { CommandPalette } from '@astryxdesign/core/CommandPalette'
@@ -62,7 +63,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
   const navigate = useNavigate()
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
   const isAdmin = user.roles.includes('admin')
-  const searchSource = useMemo(() => paletteSource(isAdmin ? [...PAGES, { id: '/admin', label: 'Administration', auxiliaryData: { group: 'More', href: '/admin' } }] : PAGES), [isAdmin])
+  const searchSource = useMemo(() => paletteSource(isAdmin ? [...PAGES, { id: '/admin', label: 'Administration', auxiliaryData: { group: 'More', href: '/admin' } }] : PAGES, isAdmin), [isAdmin])
   const location = useLocation()
 
   useEffect(() => {
@@ -103,7 +104,11 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           {/* Times are formatted from module state, so a change to how they
               read remounts the page; dialogs in the shell stay open. */}
           <div key={timeKey} style={{ flex: 1, minHeight: 0 }}>
-            <Outlet />
+            {/* A page whose code is still arriving suspends here, inside the
+                shell, rather than hiding the shell behind the root fallback. */}
+            <Suspense fallback={<PagePending />}>
+              <Outlet />
+            </Suspense>
           </div>
 
         </div>
@@ -112,7 +117,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
         isOpen={isPaletteOpen}
         onOpenChange={setIsPaletteOpen}
         searchSource={searchSource}
-        label="Go to a page, or search IPs, sessions, payloads…"
+        label="Go to a page or setting, or search anything: IPs, alerts, campaigns, payloads…"
         onValueChange={(id) => {
           setIsPaletteOpen(false)
           // Pages are their own ids; an entity carries its target.
@@ -120,6 +125,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           if (!to) return
           // Settings opens as a modal over the current page.
           if (to === '/settings') onSettingsPane('account')
+          else if (to.startsWith('settings:')) onSettingsPane(to.slice('settings:'.length) as PaneId)
           else void navigate({ to })
         }}
       />

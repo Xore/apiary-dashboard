@@ -259,6 +259,19 @@ describe('filters and search', () => {
     const groups = await q.searchAll('root')
     expect(groups.map((g) => g.id)).toContain('credentials')
   })
+
+  it('searches every kind of entity, capped per group, with a page for each hit', async () => {
+    const ids = new Set<string>()
+    for (const query of ['cowrie', 'ssh', 'as', '192.0.2', 'report', 'mysql']) {
+      for (const group of await q.searchAll(query, 3)) {
+        ids.add(group.id)
+        expect(group.items.length).toBeLessThanOrEqual(3)
+        expect(group.total).toBeGreaterThanOrEqual(group.items.length)
+        for (const item of group.items) expect(item.href).toMatch(/^\//)
+      }
+    }
+    for (const id of ['sources', 'networks', 'sensors', 'alerts', 'reports']) expect(ids).toContain(id)
+  })
 })
 
 describe('mock writes', () => {

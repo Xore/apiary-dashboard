@@ -116,11 +116,11 @@ In dev, TanStack devtools open with **Ctrl+~** (the floating trigger is hidden s
 
 - Routing: TanStack Router file routes in `src/routes/`; `src/routeTree.gen.ts` is generated.
 - UI: Astryx components (see `AGENTS.md` for the CLI workflow — `bunx astryx build "<idea>"`).
-- Theme: editable neutral theme in `src/themes/neutral/`. Edit `neutralTheme.ts` (the annotated `theme.template.ts` documents every field), then:
+- Theme: editable neutral theme family in `src/themes/neutral/`. `neutralTheme.ts` is the root (the annotated `theme.template.ts` documents every field); `variants/*.ts` hold one family member each: an accent palette (Settings → Appearance → Accent palette) and a high-contrast twin of every palette (`*-hc.ts`, `hc.ts` for the default Claude palette), built from the helpers in `neutralVariants.ts`. `src/themes/appTheme.ts` maps the preferences to a member; the root route passes it to `<Theme>`, so the server renders the chosen theme and there is no flash. Then:
 
   ```bash
-  bun run theme:build   # regenerates neutral.css / neutral.js / neutral.d.ts
+  bun run theme:build   # regenerates neutral-family.css / .js / .d.ts (every member, one stylesheet)
   bun run theme:check   # fails if the committed outputs are stale (part of smoke)
   ```
 
-  The theme CLI runs under Bun (`bunx --bun`) so the icon registry's JSX uses the project's automatic runtime. Palette changes start from `palette.config.json` via `bunx astryx theme palette generate`.
+  The theme CLI runs under Bun (`bunx --bun`, with `JITI_TRY_NATIVE=0` so the family build can trace each member's ancestry) and `icons.tsx` carries a `@jsxRuntime automatic` pragma for the same loader. A new member is a new file in `variants/`, picked up by the build's glob, plus an entry in `appTheme.ts`. Palette changes start from `palette.config.json` (neutral and status hues) or `accentPalettes.config.json` (accent palettes, seeded from the Settings swatches) via `bunx astryx theme palette generate <config> -o <name>.generated.ts -f`.

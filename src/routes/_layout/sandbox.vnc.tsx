@@ -7,6 +7,9 @@ import { ComputerDesktopIcon } from '@heroicons/react/24/outline'
 import { createFileRoute } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
+import { SkeletonLines } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { getSandboxLiveStatus } from '#/data/queries'
 import { formatDateTime } from '#/lib/format'
 import { analysisTabs } from '#/lib/navFamilies'
@@ -15,14 +18,19 @@ export const Route = createFileRoute('/_layout/sandbox/vnc')({
   staticData: { viewTabs: analysisTabs() },
   loader: () => getSandboxLiveStatus(),
   component: SandboxLivePage,
+  pendingComponent: SandboxLivePage,
 })
 
 function SandboxLivePage() {
-  const status = Route.useLoaderData()
+  const status = orPending(Route.useLoaderData())
   return (
     <PageFrame title="Sandbox live view" description="A read-only view of the isolated Windows guest while a captured sample detonates. Admin only.">
       <VStack gap={4}>
-        {status.running ? (
+        {!status ? (
+          <Panel title={<Skeleton width={200} height={18} />}>
+            <SkeletonLines count={2} />
+          </Panel>
+        ) : status.running ? (
           <Panel title={`Detonating ${status.job ?? ''}`}>
             <Text>Started {status.since ? formatDateTime(status.since) : 'just now'}. The guest display appears here, view only.</Text>
           </Panel>

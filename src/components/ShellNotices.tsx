@@ -57,6 +57,12 @@ export function ShellBanners({ config }: { config: ShellConfig }) {
 /** The shell's standing actions, floating over the content, pinned to the
  * bottom right: how evidence is handled, the help link, and reporting a
  * problem. One group, so they never overlap each other. */
+/** A floating button over the page: the secondary fill is translucent, so it
+ * sits on the popover surface or the content would show through it. */
+function Afloat({ children }: { children: ReactNode }) {
+  return <span style={{ display: 'inline-flex', borderRadius: 10, background: 'var(--color-background-popover)' }}>{children}</span>
+}
+
 export function ShellFloatingActions({ config, problemReport }: { config: ShellConfig; problemReport?: (compact: boolean) => ReactNode }) {
   const { presentation: p } = config
   // On a phone the labels would run off the screen: icons, named for
@@ -66,24 +72,29 @@ export function ShellFloatingActions({ config, problemReport }: { config: ShellC
   return (
     <HStack gap={2} vAlign="center" style={{ position: 'fixed', insetInlineEnd: 16, insetBlockEnd: 16, zIndex: 20 }}>
       {p.privacyNotice && (
-        <Popover label="Evidence handling" placement="above" content={<Text>{p.privacyNotice}</Text>}>
-          <Button label="Evidence handling" size="sm" variant="secondary" isIconOnly={compact} icon={<Icon icon={ShieldCheckIcon} size="sm" />} />
-        </Popover>
+        <Afloat>
+          <Popover label="Evidence handling" placement="above" content={<Text>{p.privacyNotice}</Text>}>
+            <Button label="Evidence handling" size="sm" variant="secondary" elevation="med" isIconOnly={compact} icon={<Icon icon={ShieldCheckIcon} size="sm" />} />
+          </Popover>
+        </Afloat>
       )}
       {p.helpLinkUrl && (
-        <Button
-          label={p.helpLinkLabel || 'Help'}
-          href={p.helpLinkUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          size="sm"
-          variant="secondary"
-          isIconOnly={compact}
-          icon={compact ? <Icon icon={BookOpenIcon} size="sm" /> : undefined}
-          endContent={compact ? undefined : <Icon icon={ArrowTopRightOnSquareIcon} size="sm" />}
-        />
+        <Afloat>
+          <Button
+            label={p.helpLinkLabel || 'Help'}
+            href={p.helpLinkUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            size="sm"
+            variant="secondary"
+            elevation="med"
+            isIconOnly={compact}
+            icon={compact ? <Icon icon={BookOpenIcon} size="sm" /> : undefined}
+            endContent={compact ? undefined : <Icon icon={ArrowTopRightOnSquareIcon} size="sm" />}
+          />
+        </Afloat>
       )}
-      {problemReport?.(compact)}
+      {problemReport && <Afloat>{problemReport(compact)}</Afloat>}
     </HStack>
   )
 }

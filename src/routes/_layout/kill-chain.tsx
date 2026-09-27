@@ -4,16 +4,19 @@ import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
 import { CampaignTimeline, CoverageHeatmap, FlowSankey } from '#/components/charts'
 import { Panel } from '#/components/DashboardBlocks'
+import { SkeletonBlock } from '#/components/EntityBlocks'
 import { PageFrame } from '#/components/PageFrame'
+import { orPending } from '#/lib/pending'
 import { getKillChain } from '#/data/queries'
 
 export const Route = createFileRoute('/_layout/kill-chain')({
   loader: () => getKillChain(),
   component: KillChainPage,
+  pendingComponent: KillChainPage,
 })
 
 function KillChainPage() {
-  const data = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
   return (
     <PageFrame
       title="Kill-chain analytics"
@@ -31,18 +34,18 @@ function KillChainPage() {
             Each attacker session contributes one flow unit between every pair of tactics its traffic touched, in
             kill-chain order.
           </Text>
-          <FlowSankey flow={data.flow} />
+          {data ? <FlowSankey flow={data.flow} /> : <SkeletonBlock height={360} />}
         </Panel>
         <Panel title="Campaign timeline" action={<ActionLink href="/campaigns">All campaigns</ActionLink>}>
           <Text color="secondary">Current network campaigns, from first to last observed activity.</Text>
-          <CampaignTimeline rows={data.timeline} />
+          {data ? <CampaignTimeline rows={data.timeline} /> : <SkeletonBlock height={240} />}
         </Panel>
         <Panel title="ATT&CK coverage">
           <Text color="secondary">
             Every technique this deployment has evidence for, grouped by tactic. Darker cells mean more observed
             events, not more severe activity.
           </Text>
-          <CoverageHeatmap tactics={data.tactics} cells={data.coverage} />
+          {data ? <CoverageHeatmap tactics={data.tactics} cells={data.coverage} /> : <SkeletonBlock height={420} />}
         </Panel>
       </VStack>
     </PageFrame>

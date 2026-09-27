@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { PageFrame } from '#/components/PageFrame'
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
 import { ReportWizard, emptyDraft } from '#/components/reports/ReportWizard'
 import { getFacets, getReports } from '#/data/queries'
 import { reportTabs } from '#/lib/navFamilies'
@@ -17,15 +19,15 @@ export const Route = createFileRoute('/_layout/reports/generate')({
     return { data, facets }
   },
   component: GeneratePage,
+  pendingComponent: GeneratePage,
 })
 
 function GeneratePage() {
-  const { data, facets } = Route.useLoaderData()
+  const { data, facets } = orPending(Route.useLoaderData()) ?? {}
   const { template, from } = Route.useSearch()
   // Bumping the key starts a fresh wizard after a report was generated.
   const [run, setRun] = useState(0)
-  const source = from ? data.definitions.find((d) => d.id === from) : undefined
-  const initial = source && run === 0 ? structuredClone(source) : emptyDraft(data, template)
+  const source = from ? data?.definitions.find((d) => d.id === from) : undefined
 
   return (
     <PageFrame
@@ -33,7 +35,11 @@ function GeneratePage() {
       description="Decide what the report covers and how it looks; the data is checked and each section rendered before the PDF is made."
       contentWidth={800}
     >
-      <ReportWizard key={`${from ?? template ?? ''}-${run}`} data={data} facets={facets} initial={initial} onRestart={() => setRun((n) => n + 1)} />
+      {data && facets ? (
+        <ReportWizard key={`${from ?? template ?? ''}-${run}`} data={data} facets={facets} initial={source && run === 0 ? structuredClone(source) : emptyDraft(data, template)} onRestart={() => setRun((n) => n + 1)} />
+      ) : (
+        <SkeletonPanels count={1} lines={10} />
+      )}
     </PageFrame>
   )
 }

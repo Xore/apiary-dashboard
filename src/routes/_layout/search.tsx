@@ -22,7 +22,7 @@ export const Route = createFileRoute('/_layout/search')({
     q: textParam(search.q),
   }),
   loaderDeps: ({ search }) => ({ q: search.q ?? '' }),
-  loader: ({ deps }) => searchAll(deps.q),
+  loader: ({ deps }) => searchAll(deps.q, 50),
   component: SearchPage,
 })
 
@@ -59,7 +59,7 @@ function SearchPage() {
                     />
                   ))}
                 </List>
-                {group.total > group.items.length && (group.moreHref ? <ActionLink href={group.moreHref}>{`${group.total - group.items.length} more in event history`}</ActionLink> : <Text type="supporting">{group.total - group.items.length} more not shown</Text>)}
+                {group.total > group.items.length && (group.moreHref ? <ActionLink href={group.moreHref}>{`${group.total - group.items.length} more`}</ActionLink> : <Text type="supporting">{group.total - group.items.length} more not shown</Text>)}
               </Panel>
             ))}
           </Grid>

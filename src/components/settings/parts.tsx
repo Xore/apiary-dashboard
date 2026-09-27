@@ -21,7 +21,7 @@ import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
 import { Theme } from '@astryxdesign/core/theme'
 import { ChevronRightIcon, ComputerDesktopIcon, MagnifyingGlassIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline'
-import { neutralTheme } from '#/themes/neutral/neutral'
+import { neutralTheme } from '#/themes/neutral/neutral-family'
 import { PANELS, PANEL_GROUPS, SETTINGS, isAdminPanel, matchesSearch, panelOf, settingOf } from './registry'
 import type { IconComponent, PaneId, Setting } from './registry'
 

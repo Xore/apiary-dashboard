@@ -15,7 +15,7 @@ import {
   useLocation,
 } from '@tanstack/react-router'
 import { NAV_SECTIONS } from '#/lib/nav'
-import { neutralTheme } from '#/themes/neutral/neutral'
+import { neutralTheme } from '#/themes/neutral/neutral-family'
 import { RouterLink } from './RouterLink'
 import { ShellAppShell } from './ShellAppShell'
 import { searchTabs } from './ViewTabs'
