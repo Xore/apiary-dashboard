@@ -150,6 +150,7 @@ export function ProblemReportButton({ enabled, compact = false }: { enabled: boo
       <Button
         label="Report a problem"
         variant="secondary"
+        elevation="med"
         size="sm"
         isIconOnly={compact}
         icon={<Icon icon={ChatBubbleLeftEllipsisIcon} size="sm" />}
