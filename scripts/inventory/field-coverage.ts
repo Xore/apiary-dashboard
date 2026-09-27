@@ -63,7 +63,7 @@ export function staleEntries(routes: RouteInventory[], map: FieldMap): string[] 
 
 export function renderCoverage(rows: Coverage[]): string {
   const sum = (pick: (c: Coverage) => number) => rows.reduce((n, c) => n + pick(c), 0)
-  const cell = (t: string) => t.replace(/\|/g, '\\|')
+  const cell = (t: string) => t.replace(/\\/g, '\\\\').replace(/\|/g, '\\|')
   const lines = [
     '# Field coverage',
     '',
