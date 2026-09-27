@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { MemorySessionStore, SESSION_COOKIE, clearSessionCookie, sessionCookie, sidFrom } from './session'
+import { describe, expect, it, vi } from 'vitest'
+import { DEV_SESSION_COOKIE, MemorySessionStore, SESSION_COOKIE, clearSessionCookie, sessionCookie, sidFrom } from './session'
 
 const account = { sub: 's', username: 'u', displayName: 'U', email: 'u@example.test', role: 'viewer' as const }
 
@@ -27,5 +27,17 @@ describe('sessions', () => {
     expect(sessionCookie('abc')).toBe(`${SESSION_COOKIE}=abc; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=43200`)
     expect(clearSessionCookie()).toContain('Max-Age=0')
     expect(sidFrom(new Request('http://x/', { headers: { cookie: `other=1; ${SESSION_COOKIE}=abc` } }))).toBe('abc')
+  })
+
+  it('uses a plain-HTTP cookie for a development server reached by address', () => {
+    vi.stubEnv('APIARY_DEV_HTTP_COOKIE', '1')
+    try {
+      expect(sessionCookie('abc')).toBe(`${DEV_SESSION_COOKIE}=abc; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200`)
+      expect(clearSessionCookie()).toBe(`${DEV_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`)
+      // Only the cookie in use counts.
+      expect(sidFrom(new Request('http://x/', { headers: { cookie: `${SESSION_COOKIE}=secure; ${DEV_SESSION_COOKIE}=dev` } }))).toBe('dev')
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 })
