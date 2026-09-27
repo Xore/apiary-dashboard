@@ -796,19 +796,17 @@ function PanelBody({ panel }: { panel: PaneId }) {
 
 /** One administration panel as a page (/admin?pane=…): the same panels the
  * settings dialog used to hold, with the data they read and write. */
-export function AdminPanelView({ pane }: { pane: PaneId }) {
+export function AdminPanelView({ pane, initial }: { pane: PaneId; initial: SettingsData }) {
   const navigate = useNavigate()
-  const [data, setData] = useState<SettingsData | null>(null)
+  // The route loaded it; saving reloads it here.
+  const [data, setData] = useState<SettingsData>(initial)
+  useEffect(() => setData(initial), [initial])
   const reload = useCallback(async () => {
     setData(await getSettings())
   }, [])
-  useEffect(() => {
-    void reload()
-  }, [reload])
   // Administration changes save per panel (Save / Revert); nothing personal
   // is edited here.
   const noop = useCallback(() => {}, [])
-  if (!data) return <PendingPanel />
   return (
     <SettingsContext.Provider value={{ data, reload, prefs: data.preferences, setPref: noop, setDirty: noop, openPage: (href) => void navigate({ href }) }}>
       <VStack gap={4}>
@@ -818,21 +816,6 @@ export function AdminPanelView({ pane }: { pane: PaneId }) {
   )
 }
 
-/** A panel still loading: cards of skeleton rows. */
-function PendingPanel() {
-  return (
-    <VStack gap={4} aria-busy>
-      {[0, 1].map((card) => (
-        <VStack key={card} gap={3}>
-          <Skeleton width={180} height={18} />
-          {[0, 1, 2, 3].map((row) => (
-            <Skeleton key={row} height={44} />
-          ))}
-        </VStack>
-      ))}
-    </VStack>
-  )
-}
 
 // ---- Dialog ----------------------------------------------------------------------
 

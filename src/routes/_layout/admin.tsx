@@ -9,6 +9,7 @@ import { SettingsPanelHeading } from '#/components/settings/parts'
 import { PANEL_GROUPS } from '#/components/settings/registry'
 import type { PaneId } from '#/components/settings/registry'
 import { searchTabs } from '#/components/ViewTabs'
+import { getSettings } from '#/data/queries'
 
 const ADMIN_PANES = PANEL_GROUPS[1].panels
 
@@ -22,15 +23,18 @@ export const Route = createFileRoute('/_layout/admin')({
   beforeLoad: ({ context }) => {
     if (!context.user.roles.includes('admin')) throw redirect({ to: '/' })
   },
+  // The panels' data comes with the page, so an outage shows as one.
+  loader: () => getSettings(),
   component: AdminPage,
 })
 
 function AdminPage() {
   const { pane = ADMIN_PANES[0].id } = Route.useSearch()
+  const data = Route.useLoaderData()
   return (
     <PageFrame title="Administration" description="Settings that affect everyone: branding, defaults, operations, users and the record of changes.">
       <SettingsPanelHeading panel={pane} />
-      <AdminPanelView pane={pane} />
+      <AdminPanelView pane={pane} initial={data} />
     </PageFrame>
   )
 }
