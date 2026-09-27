@@ -64,6 +64,7 @@
  */
 
 import path from 'node:path'
+import { assertBootPolicies } from './src/server/policy'
 
 // Configuration
 const SERVER_PORT = Number(process.env.PORT ?? 3000)
@@ -500,6 +501,11 @@ async function initializeStaticRoutes(
  * Initialize the server
  */
 async function initializeServer() {
+  // The pre-listen gate (#5): an environment that would open the dashboard
+  // (no SERVICE_TOKEN, OIDC_DISABLED outside development) stops the process
+  // here, before it accepts a single request.
+  assertBootPolicies()
+
   log.header('Starting Production Server')
 
   // Load TanStack Start server handler

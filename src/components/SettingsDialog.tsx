@@ -135,7 +135,7 @@ function useStagedForm<TSection extends ConfigSection>(panel: PaneId, section: T
 const external = (href: string, label = 'Open') => <Button label={label} variant="secondary" size="sm" href={href} target="_blank" rel="noopener noreferrer" />
 
 function AccountPanel() {
-  const { data, openPage } = useSettings()
+  const { data } = useSettings()
   const account = accountLinks(useShellConfig().links.accountConsole)
   return (
     <>
@@ -144,7 +144,7 @@ function AccountPanel() {
         <SettingsRow setting="email" control={<Text>{data.user.email}</Text>} />
         <SettingsRow setting="roles" control={<HStack gap={1}>{data.user.roles.map((role) => <Token key={role} size="sm" label={role} />)}</HStack>} />
         <SettingsRow setting="session" control={<Text type="supporting">OIDC provider (mock)</Text>} />
-        <SettingsRow setting="signOut" control={<Button label="Sign out" variant="secondary" size="sm" onClick={() => openPage('/auth/logout')} />} />
+        <SettingsRow setting="signOut" control={<Button label="Sign out" variant="secondary" size="sm" onClick={() => window.location.assign('/auth/logout')} />} />
       </SettingsCard>
       {account && (
         // Credentials live with the identity provider, never here.

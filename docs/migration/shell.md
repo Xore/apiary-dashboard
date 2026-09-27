@@ -37,8 +37,8 @@ Every behavior of the canonical dashboard's shell (`Xore/APIARY@62ee45d`) and wh
 | 22 | Shell configuration read once in the root loader: banner, report-a-problem switch, app name (`__root` loader → `/api/v1/config`) | `_layout` loader → `getShellConfig` | implemented | Also read-only mode, labels, footer and deployment links (#58, #62). |
 | 23 | Appearance before first paint: cookie hint, reconciled with the stored preference once per session (`lib/appearanceCookie.ts`, `__root` boot script) | Root loader reads the preferences and renders the attributes server-side | replaced | No flash because the server renders the operator's theme. The per-device reconcile is Phase 2, with real preference storage. |
 | 24 | Humane 404: empty-state voice with one action (`__root notFoundComponent`) | `NotFound` | implemented | |
-| 25 | Navigation guard: unauthenticated navigation goes to `/auth/login` with a safe `return_to` (`__root beforeLoad`) | Mock sign-in pages, `lib/returnTo.ts` | Phase 2 | The return-path guard is implemented and tested; the session check is #5. |
+| 25 | Navigation guard: unauthenticated navigation goes to `/auth/login` with a safe `return_to` (`__root beforeLoad`) | `_layout` beforeLoad, `lib/returnTo.ts`, `src/server/session.ts` | implemented | Real sessions on the mock identity provider (#87); Keycloak in #5. |
 | 26 | Session expiry noticed on return to a hidden tab, and a 401 goes through sign-in once (`lib/useSessionWatch.ts`, `lib/reauth.ts`) | Expired-session boundary with *Sign in again* (#50, #60) | Phase 2 | Detecting expiry needs the real session. |
 | 27 | CSP nonce on every script, versioned stylesheet URL (`__root` head) | Astryx stylesheet bundled by Vite | Phase 2 | Content-hashed assets cover the stylesheet; the nonce is #5. |
 
-**Totals:** 15 implemented, 4 replaced, 5 gaps (rows 5, 7, 9, 11 and 17; the `/` shortcut in row 10 is a sixth, smaller one), 3 Phase 2.
+**Totals:** 16 implemented, 4 replaced, 5 gaps (rows 5, 7, 9, 11 and 17; the `/` shortcut in row 10 is a sixth, smaller one), 2 Phase 2.

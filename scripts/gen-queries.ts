@@ -42,7 +42,7 @@ export function renderQueries(): string {
       `const ${name}Fn = createServerFn({ method: '${isRead(name) ? 'GET' : 'POST'}' })`,
       '  .middleware([mockScenarioMiddleware])',
       '  .validator((args: unknown[]) => args)',
-      `  .handler(async ({ data, context }) => (await (await import('./backend')).run('${name}', data, context.mock)) as Json)`,
+      `  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('${name}', data, context.mock)) as Json)`,
       `export const ${name} = announced('${name}', ${name}Fn) as Rpc<typeof impl.${name}>`,
       '',
     )

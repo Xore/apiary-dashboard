@@ -8,7 +8,8 @@
 // the router renders only 200, 404 and 500.
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AuthProblem } from '#/components/auth/AuthFrame'
-import { returnAs } from '#/lib/returnTo'
+import { signInMock } from '#/data/auth'
+import { returnAfterSignIn } from '#/lib/returnTo'
 
 type CallbackSearch = { code?: string; role?: 'admin' | 'viewer'; return_to?: string; error?: string; error_description?: string }
 
@@ -22,9 +23,11 @@ export const Route = createFileRoute('/auth/callback')({
     error: text(search.error),
     error_description: text(search.error_description),
   }),
-  beforeLoad: ({ search }) => {
+  beforeLoad: async ({ search }) => {
     if (search.error || !search.code || search.code === 'expired' || search.code === 'failed') return
-    throw redirect({ href: returnAs(search.return_to ?? '/', search.role ?? 'admin') })
+    // The mock provider's answer: a session for the chosen account.
+    await signInMock({ data: { role: search.role ?? 'admin' } })
+    throw redirect({ href: returnAfterSignIn(search.return_to ?? '/') })
   },
   head: () => ({ meta: [{ title: 'Sign in · APIARY' }] }),
   component: Callback,

@@ -7,6 +7,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { listen } from '#/data/mock/liveFeed'
 import { isScenario } from '#/data/scenarios'
+import { resolveUser } from '#/server/identity'
 
 const OUTAGE: Record<string, { status: number; headers?: Record<string, string> }> = {
   unavailable: { status: 502 },
@@ -17,7 +18,9 @@ const OUTAGE: Record<string, { status: number; headers?: Record<string, string> 
 export const Route = createFileRoute('/api/live')({
   server: {
     handlers: {
-      GET: ({ request }) => {
+      GET: async ({ request }) => {
+        // A direct handler: it checks the session itself.
+        if (!(await resolveUser(request))) return new Response('unauthorized', { status: 401 })
         const mock = new URL(request.url).searchParams.get('mock')
         const scenario = isScenario(mock) ? mock : 'normal'
         const outage = OUTAGE[scenario] as (typeof OUTAGE)[string] | undefined

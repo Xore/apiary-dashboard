@@ -11,6 +11,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { chromium, devices } from 'playwright-core'
 import type { Page } from 'playwright-core'
+import { signInContext } from './lib/signIn'
 
 const base = process.argv[2] ?? 'http://localhost:3000'
 const root = join(import.meta.dirname, '..')
@@ -78,6 +79,7 @@ for (const [label, options, visits] of [
   ['phone', { ...devices['iPhone 13'], viewport: { width: 375, height: 812 } }, PHONE],
 ] as const) {
   const context = await browser.newContext(options)
+  await signInContext(context, base)
   const page = await context.newPage()
   for (const visit of visits) {
     await page.goto(base + visit.path, { waitUntil: 'load' })

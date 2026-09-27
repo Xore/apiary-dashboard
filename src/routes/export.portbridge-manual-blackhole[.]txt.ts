@@ -6,5 +6,5 @@ import { createFileRoute } from '@tanstack/react-router'
 import { blackholeExport, serveDownload } from '#/data/downloads'
 
 export const Route = createFileRoute('/export/portbridge-manual-blackhole.txt')({
-  server: { handlers: { GET: ({ request }) => serveDownload(request, blackholeExport()) } },
+  server: { handlers: { GET: ({ request }) => serveDownload(request, blackholeExport(), { session: false }) } },
 })

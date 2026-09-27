@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { returnAs, safeReturnTo } from './returnTo'
+import { returnAfterSignIn, safeReturnTo } from './returnTo'
 
 describe('safeReturnTo', () => {
   it('keeps a path on the dashboard', () => {
@@ -11,12 +11,17 @@ describe('safeReturnTo', () => {
   })
 })
 
-describe('returnAs', () => {
-  it('signs the viewer into the viewer scenario', () => {
-    expect(returnAs('/alerts?range=7d', 'viewer')).toBe('/alerts?range=7d&mock=viewer')
+describe('returnAfterSignIn', () => {
+  it('keeps the path, its filters and a design scenario', () => {
+    expect(returnAfterSignIn('/alerts?range=7d&mock=large')).toBe('/alerts?range=7d&mock=large')
   })
 
-  it('leaves the expired-session scenario when signing in again', () => {
-    expect(returnAs('/events?mock=expired&sensor=cowrie', 'admin')).toBe('/events?sensor=cowrie')
+  it('drops the scenarios a session replaces', () => {
+    expect(returnAfterSignIn('/events?mock=expired&sensor=cowrie')).toBe('/events?sensor=cowrie')
+    expect(returnAfterSignIn('/events?mock=viewer')).toBe('/events')
+  })
+
+  it('stays on the dashboard', () => {
+    expect(returnAfterSignIn('//evil.example.test/')).toBe('/')
   })
 })

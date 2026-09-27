@@ -47,6 +47,7 @@ import { FilterSelect } from '../FilterSelect'
 import { WEEKDAYS, WINDOWS, describeSchedule } from '../details/Report'
 import { ReportPreviewPages } from './ReportPreviewPages'
 import { useGuardedAction } from '#/lib/useGuardedAction'
+import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 
 const STEP_META = [
   { kind: 'human', label: 'Template' },
@@ -102,6 +103,9 @@ const plural = (n: number, word: string) => `${formatNumber(n)} ${word}${n === 1
 
 export function ReportWizard({ data, facets, initial, onRestart }: { data: ReportsData; facets: Facets; initial: ReportDefinition; onRestart: () => void }) {
   const router = useRouter()
+  // Generating (and keeping the definition) is an admin's; a viewer can
+  // still compose and preview.
+  const isAdmin = useIsAdmin()
   const [draft, setDraft] = useState<ReportDefinition>(initial)
   const [active, setActive] = useState(0)
   const [auto, setAuto] = useState<Record<number, AutoState>>({ [CHECK_STEP]: IDLE, [RENDER_STEP]: IDLE })
@@ -259,7 +263,11 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
     const count = Object.keys(currentErrors).length
     return (
       <HStack gap={2} vAlign="center" wrap="wrap">
-        <Button label={label} variant="primary" isLoading={generating} onClick={() => void confirmStep()} />
+        {index === STEP_META.length - 1 && !isAdmin ? (
+          <Button label={label} variant="primary" isDisabled tooltip={ADMIN_REQUIRED} />
+        ) : (
+          <Button label={label} variant="primary" isLoading={generating} onClick={() => void confirmStep()} />
+        )}
         {index > 0 && <Button label="Back" variant="ghost" onClick={() => goToStep(index - 1)} />}
         {count > 0 && <FieldStatus type="error" variant="detached" message={count === 1 ? 'One problem above needs fixing first.' : `${count} problems above need fixing first.`} />}
         {error && index === STEP_META.length - 1 && <FieldStatus type="error" variant="detached" message={error} />}

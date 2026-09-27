@@ -33,13 +33,29 @@ step "unit tests"; bun run test
 step "theme outputs match source"; bun run theme:check
 step "build";      bun run build
 
+step "the server refuses an environment that would open it"
+refuses() {
+  local code="$1"; shift
+  if env -u SERVICE_TOKEN -u OIDC_DISABLED -u APIARY_ALLOW_UNAUTH_DEV "$@" PORT="$PORT" bun run start >"$WORK/refusal.log" 2>&1; then
+    printf '  FAIL started anyway (%s)\n' "$code"; return 1
+  fi
+  if grep -q "$code" "$WORK/refusal.log"; then printf '  ok   refused with %s\n' "$code"; else printf '  FAIL no %s in the refusal\n' "$code"; return 1; fi
+}
+refuses E-SERVICE-TOKEN env
+refuses E-OIDC-DISABLED env SERVICE_TOKEN=smoke OIDC_DISABLED=1 NODE_ENV=production
+
 step "start production server on :$PORT"
-PORT="$PORT" bun run start >"$WORK/server.log" 2>&1 &
+SERVICE_TOKEN=smoke-token PORT="$PORT" bun run start >"$WORK/server.log" 2>&1 &
 SERVER_PID=$!
 for _ in $(seq 1 50); do
-  curl -fs -o /dev/null "http://localhost:$PORT/" && break
+  curl -s -o /dev/null "http://localhost:$PORT/healthz" && break
   sleep 0.2
 done
+
+# Signed in as the operator through the mock identity provider.
+signin() { curl -s -o /dev/null -D - "http://localhost:$PORT/auth/callback?code=mock&role=${1:-admin}" | tr -d '\r' | sed -n 's/^[Ss]et-[Cc]ookie: \([^;]*\).*/\1/p'; }
+COOKIE="$(signin admin)"
+[[ -n "$COOKIE" ]] || { echo "sign-in failed"; exit 1; }
 
 # path  expected-status
 CHECKS=(
@@ -87,7 +103,6 @@ CHECKS=(
   "/auth/callback?error=invalid_request 200"
   "/auth/callback?code=failed 200"
   "/auth/callback?code=mock&return_to=%2F%2Fevil.example.test 307"
-  "/auth/logout 307"
   "/api/export/events.csv?sensor=cowrie 200"
   "/api/export/history.json?q=wget 200"
   "/api/export/nope 404"
@@ -105,12 +120,25 @@ CHECKS=(
   "/api/report/rpt-unknown/pdf 404"
 )
 
-step "HTTP checks"
+# Without a session: pages go to sign-in, direct handlers refuse, and only
+# the infrastructure endpoints answer.
+ANON_CHECKS=(
+  "/ 307"
+  "/events?kind=login 307"
+  "/api/export/commands.csv 401"
+  "/api/payload/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/download 401"
+  "/api/live 401"
+  "/healthz 200"
+  "/export/portbridge-manual-blackhole.txt 200"
+  "/auth/login 200"
+)
+
+step "HTTP checks, signed in"
 failed=0
 for check in "${CHECKS[@]}"; do
   path="${check% *}"
   want="${check##* }"
-  got="$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$PORT$path")"
+  got="$(curl -s -o /dev/null -w '%{http_code}' -b "$COOKIE" "http://localhost:$PORT$path")"
   if [[ "$got" == "$want" ]]; then
     printf '  ok   %s %s\n' "$got" "$path"
   else
@@ -118,6 +146,21 @@ for check in "${CHECKS[@]}"; do
     failed=1
   fi
 done
+
+step "HTTP checks, anonymous"
+for check in "${ANON_CHECKS[@]}"; do
+  path="${check% *}"
+  want="${check##* }"
+  got="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://localhost:$PORT$path")"
+  if [[ "$got" == "$want" ]]; then printf '  ok   %s %s\n' "$got" "$path"; else printf '  FAIL %s %s (expected %s)\n' "$got" "$path" "$want"; failed=1; fi
+done
+
+step "sign-out: same origin only, then the session is gone"
+OTHER="$(signin viewer)"
+check() { if [[ "$2" == "$3" ]]; then printf '  ok   %s %s\n' "$2" "$1"; else printf '  FAIL %s %s (expected %s)\n' "$2" "$1" "$3"; failed=1; fi; }
+check "cross-site sign-out" "$(curl -s -o /dev/null -w '%{http_code}' -b "$OTHER" -H 'Referer: https://evil.example.test/' "http://localhost:$PORT/auth/logout")" 403
+check "sign-out" "$(curl -s -o /dev/null -w '%{http_code}' -b "$OTHER" -H "Referer: http://localhost:$PORT/events" "http://localhost:$PORT/auth/logout")" 303
+check "a page after sign-out" "$(curl -s -o /dev/null -w '%{http_code}' -b "$OTHER" "http://localhost:$PORT/events")" 307
 
 step "SSR link crawl, every entity tab"
 bun scripts/crawl.ts "http://localhost:$PORT" 2 || failed=1
