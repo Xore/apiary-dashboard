@@ -20,7 +20,7 @@ import type { CapturedPayload, WorkbenchRun } from '#/data/types'
 import { queuedMessage } from '#/components/analyzers/WorkbenchRuns'
 import { entityHref } from '#/lib/entities'
 import { formatTime } from '#/lib/format'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 
 export const Route = createFileRoute('/_layout/payloads/')({
   validateSearch: (search: Record<string, unknown>): { source?: string } => ({
@@ -47,10 +47,14 @@ function PayloadActions({ payload, onPublish, onAnalyze }: { payload: CapturedPa
       label="Payload actions"
       items={[
         { label: 'Static analysis', onClick: () => void navigate({ href: `/payloads/${hash}/static` }) },
-        { label: 'New analysis run…', isDisabled: !isAdmin, description: isAdmin ? undefined : ADMIN_REQUIRED, onClick: () => onAnalyze(payload.hash) },
+        ...(isAdmin ? [{ label: 'New analysis run…', onClick: () => onAnalyze(payload.hash) }] : []),
         { label: 'Who delivered it', onClick: () => void navigate({ href: `/payloads/${hash}/delivered-by` }) },
-        { label: 'Publish to GitHub…', isDisabled: !isAdmin, description: isAdmin ? undefined : ADMIN_REQUIRED, onClick: () => onPublish(payload) },
-        { label: 'Download sample', isDisabled: !isAdmin, description: isAdmin ? 'Live malware: the captured bytes' : ADMIN_REQUIRED, onClick: () => void window.location.assign(apiHref(`/api/payload/${hash}/download`)) },
+        ...(isAdmin
+          ? [
+              { label: 'Publish to GitHub…', onClick: () => onPublish(payload) },
+              { label: 'Download sample', description: 'Live malware: the captured bytes', onClick: () => void window.location.assign(apiHref(`/api/payload/${hash}/download`)) },
+            ]
+          : []),
         { label: 'Look up on VirusTotal', description: 'Opens in a new tab', onClick: () => void window.open(virusTotalLink(payload.hash).href, '_blank', 'noopener,noreferrer') },
       ]}
     />
@@ -102,7 +106,7 @@ function PayloadsPage() {
       <RecordList
         title="Captured payloads"
         description="Every file attackers dropped or downloaded, with its verdict and where it was captured. Open one for its bytes and every analysis."
-        actions={<Button label="New analysis run" size="sm" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setAnalyzing('')} />}
+        actions={isAdmin ? <Button label="New analysis run" size="sm" onClick={() => setAnalyzing('')} /> : undefined}
         summary={
           (published || queued) && (
             <VStack gap={2}>

@@ -11,7 +11,7 @@ import { TextInput } from '@astryxdesign/core/TextInput'
 import { useRouter } from '@tanstack/react-router'
 import { linkCredentialToken, rotateCredential } from '#/data/queries'
 import { describeError } from '#/lib/actionError'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import type { BaitCredential, CanaryToken } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
@@ -78,6 +78,7 @@ export function CredentialInspector({
         />
       </VStack>
       <Divider />
+      {isAdmin && (
       <VStack gap={2}>
         <Heading level={3}>Rotate</Heading>
         <Text type="supporting">
@@ -97,8 +98,6 @@ export function CredentialInspector({
             label="Rotate"
             variant="secondary"
             isLoading={busy === 'rotate'}
-            isDisabled={!isAdmin}
-            tooltip={isAdmin ? undefined : ADMIN_REQUIRED}
             onClick={() =>
               run('rotate', async () => {
                 await rotateCredential(credential.id, newPassword || undefined)
@@ -108,16 +107,16 @@ export function CredentialInspector({
           />
         </HStack>
         {error?.kind === 'rotate' && <FieldStatus type="error" variant="detached" message={error.message} />}
-        {!isAdmin && <Text type="supporting">{`${ADMIN_REQUIRED} Rotating and linking change the planted file.`}</Text>}
       </VStack>
+      )}
       <VStack gap={2}>
         <Heading level={3}>Linked canarytoken</Heading>
+        {isAdmin ? (
         <Selector
           label="Linked canarytoken"
           isLabelHidden
           hasClear
           placeholder="No linked token"
-          isDisabled={!isAdmin}
           status={error?.kind === 'link' ? { type: 'error', message: error.message } : undefined}
           value={credential.linkedTokenId ?? null}
           onChange={(tokenId) =>
@@ -131,6 +130,9 @@ export function CredentialInspector({
             description: t.type,
           }))}
         />
+        ) : (
+          <Text>{linked ? linked.memo : 'No linked token'}</Text>
+        )}
         {linked && <ActionLink href="/canarytokens">Open canarytokens</ActionLink>}
       </VStack>
     </VStack>

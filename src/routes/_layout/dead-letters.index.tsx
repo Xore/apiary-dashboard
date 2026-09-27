@@ -12,7 +12,7 @@ import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { getDeadLetters, purgeDeadLetters } from '#/data/queries'
 import { describeError } from '#/lib/actionError'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import type { DeadLetter } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
@@ -53,7 +53,7 @@ function DeadLettersPage() {
         actions={
           <HStack gap={2} vAlign="center">
             {error && <FieldStatus type="error" variant="detached" message={error} />}
-            <Button label={`Purge ${rows.length} shown`} size="sm" variant="destructive" isDisabled={rows.length === 0 || !isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />
+            {isAdmin && <Button label={`Purge ${rows.length} shown`} size="sm" variant="destructive" isDisabled={rows.length === 0} onClick={() => setConfirmOpen(true)} />}
           </HStack>
         }
         toolbar={

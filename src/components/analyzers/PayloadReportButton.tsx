@@ -10,7 +10,7 @@ import { generatePayloadReport } from '#/data/queries'
 import type { GeneratedReport } from '#/data/types'
 import { reportPdfHref } from '#/lib/reportPdf'
 import { useGuardedAction } from '#/lib/useGuardedAction'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 
 export function PayloadReportButton({ hash }: { hash: string }) {
   const isAdmin = useIsAdmin()
@@ -26,7 +26,7 @@ export function PayloadReportButton({ hash }: { hash: string }) {
   const pdf = report ? reportPdfHref(report) : undefined
   return (
     <>
-      <Button label="Payload report" size="sm" variant="secondary" isLoading={busy} isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => void generate()} />
+      {isAdmin && <Button label="Payload report" size="sm" variant="secondary" isLoading={busy} onClick={() => void generate()} />}
       <Dialog isOpen={report !== null || error !== undefined} onOpenChange={(open) => !open && (setReport(null), clearError())} width={960} purpose="info">
         <Layout
           padding={4}

@@ -47,7 +47,7 @@ import { FilterSelect } from '../FilterSelect'
 import { WEEKDAYS, WINDOWS, describeSchedule } from '../details/Report'
 import { ReportPreviewPages } from './ReportPreviewPages'
 import { useGuardedAction } from '#/lib/useGuardedAction'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 
 const STEP_META = [
   { kind: 'human', label: 'Template' },
@@ -264,11 +264,8 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
     const count = Object.keys(currentErrors).length
     return (
       <HStack gap={2} vAlign="center" wrap="wrap">
-        {index === STEP_META.length - 1 && !isAdmin ? (
-          <Button label={label} variant="primary" isDisabled tooltip={ADMIN_REQUIRED} />
-        ) : (
-          <Button label={label} variant="primary" isLoading={generating} onClick={() => void confirmStep()} />
-        )}
+        {/* Generating is an admin's call: viewers compose and preview. */}
+        {(index < STEP_META.length - 1 || isAdmin) && <Button label={label} variant="primary" isLoading={generating} onClick={() => void confirmStep()} />}
         {index > 0 && <Button label="Back" variant="ghost" onClick={() => goToStep(index - 1)} />}
         {count > 0 && <FieldStatus type="error" variant="detached" message={count === 1 ? 'One problem above needs fixing first.' : `${count} problems above need fixing first.`} />}
         {error && index === STEP_META.length - 1 && <FieldStatus type="error" variant="detached" message={error} />}

@@ -41,7 +41,7 @@ import { formatDateTime, formatNumber } from '#/lib/format'
 import { NAV_SECTIONS } from '#/lib/nav'
 import { prefetchEnabled, setPrefetchEnabled } from '#/lib/prefetch'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
-import { ADMIN_REQUIRED, useIsAdmin, useShellConfig } from '#/lib/session'
+import { useIsAdmin, useShellConfig } from '#/lib/session'
 import { accountLinks } from '#/lib/toolLinks'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 
@@ -109,7 +109,6 @@ function useStagedForm<TSection extends ConfigSection>(panel: PaneId, section: T
       <Button
         label="Save"
         isDisabled={!dirty || count > 0 || !isAdmin}
-        tooltip={isAdmin ? undefined : ADMIN_REQUIRED}
         isLoading={busy}
         onClick={async () => {
           setBusy(true)
@@ -789,13 +788,14 @@ function PanelBody({ panel }: { panel: PaneId }) {
 
 // ---- Dialog ----------------------------------------------------------------------
 
-export function SettingsDialog({ pane, onPane, onClose }: { pane: PaneId; onPane: (pane: PaneId) => void; onClose: () => void }) {
+export function SettingsDialog({ pane: asked, onPane, onClose }: { pane: PaneId; onPane: (pane: PaneId) => void; onClose: () => void }) {
   const titleId = useId()
   const navigate = useNavigate()
   const router = useRouter()
-  // Administration panels are visible to every role and editable by admins.
+  // Administration panels are for admins only: a viewer who follows a link
+  // to one lands on their own account instead.
   const isAdmin = useIsAdmin()
-  const readOnly = isAdminPanel(pane) && !isAdmin
+  const pane: PaneId = isAdminPanel(asked) && !isAdmin ? 'account' : asked
   const isNarrow = useMediaQuery(NARROW_VIEWPORT)
   const [data, setData] = useState<SettingsData | null>(null)
   const [prefs, setPrefs] = useState<Preferences | null>(null)
@@ -900,13 +900,9 @@ export function SettingsDialog({ pane, onPane, onClose }: { pane: PaneId; onPane
           <div aria-hidden style={{ width: 32 }} />
         </HStack>
         {discardBanner}
-        {readOnly && <Banner status="info" title="Read only" description="Changing administration settings needs the admin role. You can see them; ask an admin to change them." />}
-        {/* A disabled fieldset disables every control inside it at once. */}
-        <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-          <VStack gap={4}>
-            <PanelBody key={pane} panel={pane} />
-          </VStack>
-        </fieldset>
+        <VStack gap={4}>
+          <PanelBody key={pane} panel={pane} />
+        </VStack>
       </PanelColumn>
     </SettingsContext.Provider>
   )

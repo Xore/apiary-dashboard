@@ -25,7 +25,7 @@ import { AnalyzerSection } from './AnalyzerSection'
 import { queuePayloadAction } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { EntityLink } from '../EntityLink'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 
 const VERDICT_COLOR = { malicious: 'red', suspicious: 'orange', benign: 'green' } as const
@@ -372,7 +372,7 @@ export function SandboxResult({ run, section }: { run: SandboxRun; section: Sand
         <HStack gap={2} vAlign="center">
           <Token size="sm" color={VERDICT_COLOR[run.verdict]} label={run.verdict} />
           {run.goldenImage && <GoldenImageNote image={run.goldenImage} />}
-          <Button label="Re-analyze" size="sm" variant="secondary" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />
+          {isAdmin && <Button label="Re-analyze" size="sm" variant="secondary" onClick={() => setConfirmOpen(true)} />}
         </HStack>
       }
     >

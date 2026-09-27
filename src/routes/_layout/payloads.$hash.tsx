@@ -6,7 +6,7 @@ import { OpenInMenu } from '#/components/OpenInMenu'
 import { PayloadReportButton } from '#/components/analyzers/PayloadReportButton'
 import { virusTotalLink } from '#/lib/toolLinks'
 import { apiHref } from '#/lib/apiHref'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
@@ -51,15 +51,16 @@ function PayloadLayout() {
       basePath={`/payloads/${p.hash}`}
       actions={
         <>
-          <Button
-            label="Download sample"
-            size="sm"
-            variant="secondary"
-            icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-            isDisabled={!isAdmin}
-            tooltip={isAdmin ? 'Live malware: the captured bytes, unchanged' : ADMIN_REQUIRED}
-            href={apiHref(`/api/payload/${p.hash}/download`)}
-          />
+          {isAdmin && (
+            <Button
+              label="Download sample"
+              size="sm"
+              variant="secondary"
+              icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
+              tooltip="Live malware: the captured bytes, unchanged"
+              href={apiHref(`/api/payload/${p.hash}/download`)}
+            />
+          )}
           <PayloadReportButton hash={p.hash} />
           <OpenInMenu links={[virusTotalLink(p.hash)]} />
         </>

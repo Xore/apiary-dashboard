@@ -14,4 +14,3 @@ export const useShellConfig = (): ShellConfig => layout.useLoaderData().config
  * need the admin role; the backend refuses them for anyone else too. */
 export const useIsAdmin = (): boolean => useSessionUser().roles.includes('admin')
 
-export const ADMIN_REQUIRED = 'Admin role required.'
