@@ -82,7 +82,9 @@ import { Route as LayoutSensorsSensorRouteImport } from './routes/_layout/sensor
 import { Route as LayoutSessionsIdRouteImport } from './routes/_layout/sessions.$id'
 import { Route as LayoutSourcesIpRouteImport } from './routes/_layout/sources.$ip'
 import { Route as LayoutTtyReplayShasumRouteImport } from './routes/_layout/tty-replay.$shasum'
+import { Route as ApiChartNameRouteImport } from './routes/api.chart.$name'
 import { Route as ApiExportNameRouteImport } from './routes/api.export.$name'
+import { Route as ApiTopologyFlowRouteImport } from './routes/api.topology.flow'
 import { Route as LayoutAgentCampaignsIdIndexRouteImport } from './routes/_layout/agent-campaigns.$id.index'
 import { Route as LayoutAgentCampaignsIdEventsRouteImport } from './routes/_layout/agent-campaigns.$id.events'
 import { Route as LayoutAgentCampaignsIdEvidenceRouteImport } from './routes/_layout/agent-campaigns.$id.evidence'
@@ -565,9 +567,19 @@ const LayoutTtyReplayShasumRoute = LayoutTtyReplayShasumRouteImport.update({
   path: '/tty-replay/$shasum',
   getParentRoute: () => LayoutRoute,
 } as any)
+const ApiChartNameRoute = ApiChartNameRouteImport.update({
+  id: '/api/chart/$name',
+  path: '/api/chart/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiExportNameRoute = ApiExportNameRouteImport.update({
   id: '/api/export/$name',
   path: '/api/export/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTopologyFlowRoute = ApiTopologyFlowRouteImport.update({
+  id: '/api/topology/flow',
+  path: '/api/topology/flow',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutAgentCampaignsIdIndexRoute =
@@ -1243,7 +1255,9 @@ export interface FileRoutesByFullPath {
   '/sessions/$id': typeof LayoutSessionsIdRouteWithChildren
   '/sources/$ip': typeof LayoutSourcesIpRouteWithChildren
   '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/api/chart/$name': typeof ApiChartNameRoute
   '/api/export/$name': typeof ApiExportNameRoute
+  '/api/topology/flow': typeof ApiTopologyFlowRoute
   '/agent-campaigns/': typeof LayoutAgentCampaignsIndexRoute
   '/alerts/': typeof LayoutAlertsIndexRoute
   '/auth-events/': typeof LayoutAuthEventsIndexRoute
@@ -1414,7 +1428,9 @@ export interface FileRoutesByTo {
   '/sandbox/$job': typeof LayoutSandboxJobRoute
   '/sandbox/vnc': typeof LayoutSandboxVncRoute
   '/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/api/chart/$name': typeof ApiChartNameRoute
   '/api/export/$name': typeof ApiExportNameRoute
+  '/api/topology/flow': typeof ApiTopologyFlowRoute
   '/agent-campaigns': typeof LayoutAgentCampaignsIndexRoute
   '/alerts': typeof LayoutAlertsIndexRoute
   '/auth-events': typeof LayoutAuthEventsIndexRoute
@@ -1599,7 +1615,9 @@ export interface FileRoutesById {
   '/_layout/sessions/$id': typeof LayoutSessionsIdRouteWithChildren
   '/_layout/sources/$ip': typeof LayoutSourcesIpRouteWithChildren
   '/_layout/tty-replay/$shasum': typeof LayoutTtyReplayShasumRoute
+  '/api/chart/$name': typeof ApiChartNameRoute
   '/api/export/$name': typeof ApiExportNameRoute
+  '/api/topology/flow': typeof ApiTopologyFlowRoute
   '/_layout/agent-campaigns/': typeof LayoutAgentCampaignsIndexRoute
   '/_layout/alerts/': typeof LayoutAlertsIndexRoute
   '/_layout/auth-events/': typeof LayoutAuthEventsIndexRoute
@@ -1786,7 +1804,9 @@ export interface FileRouteTypes {
     | '/sessions/$id'
     | '/sources/$ip'
     | '/tty-replay/$shasum'
+    | '/api/chart/$name'
     | '/api/export/$name'
+    | '/api/topology/flow'
     | '/agent-campaigns/'
     | '/alerts/'
     | '/auth-events/'
@@ -1957,7 +1977,9 @@ export interface FileRouteTypes {
     | '/sandbox/$job'
     | '/sandbox/vnc'
     | '/tty-replay/$shasum'
+    | '/api/chart/$name'
     | '/api/export/$name'
+    | '/api/topology/flow'
     | '/agent-campaigns'
     | '/alerts'
     | '/auth-events'
@@ -2141,7 +2163,9 @@ export interface FileRouteTypes {
     | '/_layout/sessions/$id'
     | '/_layout/sources/$ip'
     | '/_layout/tty-replay/$shasum'
+    | '/api/chart/$name'
     | '/api/export/$name'
+    | '/api/topology/flow'
     | '/_layout/agent-campaigns/'
     | '/_layout/alerts/'
     | '/_layout/auth-events/'
@@ -2281,7 +2305,9 @@ export interface RootRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthLogoutRoute: typeof AuthLogoutRoute
   ExportPortbridgeManualBlackholeDottxtRoute: typeof ExportPortbridgeManualBlackholeDottxtRoute
+  ApiChartNameRoute: typeof ApiChartNameRoute
   ApiExportNameRoute: typeof ApiExportNameRoute
+  ApiTopologyFlowRoute: typeof ApiTopologyFlowRoute
   ApiCanarytokenIdDownloadRoute: typeof ApiCanarytokenIdDownloadRoute
   ApiPayloadHashDownloadRoute: typeof ApiPayloadHashDownloadRoute
   ApiRawReportKindShaRoute: typeof ApiRawReportKindShaRoute
@@ -2803,11 +2829,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutTtyReplayShasumRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/api/chart/$name': {
+      id: '/api/chart/$name'
+      path: '/api/chart/$name'
+      fullPath: '/api/chart/$name'
+      preLoaderRoute: typeof ApiChartNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/export/$name': {
       id: '/api/export/$name'
       path: '/api/export/$name'
       fullPath: '/api/export/$name'
       preLoaderRoute: typeof ApiExportNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/topology/flow': {
+      id: '/api/topology/flow'
+      path: '/api/topology/flow'
+      fullPath: '/api/topology/flow'
+      preLoaderRoute: typeof ApiTopologyFlowRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout/agent-campaigns/$id/': {
@@ -4099,7 +4139,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLogoutRoute: AuthLogoutRoute,
   ExportPortbridgeManualBlackholeDottxtRoute:
     ExportPortbridgeManualBlackholeDottxtRoute,
+  ApiChartNameRoute: ApiChartNameRoute,
   ApiExportNameRoute: ApiExportNameRoute,
+  ApiTopologyFlowRoute: ApiTopologyFlowRoute,
   ApiCanarytokenIdDownloadRoute: ApiCanarytokenIdDownloadRoute,
   ApiPayloadHashDownloadRoute: ApiPayloadHashDownloadRoute,
   ApiRawReportKindShaRoute: ApiRawReportKindShaRoute,
