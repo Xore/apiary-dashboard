@@ -4,6 +4,7 @@
 // operator got here, not only what they saw. Shown when the admin setting
 // allows it. Secrets are stripped before the report is stored; the form
 // shows exactly what will be attached.
+import { ActionLink } from '#/components/ActionLink'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
@@ -12,7 +13,6 @@ import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Layout, LayoutContent, LayoutFooter } from '@astryxdesign/core/Layout'
-import { Link } from '@astryxdesign/core/Link'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { TextArea } from '@astryxdesign/core/TextArea'
@@ -171,7 +171,7 @@ export function ProblemReportButton() {
           content={
             <LayoutContent>
               {filed ? (
-                <Banner status="success" title="Report filed" description="Thank you. It lands with the operators, with what led up to it attached." endContent={<Link href={`/problem-reports/${filed}`}>Open the report</Link>} />
+                <Banner status="success" title="Report filed" description="Thank you. It lands with the operators, with what led up to it attached." endContent={<ActionLink href={`/problem-reports/${filed}`}>Open the report</ActionLink>} />
               ) : (
                 <VStack gap={4}>
                   <TextArea

@@ -1,8 +1,8 @@
+import { ActionLink } from '#/components/ActionLink'
 import type { ReactNode } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { Icon } from '@astryxdesign/core/Icon'
-import { Link } from '@astryxdesign/core/Link'
 import { HStack } from '@astryxdesign/core/Stack'
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
 import { PageFrame } from './PageFrame'
@@ -24,7 +24,7 @@ export function NotFound({ title = 'Page not found', description = 'Nothing live
         actions={
           <HStack gap={3} vAlign="center">
             <Button label="Go back" variant="secondary" onClick={() => window.history.back()} />
-            <Link href="/">Overview</Link>
+            <ActionLink href="/">Overview</ActionLink>
           </HStack>
         }
       />

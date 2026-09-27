@@ -1,4 +1,4 @@
-import { Link } from '@astryxdesign/core/Link'
+import { ActionLink } from '#/components/ActionLink'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel } from '@astryxdesign/core/Table'
@@ -17,7 +17,7 @@ function SensorExposure() {
   if (!exposure) return <Text type="supporting">This sensor is not in the fleet topology.</Text>
   return (
     <VStack gap={4}>
-      <Panel title="How it is reached" action={<Link href="/topology">Fleet topology</Link>}>
+      <Panel title="How it is reached" action={<ActionLink href="/topology">Fleet topology</ActionLink>}>
         <MetadataList label={{ position: 'start', width: 112 }}>
           <MetadataListItem label="Ingress">
             <HStack gap={1}>

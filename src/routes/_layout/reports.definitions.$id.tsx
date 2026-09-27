@@ -1,3 +1,4 @@
+import { ActionLink } from '#/components/ActionLink'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Link } from '@astryxdesign/core/Link'
@@ -78,7 +79,7 @@ function DefinitionPage() {
       kind="Report definition"
       title={d.name}
       basePath={`/reports/definitions/${d.id}`}
-      actions={<Link href="/reports/library">Report library</Link>}
+      actions={<ActionLink href="/reports/library">Report library</ActionLink>}
       facts={[
         { label: 'Schedule', value: describeSchedule(d.schedule) },
         { label: 'Created', value: formatDateTime(d.created) },

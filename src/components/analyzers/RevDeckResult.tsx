@@ -1,6 +1,6 @@
+import { ActionLink } from '#/components/ActionLink'
 import { Banner } from '@astryxdesign/core/Banner'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
-import { Link } from '@astryxdesign/core/Link'
 import { List, ListItem } from '@astryxdesign/core/List'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -23,7 +23,7 @@ export function RevDeckResult({ run }: { run: RevDeckRun }) {
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap">
           <EntityLink kind="payload" id={run.sha}><Text type="code">{`${run.sha.slice(0, 24)}…`}</Text></EntityLink>
-          <Link href={`/ghidra/${run.sha}`}>Ghidra result</Link>
+          <ActionLink href={`/ghidra/${run.sha}`}>Ghidra result</ActionLink>
           <Text type="supporting">{formatDateTime(run.at)}</Text>
         </HStack>
         {run.status === 'failed' ? (

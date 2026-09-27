@@ -1,3 +1,4 @@
+import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { virusTotalLink } from '#/lib/toolLinks'
 import { OpenInMenu } from '#/components/OpenInMenu'
@@ -115,7 +116,7 @@ function AttackVectorsPanel({ views }: { views: OverviewViews }) {
 function LiveView({ views, recent, timeline, start }: { views: OverviewViews; recent: HoneypotEvent[]; timeline: Parameters<typeof ProtocolTimeline>[0]['buckets']; start: string }) {
   return (
     <VStack gap={4}>
-      <Panel title="Activity, last 24h" action={<Link href="/events">Event explorer</Link>}>
+      <Panel title="Activity, last 24h" action={<ActionLink href="/events">Event explorer</ActionLink>}>
         <SensorHeatmap rows={views.heatmap} startIso={start} />
       </Panel>
       <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
@@ -124,10 +125,10 @@ function LiveView({ views, recent, timeline, start }: { views: OverviewViews; re
         </Panel>
         <AttackVectorsPanel views={views} />
       </Grid>
-      <Panel title="Attack origins" action={<Link href="/ips">Attack sources</Link>}>
+      <Panel title="Attack origins" action={<ActionLink href="/ips">Attack sources</ActionLink>}>
         <WorldMap points={views.mapPoints} />
       </Panel>
-      <Panel title="Recent events" action={<Link href="/events">All events</Link>}>
+      <Panel title="Recent events" action={<ActionLink href="/events">All events</ActionLink>}>
         <Table data={recent} columns={eventColumns} idKey="id" density="compact" textOverflow="truncate" hasHover />
       </Panel>
     </VStack>
@@ -148,13 +149,13 @@ function HealthView({ views }: { views: OverviewViews }) {
   return (
     <VStack gap={4}>
       <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
-        <Panel title="Sensor feeds" action={<Link href="/source-health">Source & pipeline health</Link>}>
+        <Panel title="Sensor feeds" action={<ActionLink href="/source-health">Source & pipeline health</ActionLink>}>
           <Table data={views.feeds} columns={feedColumns} idKey="sensor" density="compact" />
         </Panel>
         <MiniTable title="Protocols probed" header="Protocol" rows={views.protocols} linkTo={(p) => `/events?proto=${p}`} />
       </Grid>
       {showMl && (
-        <Panel title="ML classification backlog, last 7 days" action={<Link href="/ml-anomalies">ML anomalies</Link>}>
+        <Panel title="ML classification backlog, last 7 days" action={<ActionLink href="/ml-anomalies">ML anomalies</ActionLink>}>
           <SeriesLines data={views.mlBacklog} series={[{ key: 'classified', label: 'Classified' }, { key: 'pending', label: 'Pending' }]} dayTicks />
         </Panel>
       )}
@@ -193,7 +194,7 @@ function ThreatsView({ views, section }: { views: OverviewViews; section?: strin
         </VStack>
       )}
       {current === 'exploits' && (
-        <Panel title="Top exploited CVEs / named incidents, last 7 days" action={<Link href="/iocs?kind=cve">All CVEs</Link>}>
+        <Panel title="Top exploited CVEs / named incidents, last 7 days" action={<ActionLink href="/iocs?kind=cve">All CVEs</ActionLink>}>
           <RankBars rows={views.cves} />
         </Panel>
       )}
@@ -287,10 +288,10 @@ function EvidenceView({ views }: { views: OverviewViews }) {
         <MiniTable title="Suricata alerts" header="Signature" rows={views.alerts} linkTo={(sig) => `/history?q=${encodeURIComponent(sig)}`} />
         <MiniTable title="Alert categories" header="Category" rows={views.alertCategories} />
       </Grid>
-      <Panel title="Captured payloads" action={<Link href="/payloads">All payloads</Link>}>
+      <Panel title="Captured payloads" action={<ActionLink href="/payloads">All payloads</ActionLink>}>
         <Table data={views.payloads} columns={payloadColumns} idKey="hash" density="compact" />
       </Panel>
-      <Panel title="Correlated campaigns, rolling 7 days" action={<Link href="/campaigns">All campaigns</Link>}>
+      <Panel title="Correlated campaigns, rolling 7 days" action={<ActionLink href="/campaigns">All campaigns</ActionLink>}>
         <Table data={views.campaigns} columns={campaignColumns} idKey="cidr" density="compact" />
       </Panel>
     </VStack>

@@ -1,3 +1,4 @@
+import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { Link } from '@astryxdesign/core/Link'
 import { apiHref } from '#/lib/apiHref'
@@ -89,7 +90,7 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
               )}
               {g.runUrl && (
                 <MetadataListItem label="Scan">
-                  <Link href={g.runUrl} target="_blank" rel="noopener noreferrer">Actions run</Link>
+                  <ActionLink href={g.runUrl} external>Actions run</ActionLink>
                 </MetadataListItem>
               )}
             </MetadataList>

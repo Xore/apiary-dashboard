@@ -1,6 +1,6 @@
+import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
-import { Link } from '@astryxdesign/core/Link'
 import { List, ListItem } from '@astryxdesign/core/List'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -76,7 +76,7 @@ export function AlertOverview({ group }: { group: AlertGroup }) {
           </MetadataListItem>
         )}
       </MetadataList>
-      {link && <Link href={link}>Show the events behind this alert</Link>}
+      {link && <ActionLink href={link}>Show the events behind this alert</ActionLink>}
     </Panel>
   )
 }

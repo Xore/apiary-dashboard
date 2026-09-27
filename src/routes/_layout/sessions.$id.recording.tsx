@@ -1,4 +1,4 @@
-import { Link } from '@astryxdesign/core/Link'
+import { ActionLink } from '#/components/ActionLink'
 import { HStack } from '@astryxdesign/core/Stack'
 import { RecordingDownloads } from '#/components/RecordingDownloads'
 import { Text } from '@astryxdesign/core/Text'
@@ -32,7 +32,7 @@ function SessionRecording() {
       action={
         <HStack gap={3} vAlign="center">
           <RecordingDownloads shasum={recording.shasum} />
-          <Link href={`/recordings/${recording.shasum}`}>Open recording</Link>
+          <ActionLink href={`/recordings/${recording.shasum}`}>Open recording</ActionLink>
         </HStack>
       }
     >

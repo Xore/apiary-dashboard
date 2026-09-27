@@ -1,4 +1,4 @@
-import { Link } from '@astryxdesign/core/Link'
+import { ActionLink } from '#/components/ActionLink'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
@@ -20,8 +20,8 @@ function KillChainPage() {
       description="How attackers progress through MITRE ATT&CK tactics. Behavior context only, never actor attribution."
       actions={
         <>
-          <Link href="/campaigns">Network campaigns</Link>
-          <Link href="/attackers">Attacker identities</Link>
+          <ActionLink href="/campaigns">Network campaigns</ActionLink>
+          <ActionLink href="/attackers">Attacker identities</ActionLink>
         </>
       }
     >
@@ -33,7 +33,7 @@ function KillChainPage() {
           </Text>
           <FlowSankey flow={data.flow} />
         </Panel>
-        <Panel title="Campaign timeline" action={<Link href="/campaigns">All campaigns</Link>}>
+        <Panel title="Campaign timeline" action={<ActionLink href="/campaigns">All campaigns</ActionLink>}>
           <Text color="secondary">Current network campaigns, from first to last observed activity.</Text>
           <CampaignTimeline rows={data.timeline} />
         </Panel>

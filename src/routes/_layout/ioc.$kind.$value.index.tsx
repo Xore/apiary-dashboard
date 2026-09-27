@@ -1,5 +1,5 @@
+import { ActionLink } from '#/components/ActionLink'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { VStack } from '@astryxdesign/core/Stack'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
@@ -25,7 +25,7 @@ function IocOverview() {
         <StatTile label="Sessions" value={ioc.sessions.length} href={`${base}/sessions`} />
         <StatTile label="Payloads after it" value={ioc.payloads.length} href={`${base}/payloads`} />
       </Grid>
-      <EventsPanel title="Newest events" events={ioc.events.slice(0, 5)} showSource action={<Link href={`${base}/events`}>All events</Link>} />
+      <EventsPanel title="Newest events" events={ioc.events.slice(0, 5)} showSource action={<ActionLink href={`${base}/events`}>All events</ActionLink>} />
       <RelatedPanel center={ioc.value} groups={Route.useLoaderData()} />
     </VStack>
   )
