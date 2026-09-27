@@ -176,7 +176,7 @@ step "when the session store or the identity provider does not answer"
 # A second server with the mock faults on (src/server/faults.ts): nothing
 # crashes, nobody is signed in by accident, and the sign-in pages say why.
 FAULT_PORT=$((PORT + 1))
-body() { curl -s --max-time 5 "${@:2}" "http://localhost:$FAULT_PORT$1"; }
+body() { curl -s --max-time 5 "${@:2}" "http://localhost:$FAULT_PORT$1" | tr -d '\0'; }
 code() { curl -s -o /dev/null -w '%{http_code}' --max-time 5 "${@:2}" "http://localhost:$FAULT_PORT$1"; }
 contains() { if grep -q "$3" <<<"$2"; then printf '  ok   %s\n' "$1"; else printf '  FAIL %s (no "%s")\n' "$1" "$3"; failed=1; fi; }
 for fault in session-store identity-provider; do
