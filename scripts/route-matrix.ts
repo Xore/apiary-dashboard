@@ -19,6 +19,10 @@ export type Row = {
   destination: string[]
   status: Status
   note: string
+  /** Who enforces the canonical boundary, for a direct handler or auth
+   * route; pages are all behind the navigation guard and the function
+   * middleware. */
+  security?: string
 }
 
 const P2 = 'Phase 2'
@@ -72,28 +76,28 @@ export const ROWS: Row[] = [
   { source: 'tty-replay.$shasum.tsx', destination: ['/tty-replay/$shasum', '/recordings/$shasum'], status: 'replaced', note: 'Redirects to the recording entity page.' },
 
   // ---- Sign-in ----------------------------------------------------------------
-  { source: 'auth/login.ts', destination: ['/auth/login'], status: 'implemented', note: `Mock identity provider and the unavailable page; Keycloak PKCE in ${P2} (#5).` },
-  { source: 'auth/callback.ts', destination: ['/auth/callback'], status: 'implemented', note: `The three failures production tells apart; the code exchange and Redis session in ${P2} (#5).` },
-  { source: 'auth/logout.ts', destination: ['/auth/logout'], status: 'implemented', note: `Mock sign-out; RP-initiated logout and the cross-origin 403 in ${P2} (#5).` },
+  { source: 'auth/login.ts', destination: ['/auth/login'], status: 'implemented', note: `Mock identity provider and the unavailable page; Keycloak PKCE in ${P2} (#5).` , security: 'public; PKCE state and verifier kept one-time in Redis; safe `return_to`; the dev bypass only with `OIDC_DISABLED`' },
+  { source: 'auth/callback.ts', destination: ['/auth/callback'], status: 'implemented', note: `The three failures production tells apart; the code exchange and Redis session in ${P2} (#5).` , security: 'public; completes the PKCE exchange against the one-time state; provider errors render as pages' },
+  { source: 'auth/logout.ts', destination: ['/auth/logout'], status: 'implemented', note: `Mock sign-out; RP-initiated logout and the cross-origin 403 in ${P2} (#5).` , security: 'same-origin `Origin`/`Referer` required (cross-origin 403, #3153); destroys the Redis session, then Keycloak end-session' },
 
   // ---- Direct handlers ----------------------------------------------------------
-  { source: 'api/artifact.$kind.$key.$filename.ts', destination: ['/api/artifact/$kind/$key/$filename'], status: 'implemented', note: 'Mock files built from the run.' },
-  { source: 'api/canarytoken.$id.download.ts', destination: ['/api/canarytoken/$id/download'], status: 'implemented', note: 'Mock token files.' },
-  { source: 'api/export.$name.ts', destination: ['/api/export/$name'], status: 'implemented', note: 'Same allowlist; full scope, capped at the export limit.' },
-  { source: 'api/payload.$hash.download.ts', destination: ['/api/payload/$hash/download'], status: 'implemented', note: 'Admins only; a harmless stand-in for the live bytes.' },
-  { source: 'api/raw-report.$kind.$sha.ts', destination: ['/api/raw-report/$kind/$sha'], status: 'implemented', note: '' },
-  { source: 'api/recording.$shasum.$format.ts', destination: ['/api/recording/$shasum/$format'], status: 'implemented', note: 'asciicast v2 and the raw log.' },
-  { source: 'api/report.$id.pdf.ts', destination: ['/api/report/$id/pdf'], status: 'implemented', note: 'A real PDF from the report\'s sections.' },
-  { source: 'api/chart.$name.ts', destination: [], status: 'pending', note: `Chart payloads come through the data seam on mock data; the session-guarded proxy to the Rust tier is ${P2} (#6).` },
-  { source: 'api/live.ts', destination: [], status: 'pending', note: `The live stream is simulated in the browser (src/data/liveStream.ts); the SSE proxy with its admission gate is ${P2} (#6).` },
-  { source: 'api/topology.flow.ts', destination: [], status: 'pending', note: `The topology comes through the data seam on mock data; the proxy is ${P2} (#6).` },
+  { source: 'api/artifact.$kind.$key.$filename.ts', destination: ['/api/artifact/$kind/$key/$filename'], status: 'implemented', note: 'Mock files built from the run.' , security: 'handler\'s own session check; artifact admission gate' },
+  { source: 'api/canarytoken.$id.download.ts', destination: ['/api/canarytoken/$id/download'], status: 'implemented', note: 'Mock token files.' , security: 'handler\'s own session check; admission gate' },
+  { source: 'api/export.$name.ts', destination: ['/api/export/$name'], status: 'implemented', note: 'Same allowlist; full scope, capped at the export limit.' , security: 'handler\'s own session check; name allowlist; export admission gate' },
+  { source: 'api/payload.$hash.download.ts', destination: ['/api/payload/$hash/download'], status: 'implemented', note: 'Admins only; a harmless stand-in for the live bytes.' , security: 'handler\'s own session check, then admin role; hash validated; payload admission gate' },
+  { source: 'api/raw-report.$kind.$sha.ts', destination: ['/api/raw-report/$kind/$sha'], status: 'implemented', note: '' , security: 'handler\'s own session check; kind allowlist; admission gate' },
+  { source: 'api/recording.$shasum.$format.ts', destination: ['/api/recording/$shasum/$format'], status: 'implemented', note: 'asciicast v2 and the raw log.' , security: 'handler\'s own session check; shasum and format validated; admission gate' },
+  { source: 'api/report.$id.pdf.ts', destination: ['/api/report/$id/pdf'], status: 'implemented', note: 'A real PDF from the report\'s sections.' , security: 'handler\'s own session check; PDF admission gate' },
+  { source: 'api/chart.$name.ts', destination: [], status: 'pending', note: `Chart payloads come through the data seam on mock data; the session-guarded proxy to the Rust tier is ${P2} (#6).` , security: 'handler\'s own session check; chart allowlist' },
+  { source: 'api/live.ts', destination: [], status: 'pending', note: `The live stream is simulated in the browser (src/data/liveStream.ts); the SSE proxy with its admission gate is ${P2} (#6).` , security: 'handler\'s own session check; stream admission gate (503 when full)' },
+  { source: 'api/topology.flow.ts', destination: [], status: 'pending', note: `The topology comes through the data seam on mock data; the proxy is ${P2} (#6).` , security: 'handler\'s own session check' },
 
   // ---- Infrastructure -------------------------------------------------------------
-  { source: 'healthz.ts', destination: ['/healthz'], status: 'implemented', note: 'Unauthenticated, always 200: the Traefik and Docker probe.' },
-  { source: 'export.portbridge-manual-blackhole[.]txt.ts', destination: ['/export/portbridge-manual-blackhole.txt'], status: 'implemented', note: 'The firewall puller\'s list, byte for byte; no session, 5xx on outage.' },
-  { source: 'metrics.ts', destination: [], status: 'pending', note: `Prometheus baseline behind the service token: ${P2} (#5, #7).` },
-  { source: 'bff.$.ts', destination: [], status: 'pending', note: `The tier boundary for a split frontend host: ${P2} (#5).` },
-  { source: 'bff-mounted.$.ts', destination: [], status: 'pending', note: `The same seam to backend-service-mounted: ${P2} (#5).` },
+  { source: 'healthz.ts', destination: ['/healthz'], status: 'implemented', note: 'Unauthenticated, always 200: the Traefik and Docker probe.' , security: 'public by design: the infrastructure probe' },
+  { source: 'export.portbridge-manual-blackhole[.]txt.ts', destination: ['/export/portbridge-manual-blackhole.txt'], status: 'implemented', note: 'The firewall puller\'s list, byte for byte; no session, 5xx on outage.' , security: 'no session by design: the WireGuard tunnel is the trust boundary; the backend call carries the service token' },
+  { source: 'metrics.ts', destination: [], status: 'pending', note: `Prometheus baseline behind the service token: ${P2} (#5, #7).` , security: 'inbound service token (`x-service-token`); refuses when none is configured' },
+  { source: 'bff.$.ts', destination: [], status: 'pending', note: `The tier boundary for a split frontend host: ${P2} (#5).` , security: '`proxyToRust`: serve-mode gate and inbound service token' },
+  { source: 'bff-mounted.$.ts', destination: [], status: 'pending', note: `The same seam to backend-service-mounted: ${P2} (#5).` , security: '`proxyToRust`: serve-mode gate and inbound service token' },
 ]
 
 const LEGEND: Record<Status, string> = {
@@ -101,6 +105,11 @@ const LEGEND: Record<Status, string> = {
   replaced: 'the old path redirects to its new home in the rewrite',
   pending: 'not in the rewrite yet; the note says what stands in and where it is tracked',
 }
+
+/** Every page: the root route's navigation guard (session, else sign-in
+ * with a safe return path), and its data through server functions behind
+ * the global middleware (same-origin, then session). */
+const PAGE_SECURITY = 'navigation guard; function middleware'
 
 export function renderMatrix(rows: Row[] = ROWS): string {
   const count = (status: Status) => rows.filter((r) => r.status === status).length
@@ -114,9 +123,11 @@ export function renderMatrix(rows: Row[] = ROWS): string {
     '',
     ...(['implemented', 'replaced', 'pending'] as const).map((s) => `- **${s}**: ${LEGEND[s]}`),
     '',
-    '| Canonical module | Rewrite | Status | Note | Slice |',
-    '|---|---|---|---|---|',
-    ...rows.map((r) => `| \`${cell(r.source)}\` | ${r.destination.map((d) => `\`${cell(d)}\``).join('<br>') || '—'} | ${r.status} | ${cell(r.note)} | ${sliceRef(sliceOfRoute(r.source))} |`),
+    '**Security owner** is who enforces the canonical boundary. Pages rely on the root route\'s navigation guard and on the global function middleware (same-origin, then session) for their data; direct handlers do not pass through either, so each names its own.',
+    '',
+    '| Canonical module | Rewrite | Status | Note | Security owner | Slice |',
+    '|---|---|---|---|---|---|',
+    ...rows.map((r) => `| \`${cell(r.source)}\` | ${r.destination.map((d) => `\`${cell(d)}\``).join('<br>') || '—'} | ${r.status} | ${cell(r.note)} | ${cell(r.security ?? PAGE_SECURITY)} | ${sliceRef(sliceOfRoute(r.source))} |`),
     '',
     'Each row links its Phase 2 slice (`slices.md`). Server functions with their permissions and data fields: `server-functions.md`; per-route data, mutations and states: `routes.md`; the shell: `shell.md`.',
     '',
