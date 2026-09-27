@@ -25,27 +25,25 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
-    "@astryxdesign/cli": "^0.6.2",
     "@astryxdesign/core": "^0.6.2",
     "@astryxdesign/theme-neutral": "^0.6.2",
     "@heroicons/react": "^2.2.0",
-    "@stylexjs/stylex": "^0.19.1",
-    "@tailwindcss/vite": "^4.1.18",
-    "@tanstack/react-devtools": "0.10.12",
     "@tanstack/react-router": "1.170.38",
-    "@tanstack/react-router-devtools": "1.167.2",
     "@tanstack/react-start": "1.168.57",
     "d3-geo": "^3.1.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.10.1",
-    "tailwindcss": "^4.1.18",
-    "topojson-client": "^3.1.0",
-    "world-atlas": "^2.0.2"
+    "topojson-client": "^3.1.0"
   },
   "devDependencies": {
+    "@astryxdesign/cli": "^0.6.2",
+    "@stylexjs/stylex": "^0.19.1",
+    "@tailwindcss/vite": "^4.1.18",
     "@tanstack/devtools-vite": "0.8.5",
     "@tanstack/eslint-config": "0.4.0",
+    "@tanstack/react-devtools": "0.10.12",
+    "@tanstack/react-router-devtools": "1.167.2",
     "@tanstack/router-cli": "1.167.38",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
@@ -63,9 +61,11 @@
     "jsdom": "^30.1.1",
     "playwright-core": "^1.63.0",
     "prettier": "^3.8.1",
+    "tailwindcss": "^4.1.18",
     "typescript": "^6.0.2",
     "vite": "^8.0.0",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.1",
+    "world-atlas": "^2.0.2"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
