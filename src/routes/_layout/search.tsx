@@ -16,6 +16,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
 import { PageFrame } from '#/components/PageFrame'
 import { searchAll } from '#/data/queries'
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
 
 export const Route = createFileRoute('/_layout/search')({
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
@@ -24,17 +26,18 @@ export const Route = createFileRoute('/_layout/search')({
   loaderDeps: ({ search }) => ({ q: search.q ?? '' }),
   loader: ({ deps }) => searchAll(deps.q, 50),
   component: SearchPage,
+  pendingComponent: SearchPage,
 })
 
 function SearchPage() {
-  const groups = Route.useLoaderData()
+  const groups = orPending(Route.useLoaderData())
   const { q } = Route.useSearch()
   const navigate = Route.useNavigate()
   const [draft, setDraft] = useState(q ?? '')
   const run = () => void navigate({ search: { q: draft.trim() || undefined } })
 
   return (
-    <PageFrame title="Search" description="Grouped matches across sources, sessions, payloads, commands, credentials, fingerprints, and signatures.">
+    <PageFrame title="Search" description="Grouped matches across everything the dashboard shows: sources, networks, campaigns, alerts, anomalies, payloads, reports, and more.">
       <VStack gap={5}>
         <HStack gap={2} vAlign="end">
           <StackItem size="fill">
@@ -44,6 +47,8 @@ function SearchPage() {
         </HStack>
         {!q ? (
           <EmptyState icon={<Icon icon={MagnifyingGlassIcon} size="lg" />} title="Search everything" description="Try an IP prefix like 198.51, a username like root, or a family like Mirai." />
+        ) : !groups ? (
+          <SkeletonPanels count={4} lines={5} />
         ) : groups.length === 0 ? (
           <EmptyState icon={<Icon icon={MagnifyingGlassIcon} size="lg" />} title={`Nothing matched “${q}”`} description="Try a shorter term, or look it up as an indicator." />
         ) : (
