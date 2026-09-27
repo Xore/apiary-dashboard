@@ -1,0 +1,57 @@
+name: Pull request title
+
+# Pull requests are squash-merged, so the title becomes the commit on main:
+# it must be a conventional commit (feat:, fix:, docs:, ci:, …), which the
+# release notes group by.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  title:
+    name: Conventional title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            ci
+            chore
+            refactor
+            test
+            perf
+            build
+            style
+            revert
+          requireScope: false
+
+  label:
+    name: Label by kind
+    runs-on: ubuntu-latest
+    # A fork's token cannot write labels; its PRs are labelled by hand.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: The kind in the title becomes the release-notes label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TITLE: ${{ github.event.pull_request.title }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          kind="$(sed -nE 's/^([a-z]+)(\([^)]*\))?!?:.*/\1/p' <<<"$TITLE")"
+          case "$kind" in
+            feat) label=enhancement ;;
+            fix) label=bug ;;
+            docs) label=documentation ;;
+            ci | build) label=ci ;;
+            *) exit 0 ;;
+          esac
+          gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --add-label "$label"
