@@ -1,4 +1,4 @@
-import { Link } from '@astryxdesign/core/Link'
+import { ActionLink } from '#/components/ActionLink'
 import { attckUrl } from '#/components/DetailBlocks'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -40,7 +40,7 @@ function IdentityOverview() {
             ))}
           </HStack>
         )}
-        {a.ips.length > 0 && <Link href={`/recordings?ip=${encodeURIComponent(a.ips[0])}`}>Session recordings</Link>}
+        {a.ips.length > 0 && <ActionLink href={`/recordings?ip=${encodeURIComponent(a.ips[0])}`}>Session recordings</ActionLink>}
       </Panel>
       <GroupOverview group={group} base={`/identities/${a.id}`} sourcesTab="members" />
       <RelatedPanel center={a.id.slice(0, 8)} groups={Route.useLoaderData()} />

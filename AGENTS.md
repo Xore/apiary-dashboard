@@ -31,3 +31,7 @@ MORE CLI:
   swizzle <Name>     eject component source for deep customization
   upgrade --apply    run after any Astryx or integration dependency bump
 <!-- ASTRYX:END -->
+
+## Project conventions
+
+- **Links vs. buttons.** A link that is an action (go to the full list, open the report, back to the list, a panel's or a page's action, a banner's follow-up) is `ActionLink` (`src/components/ActionLink.tsx`): it looks like a button. A link that is data (an address, a hash, a name or count in a table or a sentence, an entity via `EntityLink`) stays a `Link`.

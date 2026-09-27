@@ -1,5 +1,5 @@
+import { ActionLink } from '#/components/ActionLink'
 import { Divider } from '@astryxdesign/core/Divider'
-import { Link } from '@astryxdesign/core/Link'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -62,7 +62,7 @@ function SensorEvents() {
   const { sensor, reading } = detail
   return (
     <VStack gap={4}>
-      <Panel title="What it captured" action={<Link href={`/events?sensor=${sensor.id}`}>All events</Link>}>
+      <Panel title="What it captured" action={<ActionLink href={`/events?sensor=${sensor.id}`}>All events</ActionLink>}>
         <Text type="supporting">{reading.what}. The newest events, with this sensor's own fields; open a row for the full record.</Text>
         <Table data={detail.recentEvents} columns={columnsFor(reading)} idKey="id" density="compact" textOverflow="truncate" />
       </Panel>

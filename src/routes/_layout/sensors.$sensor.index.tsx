@@ -1,6 +1,6 @@
+import { ActionLink } from '#/components/ActionLink'
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Heading, Text } from '@astryxdesign/core/Text'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -33,7 +33,7 @@ function SensorOverview() {
           ))}
         </Grid>
       </Panel>
-      <Panel title="Activity" action={<Link href={`/events?sensor=${sensor.id}`}>All events</Link>}>
+      <Panel title="Activity" action={<ActionLink href={`/events?sensor=${sensor.id}`}>All events</ActionLink>}>
         <Text type="supporting">Events per hour over the last 24 hours. First seen {formatDateTime(detail.firstSeen)}.</Text>
         <ProtocolTimeline buckets={detail.timeline} />
       </Panel>

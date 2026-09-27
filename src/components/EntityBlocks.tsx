@@ -1,3 +1,4 @@
+import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { Link } from '@astryxdesign/core/Link'
 import { List, ListItem } from '@astryxdesign/core/List'
@@ -209,7 +210,7 @@ export function GroupOverview({ group, base, sourcesTab, eventsTab }: { group: S
         <StatTile label="Tunnel connections" value={group.tunnelConnections} />
         <StatTile label="Sensors reached" value={group.sensors.length} href={`${base}/breakdown`} />
       </Grid>
-      <EventsPanel title="Newest events" events={group.events.slice(0, 5)} showSource action={eventsTab && <Link href={`${base}/${eventsTab}`}>All events</Link>} empty="No events." />
+      <EventsPanel title="Newest events" events={group.events.slice(0, 5)} showSource action={eventsTab && <ActionLink href={`${base}/${eventsTab}`}>All events</ActionLink>} empty="No events." />
     </VStack>
   )
 }

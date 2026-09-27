@@ -1,8 +1,8 @@
+import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
-import { Link } from '@astryxdesign/core/Link'
 import { HStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -85,7 +85,7 @@ function LibraryPage() {
               title={`Generated “${generated.title}”`}
               isDismissable
               onDismiss={() => setGenerated(null)}
-              endContent={<Link href={`/reports/generated/${generated.id}`}>Open the report</Link>}
+              endContent={<ActionLink href={`/reports/generated/${generated.id}`}>Open the report</ActionLink>}
             />
           )
         }

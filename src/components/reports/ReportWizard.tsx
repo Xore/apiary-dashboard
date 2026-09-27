@@ -17,6 +17,7 @@
  * every automatic result below it, because those were computed from inputs
  * that are now open for editing.
  */
+import { ActionLink } from '#/components/ActionLink'
 import { useEffect, useMemo, useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
@@ -25,7 +26,6 @@ import { CheckboxList, CheckboxListItem } from '@astryxdesign/core/CheckboxList'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { FormLayout } from '@astryxdesign/core/FormLayout'
 import { Icon } from '@astryxdesign/core/Icon'
-import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { NumberInput } from '@astryxdesign/core/NumberInput'
 import { RadioList, RadioListItem } from '@astryxdesign/core/RadioList'
@@ -514,8 +514,8 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
           description={result.definition ? `Saved to the Library as “${result.definition.name}”${draft.schedule ? `, runs ${describeSchedule(draft.schedule)}` : ''}.` : 'A one-off report; nothing was saved to the Library.'}
           endContent={
             <HStack gap={3} vAlign="center">
-              <Link href={`/reports/generated/${result.report.id}`}>Open the report</Link>
-              <Link href="/reports/history">History</Link>
+              <ActionLink href={`/reports/generated/${result.report.id}`}>Open the report</ActionLink>
+              <ActionLink href="/reports/history">History</ActionLink>
               <Button label="Create another" size="sm" variant="secondary" onClick={onRestart} />
             </HStack>
           }

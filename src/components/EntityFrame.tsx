@@ -1,9 +1,9 @@
+import { ActionLink } from '#/components/ActionLink'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Layout, LayoutContent, LayoutHeader } from '@astryxdesign/core/Layout'
-import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Heading, Text } from '@astryxdesign/core/Text'
@@ -72,7 +72,7 @@ function ListStepper({ basePath, tab }: { basePath: string; tab: string }) {
   if (!context || index < 0) return null
   return (
     <HStack gap={2} vAlign="center">
-      <Link href={context.listHref}>{`Back to ${context.listTitle}`}</Link>
+      <ActionLink href={context.listHref}>{`Back to ${context.listTitle}`}</ActionLink>
       <Text type="supporting">
         {formatNumber(index + 1)} of {formatNumber(context.hrefs.length)}
       </Text>

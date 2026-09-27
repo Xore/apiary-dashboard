@@ -1,4 +1,4 @@
-import { Link } from '@astryxdesign/core/Link'
+import { ActionLink } from '#/components/ActionLink'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
@@ -16,7 +16,7 @@ const FEED_COLOR = { fresh: 'green', delayed: 'orange', stale: 'orange', silent:
 function SensorHealth() {
   const { detail, feed } = parent.useLoaderData()
   return (
-    <Panel title="Is its data arriving" action={<Link href="/source-health">Source & pipeline health</Link>}>
+    <Panel title="Is its data arriving" action={<ActionLink href="/source-health">Source & pipeline health</ActionLink>}>
       {feed ? (
         <MetadataList label={{ position: 'start', width: 144 }}>
           <MetadataListItem label="Feed">

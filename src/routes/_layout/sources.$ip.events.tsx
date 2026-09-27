@@ -1,5 +1,5 @@
+import { ActionLink } from '#/components/ActionLink'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
-import { Link } from '@astryxdesign/core/Link'
 import { EventsPanel } from '#/components/DetailBlocks'
 import { getSourceEvents } from '#/data/queries'
 
@@ -14,5 +14,5 @@ export const Route = createFileRoute('/_layout/sources/$ip/events')({
 function SourceEvents() {
   const events = Route.useLoaderData()
   const { ip } = parent.useParams()
-  return <EventsPanel title={`Events in range (${events.length})`} events={events} action={<Link href={`/events?ip=${ip}`}>Filter in Event explorer</Link>} empty="No events from this address in the time range." />
+  return <EventsPanel title={`Events in range (${events.length})`} events={events} action={<ActionLink href={`/events?ip=${ip}`}>Filter in Event explorer</ActionLink>} empty="No events from this address in the time range." />
 }

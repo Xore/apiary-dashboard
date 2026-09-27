@@ -1,6 +1,6 @@
+import { ActionLink } from '#/components/ActionLink'
 import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { Icon } from '@astryxdesign/core/Icon'
-import { Link } from '@astryxdesign/core/Link'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { ComputerDesktopIcon } from '@heroicons/react/24/outline'
@@ -31,7 +31,7 @@ function SandboxLivePage() {
             icon={<Icon icon={ComputerDesktopIcon} size="lg" />}
             title="No detonation is running"
             description="The view opens automatically when the Windows sandbox starts a sample."
-            actions={<Link href="/payload-workbench/results?tab=sandbox">Sandbox results</Link>}
+            actions={<ActionLink href="/payload-workbench/results?tab=sandbox">Sandbox results</ActionLink>}
           />
         )}
         <Text type="supporting">This page never controls the guest. Keyboard and mouse input are not forwarded.</Text>

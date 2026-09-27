@@ -3,6 +3,7 @@
 // contains and calls), data (what it references), deep dive (what a
 // reverse-engineering session recovered), and raw. Nothing here executes the
 // sample; names and strings from it are shown as text only.
+import { ActionLink } from '#/components/ActionLink'
 import { apiHref } from '#/lib/apiHref'
 import { ArtifactList } from './ArtifactList'
 import { useState } from 'react'
@@ -11,7 +12,6 @@ import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Grid } from '@astryxdesign/core/Grid'
-import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
@@ -403,7 +403,7 @@ export function GhidraResult({ g, fn, section }: { g: GhidraAnalysis; fn?: strin
           <Text type="supporting">
             {g.arch} · analyzed {formatDateTime(g.at)}
           </Text>
-          <Link href={`/revdeck/${sha}`}>RevDeck walkthrough</Link>
+          <ActionLink href={`/revdeck/${sha}`}>RevDeck walkthrough</ActionLink>
         </HStack>
         {queued && <Banner status="success" title={queued} description="Mock: nothing was actually queued." isDismissable onDismiss={() => setQueued(null)} />}
         {section === 'overview' && <Overview g={g} />}

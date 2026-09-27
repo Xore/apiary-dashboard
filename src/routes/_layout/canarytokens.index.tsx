@@ -1,7 +1,7 @@
+import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
-import { Link } from '@astryxdesign/core/Link'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -79,7 +79,7 @@ function CanarytokensPage() {
       actions={create}
       summary={
         minted && (
-          <Banner status="success" title={`Token created: ${minted.memo}`} description={minted.url} isDismissable onDismiss={() => setMinted(null)} endContent={<Link href={`/canarytokens/${encodeURIComponent(minted.id)}`}>Open token</Link>} />
+          <Banner status="success" title={`Token created: ${minted.memo}`} description={minted.url} isDismissable onDismiss={() => setMinted(null)} endContent={<ActionLink href={`/canarytokens/${encodeURIComponent(minted.id)}`}>Open token</ActionLink>} />
         )
       }
       rows={tokens}

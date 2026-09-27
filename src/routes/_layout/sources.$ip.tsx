@@ -1,4 +1,4 @@
-import { Link } from '@astryxdesign/core/Link'
+import { ActionLink } from '#/components/ActionLink'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { BlockControl } from '#/components/BlockControl'
@@ -50,7 +50,7 @@ function SourceLayout() {
       ]}
       actions={
         <>
-          <Link href={`/recordings?ip=${ip}`}>Recordings</Link>
+          <ActionLink href={`/recordings?ip=${ip}`}>Recordings</ActionLink>
           <BlockControl ip={ip} blocked={p.blocked} />
         </>
       }

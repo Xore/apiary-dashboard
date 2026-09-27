@@ -1,8 +1,8 @@
+import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Divider } from '@astryxdesign/core/Divider'
-import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Selector } from '@astryxdesign/core/Selector'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
@@ -131,7 +131,7 @@ export function CredentialInspector({
             description: t.type,
           }))}
         />
-        {linked && <Link href="/canarytokens">Open canarytokens</Link>}
+        {linked && <ActionLink href="/canarytokens">Open canarytokens</ActionLink>}
       </VStack>
     </VStack>
   )

@@ -1,8 +1,8 @@
+import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
-import { Link } from '@astryxdesign/core/Link'
 import { MoreMenu } from '@astryxdesign/core/MoreMenu'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -106,7 +106,7 @@ function PayloadsPage() {
           (published || queued) && (
             <VStack gap={2}>
               {published && <Banner status="success" title="Submitted for publication" description={`${published.slice(0, 16)}… was queued for the public analysis repository (mock).`} isDismissable onDismiss={() => setPublished(null)} />}
-              {queued && <Banner status="success" title={`Analysis run ${queued.id} queued`} description={`${queued.recipe ?? ''} on ${queued.file}…`} isDismissable onDismiss={() => setQueued(null)} endContent={<Link href="/payload-workbench/results">Analysis results</Link>} />}
+              {queued && <Banner status="success" title={`Analysis run ${queued.id} queued`} description={`${queued.recipe ?? ''} on ${queued.file}…`} isDismissable onDismiss={() => setQueued(null)} endContent={<ActionLink href="/payload-workbench/results">Analysis results</ActionLink>} />}
             </VStack>
           )
         }
