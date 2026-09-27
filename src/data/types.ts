@@ -58,6 +58,12 @@ export interface HoneypotEvent extends Record<string, unknown> {
   type: EventType
   severity: Severity
   srcIp: string
+  /** What the request itself claimed as its source (X-Forwarded-For), when
+   * it disagrees with the address portbridge recorded for the connection.
+   * The connection is the stronger evidence and is `srcIp`; a claim like
+   * this is most likely forged, and is kept because hiding it would hide
+   * the attempt. */
+  srcIpClaimed?: string
   srcPort: number
   dstPort: number
   country: string
@@ -528,6 +534,9 @@ export interface SourceHealth {
   runtime: { uptimeSeconds: number; rssBytes: number; vmBytes: number }
   pipeline: { state: 'running' | 'degraded' | 'stopped'; acked: number; failed: number; dropped: number; active: number; decodeFailures: number }
   deadLetters: number
+  /** Events in the last 24 h that arrived over the WireGuard tunnel with no
+   * recoverable client address: in every total, attributed to no source. */
+  unattributed24h: number
 }
 
 export interface TopologySensor extends Record<string, unknown> {
@@ -544,7 +553,9 @@ export type ContainerState = 'running' | 'restarting' | 'exited' | 'unknown'
 export interface Topology {
   flow: { nodes: Array<{ name: string }>; links: Array<{ source: number; target: number; value: number }> }
   sensors: TopologySensor[]
-  stacks: Array<{ stack: string; containers: Array<{ name: string; state: ContainerState }> }>
+  /** `unknown`: outside the services adapter's allowlist, so no live state
+   * is reported. `exitCode` on an exited container. */
+  stacks: Array<{ stack: string; containers: Array<{ name: string; state: ContainerState; exitCode?: number }> }>
 }
 
 // ---- Reports ---------------------------------------------------------------
@@ -599,6 +610,7 @@ export interface Facets {
   kinds: FacetValue[]
   personas: FacetValue[]
   providers: FacetValue[]
+  cities: FacetValue[]
 }
 
 /** What a draft definition would cover, checked before rendering. */
@@ -785,9 +797,22 @@ export interface SessionDetail {
   recordingShasum?: string
 }
 
+/** A manual block at portbridge: who set it, when, and until when (none:
+ * until someone lifts it). */
+export interface BlockRecord {
+  by: string
+  at: string
+  expiresAt?: string
+}
+
 export interface IpProfile {
   source: SourceProfile & { asn: string; riskScore: number; tags: string[] }
   blocked: boolean
+  block?: BlockRecord
+  /** A sandbox detonation of a sample that references this address
+   * connected to it: two independent pipelines agree. Informational; an
+   * absent badge means no such corroboration, not benign. */
+  confirmedMalicious: boolean
   events: HoneypotEvent[]
   sensors: CountRow[]
   credentials: CountRow[]
@@ -799,7 +824,7 @@ export interface IpProfile {
   payloads: CountRow[]
   alerts: CountRow[]
   techniques: Technique[]
-  correlation: { totalMatches: number; tunnelConnections: number; distinctSensors: number }
+  correlation: { totalMatches: number; tunnelConnections: number; distinctSensors: number; tunnelOsGuesses: string[] }
   attackerId?: string
 }
 
@@ -823,6 +848,9 @@ export interface SearchGroup {
   title: string
   total: number
   items: Array<{ label: string; detail: string; href: string }>
+  /** Where the rest of this group's matches are listed, when there are
+   * more than shown. */
+  moreHref?: string
 }
 
 export interface DeadLetter extends Record<string, unknown> {
@@ -1330,6 +1358,9 @@ export interface SourceGroup {
   /** Matches across honeypot, Suricata, and portbridge tunnel records. */
   totalMatches: number
   tunnelConnections: number
+  /** p0f's OS guesses for the tunnel connections (TCP/IP stack
+   * fingerprints), most frequent first. */
+  tunnelOsGuesses: string[]
   first?: string
   last?: string
   sensors: CountRow[]

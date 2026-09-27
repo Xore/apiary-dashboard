@@ -1,3 +1,4 @@
+import { textParam } from '#/lib/searchParams'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { clusterHref } from '#/lib/entities'
 
@@ -5,7 +6,7 @@ import { clusterHref } from '#/lib/entities'
 export const Route = createFileRoute('/_layout/investigate/cluster')({
   validateSearch: (search: Record<string, unknown>): { kind?: string; value?: string } => ({
     kind: typeof search.kind === 'string' ? search.kind : undefined,
-    value: typeof search.value === 'string' ? search.value : undefined,
+    value: textParam(search.value),
   }),
   beforeLoad: ({ search }) => {
     if (!search.kind || !search.value) throw notFound()

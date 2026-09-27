@@ -1,6 +1,7 @@
 // Mock fixtures behind the drill-down and unlisted pages. Detail lookups are
 // computed from the shared event set; the rest is small seeded data.
 import type {
+  BlockRecord,
   AuditEntry,
   DashboardConfig,
   DeploymentLinks,
@@ -44,7 +45,10 @@ export function techniquesFor(events: HoneypotEvent[]): Technique[] {
 
 /** Addresses an operator blocked by hand; the VPS firewall pulls them from
  * /export/portbridge-manual-blackhole.txt. Two of the mock's busiest sources. */
-export const BLOCKED_IPS = new Set<string>(['198.51.100.13', '192.0.2.35'])
+export const BLOCKED_IPS = new Map<string, BlockRecord>([
+  ['198.51.100.13', { by: 'Operator', at: isoMinutesAgo(26 * 60) }],
+  ['192.0.2.35', { by: 'Analyst', at: isoMinutesAgo(3 * 60), expiresAt: isoMinutesAgo(-21 * 60) }],
+])
 
 // ---- Dead letters ----------------------------------------------------------
 

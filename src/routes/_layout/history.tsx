@@ -1,3 +1,4 @@
+import { textParam } from '#/lib/searchParams'
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
@@ -19,7 +20,7 @@ import { pageParam, pageRequest } from '#/lib/paging'
 
 export const Route = createFileRoute('/_layout/history')({
   validateSearch: (search: Record<string, unknown>): { q?: string; page?: number } => ({
-    q: typeof search.q === 'string' && search.q ? search.q : undefined,
+    q: textParam(search.q),
     page: pageParam(search.page),
   }),
   loaderDeps: ({ search }) => ({ q: search.q ?? '', page: search.page }),

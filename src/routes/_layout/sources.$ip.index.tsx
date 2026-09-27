@@ -6,6 +6,7 @@ import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
 import { StatTile } from '#/components/DashboardBlocks'
 import { EventsPanel } from '#/components/DetailBlocks'
+import { osGuessCaption } from '#/components/EntityBlocks'
 
 const parent = getRouteApi('/_layout/sources/$ip')
 
@@ -25,6 +26,7 @@ function SourceOverview() {
         <StatTile label="Logins" value={p.source.logins} href={`/events?ip=${ip}&kind=login`} />
         <StatTile label="Sessions" value={p.source.sessions} href={`${base}/sessions`} />
         <StatTile label="Sensors reached" value={p.correlation.distinctSensors} href={`${base}/breakdown`} />
+        <StatTile label="Tunnel connections" value={p.correlation.tunnelConnections} caption={osGuessCaption(p.correlation.tunnelOsGuesses)} />
         <StatTile label="ATT&CK techniques" value={p.techniques.length} href={`${base}/behavior`} />
       </Grid>
       <EventsPanel title="Newest events" events={p.events.slice(0, 5)} action={<Link href={`${base}/events`}>All events</Link>} />

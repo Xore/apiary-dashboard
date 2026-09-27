@@ -35,10 +35,11 @@ const CONTAINER = {
   unknown: 'neutral',
 } as const satisfies Record<ContainerState, string>
 
-export function ContainerStateLabel({ name, state }: { name: string; state: ContainerState }) {
+export function ContainerStateLabel({ name, state, exitCode }: { name: string; state: ContainerState; exitCode?: number }) {
+  const label = state === 'exited' && exitCode !== undefined ? `exited (${exitCode})` : state
   return (
     <HStack gap={1.5} vAlign="center">
-      <StatusDot variant={CONTAINER[state]} label={state} tooltip={state === 'unknown' ? 'No live state reported' : state} />
+      <StatusDot variant={CONTAINER[state]} label={label} tooltip={state === 'unknown' ? "Outside the services adapter's allowlist: no live state is reported" : label} />
       <Text type="code">{name}</Text>
     </HStack>
   )

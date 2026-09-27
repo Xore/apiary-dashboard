@@ -196,6 +196,11 @@ export function SharedSignalsTable({ signals }: { signals: SharedSignal[] }) {
   )
 }
 
+/** p0f's OS guesses over the portbridge tunnel, as a tile caption. */
+export function osGuessCaption(guesses: string[]): string {
+  return guesses.length ? `p0f: ${guesses.slice(0, 3).join(', ')}` : 'no p0f OS guess'
+}
+
 /** What a group page opens with: the headline numbers and its newest
  * events. The leaderboards live on the Breakdown tab. `sourcesTab` and
  * `eventsTab` name this entity's tabs for those lists, when it has them. */
@@ -206,7 +211,7 @@ export function GroupOverview({ group, base, sourcesTab, eventsTab }: { group: S
         <StatTile label="Source IPs" value={group.members.length} href={sourcesTab && `${base}/${sourcesTab}`} />
         <StatTile label="Events" value={group.events.length} href={eventsTab && `${base}/${eventsTab}`} />
         <StatTile label="Total matches" value={group.totalMatches} caption="honeypot, Suricata, portbridge" />
-        <StatTile label="Tunnel connections" value={group.tunnelConnections} />
+        <StatTile label="Tunnel connections" value={group.tunnelConnections} caption={osGuessCaption(group.tunnelOsGuesses)} />
         <StatTile label="Sensors reached" value={group.sensors.length} href={`${base}/breakdown`} />
       </Grid>
       <EventsPanel title="Newest events" events={group.events.slice(0, 5)} showSource action={eventsTab && <Link href={`${base}/${eventsTab}`}>All events</Link>} empty="No events." />

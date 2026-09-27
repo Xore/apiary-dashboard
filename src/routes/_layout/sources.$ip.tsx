@@ -1,5 +1,6 @@
 import { Link } from '@astryxdesign/core/Link'
 import { Token } from '@astryxdesign/core/Token'
+import { Tooltip } from '@astryxdesign/core/Tooltip'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { BlockControl } from '#/components/BlockControl'
 import { EntityFrame } from '#/components/EntityFrame'
@@ -39,6 +40,13 @@ function SourceLayout() {
             <Token key={tag} size="sm" color="orange" label={tag} />
           ))}
           {p.blocked && <Token size="sm" color="red" label="blocked" />}
+          {/* Only when true: most sources are hostile and simply never
+              turned up in an analysed sample, so absence is not "benign". */}
+          {p.confirmedMalicious && (
+            <Tooltip content="A sandbox detonation of a sample that references this address actually connected to it: two independent pipelines agree. Informational; blocking does not depend on it." focusTrigger="always">
+              <Token size="sm" color="red" label="confirmed malicious (sandbox)" />
+            </Tooltip>
+          )}
         </>
       }
       facts={[
@@ -47,6 +55,7 @@ function SourceLayout() {
         { label: 'Last seen', value: formatDateTime(p.source.last) },
         { label: 'Events', value: formatNumber(p.source.events) },
         { label: 'Risk score', value: String(p.source.riskScore) },
+        ...(p.block ? [{ label: 'Blocked', value: `by ${p.block.by}, ${formatDateTime(p.block.at)}${p.block.expiresAt ? `, expires ${formatDateTime(p.block.expiresAt)}` : ', until lifted'}` }] : []),
       ]}
       actions={
         <>

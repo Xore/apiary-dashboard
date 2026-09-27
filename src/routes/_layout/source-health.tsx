@@ -1,3 +1,4 @@
+import { Banner } from '@astryxdesign/core/Banner'
 import { Grid } from '@astryxdesign/core/Grid'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Link } from '@astryxdesign/core/Link'
@@ -86,6 +87,14 @@ function SourceHealthPage() {
           </Panel>
           <StatTile label="Dead letters, 24h" value={health.deadLetters} href="/dead-letters" />
         </Grid>
+        {/* Only when there is a discrepancy to explain. */}
+        {health.unattributed24h > 0 && (
+          <Banner
+            status="info"
+            title={`${formatNumber(health.unattributed24h)} ${health.unattributed24h === 1 ? 'event' : 'events'} in the last 24 hours with no source address`}
+            description="They arrived over the WireGuard tunnel with no recoverable client address, so they count in every total above but belong to no source IP: the tunnel peer is our own VPS, not an attacker. The per-sensor counts below will not add up to the totals. Sensors reached over UDP, or on ports without a PROXY-protocol rule, have no way back to the real address."
+          />
+        )}
 
         <VStack gap={3}>
           <Heading level={2}>Ingestion pipeline</Heading>

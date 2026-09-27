@@ -1,0 +1,55 @@
+{
+  "agent-campaigns.tsx": {
+    "rows[].campaign_id": "AgentCampaign.id",
+    "rows[].matched_categories": "AgentCampaign.categories",
+    "rows[].correlation_identifiers": "AgentCampaign.identifiers"
+  },
+  "events.tsx": {
+    "rows[].pivots.tty_replay": "event detail: RecordingDownloads, from the loader's recordingShasum"
+  },
+  "index.tsx": {
+    "payloads[].vt": "virusTotalLink (lib/toolLinks) from CapturedPayload.hash",
+    "heatmap[].cells[].pct": "waived: the heatmap draws each cell's share from HeatmapRow.cells",
+    "previous24h": "Kpi.previous",
+    "change24h": "Kpi.previous and Kpi.value, as the tile's delta",
+    "ready": "waived: a readiness flag for client-side fetching; the rewrite's loader renders the page with its data"
+  },
+  "payloads.tsx": {
+    "rows[].SizeH": "CapturedPayload.sizeBytes, formatted",
+    "rows[].MtimeUTC": "CapturedPayload.capturedAt",
+    "rows[].AnalysisPath": "CapturedPayload.dynamic (dynamic route or static only)",
+    "rows[].PreviewTruncated": "CapturedPayload.preview against sizeBytes",
+    "counts": "getPayloads().sources, the per-source census"
+  },
+  "investigate.ip.$ip.tsx": {
+    "BlockedBy": "IpProfile.block.by"
+  },
+  "investigate.cluster.tsx": {
+    "ip_count": "SourceGroup.members.length"
+  },
+  "search.tsx": {
+    "query": "the search page's `q` parameter",
+    "groups[].more_url": "SearchGroup.moreHref"
+  },
+  "source-health.tsx": {
+    "total_documents": "SourceHealth.indexedDocuments"
+  },
+  "topology.tsx": {
+    "stacks[].containers[].adapter_visible": "container state `unknown` (outside the services adapter's allowlist)"
+  },
+  "campaigns.tsx": {
+    "rows[].ports_touched_counted": "NetworkCampaign.portsTouched"
+  },
+  "credentials.tsx": {
+    "credentials[].content_template": "BaitCredential.template"
+  },
+  "ips.tsx": {
+    "total_unique": "Paged.total"
+  },
+  "sandbox.vnc.tsx": {
+    "status.bridge_ws": "waived: the VNC bridge's WebSocket URL is transport for the live viewer, which the mock stands in for; wired with the sandbox slice (#78)"
+  },
+  "tty-replay.$shasum.tsx": {
+    "replay.ttylog_base64": "waived: the raw ttylog transport; the rewrite's Replay carries the decoded frames"
+  }
+}

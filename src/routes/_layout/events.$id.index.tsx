@@ -96,6 +96,14 @@ function EventOverview() {
             <MetadataListItem label="Source">
               <EntityLink kind="source" id={event.srcIp}>{`${event.srcIp}:${event.srcPort}`}</EntityLink>
             </MetadataListItem>
+            {event.srcIpClaimed && (
+              <MetadataListItem label="Claimed">
+                <VStack gap={0.5}>
+                  <Text type="code">{event.srcIpClaimed}</Text>
+                  <Text type="supporting">The request's X-Forwarded-For disagrees with the connection portbridge recorded. The connection is the stronger evidence; this claim is likely forged.</Text>
+                </VStack>
+              </MetadataListItem>
+            )}
             <MetadataListItem label="Network">
               <EntityLink kind="asn" id={event.asn}>{`${event.asn} · ${event.org}`}</EntityLink>
             </MetadataListItem>
