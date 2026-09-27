@@ -1,3 +1,4 @@
+import { textParam } from '#/lib/searchParams'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Selector } from '@astryxdesign/core/Selector'
@@ -18,6 +19,7 @@ import type { EventFilters, EventKind, Facets, HoneypotEvent } from '#/data/type
 import { apiHref } from '#/lib/apiHref'
 import { downloadJson } from '#/lib/export'
 import { formatClock, formatNumber } from '#/lib/format'
+import { ClaimedSource } from '#/components/ClaimedSource'
 import { EntityLink } from '#/components/EntityLink'
 import { useLiveRefresh } from '#/lib/live'
 import { ZoneHeader } from '#/components/ZoneHeader'
@@ -34,12 +36,13 @@ const FILTER_KEYS = ['ip', 'sensor', 'persona', 'provider', 'country', 'proto', 
 const FILTER_LABEL: Partial<Record<(typeof FILTER_KEYS)[number], string>> = { site: 'decoy site', asset: 'decoy asset', fingerprint: 'fingerprint', org: 'network', city: 'city' }
 
 // Each value filter lists every value seen, with counts, under the field.
-const FILTERS: Array<{ key: 'ip' | 'sensor' | 'persona' | 'provider' | 'country' | 'proto' | 'port' | 'kind'; label: string; width: number; options: (f: Facets) => FilterOption[] }> = [
+const FILTERS: Array<{ key: 'ip' | 'sensor' | 'persona' | 'provider' | 'country' | 'city' | 'proto' | 'port' | 'kind'; label: string; width: number; options: (f: Facets) => FilterOption[] }> = [
   { key: 'ip', label: 'Source IP', width: 170, options: (f) => f.sources },
   { key: 'sensor', label: 'Sensor', width: 170, options: (f) => f.sensors },
   { key: 'persona', label: 'Decoy persona', width: 190, options: (f) => f.personas },
   { key: 'provider', label: 'Provider', width: 130, options: (f) => f.providers },
   { key: 'country', label: 'Country', width: 130, options: (f) => f.countries },
+  { key: 'city', label: 'City', width: 140, options: (f) => f.cities },
   { key: 'proto', label: 'Protocol', width: 130, options: (f) => f.protocols },
   { key: 'port', label: 'Port', width: 110, options: (f) => f.ports },
   { key: 'kind', label: 'Kind', width: 130, options: (f) => f.kinds },
@@ -61,7 +64,7 @@ export const Route = createFileRoute('/_layout/events/')({
       org: list('org'),
       city: list('city'),
       // Matched whole: a User-Agent fingerprint can itself contain commas.
-      fingerprint: typeof search.fingerprint === 'string' && search.fingerprint !== '' ? search.fingerprint : undefined,
+      fingerprint: textParam(search.fingerprint),
       country: list('country'),
       proto: list('proto'),
       port: toNumericParam(listParam(search.port)),
@@ -103,6 +106,7 @@ const columns: TableColumn<HoneypotEvent>[] = [
       <HStack gap={1.5} vAlign="center">
         <EntityLink kind="source" id={row.srcIp} />
         <Text type="supporting">{row.country}</Text>
+        {row.srcIpClaimed && <ClaimedSource claimed={row.srcIpClaimed} />}
       </HStack>
     ),
   },

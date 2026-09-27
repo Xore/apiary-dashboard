@@ -10,13 +10,14 @@ import type {
   RevDeckRun,
   SandboxRun,
 } from '../types'
+import { LOADER_HOSTS } from './fleet'
 import { ANALYSIS_RESULTS, PAYLOADS } from './operations'
 import { createRng, hex, int, isoMinutesAgo, pick } from './random'
 import type { Rng } from './random'
 
 const seedFor = (hash: string) => Number.parseInt(hash.slice(0, 8), 16)
 
-const C2_HOSTS = ['cnc.example.test', 'bot.example.test', 'update.example.test', '198.51.100.23', '203.0.113.9']
+const C2_HOSTS = ['cnc.example.test', 'bot.example.test', 'update.example.test', ...LOADER_HOSTS]
 
 function iocs(rng: Rng) {
   const host = pick(rng, C2_HOSTS)
@@ -152,7 +153,7 @@ function sandboxForensics(payload: CapturedPayload, host: string): Omit<SandboxR
         { id: 'udp', label: 'udp', count: int(rng, 10, 3000) },
         { id: 'dns', label: 'dns', count: int(rng, 1, 12) },
       ],
-      remoteIps: [host.match(/\d/) ? host : '198.51.100.23', '203.0.113.200'],
+      remoteIps: [host.match(/\d/) ? host : LOADER_HOSTS[0], '203.0.113.200'],
       hostEvents: Array.from({ length: 6 }, (_, i) => tcpdumpLine(i, i % 3 === 2 ? 'UDP, length 1458' : `Flags [S], seq ${int(rng, 1e8, 9e8)}`, `${host}.${port}`)),
       attempts: [`connect(${host}:${port}) = 0`, 'connect(203.0.113.200:80) = -1 ETIMEDOUT'],
       guest: {
@@ -166,7 +167,7 @@ function sandboxForensics(payload: CapturedPayload, host: string): Omit<SandboxR
       },
     },
     staticIocs: {
-      remoteIps: [host.match(/\d/) ? host : '198.51.100.23'],
+      remoteIps: [host.match(/\d/) ? host : LOADER_HOSTS[0]],
       uncPaths: windows ? ['\\\\192.0.2.66\\share\\payload.dll'] : [],
       downloadUrls: [`http://${host}/bins.sh`],
       downloadCradles: windows ? 1 : int(rng, 0, 3),

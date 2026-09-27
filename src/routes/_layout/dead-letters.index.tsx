@@ -1,3 +1,4 @@
+import { textParam } from '#/lib/searchParams'
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Button } from '@astryxdesign/core/Button'
@@ -20,7 +21,7 @@ import { healthTabs } from '#/lib/navFamilies'
 export const Route = createFileRoute('/_layout/dead-letters/')({
   staticData: { viewTabs: healthTabs },
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
-    q: typeof search.q === 'string' && search.q ? search.q : undefined,
+    q: textParam(search.q),
   }),
   loaderDeps: ({ search }) => ({ q: search.q ?? '' }),
   loader: ({ deps }) => getDeadLetters(deps.q),

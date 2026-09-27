@@ -163,6 +163,18 @@ function communityIdOf(srcIp: string, srcPort: number, dstPort: number, protocol
   return `1:${btoa(String.fromCharCode(...bytes))}`
 }
 
+/** One HTTP request in eleven claims another source in X-Forwarded-For
+ * than the connection it arrived on, from the documentation range. Derived
+ * from the event id, so it moves no other mock value. */
+function claimedSourceOf(id: string, fields: SensorFields, srcIp: string): string | undefined {
+  if (typeof fields.user_agent !== 'string') return undefined
+  let hash = 2166136261
+  for (const c of id) hash = Math.imul(hash ^ c.charCodeAt(0), 16777619) >>> 0
+  if (hash % 11 !== 0) return undefined
+  const claimed = `203.0.113.${(hash >>> 8) % 254 + 1}`
+  return claimed === srcIp ? undefined : claimed
+}
+
 export function eventFrom(spec: SensorSpec, source: AttackSource, sessionId: string, timestamp: string, rng: Rng, decoy: Rng): HoneypotEvent {
   const { type, severity, protocol, dstPort, eventName, summary, fields: own, username, password, command } = spec.generate(rng, sessionId)
   // The decoy identity rides along in the sensor's own fields, as the
@@ -180,6 +192,7 @@ export function eventFrom(spec: SensorSpec, source: AttackSource, sessionId: str
     type,
     severity,
     srcIp: source.ip,
+    ...(claimedSourceOf(id, fields, source.ip) ? { srcIpClaimed: claimedSourceOf(id, fields, source.ip) } : {}),
     srcPort,
     dstPort,
     ...(UNBRIDGED.has(spec.id) ? {} : { communityId: communityIdOf(source.ip, srcPort, dstPort, protocol) }),

@@ -83,6 +83,7 @@ export const SOURCE_HEALTH: SourceHealth = {
   runtime: { uptimeSeconds: 6 * 86_400 + 4 * 3_600 + 12 * 60, rssBytes: 312 * 1024 ** 2, vmBytes: 1.9 * 1024 ** 3 },
   pipeline: { state: 'running', acked: 4_812_330, failed: 12, dropped: 0, active: 38, decodeFailures: 3 },
   deadLetters: 12,
+  unattributed24h: 37,
 }
 
 // ---- Topology --------------------------------------------------------------
@@ -154,7 +155,7 @@ export const TOPOLOGY: Topology = {
     }
   }),
   stacks: [
-    { stack: 'honeypot-vps', containers: [{ name: 'hp-portbridge', state: 'running' }, { name: 'hp-traefik', state: 'running' }, { name: 'hp-suricata', state: 'exited' }] },
+    { stack: 'honeypot-vps', containers: [{ name: 'hp-portbridge', state: 'running' }, { name: 'hp-traefik', state: 'running' }, { name: 'hp-suricata', state: 'exited', exitCode: 137 }] },
     { stack: 'honeypot-sensors', containers: SENSORS.filter((s) => s.id !== 'suricata').map((s) => ({ name: CONTAINER[s.id] ?? `hp-${s.id}`, state: CONTAINER_STATE[s.status] })) },
     { stack: 'honeypot-elk', containers: [{ name: 'hp-elasticsearch', state: 'running' }, { name: 'hp-filebeat', state: 'running' }, { name: 'hp-kibana', state: 'running' }] },
     { stack: 'honeypot-dashboard', containers: [{ name: 'hp-dashboard-next', state: 'running' }, { name: 'hp-apiary-backend', state: 'running' }, { name: 'hp-apiary-ml-worker', state: 'running' }, { name: 'hp-apiary-correlator', state: 'running' }, { name: 'hp-apiary-llm-worker', state: 'unknown' }] },

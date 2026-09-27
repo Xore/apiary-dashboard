@@ -95,7 +95,7 @@ function TopologyPage() {
               <Panel key={stack.stack} title={stack.stack}>
                 <VStack gap={1.5}>
                   {stack.containers.map((container) => (
-                    <ContainerStateLabel key={container.name} name={container.name} state={container.state} />
+                    <ContainerStateLabel key={container.name} name={container.name} state={container.state} exitCode={container.exitCode} />
                   ))}
                 </VStack>
               </Panel>

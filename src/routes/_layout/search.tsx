@@ -1,3 +1,4 @@
+import { textParam } from '#/lib/searchParams'
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { EmptyState } from '@astryxdesign/core/EmptyState'
@@ -17,7 +18,7 @@ import { searchAll } from '#/data/queries'
 
 export const Route = createFileRoute('/_layout/search')({
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
-    q: typeof search.q === 'string' && search.q ? search.q : undefined,
+    q: textParam(search.q),
   }),
   loaderDeps: ({ search }) => ({ q: search.q ?? '' }),
   loader: ({ deps }) => searchAll(deps.q),
@@ -57,7 +58,7 @@ function SearchPage() {
                     />
                   ))}
                 </List>
-                {group.total > group.items.length && <Text type="supporting">{group.total - group.items.length} more not shown</Text>}
+                {group.total > group.items.length && (group.moreHref ? <Link href={group.moreHref}>{`${group.total - group.items.length} more in event history`}</Link> : <Text type="supporting">{group.total - group.items.length} more not shown</Text>)}
               </Panel>
             ))}
           </Grid>

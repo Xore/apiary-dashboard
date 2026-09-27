@@ -674,6 +674,7 @@ export async function getFacets(): Promise<Facets> {
     kinds: (Object.keys(KIND_TYPES) as EventKind[]).map((kind) => ({ value: kind, count: EVENTS.filter((e) => KIND_TYPES[kind].includes(e.type)).length })),
     personas: facet(EVENTS.flatMap((e) => (e.persona ? [e.persona] : []))),
     providers: facet(EVENTS.map((e) => e.provider)),
+    cities: facet(EVENTS.flatMap((e) => (e.city ? [e.city] : []))),
   }
 }
 
@@ -966,6 +967,8 @@ export async function getIpProfile(ip: string): Promise<IpProfile | null> {
   return {
     source: { ...profile, asn: source.asn, riskScore: source.riskScore, tags: source.tags },
     blocked: BLOCKED_IPS.has(ip),
+    ...(BLOCKED_IPS.has(ip) ? { block: { ...BLOCKED_IPS.get(ip)! } } : {}),
+    confirmedMalicious: sandboxConfirmed().has(ip),
     events,
     sensors: countBy(events.map((e) => e.sensor), 10),
     credentials: countBy(events.map(credentialOf), 10),
@@ -981,21 +984,52 @@ export async function getIpProfile(ip: string): Promise<IpProfile | null> {
       totalMatches: events.length + Math.round(events.length * 0.4),
       tunnelConnections: Math.round(events.length * 0.3),
       distinctSensors: new Set(events.map((e) => e.sensor)).size,
+      tunnelOsGuesses: tunnelOsGuesses([ip]),
     },
     attackerId: ATTACKERS.find((a) => a.ips.includes(ip))?.id,
   }
 }
 
-/** Mock write: adds/removes the address on the portbridge manual blackhole. */
+/** p0f's stack fingerprints for portbridge tunnel connections: one or two
+ * guesses per address, stable per address. */
+const P0F_GUESSES = ['Linux 2.2.x-3.x', 'Linux 3.11 and newer', 'Linux 2.6.x', 'Windows 7 or 8', 'FreeBSD 9.x or newer', 'Mac OS X']
+function tunnelOsGuesses(ips: string[]): string[] {
+  const seen = new Map<string, number>()
+  for (const ip of ips) {
+    const last = Number(ip.split('.').at(-1))
+    // A third of addresses were never fingerprinted over the tunnel.
+    if (last % 3 === 0) continue
+    for (const guess of [P0F_GUESSES[last % P0F_GUESSES.length], ...(last % 4 === 1 ? [P0F_GUESSES[(last + 1) % P0F_GUESSES.length]] : [])]) seen.set(guess, (seen.get(guess) ?? 0) + 1)
+  }
+  return [...seen].sort((a, b) => b[1] - a[1]).map(([guess]) => guess)
+}
+
+let confirmed: Set<string> | undefined
+/** Addresses a sandbox detonation both found in the sample and connected
+ * to. */
+function sandboxConfirmed(): Set<string> {
+  if (!confirmed) {
+    confirmed = new Set()
+    for (const payload of PAYLOADS.filter((p) => p.dynamic)) {
+      const run = buildSandboxRun(payload)
+      const referenced = new Set(run.staticIocs.remoteIps)
+      for (const ip of run.network.remoteIps) if (referenced.has(ip)) confirmed.add(ip)
+    }
+  }
+  return confirmed
+}
+
 /** Every manually blocked address, as the VPS firewall pulls them. */
 export async function getBlockedIps(): Promise<string[]> {
   await mockDelay()
-  return [...BLOCKED_IPS]
+  return [...BLOCKED_IPS.keys()]
 }
 
+/** Mock write: adds/removes the address on the portbridge manual blackhole,
+ * as the signed-in operator, until lifted. */
 export async function setIpBlocked(ip: string, blocked: boolean): Promise<void> {
   await mockDelay()
-  if (blocked) BLOCKED_IPS.add(ip)
+  if (blocked) BLOCKED_IPS.set(ip, { by: MOCK_USER.name, at: new Date().toISOString() })
   else BLOCKED_IPS.delete(ip)
 }
 
@@ -1030,7 +1064,7 @@ export async function searchAll(query: string): Promise<SearchGroup[]> {
   if (!q) return []
   const groups: SearchGroup[] = []
   const add = (id: string, title: string, items: SearchGroup['items']) => {
-    if (items.length) groups.push({ id, title, total: items.length, items: items.slice(0, 8) })
+    if (items.length) groups.push({ id, title, total: items.length, items: items.slice(0, 8), ...(items.length > 8 ? { moreHref: `/history?q=${encodeURIComponent(q)}` } : {}) })
   }
   add('sources', 'Source IPs', SOURCES.filter((s) => s.ip.includes(q) || s.org.toLowerCase().includes(q) || s.asn.toLowerCase() === q).map((s) => ({ label: s.ip, detail: `${s.org} · ${s.country} · ${s.events} events`, href: `/sources/${s.ip}` })))
   add('sessions', 'Sessions', [...new Set(EVENTS.filter((e) => e.sessionId.includes(q)).map((e) => e.sessionId))].map((id) => ({ label: id, detail: 'session', href: `/sessions/${id}` })))
@@ -1417,6 +1451,7 @@ function groupOf(ips: string[]): SourceGroup {
     events,
     totalMatches: events.length + Math.round(events.length * 0.35),
     tunnelConnections: Math.round(events.length * 0.28),
+    tunnelOsGuesses: tunnelOsGuesses(ips),
     first: events.at(-1)?.timestamp,
     last: events[0]?.timestamp,
     sensors: countBy(events.map((e) => e.sensor), 20),
