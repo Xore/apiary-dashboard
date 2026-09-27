@@ -945,7 +945,7 @@ export function SettingsDialog({ pane: asked, onPane, onClose }: { pane: PaneId;
   )
 
   return (
-    <Dialog isOpen onOpenChange={(open) => !open && requestClose()} purpose="form" width={1120} maxHeight={SHELL_HEIGHT} padding={0} aria-labelledby={titleId}>
+    <Dialog isOpen onOpenChange={(open) => !open && requestClose()} purpose="info" width={1120} maxHeight={SHELL_HEIGHT} padding={0} aria-labelledby={titleId}>
       <VStack style={{ height: SHELL_HEIGHT }}>
         {isNarrow ? (
           <VStack gap={0} height="100%">

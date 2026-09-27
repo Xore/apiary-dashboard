@@ -1,7 +1,7 @@
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -107,7 +107,7 @@ function LibraryPage() {
         getHref={(row) => `/reports/definitions/${row.id}`}
         emptyState={{ title: 'No saved definitions', description: 'Generate a report and keep it as a definition to see it here.' }}
       />
-      <AlertDialog
+      <ConfirmDialog
         isOpen={confirm !== null}
         onOpenChange={(open) => !open && setConfirm(null)}
         title="Delete this definition?"

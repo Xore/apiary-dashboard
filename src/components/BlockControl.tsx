@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Button } from '@astryxdesign/core/Button'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -26,7 +26,7 @@ export function BlockControl({ ip, blocked }: { ip: string; blocked: boolean }) 
         onClick={() => setConfirmOpen(true)}
       />
       {error && <FieldStatus type="error" variant="detached" message={error} />}
-      <AlertDialog
+      <ConfirmDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
         title={blocked ? `Unblock ${ip}?` : `Block ${ip}?`}

@@ -6,7 +6,7 @@
 import { apiHref } from '#/lib/apiHref'
 import { Link } from '@astryxdesign/core/Link'
 import { useState } from 'react'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
@@ -392,7 +392,7 @@ export function SandboxResult({ run, section }: { run: SandboxRun; section: Sand
         {shown === 'raw' && <Raw run={run} />}
       </VStack>
       {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}
-      <AlertDialog
+      <ConfirmDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Detonate this sample again?"

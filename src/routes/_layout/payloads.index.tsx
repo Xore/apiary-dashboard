@@ -1,7 +1,7 @@
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { MoreMenu } from '@astryxdesign/core/MoreMenu'
@@ -138,7 +138,7 @@ function PayloadsPage() {
         emptyState={{ title: 'No payloads from this sensor', description: 'Pick another source, or All.' }}
       />
       <AnalysisRunDialog isOpen={analyzing !== undefined} onOpenChange={(open) => !open && setAnalyzing(undefined)} initialHash={analyzing || undefined} onQueued={setQueued} />
-      <AlertDialog
+      <ConfirmDialog
         isOpen={publishing !== null}
         onOpenChange={(open) => !open && setPublishing(null)}
         title="Publish to Xore/honeypot?"
