@@ -5,7 +5,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import { LinkProvider } from '@astryxdesign/core/Link'
 import { Theme } from '@astryxdesign/core/theme'
 import { RouterLink } from '../components/RouterLink'
-import { neutralTheme } from '../themes/neutral/neutral'
+import { appTheme } from '#/themes/appTheme'
 import { getPreferences, mockNow } from '#/data/queries'
 import type { Preferences } from '#/data/types'
 import { browserTimeZone, rememberBrowserZone } from '#/lib/browserZone'
@@ -48,12 +48,11 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
 })
 
-/** Preferences as root attributes; styles.css keys the overrides on them. */
+/** Preferences as root attributes; styles.css keys the overrides on them.
+ * Palette and contrast are not among them: they pick the Astryx theme. */
 function rootAttributes(prefs: Preferences | undefined): Record<string, string | undefined> {
   if (!prefs) return {}
   return {
-    'data-palette': prefs.palette === 'claude' ? undefined : prefs.palette,
-    'data-contrast': prefs.highContrast ? 'more' : undefined,
     'data-motion': prefs.motion === 'on' ? 'reduced' : undefined,
     'data-evidence': prefs.largeEvidenceText ? 'large' : undefined,
   }
@@ -86,7 +85,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <Theme theme={neutralTheme} mode={prefs?.theme ?? 'system'}>
+        <Theme theme={appTheme(prefs?.palette, prefs?.highContrast)} mode={prefs?.theme ?? 'system'}>
           <LinkProvider component={RouterLink}>{children}</LinkProvider>
         </Theme>
         <TanStackDevtools

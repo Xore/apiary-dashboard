@@ -7,7 +7,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Theme } from '@astryxdesign/core/theme'
-import { neutralTheme } from '#/themes/neutral/neutral'
+import { neutralTheme } from '#/themes/neutral/neutral-family'
 import { WizardDialog, statusOf } from './WizardDialog'
 
 let finished: string[] = []

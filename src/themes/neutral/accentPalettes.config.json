@@ -1,0 +1,72 @@
+{
+  "recipe": "astryx-oklch-v1",
+  "vibrancy": 50,
+  "neutralProfile": "custom",
+  "modeStrategy": "light-and-dark",
+  "darkChromaTaper": {
+    "edgeMultiplier": 0.5,
+    "throughStop": 25,
+    "recoverAtStop": 60
+  },
+  "stops": [
+    0,
+    5,
+    10,
+    15,
+    20,
+    25,
+    30,
+    35,
+    40,
+    45,
+    50,
+    55,
+    60,
+    65,
+    70,
+    75,
+    80,
+    85,
+    90,
+    95,
+    100
+  ],
+  "families": [
+    {
+      "id": "amber",
+      "name": "Amber",
+      "seed": "#d99a1e"
+    },
+    {
+      "id": "lavender",
+      "name": "Lavender",
+      "seed": "#8c7ae6"
+    },
+    {
+      "id": "lime",
+      "name": "Lime",
+      "seed": "#7cb518"
+    },
+    {
+      "id": "neon",
+      "name": "Neon",
+      "seed": "#00c2a8"
+    },
+    {
+      "id": "ocean",
+      "name": "Ocean",
+      "seed": "#1f78d1"
+    },
+    {
+      "id": "rose",
+      "name": "Rose",
+      "seed": "#d6557d"
+    },
+    {
+      "id": "slate",
+      "name": "Slate",
+      "seed": "#64748b",
+      "kind": "neutral"
+    }
+  ]
+}

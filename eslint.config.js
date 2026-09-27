@@ -18,7 +18,7 @@ export default [
     ignores: [
       'eslint.config.js',
       'prettier.config.js',
-      'src/themes/neutral/neutral.js',
+      'src/themes/neutral/neutral-family.js',
       'src/themes/neutral/*.d.ts',
       '.tanstack/**',
     ],
