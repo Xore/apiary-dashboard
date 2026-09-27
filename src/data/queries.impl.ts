@@ -1129,23 +1129,65 @@ export async function getReplayDetail(shasum: string): Promise<ReplayDetail | nu
   }
 }
 
-/** Grouped search across the mock data set, as behind the palette's Enter. */
-export async function searchAll(query: string): Promise<SearchGroup[]> {
+/** Grouped search across everything the dashboard shows: the palette asks
+ * for a few per group, the search page for more. `moreHref` is where a
+ * group's full list lives when it has one beyond the search page. */
+export async function searchAll(query: string, limit = 8): Promise<SearchGroup[]> {
   await mockDelay()
   const q = query.trim().toLowerCase()
   if (!q) return []
+  const has = (...values: Array<string | number | undefined>) => values.some((v) => v !== undefined && String(v).toLowerCase().includes(q))
+  const history = `/history?q=${encodeURIComponent(q)}`
   const groups: SearchGroup[] = []
-  const add = (id: string, title: string, items: SearchGroup['items']) => {
-    if (items.length) groups.push({ id, title, total: items.length, items: items.slice(0, 8), ...(items.length > 8 ? { moreHref: `/history?q=${encodeURIComponent(q)}` } : {}) })
+  const add = (id: string, title: string, items: SearchGroup['items'], moreHref?: string) => {
+    // Within a group, and across groups, what the query names exactly comes
+    // first: `cowrie` is the sensor before it is an alert that mentions it.
+    const ranked = items.map((item) => ({ ...item, label: item.label.length > 96 ? `${item.label.slice(0, 95)}…` : item.label, rank: rankOf(item.label) })).sort((a, b) => a.rank - b.rank)
+    if (ranked.length) groups.push({ id, title, total: ranked.length, items: ranked.slice(0, limit).map(({ rank: _, ...item }) => item), ...(ranked.length > limit && moreHref ? { moreHref } : {}) })
+    best.set(id, ranked[0]?.rank ?? 3)
   }
+  const rankOf = (label: string) => {
+    const l = label.toLowerCase()
+    return l === q ? 0 : l.startsWith(q) ? 1 : l.includes(q) ? 2 : 3
+  }
+  const best = new Map<string, number>()
+  const distinct = <T,>(values: T[]) => [...new Set(values)]
   add('sources', 'Source IPs', SOURCES.filter((s) => s.ip.includes(q) || s.org.toLowerCase().includes(q) || s.asn.toLowerCase() === q).map((s) => ({ label: s.ip, detail: `${s.org} · ${s.country} · ${s.events} events`, href: `/sources/${s.ip}` })))
-  add('sessions', 'Sessions', [...new Set(EVENTS.filter((e) => e.sessionId.includes(q)).map((e) => e.sessionId))].map((id) => ({ label: id, detail: 'session', href: `/sessions/${id}` })))
-  add('commands', 'Commands', [...new Set(EVENTS.filter((e) => e.command?.toLowerCase().includes(q)).map((e) => e.command!))].map((c) => ({ label: c, detail: 'executed command', href: `/history?q=${encodeURIComponent(q)}` })))
-  add('credentials', 'Credentials', [...new Set(EVENTS.flatMap((e) => credentialOf(e) ?? []).filter((c) => c.toLowerCase().includes(q)))].map((c) => ({ label: c, detail: 'credential pair', href: clusterHref('credential', c) })))
-  add('payloads', 'Payloads', PAYLOADS.filter((p) => p.hash.includes(q) || p.verdict?.family?.toLowerCase().includes(q)).map((p) => ({ label: p.hash.slice(0, 24), detail: `${p.kind}${p.verdict?.family ? ` · ${p.verdict.family}` : ''}`, href: `/payloads/${p.hash}` })))
+  add('networks', 'Networks', NETWORK_CAMPAIGNS.filter((c) => has(c.cidr, ...c.asns, ...c.providers)).map((c) => ({ label: c.cidr, detail: `${c.uniqueIps} IPs · ${c.events} events`, href: `/networks/${encodeURIComponent(c.cidr)}` })))
+  add('asns', 'Autonomous systems', distinct(SOURCES.filter((s) => has(s.asn, s.org)).map((s) => `${s.asn}\u0000${s.org}`)).map((key) => {
+    const [asn, org] = key.split('\u0000')
+    return { label: asn, detail: org, href: `/asn/${encodeURIComponent(asn)}` }
+  }))
+  add('campaigns', 'Campaigns', NETWORK_CAMPAIGNS.filter((c) => has(c.cidr, c.explanation)).map((c) => ({ label: c.cidr, detail: `campaign · score ${c.score}`, href: `/campaigns/${encodeURIComponent(c.cidr)}` })), '/campaigns')
+  add('clusters', 'Infrastructure clusters', INFRA_CLUSTERS.filter((c) => has(c.value, c.kind)).map((c) => ({ label: c.value, detail: `${c.kind} · ${c.sources} sources`, href: clusterHref(c.kind, c.value) })), '/clusters')
+  add('identities', 'Attacker identities', ATTACKERS.filter((a) => has(a.id, ...a.ips, ...a.fingerprints, ...a.verdicts)).map((a) => ({ label: a.id, detail: `${a.ips.length} IPs · ${a.events} events`, href: `/identities/${encodeURIComponent(a.id)}` })), '/attackers')
+  add('sessions', 'Sessions', distinct(EVENTS.filter((e) => e.sessionId.includes(q)).map((e) => e.sessionId)).map((id) => ({ label: id, detail: 'session', href: `/sessions/${id}` })), history)
+  add('commands', 'Commands', distinct(EVENTS.filter((e) => e.command?.toLowerCase().includes(q)).map((e) => e.command!)).map((c) => ({ label: c, detail: 'executed command', href: history })), history)
+  add('credentials', 'Credentials', distinct(EVENTS.flatMap((e) => credentialOf(e) ?? []).filter((c) => c.toLowerCase().includes(q))).map((c) => ({ label: c, detail: 'credential pair', href: clusterHref('credential', c) })), history)
+  add('payloads', 'Payloads', PAYLOADS.filter((p) => p.hash.includes(q) || p.verdict?.family?.toLowerCase().includes(q)).map((p) => ({ label: p.hash.slice(0, 24), detail: `${p.kind}${p.verdict?.family ? ` · ${p.verdict.family}` : ''}`, href: `/payloads/${p.hash}` })), '/payloads')
   add('fingerprints', 'Fingerprints', INFRA_CLUSTERS.filter((c) => c.kind === 'fingerprint' && c.value.includes(q)).map((c) => ({ label: c.value, detail: `${c.sources} sources`, href: clusterHref('fingerprint', c.value) })))
-  add('signatures', 'IDS signatures', [...new Set(EVENTS.filter((e) => e.type === 'ids.alert' && e.summary.toLowerCase().includes(q)).map((e) => e.summary))].map((s) => ({ label: s, detail: 'Suricata signature', href: `/history?q=${encodeURIComponent(q)}` })))
-  return groups
+  add('signatures', 'IDS signatures', distinct(EVENTS.filter((e) => e.type === 'ids.alert' && e.summary.toLowerCase().includes(q)).map((e) => e.summary)).map((s) => ({ label: s, detail: 'Suricata signature', href: history })), history)
+  add('alerts', 'Alerts', [...new Map(ALERTS.filter((a) => has(a.key, a.kind, a.message)).map((a) => [alertClass(a), a])).entries()].map(([key, a]) => ({ label: a.message, detail: `${a.severity} · ${a.kind}`, href: `/alerts/${encodeURIComponent(key)}` })), '/alerts')
+  add('anomalies', 'ML anomalies', ML_ANOMALIES.filter((a) => has(a.id, a.srcIp, a.explanation, a.sensor, a.eventType)).map((a) => ({ label: a.id, detail: `${a.severity} · ${a.srcIp ?? a.sensor} · ${a.eventType}`, href: `/ml-anomalies/${encodeURIComponent(a.id)}` })), '/ml-anomalies')
+  add('llm', 'LLM analyses', LLM_ANALYSES.filter((a) => has(a.id, a.intent, a.summary, a.srcIp, a.sessionId, ...a.behaviors)).map((a) => ({ label: a.intent, detail: `${a.severity} · ${a.srcIp ?? a.docType}`, href: `/llm-analysis/${encodeURIComponent(a.id)}` })), '/llm-analysis')
+  add('agent-campaigns', 'Agent campaigns', AGENT_CAMPAIGNS.filter((c) => has(c.id, ...c.categories, ...c.identifiers)).map((c) => ({ label: c.id, detail: `${c.severity} · ${c.categories.join(', ')}`, href: `/agent-campaigns/${encodeURIComponent(c.id)}` })), '/agent-campaigns')
+  add('sensors', 'Sensors', SENSORS.filter((s) => has(s.id, s.name, s.kind, s.what, s.location)).map((s) => ({ label: s.name, detail: `${s.kind} · ${s.location}`, href: `/sensors/${encodeURIComponent(s.id)}` })), '/sensors')
+  add('recordings', 'Session recordings', distinct(RECORDINGS.filter((r) => has(r.shasum, r.session, r.srcIp)).map((r) => r.shasum)).map((shasum) => ({ label: shasum.slice(0, 24), detail: 'terminal recording', href: `/recordings/${shasum}` })), '/recordings')
+  add('reports', 'Reports', [
+    ...REPORT_DEFINITIONS.filter((d) => has(d.id, d.name, d.template)).map((d) => ({ label: d.name, detail: 'report definition', href: `/reports/definitions/${encodeURIComponent(d.id)}` })),
+    ...GENERATED_REPORTS.filter((g) => has(g.id, g.title)).map((g) => ({ label: g.title, detail: `generated PDF · ${g.origin}`, href: `/reports/generated/${encodeURIComponent(g.id)}` })),
+  ], '/reports/library')
+  add('canarytokens', 'Canarytokens', CANARY_TOKENS.filter((t) => has(t.id, t.memo, t.type, t.hostname)).map((t) => ({ label: t.memo, detail: `${t.type} token`, href: `/canarytokens/${encodeURIComponent(t.id)}` })), '/canarytokens')
+  add('bait', 'Bait credentials', BAIT_CREDENTIALS.filter((b) => has(b.id, b.username, b.memo, b.target, b.path)).map((b) => ({ label: b.username, detail: `${b.target} · ${b.memo}`, href: `/credentials/${encodeURIComponent(b.id)}` })), '/credentials')
+  add('analysis', 'Analysis runs', [
+    ...CAPE_RUNS.filter((r) => has(r.sha)).map((r) => ({ label: r.sha.slice(0, 24), detail: `CAPE · ${r.status}`, href: `/cape/${r.sha}` })),
+    ...GITHUB_ANALYSES.filter((r) => has(r.sha, r.family)).map((r) => ({ label: r.sha.slice(0, 24), detail: `GitHub analysis · ${r.status}${r.family ? ` · ${r.family}` : ''}`, href: `/github-analysis/${r.sha}` })),
+    ...REVDECK_RUNS.filter((r) => has(r.sha, r.verdict)).map((r) => ({ label: r.sha.slice(0, 24), detail: `RevDeck · ${r.verdict}`, href: `/revdeck/${r.sha}` })),
+    ...PAYLOADS.filter((p) => p.dynamic && p.hash.includes(q)).map((p) => ({ label: p.hash.slice(0, 24), detail: 'sandbox detonation', href: `/sandbox/${p.hash}` })),
+  ], '/payload-workbench/results')
+  add('dead-letters', 'Ingest dead letters', DEAD_LETTERS.filter((d) => has(d.id, d.reason, d.source, d.index)).map((d) => ({ label: d.id, detail: `${d.source} · ${d.reason}`, href: `/dead-letters/${encodeURIComponent(d.id)}` })), '/dead-letters')
+  add('problems', 'Problem reports', PROBLEM_REPORTS.filter((r) => has(r.id, r.page, r.expected, r.actual)).map((r) => ({ label: r.expected, detail: `${r.status} · ${r.page}`, href: `/problem-reports/${encodeURIComponent(r.id)}` })), '/problem-reports')
+  return groups.sort((a, b) => best.get(a.id)! - best.get(b.id)!)
 }
 
 export async function getDeadLetters(query: string): Promise<DeadLetter[]> {

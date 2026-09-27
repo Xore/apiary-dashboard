@@ -61,7 +61,8 @@ type ShellProps = {
 export function ShellAppShell({ user, config, narrow = false, settingsPane, onSettingsPane }: ShellProps) {
   const navigate = useNavigate()
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
-  const searchSource = useMemo(() => paletteSource(PAGES), [])
+  const isAdmin = user.roles.includes('admin')
+  const searchSource = useMemo(() => paletteSource(PAGES, isAdmin), [isAdmin])
   const location = useLocation()
 
   useEffect(() => {
@@ -111,7 +112,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
         isOpen={isPaletteOpen}
         onOpenChange={setIsPaletteOpen}
         searchSource={searchSource}
-        label="Go to a page, or search IPs, sessions, payloads…"
+        label="Go to a page or setting, or search anything: IPs, alerts, campaigns, payloads…"
         onValueChange={(id) => {
           setIsPaletteOpen(false)
           // Pages are their own ids; an entity carries its target.
@@ -119,6 +120,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           if (!to) return
           // Settings opens as a modal over the current page.
           if (to === '/settings') onSettingsPane('account')
+          else if (to.startsWith('settings:')) onSettingsPane(to.slice('settings:'.length) as PaneId)
           else void navigate({ to })
         }}
       />
