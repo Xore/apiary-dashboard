@@ -11,7 +11,10 @@ import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute } from '@tanstack/react-router'
 import { Histogram, ProtocolTimeline, RankBars, SensorHeatmap, SeriesLines } from '#/components/charts'
-import { CountTable, MiniTable, Panel, StatTile } from '#/components/DashboardBlocks'
+import { CountTable, MiniTable, Panel, SkeletonTiles, StatTile } from '#/components/DashboardBlocks'
+import { SkeletonBlock, SkeletonPanels } from '#/components/EntityBlocks'
+import { SkeletonTable } from '#/components/SkeletonTable'
+import { orPending } from '#/lib/pending'
 import { FeedStateLabel } from '#/components/FeedState'
 import { PageFrame } from '#/components/PageFrame'
 import { SeverityToken } from '#/components/SeverityToken'
@@ -61,6 +64,7 @@ export const Route = createFileRoute('/_layout/')({
     return { overview, views }
   },
   component: OverviewPage,
+  pendingComponent: OverviewPage,
 })
 
 const formatBytes = (bytes: number) => (bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${(bytes / 1e6).toFixed(0)} MB`)
@@ -130,6 +134,32 @@ function LiveView({ views, recent, timeline, start }: { views: OverviewViews; re
       </Panel>
       <Panel title="Recent events" action={<ActionLink href="/events">All events</ActionLink>}>
         <Table data={recent} columns={eventColumns} idKey="id" density="compact" textOverflow="truncate" hasHover />
+      </Panel>
+    </VStack>
+  )
+}
+
+/** The live view before its data: the same panels, charts as blocks of
+ * their height, the recent events as skeleton rows. */
+function LiveSkeleton() {
+  return (
+    <VStack gap={4}>
+      <Panel title="Activity, last 24h" action={<ActionLink href="/events">Event explorer</ActionLink>}>
+        <SkeletonBlock height={560} />
+      </Panel>
+      <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
+        <Panel title="Events by protocol">
+          <SkeletonBlock height={260} />
+        </Panel>
+        <Panel title="Attack vectors">
+          <SkeletonBlock height={260} />
+        </Panel>
+      </Grid>
+      <Panel title="Attack origins" action={<ActionLink href="/ips">Attack sources</ActionLink>}>
+        <SkeletonBlock height={420} />
+      </Panel>
+      <Panel title="Recent events" action={<ActionLink href="/events">All events</ActionLink>}>
+        <SkeletonTable columns={eventColumns} rows={10} density="compact" />
       </Panel>
     </VStack>
   )
@@ -301,27 +331,31 @@ function EvidenceView({ views }: { views: OverviewViews }) {
 // ---- Page --------------------------------------------------------------------
 
 function OverviewPage() {
-  const { overview, views } = Route.useLoaderData()
+  const { overview, views } = orPending(Route.useLoaderData()) ?? {}
   const { view = 'live', section } = Route.useSearch()
   // The numbers follow the live stream, at most every refresh interval.
   useLiveRefresh((usePreferences()?.refreshSeconds ?? 10) * 1000)
   return (
-    <PageFrame title="Overview" description={`Last 24 hours · generated ${formatDateTime(overview.generatedAt)}`}>
+    <PageFrame title="Overview" description={overview ? `Last 24 hours · generated ${formatDateTime(overview.generatedAt)}` : 'Last 24 hours'}>
       <VStack gap={5}>
         {/* The headline numbers belong to the at-a-glance view; the other
             views are deep dives and start with their own content. */}
         {view === 'live' && (
           <Grid columns={{ minWidth: 200, repeat: 'fit' }} gap={4}>
-            {overview.kpis.map((kpi) => (
-              <StatTile key={kpi.id} {...kpi} caption="Last 24h vs. previous 24h" />
-            ))}
+            {overview ? overview.kpis.map((kpi) => <StatTile key={kpi.id} {...kpi} caption="Last 24h vs. previous 24h" />) : <SkeletonTiles count={5} />}
           </Grid>
         )}
-        {view === 'live' && <LiveView views={views} recent={overview.recentEvents} timeline={overview.timeline} start={overview.timeline.at(0)?.time ?? overview.generatedAt} />}
-        {view === 'health' && <HealthView views={views} />}
-        {view === 'threats' && <ThreatsView views={views} section={section} />}
-        {view === 'behavior' && <BehaviorView views={views} section={section} />}
-        {view === 'evidence' && <EvidenceView views={views} />}
+        {!overview || !views ? (
+          view === 'live' ? <LiveSkeleton /> : <SkeletonPanels count={4} lines={6} />
+        ) : (
+          <>
+            {view === 'live' && <LiveView views={views} recent={overview.recentEvents} timeline={overview.timeline} start={overview.timeline.at(0)?.time ?? overview.generatedAt} />}
+            {view === 'health' && <HealthView views={views} />}
+            {view === 'threats' && <ThreatsView views={views} section={section} />}
+            {view === 'behavior' && <BehaviorView views={views} section={section} />}
+            {view === 'evidence' && <EvidenceView views={views} />}
+          </>
+        )}
       </VStack>
     </PageFrame>
   )

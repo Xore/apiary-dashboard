@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
+import { PagePending } from './PagePending'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { AppShell } from '@astryxdesign/core/AppShell'
 import { CommandPalette } from '@astryxdesign/core/CommandPalette'
@@ -103,7 +104,11 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           {/* Times are formatted from module state, so a change to how they
               read remounts the page; dialogs in the shell stay open. */}
           <div key={timeKey} style={{ flex: 1, minHeight: 0 }}>
-            <Outlet />
+            {/* A page whose code is still arriving suspends here, inside the
+                shell, rather than hiding the shell behind the root fallback. */}
+            <Suspense fallback={<PagePending />}>
+              <Outlet />
+            </Suspense>
           </div>
 
         </div>
