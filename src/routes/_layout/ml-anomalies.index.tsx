@@ -132,12 +132,12 @@ function ModelHealthView({ data }: { data: ReturnType<typeof Route.useLoaderData
     <PageFrame title="ML anomalies" description="How the three detectors score traffic, and whether their latest retrain was accepted.">
       <VStack gap={4}>
         <Panel title="Model health">
-          <Table data={data.modelHealth} columns={healthColumns} idKey="model" density="compact" />
+          <Table data={data?.modelHealth} columns={healthColumns} idKey="model" density="compact" />
         </Panel>
         <Grid columns={{ minWidth: 380, repeat: 'fit' }} gap={4}>
           <Panel title="Model scores over time">
             <TimeLines
-              data={data.scoreTimeline}
+              data={data?.scoreTimeline}
               series={[
                 { key: 'isolationForest', label: 'Isolation forest' },
                 { key: 'lstmAe', label: 'LSTM autoencoder' },
@@ -145,7 +145,7 @@ function ModelHealthView({ data }: { data: ReturnType<typeof Route.useLoaderData
               ]}
             />
           </Panel>
-          <MiniTable title="Top source IPs by anomalies, 24h" header="Source IP" rows={data.topSources} entity="source" />
+          <MiniTable title="Top source IPs by anomalies, 24h" header="Source IP" rows={data?.topSources} entity="source" />
         </Grid>
       </VStack>
     </PageFrame>

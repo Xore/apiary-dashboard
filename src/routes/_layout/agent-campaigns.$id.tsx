@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { HStack } from '@astryxdesign/core/Stack'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
@@ -24,28 +26,29 @@ export const Route = createFileRoute('/_layout/agent-campaigns/$id')({
     />
   ),
   component: AgentCampaignLayout,
+  pendingComponent: AgentCampaignLayout,
 })
 
 function AgentCampaignLayout() {
-  const { campaign: c } = Route.useLoaderData()
+  const loaded = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
+  const c = loaded?.campaign
   return (
     <EntityFrame
       kind="Agent campaign"
-      title={c.id}
-      basePath={`/agent-campaigns/${encodeURIComponent(c.id)}`}
-      tokens={
-        <HStack gap={1} wrap="wrap">
+      title={<Pending width={320}>{c && c.id}</Pending>}
+      basePath={`/agent-campaigns/${encodeURIComponent(id)}`}
+      tokens={c && (<HStack gap={1} wrap="wrap">
           <SeverityToken severity={c.severity} />
           {c.categories.map((category) => (
             <Token key={category} size="sm" label={categoryLabel(category)} />
           ))}
-        </HStack>
-      }
+        </HStack>)}
       facts={[
-        { label: 'Started', value: formatDateTime(c.start) },
-        { label: 'Ended', value: formatDateTime(c.end) },
-        { label: 'Events', value: formatNumber(c.eventCount) },
-        { label: 'Identifiers', value: formatNumber(c.identifiers.length) },
+        { label: 'Started', value: c && (formatDateTime(c.start))},
+        { label: 'Ended', value: c && (formatDateTime(c.end))},
+        { label: 'Events', value: c && (formatNumber(c.eventCount))},
+        { label: 'Identifiers', value: c && (formatNumber(c.identifiers.length))},
       ]}
     >
       <Outlet />

@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { EventsPanel } from '#/components/DetailBlocks'
@@ -9,10 +10,11 @@ export const Route = createFileRoute('/_layout/sources/$ip/events')({
   loaderDeps: ({ search }) => ({ range: search.range }),
   loader: ({ params, deps }) => getSourceEvents(params.ip, deps.range),
   component: SourceEvents,
+  pendingComponent: SourceEvents,
 })
 
 function SourceEvents() {
-  const events = Route.useLoaderData()
+  const events = orPending(Route.useLoaderData())
   const { ip } = parent.useParams()
-  return <EventsPanel title={`Events in range (${events.length})`} events={events} action={<ActionLink href={`/events?ip=${ip}`}>Filter in Event explorer</ActionLink>} empty="No events from this address in the time range." />
+  return <EventsPanel title={events ? `Events in range (${events.length})` : "Events in range"} events={events} action={<ActionLink href={`/events?ip=${ip}`}>Filter in Event explorer</ActionLink>} empty="No events from this address in the time range." />
 }

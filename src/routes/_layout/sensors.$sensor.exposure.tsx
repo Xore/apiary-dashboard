@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -9,11 +10,12 @@ import { Panel } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
-export const Route = createFileRoute('/_layout/sensors/$sensor/exposure')({ component: SensorExposure })
+export const Route = createFileRoute('/_layout/sensors/$sensor/exposure')({ component: SensorExposure, pendingComponent: SensorExposure })
 
 /** How the internet reaches this sensor: ingress path, names, and ports. */
 function SensorExposure() {
-  const { exposure } = parent.useLoaderData()
+  const loaded = orPending(parent.useLoaderData())
+  const exposure = loaded?.exposure
   if (!exposure) return <Text type="supporting">This sensor is not in the fleet topology.</Text>
   return (
     <VStack gap={4}>

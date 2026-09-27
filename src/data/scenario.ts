@@ -61,7 +61,9 @@ export function runScenario<TArgs extends unknown[], TResult>(name: string, quer
     if (name === 'getShellConfig' || name === 'getPreferences') return query(...args)
     // The Mock data menu's own controls work whatever the backend's state.
     if (MOCK_CONTROLS.has(name)) return query(...args)
-    if (scenario === 'slow') await wait(2500)
+    // The session is read from the sign-in cookie on every navigation, not
+    // from the backend: a slow backend does not slow it.
+    if (scenario === 'slow' && name !== 'getSessionUser') await wait(2500)
     if (scenario === 'unavailable' || (scenario === 'partial' && isRead(name) && failsPartly(name))) throw new ApiError('unavailable', name)
     if (scenario === 'overloaded') throw new ApiError('overloaded', name, { retryAfter: 30 })
     if (scenario === 'expired') throw new ApiError('expired', name)

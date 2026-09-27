@@ -1,3 +1,4 @@
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { useState } from 'react'
 import { Grid } from '@astryxdesign/core/Grid'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
@@ -123,8 +124,14 @@ function RelationGraph({ center, groups }: { center: string; groups: RelatedGrou
 }
 
 /** Everything else this entity touches, as a list or a graph. */
-export function RelatedPanel({ center, groups }: { center: string; groups: RelatedGroup[] }) {
+export function RelatedPanel({ center, groups }: { center: string; groups: RelatedGroup[] | undefined }) {
   const [view, setView] = useState<'list' | 'graph'>('list')
+  if (!groups)
+    return (
+      <Panel title="Related">
+        <Skeleton height={160} />
+      </Panel>
+    )
   if (groups.length === 0) return null
   return (
     <Panel

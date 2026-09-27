@@ -1,3 +1,6 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { AuthInspector } from '#/components/details/AuthFailure'
 import { getAuthEvents } from '#/data/queries'
@@ -15,22 +18,24 @@ export const Route = createFileRoute('/_layout/auth-events/$id')({
     <NotFound title="Auth failure" description="No auth failure has this id." />
   ),
   component: AuthFailurePage,
+  pendingComponent: AuthFailurePage,
 })
 
 function AuthFailurePage() {
-  const d = Route.useLoaderData()
+  const d = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
   return (
     <EntityFrame
       kind="Auth failure"
-      title={d.type}
-      basePath={`/auth-events/${encodeURIComponent(d.id)}`}
+      title={<Pending width={280}>{d?.type}</Pending>}
+      basePath={`/auth-events/${encodeURIComponent(id)}`}
       facts={[
-        { label: 'Time', value: formatDateTime(d.timestamp) },
-        { label: 'Client', value: d.clientId },
-        { label: 'Realm', value: d.realm },
+        { label: 'Time', value: d && formatDateTime(d.timestamp) },
+        { label: 'Client', value: d?.clientId },
+        { label: 'Realm', value: d?.realm },
       ]}
     >
-      <AuthInspector event={d} />
+      {d ? <AuthInspector event={d} /> : <SkeletonPanels />}
     </EntityFrame>
   )
 }

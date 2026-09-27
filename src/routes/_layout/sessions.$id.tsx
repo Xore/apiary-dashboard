@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
@@ -17,28 +18,28 @@ export const Route = createFileRoute('/_layout/sessions/$id')({
   },
   notFoundComponent: () => <NotFound title="Session" description="No events found for this session id in the current window." />,
   component: SessionLayout,
+  pendingComponent: SessionLayout,
 })
 
 function SessionLayout() {
-  const s = Route.useLoaderData()
-  const minutes = Math.max(1, Math.round((Date.parse(s.last) - Date.parse(s.first)) / 60_000))
+  const s = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
+  const minutes = s ? Math.max(1, Math.round((Date.parse(s.last) - Date.parse(s.first)) / 60_000)) : 0
 
   return (
     <EntityFrame
       kind="Session"
-      title={s.id}
-      basePath={`/sessions/${encodeURIComponent(s.id)}`}
-      tokens={
-        <EntityLink kind="country" id={s.country}>
+      title={id}
+      basePath={`/sessions/${encodeURIComponent(id)}`}
+      tokens={s && (<EntityLink kind="country" id={s.country}>
           <Token size="sm" color="blue" label={s.country} />
-        </EntityLink>
-      }
+        </EntityLink>)}
       facts={[
-        { label: 'Source', value: <EntityLink kind="source" id={s.srcIp} /> },
-        { label: 'Started', value: formatDateTime(s.first) },
-        { label: 'Duration', value: `${formatNumber(minutes)} min` },
-        { label: 'Events', value: formatNumber(s.events.length) },
-        { label: 'Sensors', value: s.sensors.map((r) => r.label).join(', ') },
+        { label: 'Source', value: s && (<EntityLink kind="source" id={s.srcIp} />)},
+        { label: 'Started', value: s && (formatDateTime(s.first))},
+        { label: 'Duration', value: s && (`${formatNumber(minutes)} min`)},
+        { label: 'Events', value: s && (formatNumber(s.events.length))},
+        { label: 'Sensors', value: s && (s.sensors.map((r) => r.label).join(', '))},
       ]}
     >
       <Outlet />
@@ -52,14 +53,14 @@ function tabsFor(loaded: unknown): ViewTab[] {
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const s = data
   return [
-    { id: 'timeline', label: 'Timeline', count: s.events.length },
-    { id: 'commands', label: 'Commands', count: s.commands.length },
-    { id: 'credentials', label: 'Credentials', count: s.credentials.length },
-    { id: 'downloads', label: 'Downloads', count: s.payloads.length },
+    { id: 'timeline', label: 'Timeline', count: s?.events.length },
+    { id: 'commands', label: 'Commands', count: s?.commands.length },
+    { id: 'credentials', label: 'Credentials', count: s?.credentials.length },
+    { id: 'downloads', label: 'Downloads', count: s?.payloads.length },
     { id: 'recording', label: 'Recording' },
-    { id: 'attck', label: 'ATT&CK', count: s.techniques.length },
+    { id: 'attck', label: 'ATT&CK', count: s?.techniques.length },
     // A mail sensor's session carries the message it delivered.
-    ...(s.events.some((e: { sensor: string }) => e.sensor === 'mailoney') ? [{ id: 'mail', label: 'Message' }] : []),
+    ...(s?.events.some((e: { sensor: string }) => e.sensor === 'mailoney') ? [{ id: 'mail', label: 'Message' }] : []),
     { id: 'raw', label: 'Raw' },
   ]
 }

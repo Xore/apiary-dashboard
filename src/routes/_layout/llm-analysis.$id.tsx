@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EvidenceLink } from '#/components/details/LlmAnalysis'
@@ -20,26 +22,27 @@ export const Route = createFileRoute('/_layout/llm-analysis/$id')({
     <NotFound title="LLM analysis" description="No analysis has this id." />
   ),
   component: LlmLayout,
+  pendingComponent: LlmLayout,
 })
 
 function LlmLayout() {
-  const { analysis: a } = Route.useLoaderData()
+  const loaded = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
+  const a = loaded?.analysis
   return (
     <EntityFrame
-      kind={`LLM analysis · ${a.docType}`}
-      title={a.intent}
-      basePath={`/llm-analysis/${encodeURIComponent(a.id)}`}
-      tokens={
-        <>
+      kind={a ? `LLM analysis · ${a.docType}` : "LLM analysis"}
+      title={<Pending width={320}>{a && a.intent}</Pending>}
+      basePath={`/llm-analysis/${encodeURIComponent(id)}`}
+      tokens={a && (<>
           <SeverityToken severity={a.severity} />
           <Token label="AI-generated" size="sm" />
-        </>
-      }
+        </>)}
       facts={[
-        { label: 'Analyzed', value: formatDateTime(a.timestamp) },
-        { label: 'Confidence', value: a.confidence ?? '—' },
-        { label: 'Evidence', value: <EvidenceLink row={a} /> },
-        { label: 'Model', value: a.model },
+        { label: 'Analyzed', value: a && (formatDateTime(a.timestamp))},
+        { label: 'Confidence', value: a && (a.confidence ?? '—')},
+        { label: 'Evidence', value: a && (<EvidenceLink row={a} />)},
+        { label: 'Model', value: a && (a.model)},
       ]}
     >
       <Outlet />
@@ -55,7 +58,7 @@ function tabsFor(loaded: unknown): ViewTab[] {
   return [
     { id: 'summary', label: 'Summary' },
     { id: 'evidence', label: 'Evidence', count: events.length },
-    { id: 'behaviors', label: 'Behaviors', count: a.behaviors.length },
+    { id: 'behaviors', label: 'Behaviors', count: a?.behaviors.length },
     { id: 'raw', label: 'Raw' },
   ]
 }

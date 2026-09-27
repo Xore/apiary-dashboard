@@ -18,7 +18,7 @@ import { EntityLink } from './EntityLink'
 import { tableDensity, usePreferences } from '#/lib/prefs'
 
 /** A titled widget card with an optional trailing action (usually a Link). */
-export function Panel({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+export function Panel({ title, action, children }: { title: ReactNode; action?: ReactNode; children: ReactNode }) {
   return (
     <Card>
       <VStack gap={4}>

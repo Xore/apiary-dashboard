@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { VStack } from '@astryxdesign/core/Stack'
@@ -12,10 +13,11 @@ import { formatNumber } from '#/lib/format'
 export const Route = createFileRoute('/_layout/sources/$ip/network')({
   loader: ({ params }) => getSourceNetwork(params.ip),
   component: SourceNetworkTab,
+  pendingComponent: SourceNetworkTab,
 })
 
 function SourceNetworkTab() {
-  const net = Route.useLoaderData()
+  const net = orPending(Route.useLoaderData())
   if (!net) return <Text type="supporting">No network data for this address.</Text>
   return (
     <VStack gap={4}>

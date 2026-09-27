@@ -1,3 +1,5 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
@@ -10,10 +12,12 @@ import { formatDateTime, formatNumber } from '#/lib/format'
 
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
-export const Route = createFileRoute('/_layout/sensors/$sensor/')({ component: SensorOverview })
+export const Route = createFileRoute('/_layout/sensors/$sensor/')({ component: SensorOverview, pendingComponent: SensorOverview })
 
 function SensorOverview() {
-  const { detail } = parent.useLoaderData()
+  const loaded = orPending(parent.useLoaderData())
+  if (!loaded) return <SkeletonPanels count={2} />
+  const detail = loaded.detail
   const { sensor } = detail
   return (
     <VStack gap={5}>

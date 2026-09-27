@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { HStack } from '@astryxdesign/core/Stack'
 import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Text } from '@astryxdesign/core/Text'
@@ -26,6 +27,7 @@ export const Route = createFileRoute('/_layout/sensors/$sensor')({
   },
   notFoundComponent: () => <NotFound title="Sensor detail" description="No sensor has this name." />,
   component: SensorLayout,
+  pendingComponent: SensorLayout,
 })
 
 const STATUS_VARIANT = { online: 'success', degraded: 'warning', offline: 'error' } as const satisfies Record<SensorStatus, string>
@@ -50,29 +52,34 @@ function SensorPicker({ current, sensors }: { current: string; sensors: string[]
 }
 
 function SensorLayout() {
-  const { detail, catalog } = Route.useLoaderData()
-  const { sensor } = detail
+  const loaded = orPending(Route.useLoaderData())
+  // The sensor's id is in the address: the title and the picker need no data.
+  const { sensor: id } = Route.useParams()
+  const detail = loaded?.detail
+  const sensor = detail?.sensor
 
   return (
     <EntityFrame
       kind="Sensor"
-      title={sensor.name}
-      description={`${sensor.kind} · ${sensor.location} · ${sensor.protocols.join(', ')}`}
-      basePath={`/sensors/${encodeURIComponent(sensor.id)}`}
+      title={sensor?.name ?? id}
+      description={sensor && `${sensor.kind} · ${sensor.location} · ${sensor.protocols.join(', ')}`}
+      basePath={`/sensors/${encodeURIComponent(id)}`}
       tokens={
-        <HStack gap={1.5} vAlign="center">
-          <StatusDot variant={STATUS_VARIANT[sensor.status]} label={sensor.status} />
-          <Text>{sensor.status}</Text>
-        </HStack>
+        sensor && (
+          <HStack gap={1.5} vAlign="center">
+            <StatusDot variant={STATUS_VARIANT[sensor.status]} label={sensor.status} />
+            <Text>{sensor.status}</Text>
+          </HStack>
+        )
       }
-      actions={<SensorPicker current={sensor.id} sensors={catalog.map((c) => c.sensor)} />}
+      actions={<SensorPicker current={id} sensors={loaded?.catalog.map((c) => c.sensor) ?? [id]} />}
       facts={[
-        { label: 'Events / 24h', value: formatNumber(sensor.eventsLast24h) },
-        { label: 'Unique sources', value: formatNumber(detail.uniqueSources) },
-        { label: 'First seen', value: formatDateTime(detail.firstSeen) },
-        { label: 'Last event', value: formatDateTime(sensor.lastSeen) },
-        { label: 'Decoy', value: sensor.persona ? <EntityLink kind="persona" id={sensor.persona.id}>{`${sensor.persona.id} · ${sensor.persona.organization}`}</EntityLink> : 'none' },
-        { label: 'Listens on', value: sensor.ports.length ? sensor.ports.map((p) => `${p.port}/${p.proto}`).join(', ') : 'no listener' },
+        { label: 'Events / 24h', value: sensor && formatNumber(sensor.eventsLast24h) },
+        { label: 'Unique sources', value: detail && formatNumber(detail.uniqueSources) },
+        { label: 'First seen', value: detail && formatDateTime(detail.firstSeen) },
+        { label: 'Last event', value: sensor && formatDateTime(sensor.lastSeen) },
+        { label: 'Decoy', value: sensor && (sensor.persona ? <EntityLink kind="persona" id={sensor.persona.id}>{`${sensor.persona.id} · ${sensor.persona.organization}`}</EntityLink> : 'none') },
+        { label: 'Listens on', value: sensor && (sensor.ports.length ? sensor.ports.map((p) => `${p.port}/${p.proto}`).join(', ') : 'no listener') },
       ]}
     >
       <Outlet />
@@ -88,8 +95,8 @@ function tabsFor(loaded: unknown): ViewTab[] {
   return [
     { id: 'overview', label: 'Overview' },
     { id: 'events', label: 'Captured' },
-    { id: 'sources', label: 'Sources', count: detail.topSources.length },
-    { id: 'leaderboards', label: 'Leaderboards', count: detail.topLists.length },
+    { id: 'sources', label: 'Sources', count: detail?.topSources.length },
+    { id: 'leaderboards', label: 'Leaderboards', count: detail?.topLists.length },
     { id: 'health', label: feed ? `Health · ${feed.state}` : 'Health' },
     { id: 'exposure', label: 'Exposure', count: exposure?.ports.length },
   ]
