@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Theme } from '@astryxdesign/core/theme'
-import { neutralTheme } from '#/themes/neutral/neutral'
+import { neutralTheme } from '#/themes/neutral/neutral-family'
 import { FilterSelect, listParam, toParam } from './FilterSelect'
 
 const OPTIONS = [

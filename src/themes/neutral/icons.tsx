@@ -6,6 +6,10 @@
  *
  * Maps semantic icon names to Lucide icon components.
  * These icons are bundled with the theme, not with @astryxdesign/core.
+ *
+ * The theme family build loads this file through a transpiler that defaults
+ * to the classic JSX runtime; the pragma keeps it on the automatic one.
+ * @jsxRuntime automatic
  */
 
 import type {IconRegistry} from '@astryxdesign/core/Icon';

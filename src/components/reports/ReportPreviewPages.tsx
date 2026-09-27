@@ -15,7 +15,7 @@ import { Icon } from '@astryxdesign/core/Icon'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import type { ReportDefinition, ReportPreview } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
-import { neutralTheme } from '#/themes/neutral/neutral'
+import { neutralTheme } from '#/themes/neutral/neutral-family'
 
 const PAGE_WIDTH = 300
 const PAGE_GAP = 12
