@@ -12,6 +12,8 @@ COPY . .
 RUN bun run build
 
 FROM oven/bun:${BUN_VERSION}-slim AS runtime
+# The base image lags Debian's security fixes; take them at build time.
+RUN apt-get update && apt-get -y upgrade --no-install-recommends && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000
 COPY package.json bun.lock ./
