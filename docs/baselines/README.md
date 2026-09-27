@@ -34,4 +34,4 @@ The same ten page kinds, cold loads at 1440×900 on the production build:
 What the first measurement shows (all loads under half a second locally):
 
 - **HTML** is heaviest where pages carry the most data: the overview (~510 KB), a source (~420 KB) and the event explorer (~370 KB, even paged, mostly its filter facets). Moving those facets and the overview's views behind their own requests is the obvious next saving.
-- **JavaScript** is 545–625 KB on every page, over 86–104 requests. Most of it is the shared shell (Astryx, the router, the charts), split into many chunks. Worth a look before cutover, together with real network conditions.
+- **JavaScript** is 495–575 KB on every page, over 87–117 requests (about 48 KB less once the mock stayed on the server). Most of it is the shared shell (Astryx, the router, the charts), split into many chunks. Worth a look before cutover, together with real network conditions.

@@ -3,9 +3,20 @@
 // state it names.
 import { afterEach, describe, expect, it } from 'vitest'
 import { ApiError, asApiError } from './errors'
-import * as q from './queries'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { backend, queryNames } from './backend'
+import type { Backend } from './backend'
 import * as impl from './queries.impl'
-import { setMockScenario } from './scenario'
+import type { MockScenario } from './scenarios'
+import { renderQueries } from '../../scripts/gen-queries'
+
+// The backend each test talks to; switching scenario is a new backend, as a
+// page with another ?mock= gets.
+let q: Backend = backend()
+const setMockScenario = (scenario: MockScenario) => {
+  q = backend(scenario)
+}
 
 afterEach(() => setMockScenario('normal'))
 
@@ -19,10 +30,13 @@ const failure = async (run: () => Promise<unknown>) => {
 }
 
 describe('mock scenarios', () => {
-  it('the facade wraps every query of the implementation', () => {
+  it('the facade has a server function for every query, and is current', () => {
     const asyncImpl = Object.entries(impl).filter(([, v]) => typeof v === 'function' && v.constructor.name === 'AsyncFunction').map(([k]) => k)
     expect(asyncImpl.length).toBeGreaterThan(80)
-    for (const name of asyncImpl) expect(q, name).toHaveProperty(name)
+    expect(queryNames().sort()).toEqual(asyncImpl.sort())
+    const facade = readFileSync(join(import.meta.dirname, 'queries.ts'), 'utf8')
+    for (const name of asyncImpl) expect(facade, name).toContain(`export const ${name} = announced('${name}'`)
+    expect(facade).toBe(renderQueries())
   })
 
   it('empty: lists empty and counts zero, catalogs and fixed measures kept', async () => {

@@ -2,20 +2,10 @@
 // the dashboard is open, so the operational toasts (and every page reading
 // health) can be seen raising and resolving. Driven from the Mock data menu.
 //
-// Browser-tab state, like every other mock write: the tab that simulates
-// sees it; a server-rendered reload starts healthy again.
+// Mock-backend state, like every other mock write: every tab sees it, and
+// the live stream tells open pages when it changes.
+import type { Incident } from '../incidents'
 import type { SourceHealth } from '../types'
-
-export type Incident = 'sensor-silent' | 'ingest-delayed' | 'ingest-stalled' | 'cluster-red' | 'pipeline-down' | 'dead-letters'
-
-export const INCIDENTS: Array<{ id: Incident; label: string }> = [
-  { id: 'sensor-silent', label: 'A sensor goes silent' },
-  { id: 'ingest-delayed', label: 'Ingest falls behind' },
-  { id: 'ingest-stalled', label: 'Ingest stalls' },
-  { id: 'cluster-red', label: 'Cluster goes red' },
-  { id: 'pipeline-down', label: 'Filebeat unreachable' },
-  { id: 'dead-letters', label: 'Dead letters arrive' },
-]
 
 /** The sensor the "goes silent" incident takes down, in turn. */
 const SILENCE_ORDER = ['cowrie', 'multipot', 'conpot-s7-1200', 'sentrypeer']
@@ -28,10 +18,16 @@ const state = {
   extraDeadLetters: 0,
 }
 
-export const HEALTH_CHANGED = 'apiary-mock-health-changed'
+const healthListeners = new Set<() => void>()
+
+/** Hear about incidents starting and resolving (the live stream does). */
+export function onHealthChanged(listener: () => void): () => void {
+  healthListeners.add(listener)
+  return () => healthListeners.delete(listener)
+}
 
 function changed() {
-  if (typeof window !== 'undefined') window.dispatchEvent(new Event(HEALTH_CHANGED))
+  for (const listener of healthListeners) listener()
 }
 
 export function simulate(incident: Incident): void {

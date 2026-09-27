@@ -1,6 +1,9 @@
-// The data seam. Route loaders call these functions and nothing else; today
-// they resolve mock fixtures, later each becomes a createServerFn call to the
-// backend with the same signature.
+// The mock backend: every query the pages make, answered from the mock
+// fixtures. Server-only. Pages reach it through the server functions in
+// ./queries.ts (generated from this file's exports by
+// scripts/gen-queries.ts), run in the page's scenario by ./backend.ts.
+// Wiring the real backend replaces what answers behind those functions;
+// the signatures here are the contract.
 import { ghidraArtifacts, sandboxArtifacts, sizeOf } from './mock/artifacts'
 import type { ArtifactFile } from './mock/artifacts'
 import { EVENTS, MOCK_USER, PASSWORDS, SENSORS, SOURCES, USERNAMES, credentialOf } from './mock/fixtures'
@@ -60,6 +63,7 @@ import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALT
 import { OVERVIEW_VIEWS } from './mock/overview'
 import { readingOf, sensorReading } from './mock/sensors'
 import { MOCK_NOW, createRng } from './mock/random'
+import { generatePassword, inRange, redact } from './shared'
 import { clusterHref } from '#/lib/entities'
 import type {
   AgentCampaign,
@@ -151,7 +155,8 @@ import type {
   DashboardConfig,
 } from './types'
 import { validateSection } from './mock/config'
-import { withIncidents } from './mock/incidents'
+import { resolveAll, simulate, withIncidents } from './mock/incidents'
+import type { Incident } from './incidents'
 import { mailFor } from './mock/mail'
 
 const HOUR = 3_600_000
@@ -807,11 +812,7 @@ export async function createCanarytoken(input: { type: string; memo: string; tex
 }
 
 // Visually unambiguous alphabet (no 0/O, 1/l/I).
-const PASSWORD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%^&*'
 
-export function generatePassword(length = 16): string {
-  return Array.from(crypto.getRandomValues(new Uint32Array(length)), (n) => PASSWORD_ALPHABET[n % PASSWORD_ALPHABET.length]).join('')
-}
 
 export async function getCredentials(): Promise<{ credentials: BaitCredential[]; tokens: CanaryToken[]; targets: string[] }> {
   await mockDelay()
@@ -1073,12 +1074,6 @@ export type ProblemReportInput = {
 
 /** Secrets never survive into a stored report: credentials, tokens and
  * cookies are replaced wherever they appear, as the store's own pass does. */
-export function redact(text: string): string {
-  return text
-    .replace(/\beyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]{8,}/g, '[redacted jwt]')
-    .replace(/\b(bearer)\s+[\w.~+/-]{8,}=*/gi, '$1 [redacted]')
-    .replace(/\b(authorization|cookie|set-cookie|x-api-key|api[_-]?key|token|access_token|refresh_token|session|password|passwd|secret)(["']?\s*[:=]\s*["']?)[^\s"'&,;}]+/gi, '$1$2[redacted]')
-}
 
 export async function submitProblemReport(input: ProblemReportInput): Promise<{ id: string }> {
   await mockDelay()
@@ -1139,7 +1134,6 @@ export async function getPreferences(): Promise<Preferences> {
 }
 
 /** The mock's "now": what relative timestamps count back from. */
-export const mockNow = () => MOCK_NOW
 
 /** The configuration the shell renders with on every page. */
 export async function getShellConfig(): Promise<ShellConfig> {
@@ -1147,9 +1141,6 @@ export async function getShellConfig(): Promise<ShellConfig> {
   return { presentation: { ...CONFIG.presentation }, behavior: { ...CONFIG.behavior }, links: { ...DEPLOYMENT_LINKS } }
 }
 
-/** Read-only mode: every write refused for everyone, except the switches
- * that turn it off again and the operator's own preferences. */
-export const isReadOnly = () => CONFIG.behavior.readOnly
 
 /** Section values as they were before each revision, for rollback. */
 const SNAPSHOTS = new Map<string, { section: ConfigSection; value: unknown }>()
@@ -1318,10 +1309,6 @@ export async function getOverviewViews(): Promise<OverviewViews> {
 const RANGE_MS: Record<string, number> = { '1h': HOUR, '6h': 6 * HOUR, '24h': DAY, '7d': 7 * DAY, '30d': 30 * DAY }
 
 /** Keeps items inside the app-wide range (default 24h). */
-export function inRange(at: string, range?: string): boolean {
-  if (range === 'all') return true
-  return MOCK_NOW - Date.parse(at) <= (RANGE_MS[range ?? '24h'] ?? DAY)
-}
 
 function summarizeSessions(events: HoneypotEvent[]): SessionSummary[] {
   const bySession = new Map<string, HoneypotEvent[]>()
@@ -1552,7 +1539,6 @@ export async function getIdentityFusion(id: string): Promise<IdentityFusion | nu
 
 /** The alert-class key an alert group's page lives under (its id without the
  * acknowledged flag, so acknowledging keeps the URL). */
-export const alertKeyOf = (group: AlertGroup) => group.id.replace(/\|(true|false)$/, '')
 
 export interface AlertDetail {
   group: AlertGroup
@@ -1881,4 +1867,16 @@ export async function getRelated(kind: TimelineEntity | 'event', id: string): Pr
       groups = []
   }
   return groups.filter((g) => g.items.length > 0)
+}
+
+// ---- Mock controls ------------------------------------------------------------
+
+/** Mock only: start a simulated operational incident (the Mock data menu). */
+export async function simulateIncident(incident: Incident): Promise<void> {
+  simulate(incident)
+}
+
+/** Mock only: every simulated incident resolves. */
+export async function resolveIncidents(): Promise<void> {
+  resolveAll()
 }

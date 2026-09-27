@@ -19,8 +19,8 @@ import { TextArea } from '@astryxdesign/core/TextArea'
 import { ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/outline'
 import { useRouterState } from '@tanstack/react-router'
 import { getSettings, submitProblemReport } from '#/data/queries'
-import { API_CALL } from '#/data/scenario'
-import type { ApiCallRecord } from '#/data/scenario'
+import { API_CALL } from '#/data/scenarios'
+import type { ApiCallRecord } from '#/data/scenarios'
 import { describeError } from '#/lib/actionError'
 
 const MAX_TRAIL = 100

@@ -1,39 +1,14 @@
-// Mock scenarios: make the whole data seam behave like a backend in a given
-// state, so every page's empty, error, pending and role-gated states can be
-// seen and designed without touching code. `?mock=<scenario>` picks one and
-// sticks across navigation; the "Mock data" badge in the top bar switches.
-//
-// The active scenario is module state, set by the layout before any loader
-// runs. On the dev server that state is per process, which is fine for a
-// single designer and wrong for anything shared: this is a mock-only seam.
+// The mock backend's scenarios: the rules that make the whole data seam
+// behave like a backend in a given state (empty, failing, slow, a viewer's
+// session), so every page's states can be seen and designed without
+// touching code. Server-only: the scenario arrives with each call (see
+// src/data/serverFn.ts), never as shared module state, so concurrent
+// requests in different scenarios do not see each other's.
 import { ApiError } from './errors'
 import { CONFIG } from './mock/details'
 import { enlargedRead, originalArgs } from './mock/large'
+import type { MockScenario } from './scenarios'
 import type { SessionUser } from './types'
-
-export type MockScenario = 'normal' | 'empty' | 'large' | 'slow' | 'partial' | 'unavailable' | 'overloaded' | 'expired' | 'viewer'
-
-export const SCENARIOS: Array<{ id: MockScenario; label: string; description: string }> = [
-  { id: 'normal', label: 'Normal', description: 'Seeded mock data, every call succeeds.' },
-  { id: 'empty', label: 'Empty', description: 'A backend with no data yet: every list empty, every count zero.' },
-  { id: 'large', label: 'Large volumes', description: 'A busy deployment: six-digit counts, long lists, long values.' },
-  { id: 'slow', label: 'Slow', description: 'Every call takes 2.5 s: loading states.' },
-  { id: 'partial', label: 'Partly failing', description: 'About a third of the calls fail; the rest succeed.' },
-  { id: 'unavailable', label: 'Backend down', description: 'Every call fails with 502.' },
-  { id: 'overloaded', label: 'Overloaded', description: 'Every call is shed with 503 and Retry-After: 30.' },
-  { id: 'expired', label: 'Session expired', description: 'Every call answers 401.' },
-  { id: 'viewer', label: 'Viewer role', description: 'Signed in without admin: admin actions are refused with 403.' },
-]
-
-export const isScenario = (value: unknown): value is MockScenario => SCENARIOS.some((s) => s.id === value)
-
-let current: MockScenario = 'normal'
-
-export function setMockScenario(scenario: MockScenario | undefined): void {
-  current = scenario ?? 'normal'
-}
-
-export const mockScenario = (): MockScenario => current
 
 /** Writes only an admin may make. The real tier refuses them for any other
  * role; the pages disable them with "Admin role required". */
@@ -59,7 +34,10 @@ const READ_ONLY_EXEMPT: ReadonlySet<string> = new Set(['saveConfigSection', 'rol
 
 const readOnly = () => CONFIG.behavior.readOnly
 
-const isRead = (name: string) => /^(get|search|semanticSearch|preview|resolve|validate)/.test(name)
+/** Controls of the mock itself, not backend calls. */
+const MOCK_CONTROLS: ReadonlySet<string> = new Set(['simulateIncident', 'resolveIncidents'])
+
+export const isRead = (name: string) => /^(get|search|semanticSearch|preview|resolve|validate)/.test(name)
 
 /** Catalogs are code, not data: an empty backend still ships them. */
 const KEEP_WHEN_EMPTY: Record<string, readonly string[]> = {
@@ -93,38 +71,15 @@ function failsPartly(name: string): boolean {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-/** Every call, as the browser sees it: the mock of the fetch log the
- * report-a-problem capture keeps (name, outcome, status, duration). */
-export const API_CALL = 'apiary-api-call'
-export type ApiCallRecord = { name: string; ok: boolean; status: number; ms: number; error?: string }
-
-function announce(record: ApiCallRecord) {
-  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent<ApiCallRecord>(API_CALL, { detail: record }))
-}
-
-/** One query, run through the active scenario, and announced. */
-export function withScenario<TArgs extends unknown[], TResult>(name: string, query: (...args: TArgs) => Promise<TResult>): (...args: TArgs) => Promise<TResult> {
-  const scenarioQuery = runScenario(name, query)
+/** One query as the backend in `scenario` answers it. */
+export function runScenario<TArgs extends unknown[], TResult>(name: string, query: (...args: TArgs) => Promise<TResult>, scenario: MockScenario): (...args: TArgs) => Promise<TResult> {
   return async (...args) => {
-    const started = Date.now()
-    try {
-      const result = await scenarioQuery(...args)
-      announce({ name, ok: true, status: 200, ms: Date.now() - started })
-      return result
-    } catch (error) {
-      announce({ name, ok: false, status: error instanceof ApiError ? error.status : 500, ms: Date.now() - started, error: error instanceof Error ? error.message : String(error) })
-      throw error
-    }
-  }
-}
-
-function runScenario<TArgs extends unknown[], TResult>(name: string, query: (...args: TArgs) => Promise<TResult>): (...args: TArgs) => Promise<TResult> {
-  return async (...args) => {
-    const scenario = current
     // The session comes from the sign-in cookie, not the backend: it
     // survives a backend outage, and only the role changes.
     // Cached configuration, like the session: it outlives a backend outage.
     if (name === 'getShellConfig' || name === 'getPreferences') return query(...args)
+    // The Mock data menu's own controls work whatever the backend's state.
+    if (MOCK_CONTROLS.has(name)) return query(...args)
     if (name === 'getSessionUser') {
       const user = (await query(...args)) as SessionUser
       return (scenario === 'viewer' ? { ...user, name: 'Analyst', roles: ['viewer'] } : user) as TResult

@@ -2,8 +2,9 @@ import { DropdownMenu, DropdownMenuDivider, DropdownMenuItem } from '@astryxdesi
 import { Icon } from '@astryxdesign/core/Icon'
 import { BeakerIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { INCIDENTS, resolveAll, simulate } from '#/data/mock/incidents'
-import { SCENARIOS, isScenario } from '#/data/scenario'
+import { HEALTH_CHANGED, INCIDENTS } from '#/data/incidents'
+import { resolveIncidents, simulateIncident } from '#/data/queries'
+import { SCENARIOS, isScenario } from '#/data/scenarios'
 
 const SIGN_IN_PAGES = [
   { label: 'Show: sign-in', href: '/auth/login' },
@@ -12,6 +13,9 @@ const SIGN_IN_PAGES = [
   { label: 'Show: sign-in could not complete', href: '/auth/callback?code=failed' },
   { label: 'Show: sign-in unavailable', href: '/auth/login?fail=unavailable' },
 ]
+
+/** This page hears at once; other pages hear it from the live stream. */
+const healthChanged = () => window.dispatchEvent(new Event(HEALTH_CHANGED))
 
 /** The "Mock data" badge, as a switch: pick how the mock backend behaves
  * (empty, failing, slow, viewer role) and every page follows, or simulate
@@ -48,9 +52,9 @@ export function MockScenarioMenu({ compact = false }: { compact?: boolean }) {
       {/* Operational incidents: change source health in this tab, so the
           toasts and health pages can be seen raising and resolving. */}
       {INCIDENTS.map((incident) => (
-        <DropdownMenuItem key={incident.id} label={`Simulate: ${incident.label.toLowerCase()}`} onClick={() => simulate(incident.id)} />
+        <DropdownMenuItem key={incident.id} label={`Simulate: ${incident.label.toLowerCase()}`} onClick={() => void simulateIncident(incident.id).then(healthChanged)} />
       ))}
-      <DropdownMenuItem label="Simulate: everything recovers" onClick={resolveAll} />
+      <DropdownMenuItem label="Simulate: everything recovers" onClick={() => void resolveIncidents().then(healthChanged)} />
       <DropdownMenuDivider />
       {/* The pages outside the shell: sign-in and the ways it fails. */}
       {SIGN_IN_PAGES.map((page) => (

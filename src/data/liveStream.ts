@@ -1,34 +1,51 @@
-// The live event stream, the one connection the shell keeps open. The real
-// tier is an EventSource on /api/live; this is its mock, driven by the mock
-// live generator and the active scenario: an outage breaks the stream, an
-// empty backend keeps it open and quiet, a slow one sends sparsely.
-import { nextLiveEvent } from './mock/live'
-import { silentSensors } from './mock/incidents'
-import { mockScenario } from './scenario'
+// The browser end of the live event stream: an EventSource on /api/live in
+// the page's mock scenario. Browsers give up on an answer that is not 200 (a
+// backend outage), so a failed stream is reopened after a pause; a change of
+// scenario reopens it at once. Source-health changes arrive as `health`
+// events and are passed on to the page as HEALTH_CHANGED.
+import { HEALTH_CHANGED } from './incidents'
+import { pageScenario } from './serverFn'
 import type { HoneypotEvent } from './types'
 
 export type StreamCallbacks = { onEvent: (event: HoneypotEvent) => void; onHealth: (healthy: boolean) => void }
 
+const RETRY_MS = 5000
+
 /** Opens the stream; returns the function that closes it. */
 export function openLiveStream({ onEvent, onHealth }: StreamCallbacks): () => void {
-  let timer: ReturnType<typeof setTimeout> | undefined
+  // Without the API (a test DOM) there is no stream to open.
+  if (typeof EventSource === 'undefined') return () => {}
+  let source: EventSource | undefined
+  let scenario = pageScenario()
+  let retry: ReturnType<typeof setTimeout> | undefined
   let closed = false
-  const tick = () => {
-    if (closed) return
-    const scenario = mockScenario()
-    const broken = scenario === 'unavailable' || scenario === 'overloaded' || scenario === 'expired'
-    onHealth(!broken)
-    if (!broken && scenario !== 'empty') {
-      const event = nextLiveEvent(silentSensors())
-      if (event) onEvent(event)
+
+  const open = () => {
+    source?.close()
+    scenario = pageScenario()
+    source = new EventSource(scenario === 'normal' ? '/api/live' : `/api/live?mock=${scenario}`)
+    source.onopen = () => onHealth(true)
+    source.onmessage = (message: MessageEvent<string>) => onEvent(JSON.parse(message.data) as HoneypotEvent)
+    source.addEventListener('health', () => window.dispatchEvent(new Event(HEALTH_CHANGED)))
+    source.onerror = () => {
+      onHealth(false)
+      // Closed for good (not 200): reopen later ourselves.
+      if (source?.readyState === EventSource.CLOSED && !closed) {
+        clearTimeout(retry)
+        retry = setTimeout(open, RETRY_MS)
+      }
     }
-    // A few events a second at most, like a busy fleet, sparser when slow.
-    const base = scenario === 'slow' ? 6000 : 1200
-    timer = setTimeout(tick, base + Math.random() * base)
   }
-  timer = setTimeout(tick, 400)
+  open()
+  // A different scenario is a different backend: reconnect to it.
+  const watch = setInterval(() => {
+    if (pageScenario() !== scenario) open()
+  }, 1000)
+
   return () => {
     closed = true
-    clearTimeout(timer)
+    clearInterval(watch)
+    clearTimeout(retry)
+    source?.close()
   }
 }

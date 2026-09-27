@@ -23,6 +23,7 @@ import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutSourceHealthRouteImport } from './routes/_layout/source-health'
 import { Route as LayoutTopologyRouteImport } from './routes/_layout/topology'
 import { Route as LayoutWatchlistRouteImport } from './routes/_layout/watchlist'
+import { Route as ApiLiveRouteImport } from './routes/api.live'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthLogoutRouteImport } from './routes/auth.logout'
@@ -261,6 +262,11 @@ const LayoutWatchlistRoute = LayoutWatchlistRouteImport.update({
   id: '/watchlist',
   path: '/watchlist',
   getParentRoute: () => LayoutRoute,
+} as any)
+const ApiLiveRoute = ApiLiveRouteImport.update({
+  id: '/api/live',
+  path: '/api/live',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
@@ -1197,6 +1203,7 @@ export interface FileRoutesByFullPath {
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
   '/watchlist': typeof LayoutWatchlistRoute
+  '/api/live': typeof ApiLiveRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
@@ -1380,6 +1387,7 @@ export interface FileRoutesByTo {
   '/source-health': typeof LayoutSourceHealthRoute
   '/topology': typeof LayoutTopologyRoute
   '/watchlist': typeof LayoutWatchlistRoute
+  '/api/live': typeof ApiLiveRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
@@ -1550,6 +1558,7 @@ export interface FileRoutesById {
   '/_layout/source-health': typeof LayoutSourceHealthRoute
   '/_layout/topology': typeof LayoutTopologyRoute
   '/_layout/watchlist': typeof LayoutWatchlistRoute
+  '/api/live': typeof ApiLiveRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/logout': typeof AuthLogoutRoute
@@ -1737,6 +1746,7 @@ export interface FileRouteTypes {
     | '/source-health'
     | '/topology'
     | '/watchlist'
+    | '/api/live'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
@@ -1920,6 +1930,7 @@ export interface FileRouteTypes {
     | '/source-health'
     | '/topology'
     | '/watchlist'
+    | '/api/live'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
@@ -2089,6 +2100,7 @@ export interface FileRouteTypes {
     | '/_layout/source-health'
     | '/_layout/topology'
     | '/_layout/watchlist'
+    | '/api/live'
     | '/auth/callback'
     | '/auth/login'
     | '/auth/logout'
@@ -2264,6 +2276,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
   HealthzRoute: typeof HealthzRoute
+  ApiLiveRoute: typeof ApiLiveRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthLogoutRoute: typeof AuthLogoutRoute
@@ -2376,6 +2389,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/watchlist'
       preLoaderRoute: typeof LayoutWatchlistRouteImport
       parentRoute: typeof LayoutRoute
+    }
+    '/api/live': {
+      id: '/api/live'
+      path: '/api/live'
+      fullPath: '/api/live'
+      preLoaderRoute: typeof ApiLiveRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
       id: '/auth/callback'
@@ -4073,6 +4093,7 @@ const LayoutRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
   HealthzRoute: HealthzRoute,
+  ApiLiveRoute: ApiLiveRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthLogoutRoute: AuthLogoutRoute,
