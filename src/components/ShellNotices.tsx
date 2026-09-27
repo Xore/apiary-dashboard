@@ -7,7 +7,7 @@ import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Popover } from '@astryxdesign/core/Popover'
-import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
+import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { ShieldCheckIcon } from '@heroicons/react/24/outline'
 import type { ShellConfig } from '#/data/types'
@@ -54,16 +54,14 @@ export function ShellBanners({ config }: { config: ShellConfig }) {
   )
 }
 
-/** The footer: the deployment's own line on the left; on the right its
- * actions, as buttons in one row, so nothing floats over them: how evidence
- * is handled, the help link, and reporting a problem. */
-export function ShellFooter({ config, problemReport }: { config: ShellConfig; problemReport?: ReactNode }) {
+/** The shell's standing actions, floating over the content, pinned to the
+ * bottom right: how evidence is handled, the help link, and reporting a
+ * problem. One group, so they never overlap each other. */
+export function ShellFloatingActions({ config, problemReport }: { config: ShellConfig; problemReport?: ReactNode }) {
   const { presentation: p } = config
-  if (!p.footerText && !p.helpLinkUrl && !p.privacyNotice && !problemReport) return null
+  if (!p.helpLinkUrl && !p.privacyNotice && !problemReport) return null
   return (
-    <HStack gap={2} vAlign="center" wrap="wrap" style={{ padding: '6px 24px', borderTop: '1px solid var(--color-border)' }}>
-      {p.footerText && <Text type="supporting">{p.footerText}</Text>}
-      <StackItem size="fill" />
+    <HStack gap={2} vAlign="center" style={{ position: 'fixed', insetInlineEnd: 16, insetBlockEnd: 16, zIndex: 20 }}>
       {p.privacyNotice && (
         <Popover label="Evidence handling" placement="above" content={<Text>{p.privacyNotice}</Text>}>
           <Button label="Evidence handling" size="sm" variant="secondary" icon={<Icon icon={ShieldCheckIcon} size="sm" />} />

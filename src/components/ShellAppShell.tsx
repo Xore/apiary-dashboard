@@ -15,7 +15,7 @@ import { LiveToasts } from './LiveToasts'
 import { ProblemReportButton } from './ProblemReportButton'
 import { SettingsDialog } from './SettingsDialog'
 import type { PaneId } from './SettingsDialog'
-import { ShellBanners, ShellFooter } from './ShellNotices'
+import { ShellBanners, ShellFloatingActions } from './ShellNotices'
 import { ShellSideNav } from './ShellSideNav'
 import { PhoneViewBar, ShellTopNav } from './ShellTopNav'
 import { rememberViewportWidth } from '#/lib/viewport'
@@ -101,10 +101,12 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           <ShellBanners config={config} />
           {/* Times are formatted from module state, so a change to how they
               read remounts the page; dialogs in the shell stay open. */}
-          <div key={timeKey} style={{ flex: 1, minHeight: 0 }}>
+          {/* Room at the bottom, so the floating actions never hide a
+              page's last row for good. */}
+          <div key={timeKey} style={{ flex: 1, minHeight: 0, paddingBlockEnd: 64 }}>
             <Outlet />
           </div>
-          <ShellFooter config={config} problemReport={<ProblemReportButton enabled={config.behavior.showProblemReportButton} />} />
+
         </div>
       </AppShell>
       <CommandPalette
@@ -122,6 +124,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           else void navigate({ to })
         }}
       />
+      <ShellFloatingActions config={config} problemReport={<ProblemReportButton enabled={config.behavior.showProblemReportButton} />} />
       <LiveToasts />
       <EventNotifications />
       {settingsPane && <SettingsDialog pane={settingsPane} onPane={onSettingsPane} onClose={() => onSettingsPane(undefined)} />}
