@@ -121,7 +121,7 @@ export const SETTINGS: Setting[] = [
   { id: 'accountSessions', panel: 'account', title: 'Sessions & devices', description: 'Active sessions and trusted devices; revoke any of them.', icon: DevicePhoneMobileIcon, keywords: 'keycloak revoke device' },
   { id: 'accountConsole', panel: 'account', title: 'Account console', description: 'Everything else the identity provider manages.', icon: ArrowTopRightOnSquareIcon, keywords: 'keycloak manage account security' },
   { id: 'theme', panel: 'appearance', title: 'Theme', description: 'System follows your operating system.', icon: SwatchIcon, keywords: 'dark light mode color' },
-  { id: 'palette', panel: 'appearance', title: 'Accent palette', description: 'The accent colour, shared with the rest of the platform.', icon: PaintBrushIcon, keywords: 'color colour accent claude amber lavender lime neon ocean rose slate' },
+  { id: 'palette', panel: 'appearance', title: 'Palette', description: 'The whole colour theme (ground, surfaces, text and accent), shared with the rest of the platform.', icon: PaintBrushIcon, keywords: 'color colour accent theme claude slate sage lavender lime amber ocean rose neon' },
   { id: 'density', panel: 'appearance', title: 'Density', description: 'Compact fits more rows on screen.', icon: TableCellsIcon, keywords: 'compact spacing' },
   { id: 'motion', panel: 'appearance', title: 'Motion', description: 'Reduced turns off animation.', icon: SparklesIcon, keywords: 'animation reduce' },
   { id: 'highContrast', panel: 'appearance', title: 'High contrast', description: 'Stronger borders and text for bright rooms and tired eyes.', icon: SunIcon, keywords: 'accessibility contrast' },

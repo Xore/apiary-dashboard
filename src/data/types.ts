@@ -1044,7 +1044,8 @@ export interface Preferences {
   defaultWindow: string
 }
 
-export type Palette = 'claude' | 'amber' | 'lavender' | 'lime' | 'neon' | 'ocean' | 'rose' | 'slate'
+/** One of APIARY's nine palette themes. */
+export type Palette = 'claude' | 'slate' | 'sage' | 'lavender' | 'lime' | 'amber' | 'ocean' | 'rose' | 'neon'
 
 /** Dashboard configuration, by section, as the config store keeps it.
  * Every write is validated first and recorded as a revision. */

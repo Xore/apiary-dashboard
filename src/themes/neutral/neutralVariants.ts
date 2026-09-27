@@ -1,58 +1,91 @@
 // Helpers for the neutral theme family's members (one file per member in
 // ./variants, because the family build takes one theme per file): a theme
-// per accent palette, and a high-contrast twin of each. Every member extends
-// neutralTheme and only re-points colour tokens, so typography, shape,
-// motion and component overrides stay the neutral ones.
+// per APIARY palette, and a high-contrast twin of each.
 //
-// Accent hues come from accentPalettes.generated.ts, generated from
-// accentPalettes.config.json with `astryx theme palette generate`; the seeds
-// are the palette swatches shown in Settings. `bun run theme:build` compiles
-// neutralTheme and every member into neutral-family.css / .js / .d.ts.
+// A palette is a whole theme, as in APIARY: the ground and the chrome around
+// it, the surface ramp, borders, the text ramp, the accent family and the
+// status tones all come from it (apiaryPalettes.generated.ts, imported from
+// APIARY's contrast-checked theme.css). Typography, shape, motion, chart
+// series and component anatomy stay the neutral ones. `bun run theme:build`
+// compiles neutralTheme and every member into neutral-family.css / .js / .d.ts.
 import {defineTheme} from '@astryxdesign/core/theme';
 import type {DefinedTheme, TokenValue} from '@astryxdesign/core/theme';
-import {palette as accents} from './accentPalettes.generated';
-import {palette as base} from './neutralPalettes.generated';
+import {APIARY_PALETTES} from './apiaryPalettes.generated';
+import type {ApiaryPalette} from './apiaryPalettes.generated';
 import {neutralTheme} from './neutralTheme';
 
 type Tokens = Record<string, TokenValue>;
-type Accent = keyof typeof accents;
-type Stop = keyof (typeof accents)[Accent]['light'];
+type Role = keyof (typeof APIARY_PALETTES)['claude']['light'];
 
-const {neutral} = base;
+/** One APIARY role as an Astryx light/dark pair. */
+const role = (palette: ApiaryPalette, name: Role): TokenValue => [APIARY_PALETTES[palette].light[name], APIARY_PALETTES[palette].dark[name]];
 
-/** Accent roles from one palette family. The light scheme takes a deep stop
- * under white text, the dark scheme a light stop under near-black text, so
- * filled buttons and selected items keep >= 4.5:1 in both modes. */
-function accentTokens(
-  family: Accent,
-  stops: {light: Stop; dark: Stop},
-): Tokens {
-  const {light, dark} = accents[family];
-  const accent: TokenValue = [light[stops.light], dark[stops.dark]];
+/** Between two roles, for the steps APIARY has no token of its own for. */
+const mix = (palette: ApiaryPalette, a: Role, b: Role, share: number): TokenValue => {
+  const {light, dark} = APIARY_PALETTES[palette];
+  return [`color-mix(in oklab, ${light[a]} ${share}%, ${light[b]})`, `color-mix(in oklab, ${dark[a]} ${share}%, ${dark[b]})`];
+};
+
+/** Every colour role a palette owns, mapped onto Astryx's tokens. The app's
+ * chrome (sidebar, top bar) is the body; the page it frames is the surface. */
+function paletteTokens(p: ApiaryPalette): Tokens {
   return {
-    '--color-accent': accent,
-    '--color-accent-muted': [light[95], dark[20]],
-    '--color-text-accent': accent,
-    '--color-icon-accent': accent,
-    '--color-on-accent': [neutral.light[100], neutral.dark[5]],
+    '--color-background-body': role(p, 'bg-sidebar'),
+    '--color-background-surface': role(p, 'bg-000'),
+    '--color-background-card': role(p, 'bg-100'),
+    '--color-background-popover': role(p, 'bg-raised'),
+    '--color-background-muted': role(p, 'bg-200'),
+    '--color-skeleton': role(p, 'bg-300'),
+
+    '--color-border': role(p, 'border-200'),
+    '--color-border-emphasized': mix(p, 'text-300', 'bg-400', 50),
+
+    '--color-text-primary': role(p, 'text-000'),
+    '--color-text-secondary': role(p, 'text-100'),
+    '--color-text-disabled': role(p, 'text-300'),
+    '--color-icon-primary': role(p, 'text-000'),
+    '--color-icon-secondary': role(p, 'text-200'),
+    '--color-icon-disabled': role(p, 'text-300'),
+
+    '--color-accent': role(p, 'accent'),
+    '--color-accent-muted': role(p, 'accent-soft'),
+    '--color-text-accent': role(p, 'text-link'),
+    '--color-icon-accent': role(p, 'accent'),
+    '--color-on-accent': role(p, 'text-on-accent'),
+
+    '--color-success': role(p, 'success'),
+    '--color-error': role(p, 'danger'),
+    '--color-warning': role(p, 'warning'),
+    '--color-success-muted': role(p, 'success-soft'),
+    '--color-error-muted': role(p, 'danger-soft'),
+    '--color-warning-muted': role(p, 'warning-soft'),
+    '--color-on-success': role(p, 'text-on-status'),
+    '--color-on-error': role(p, 'text-on-status'),
+
+    '--color-overlay': role(p, 'overlay-bg'),
+    '--color-shadow': role(p, 'shadow-raised-far'),
   };
 }
 
-const standardStops = {light: '45', dark: '70'} as const;
-const highContrastStops = {light: '30', dark: '85'} as const;
-
-/** High contrast: secondary text and icons read nearly as primary, hairline
- * borders become solid rules, and emphasized borders go stronger still. */
-export const highContrastTokens: Tokens = {
-  '--color-text-secondary': [neutral.light[15], neutral.dark[85]],
-  '--color-text-disabled': [neutral.light[45], neutral.dark[55]],
-  '--color-icon-secondary': [neutral.light[20], neutral.dark[85]],
-  '--color-border': [neutral.light[45], neutral.dark[55]],
-  '--color-border-emphasized': [neutral.light[20], neutral.dark[80]],
-};
+/** High contrast on top of a palette: secondary text and icons move most of
+ * the way to primary, hairlines become solid rules, and the accent takes its
+ * deeper (light) or brighter (dark) step. */
+function highContrastTokens(p: ApiaryPalette): Tokens {
+  const {light, dark} = APIARY_PALETTES[p];
+  return {
+    '--color-text-secondary': mix(p, 'text-000', 'text-100', 70),
+    '--color-text-disabled': mix(p, 'text-100', 'text-300', 60),
+    '--color-icon-secondary': mix(p, 'text-000', 'text-200', 70),
+    '--color-border': mix(p, 'text-100', 'text-300', 40),
+    '--color-border-emphasized': role(p, 'text-100'),
+    '--color-accent': [light['accent-pressed'], dark['accent-hover']],
+    '--color-icon-accent': [light['accent-pressed'], dark['accent-hover']],
+    '--color-text-accent': role(p, 'text-link-hover'),
+  };
+}
 
 /** Where the app shows "you are here": the selected side-nav and top-nav
- * items take the accent's tint, so the palette reads beyond buttons. */
+ * items take the accent's tint, as APIARY's navigation does. */
 const accentSelection = {
   'side-nav-item': {
     selected: {
@@ -68,23 +101,20 @@ const accentSelection = {
   },
 };
 
-export function paletteTheme(family: Accent): DefinedTheme {
+export function paletteTheme(palette: ApiaryPalette): DefinedTheme {
   return defineTheme({
-    name: `neutral-${family}`,
+    name: `neutral-${palette}`,
     extends: neutralTheme,
-    tokens: accentTokens(family, standardStops),
+    tokens: paletteTokens(palette),
     components: accentSelection,
   });
 }
 
-export function paletteHighContrastTheme(family: Accent): DefinedTheme {
+export function paletteHighContrastTheme(palette: ApiaryPalette): DefinedTheme {
   return defineTheme({
-    name: `neutral-${family}-hc`,
+    name: `neutral-${palette}-hc`,
     extends: neutralTheme,
-    tokens: {
-      ...accentTokens(family, highContrastStops),
-      ...highContrastTokens,
-    },
+    tokens: {...paletteTokens(palette), ...highContrastTokens(palette)},
     components: accentSelection,
   });
 }
