@@ -316,6 +316,12 @@ const getNetworkCampaignsFn = createServerFn({ method: 'GET' })
   .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getNetworkCampaigns', data, context.mock)) as Json)
 export const getNetworkCampaigns = announced('getNetworkCampaigns', getNetworkCampaignsFn) as Rpc<typeof impl.getNetworkCampaigns>
 
+const getOpenAlertCountFn = createServerFn({ method: 'GET' })
+  .middleware([mockScenarioMiddleware])
+  .validator((args: unknown[]) => args)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getOpenAlertCount', data, context.mock)) as Json)
+export const getOpenAlertCount = announced('getOpenAlertCount', getOpenAlertCountFn) as Rpc<typeof impl.getOpenAlertCount>
+
 const getOverviewFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)

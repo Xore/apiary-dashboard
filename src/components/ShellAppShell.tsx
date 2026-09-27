@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Outlet, useNavigate } from '@tanstack/react-router'
+import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { AppShell } from '@astryxdesign/core/AppShell'
 import { CommandPalette } from '@astryxdesign/core/CommandPalette'
 import { ToastViewport } from '@astryxdesign/core/Toast'
-import { createStaticSource } from '@astryxdesign/core/Typeahead'
 import type { SessionUser, ShellConfig } from '#/data/types'
 import { NAV_SECTIONS } from '#/lib/nav'
+import { paletteSource } from '#/lib/paletteSource'
+import type { PaletteItem } from '#/lib/paletteSource'
+import { usePredictivePrefetch } from '#/lib/prefetch'
 import { usePreferences } from '#/lib/prefs'
+import { recordRecentFromLocation } from '#/lib/recent'
 import { EventNotifications } from './EventNotifications'
 import { LiveToasts } from './LiveToasts'
 import { ProblemReportButton } from './ProblemReportButton'
@@ -25,16 +28,22 @@ const UNLISTED = [
   { id: '/problem-reports', label: 'Problem reports' },
 ]
 
-const PAGES = [
+const PAGES: PaletteItem[] = [
   ...NAV_SECTIONS.flatMap((section) =>
     section.items.map((item) => ({
       id: item.to,
       label: item.label,
-      auxiliaryData: { group: section.label },
+      auxiliaryData: { group: section.label, href: item.to },
     })),
   ),
-  ...UNLISTED.map((page) => ({ ...page, auxiliaryData: { group: 'More' } })),
+  ...UNLISTED.map((page) => ({ ...page, auxiliaryData: { group: 'More', href: page.id } })),
 ]
+
+/** Whether a key press belongs to a field the operator is typing in. */
+function isTyping(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  return target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) || target.closest('[role="combobox"],[role="textbox"]') !== null
+}
 
 /** The single application shell: one topbar, one sidebar, one content
  * region, and the global command palette. */
@@ -52,11 +61,15 @@ type ShellProps = {
 export function ShellAppShell({ user, config, narrow = false, settingsPane, onSettingsPane }: ShellProps) {
   const navigate = useNavigate()
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
-  const searchSource = useMemo(() => createStaticSource(PAGES), [])
+  const searchSource = useMemo(() => paletteSource(PAGES), [])
+  const location = useLocation()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setIsPaletteOpen(true)
+      } else if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey && !isTyping(e.target)) {
         e.preventDefault()
         setIsPaletteOpen(true)
       }
@@ -66,6 +79,8 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
   }, [])
 
   useEffect(() => rememberViewportWidth(), [])
+  useEffect(() => recordRecentFromLocation(location.pathname, location.searchStr), [location.pathname, location.searchStr])
+  usePredictivePrefetch()
 
   const prefs = usePreferences()
   const timeKey = prefs ? `${prefs.timezone}|${prefs.clock}|${prefs.timestamps}` : undefined
@@ -96,9 +111,12 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
         isOpen={isPaletteOpen}
         onOpenChange={setIsPaletteOpen}
         searchSource={searchSource}
-        label="Go to page"
-        onValueChange={(to) => {
+        label="Go to a page, or search IPs, sessions, payloads…"
+        onValueChange={(id) => {
           setIsPaletteOpen(false)
+          // Pages are their own ids; an entity carries its target.
+          const to = id.startsWith('/') ? id : searchSource.lastHref(id)
+          if (!to) return
           // Settings opens as a modal over the current page.
           if (to === '/settings') onSettingsPane('account')
           else void navigate({ to })
