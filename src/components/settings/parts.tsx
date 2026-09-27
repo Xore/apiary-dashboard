@@ -22,7 +22,6 @@ import { Token } from '@astryxdesign/core/Token'
 import { Theme } from '@astryxdesign/core/theme'
 import { ChevronRightIcon, ComputerDesktopIcon, MagnifyingGlassIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline'
 import { neutralTheme } from '#/themes/neutral/neutral'
-import { useIsAdmin } from '#/lib/session'
 import { PANELS, PANEL_GROUPS, SETTINGS, isAdminPanel, matchesSearch, panelOf, settingOf } from './registry'
 import type { IconComponent, PaneId, Setting } from './registry'
 
@@ -189,9 +188,9 @@ export function useSettingsSearch(onSelectPanel: (panel: PaneId) => void) {
   const [activeIndex, setActiveIndex] = useState(0)
   const needle = query.trim().toLowerCase()
   const isActive = needle.length > 0
-  // Viewers are not offered what they cannot change.
-  const isAdmin = useIsAdmin()
-  const results = useMemo(() => (isActive ? SETTINGS.filter((s) => (isAdmin || !isAdminPanel(s.panel)) && matchesSearch(s, needle)) : []), [isActive, needle, isAdmin])
+  // Administration has its own page (/admin): the dialog searches only
+  // what is personal.
+  const results = useMemo(() => (isActive ? SETTINGS.filter((s) => !isAdminPanel(s.panel) && matchesSearch(s, needle)) : []), [isActive, needle])
   useEffect(() => setActiveIndex(0), [needle])
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -276,7 +275,6 @@ export function SettingsSearchResults({ search, onSelect }: { search: SettingsSe
 
 /** Title, search, and either the results or the grouped navigation. */
 export function SettingsSideNav({ titleId, search, active, onSelect }: { titleId: string; search: SettingsSearch; active: PaneId; onSelect: (panel: PaneId) => void }) {
-  const isAdmin = useIsAdmin()
   return (
     <SideNav
       aria-label="Settings sections"
@@ -293,7 +291,7 @@ export function SettingsSideNav({ titleId, search, active, onSelect }: { titleId
       {search.isActive ? (
         <SettingsSearchResults search={search} onSelect={(setting) => onSelect(setting.panel)} />
       ) : (
-        PANEL_GROUPS.filter((group) => isAdmin || !group.panels.some((panel) => isAdminPanel(panel.id))).map((group) => (
+        PANEL_GROUPS.filter((group) => !group.panels.some((panel) => isAdminPanel(panel.id))).map((group) => (
           <SideNavSection key={group.label} title={`${group.label} · ${group.scope}`} style={{ paddingBlock: 'var(--spacing-2)' }}>
             {group.panels.map((panel) => (
               <SideNavItem key={panel.id} label={panel.label} icon={<Icon icon={panel.icon} size="sm" color="primary" />} isSelected={panel.id === active} onClick={() => onSelect(panel.id)} />
@@ -336,7 +334,6 @@ export function PinnedClose({ onClose }: { onClose: () => void }) {
 /** Phone width: the same navigation laid on its side as a strip of buttons. */
 export function SettingsPanelTabs({ active, onSelect }: { active: PaneId; onSelect: (panel: PaneId) => void }) {
   const ref = useRef<HTMLDivElement>(null)
-  const isAdmin = useIsAdmin()
   // Keep the current section in view in the scrolling strip.
   useEffect(() => {
     ref.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'center' })
@@ -344,7 +341,7 @@ export function SettingsPanelTabs({ active, onSelect }: { active: PaneId; onSele
   return (
     <div ref={ref}>
       <HStack as="nav" aria-label="Settings sections" gap={1} wrap="nowrap" isScrollable paddingInline={3} paddingBlock={2}>
-        {PANELS.filter((panel) => isAdmin || !isAdminPanel(panel.id)).map((panel) => (
+        {PANELS.filter((panel) => !isAdminPanel(panel.id)).map((panel) => (
           <Button key={panel.id} label={panel.label} icon={<Icon icon={panel.icon} size="sm" />} variant={panel.id === active ? 'secondary' : 'ghost'} size="sm" aria-current={panel.id === active ? 'page' : undefined} onClick={() => onSelect(panel.id)} />
         ))}
       </HStack>

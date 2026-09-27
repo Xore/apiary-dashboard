@@ -7,6 +7,7 @@ import {
   useSideNavCollapse,
 } from '@astryxdesign/core/SideNav'
 import {
+  AdjustmentsHorizontalIcon,
   ArrowRightStartOnRectangleIcon,
   ClockIcon,
   Cog6ToothIcon,
@@ -47,6 +48,7 @@ export function ShellSideNav({ user, config, onOpenSettings }: { user: SessionUs
   const pathname = useLocation({ select: (location) => location.pathname })
   const activeHref = navHrefFor(pathname)
   const recent = useRecentInvestigations()
+  const isAdmin = user.roles.includes('admin')
 
   return (
     <SideNav
@@ -72,6 +74,12 @@ export function ShellSideNav({ user, config, onOpenSettings }: { user: SessionUs
           ))}
         </SideNavSection>
       ))}
+      {/* What affects everyone: admins only. */}
+      {isAdmin && (
+        <SideNavSection title="Administration">
+          <SideNavItem label="Administration" icon={AdjustmentsHorizontalIcon} href="/admin" isSelected={pathname === '/admin'} />
+        </SideNavSection>
+      )}
       {recent.length > 0 && (
         <SideNavSection title="Recent">
           {recent.map((entry) => (

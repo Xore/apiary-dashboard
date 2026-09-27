@@ -70,7 +70,7 @@ export const ROWS: Row[] = [
   { source: 'sensors.index.tsx', destination: ['/sensors', '/sensors/$sensor'], status: 'replaced', note: 'Opens the busiest sensor\'s page; every sensor is one switch away.' },
   { source: 'sensors.$sensor.tsx', destination: ['/sensors/$sensor'], status: 'implemented', note: '' },
   { source: 'sessions.$id.tsx', destination: ['/sessions/$id'], status: 'implemented', note: '' },
-  { source: 'settings.tsx', destination: ['/settings', '/'], status: 'replaced', note: 'The settings dialog (?settings=<pane>) over any page; the old path opens it.' },
+  { source: 'settings.tsx', destination: ['/settings', '/', '/admin'], status: 'replaced', note: 'Personal settings in the dialog (?settings=<pane>) over any page, the old path opens it; administration is its own page, /admin.' },
   { source: 'source-health.tsx', destination: ['/source-health'], status: 'implemented', note: '' },
   { source: 'topology.tsx', destination: ['/topology'], status: 'implemented', note: '' },
   { source: 'tty-replay.$shasum.tsx', destination: ['/tty-replay/$shasum', '/recordings/$shasum'], status: 'replaced', note: 'Redirects to the recording entity page.' },

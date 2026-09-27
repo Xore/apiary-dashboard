@@ -792,16 +792,61 @@ function PanelBody({ panel }: { panel: PaneId }) {
   }
 }
 
+// ---- Administration page --------------------------------------------------------
+
+/** One administration panel as a page (/admin?pane=…): the same panels the
+ * settings dialog used to hold, with the data they read and write. */
+export function AdminPanelView({ pane }: { pane: PaneId }) {
+  const navigate = useNavigate()
+  const [data, setData] = useState<SettingsData | null>(null)
+  const reload = useCallback(async () => {
+    setData(await getSettings())
+  }, [])
+  useEffect(() => {
+    void reload()
+  }, [reload])
+  // Administration changes save per panel (Save / Revert); nothing personal
+  // is edited here.
+  const noop = useCallback(() => {}, [])
+  if (!data) return <PendingPanel />
+  return (
+    <SettingsContext.Provider value={{ data, reload, prefs: data.preferences, setPref: noop, setDirty: noop, openPage: (href) => void navigate({ href }) }}>
+      <VStack gap={4}>
+        <PanelBody key={pane} panel={pane} />
+      </VStack>
+    </SettingsContext.Provider>
+  )
+}
+
+/** A panel still loading: cards of skeleton rows. */
+function PendingPanel() {
+  return (
+    <VStack gap={4} aria-busy>
+      {[0, 1].map((card) => (
+        <VStack key={card} gap={3}>
+          <Skeleton width={180} height={18} />
+          {[0, 1, 2, 3].map((row) => (
+            <Skeleton key={row} height={44} />
+          ))}
+        </VStack>
+      ))}
+    </VStack>
+  )
+}
+
 // ---- Dialog ----------------------------------------------------------------------
 
 export function SettingsDialog({ pane: asked, onPane, onClose }: { pane: PaneId; onPane: (pane: PaneId) => void; onClose: () => void }) {
   const titleId = useId()
   const navigate = useNavigate()
   const router = useRouter()
-  // Administration panels are for admins only: a viewer who follows a link
-  // to one lands on their own account instead.
+  // The administration panels live on their own page (/admin): an old link
+  // to one takes an admin there, and anyone else to their own account.
   const isAdmin = useIsAdmin()
-  const pane: PaneId = isAdminPanel(asked) && !isAdmin ? 'account' : asked
+  const pane: PaneId = isAdminPanel(asked) ? 'account' : asked
+  useEffect(() => {
+    if (isAdminPanel(asked) && isAdmin) void navigate({ to: '/admin', search: { pane: asked } })
+  }, [asked, isAdmin, navigate])
   const isNarrow = useMediaQuery(NARROW_VIEWPORT)
   const [data, setData] = useState<SettingsData | null>(null)
   const [prefs, setPrefs] = useState<Preferences | null>(null)

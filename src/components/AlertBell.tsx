@@ -26,7 +26,7 @@ export function AlertBell() {
   const open = useOpenAlertCount(pathname)
   const label = open ? `Alerts, ${open} open` : 'Alerts'
   return (
-    <Button label={label} tooltip={label} variant="secondary" size="sm" href="/alerts" isIconOnly={!open} icon={<Icon icon={BellIcon} size="sm" />}>
+    <Button label={label} tooltip={label} variant="secondary" size="sm" href="/alerts" isIconOnly={!open} icon={open ? undefined : <Icon icon={BellIcon} size="sm" />}>
       {open ? (
         <HStack gap={1.5} vAlign="center">
           <Icon icon={BellIcon} size="sm" />

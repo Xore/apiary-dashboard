@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutAttackersRouteImport } from './routes/_layout/attackers'
 import { Route as LayoutCommandsRouteImport } from './routes/_layout/commands'
 import { Route as LayoutHistoryRouteImport } from './routes/_layout/history'
@@ -208,6 +209,11 @@ const HealthzRoute = HealthzRouteImport.update({
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAdminRoute = LayoutAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutAttackersRoute = LayoutAttackersRouteImport.update({
@@ -1204,6 +1210,7 @@ const ApiArtifactKindKeyFilenameRoute =
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
   '/healthz': typeof HealthzRoute
+  '/admin': typeof LayoutAdminRoute
   '/attackers': typeof LayoutAttackersRoute
   '/commands': typeof LayoutCommandsRoute
   '/history': typeof LayoutHistoryRoute
@@ -1390,6 +1397,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/healthz': typeof HealthzRoute
+  '/admin': typeof LayoutAdminRoute
   '/attackers': typeof LayoutAttackersRoute
   '/commands': typeof LayoutCommandsRoute
   '/history': typeof LayoutHistoryRoute
@@ -1563,6 +1571,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
   '/healthz': typeof HealthzRoute
+  '/_layout/admin': typeof LayoutAdminRoute
   '/_layout/attackers': typeof LayoutAttackersRoute
   '/_layout/commands': typeof LayoutCommandsRoute
   '/_layout/history': typeof LayoutHistoryRoute
@@ -1753,6 +1762,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/healthz'
+    | '/admin'
     | '/attackers'
     | '/commands'
     | '/history'
@@ -1939,6 +1949,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/healthz'
+    | '/admin'
     | '/attackers'
     | '/commands'
     | '/history'
@@ -2111,6 +2122,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_layout'
     | '/healthz'
+    | '/_layout/admin'
     | '/_layout/attackers'
     | '/_layout/commands'
     | '/_layout/history'
@@ -2337,6 +2349,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof LayoutIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/admin': {
+      id: '/_layout/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof LayoutAdminRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/attackers': {
@@ -3976,6 +3995,7 @@ const LayoutIocKindValueRouteWithChildren =
   LayoutIocKindValueRoute._addFileChildren(LayoutIocKindValueRouteChildren)
 
 interface LayoutRouteChildren {
+  LayoutAdminRoute: typeof LayoutAdminRoute
   LayoutAttackersRoute: typeof LayoutAttackersRoute
   LayoutCommandsRoute: typeof LayoutCommandsRoute
   LayoutHistoryRoute: typeof LayoutHistoryRoute
@@ -4052,6 +4072,7 @@ interface LayoutRouteChildren {
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutAdminRoute: LayoutAdminRoute,
   LayoutAttackersRoute: LayoutAttackersRoute,
   LayoutCommandsRoute: LayoutCommandsRoute,
   LayoutHistoryRoute: LayoutHistoryRoute,

@@ -53,7 +53,7 @@ Every route module of the canonical dashboard (`Xore/APIARY@62ee45d`, listed in 
 | `sensors.index.tsx` | `/sensors`<br>`/sensors/$sensor` | replaced | Opens the busiest sensor's page; every sensor is one switch away. | navigation guard; function middleware | #77 |
 | `sensors.$sensor.tsx` | `/sensors/$sensor` | implemented |  | navigation guard; function middleware | #77 |
 | `sessions.$id.tsx` | `/sessions/$id` | implemented |  | navigation guard; function middleware | #75 |
-| `settings.tsx` | `/settings`<br>`/` | replaced | The settings dialog (?settings=<pane>) over any page; the old path opens it. | navigation guard; function middleware | #81 |
+| `settings.tsx` | `/settings`<br>`/`<br>`/admin` | replaced | Personal settings in the dialog (?settings=<pane>) over any page, the old path opens it; administration is its own page, /admin. | navigation guard; function middleware | #81 |
 | `source-health.tsx` | `/source-health` | implemented |  | navigation guard; function middleware | #77 |
 | `topology.tsx` | `/topology` | implemented |  | navigation guard; function middleware | #77 |
 | `tty-replay.$shasum.tsx` | `/tty-replay/$shasum`<br>`/recordings/$shasum` | replaced | Redirects to the recording entity page. | navigation guard; function middleware | #75 |

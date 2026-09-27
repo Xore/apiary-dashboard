@@ -143,6 +143,7 @@ const PAGE_PREFIXES: Array<[string, string]> = [
 // Routes without a nav item that still deserve a proper label.
 const PAGE_LABELS: Record<string, string> = {
   '/settings': 'Settings',
+  '/admin': 'Administration',
   '/search': 'Search',
   '/reports/history': 'Report history',
   '/reports/templates': 'Report templates',
