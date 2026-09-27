@@ -1,4 +1,5 @@
 import { BreadcrumbItem, Breadcrumbs } from '@astryxdesign/core/Breadcrumbs'
+import { AlertBell } from './AlertBell'
 import { LiveBadge } from './LiveBadge'
 import { MockScenarioMenu } from './MockScenarioMenu'
 import { Button } from '@astryxdesign/core/Button'
@@ -111,6 +112,7 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
             </Button>
           )}
           <MockScenarioMenu compact={isMobile} />
+          <AlertBell />
           <LiveBadge compact={isMobile} />
         </HStack>
       }
