@@ -8,70 +8,70 @@ Every route module of the canonical dashboard (`Xore/APIARY@62ee45d`, listed in 
 - **replaced**: the old path redirects to its new home in the rewrite
 - **pending**: not in the rewrite yet; the note says what stands in and where it is tracked
 
-| Canonical module | Rewrite | Status | Note |
-|---|---|---|---|
-| `index.tsx` | `/` | implemented | Overview with its five views as top-bar tabs. |
-| `agent-campaigns.tsx` | `/agent-campaigns`<br>`/agent-campaigns/$id` | implemented | List, and an entity page per campaign. |
-| `alerts.tsx` | `/alerts`<br>`/alerts/$key` | implemented | New and Acknowledged as tabs; an entity page per alert group. |
-| `attackers.tsx` | `/attackers`<br>`/identities/$id` | implemented | The attacker dossier became the identity entity page. |
-| `auth-events.tsx` | `/auth-events`<br>`/auth-events/$id` | implemented |  |
-| `campaigns.tsx` | `/campaigns`<br>`/campaigns/$cidr` | implemented |  |
-| `canarytokens.tsx` | `/canarytokens`<br>`/canarytokens/$id`<br>`/canarytokens/triggers/$id` | implemented | Tokens and fired tokens as tabs; creation as a dialog wizard. |
-| `cape.index.tsx` | `/cape` | implemented | A tab of Analysis results. |
-| `cape.$sha.tsx` | `/cape/$sha`<br>`/payloads/$hash/cape` | replaced | Redirects to the payload page's CAPE tab. |
-| `clusters.tsx` | `/clusters`<br>`/clusters/$kind/$value` | implemented |  |
-| `commands.tsx` | `/commands` | implemented | Under Indicators → Commands → Every execution; server-paged. |
-| `credentials.tsx` | `/credentials`<br>`/credentials/$id` | implemented | Provisioning as a dialog wizard. |
-| `dead-letters.tsx` | `/dead-letters`<br>`/dead-letters/$id` | implemented | A tab of Source & pipeline health. |
-| `event.$id.tsx` | `/event/$id`<br>`/events/$id` | replaced | Redirects to the event entity page. |
-| `events.tsx` | `/events`<br>`/events/$id` | implemented | Server-paged; tool links and exports as in production. |
-| `ghidra.$sha.tsx` | `/ghidra/$sha`<br>`/payloads/$hash/ghidra` | replaced | Redirects to the payload page's Ghidra tab. |
-| `github-analysis.index.tsx` | `/github-analysis` | implemented | A tab of Analysis results. |
-| `github-analysis.$sha.tsx` | `/github-analysis/$sha`<br>`/payloads/$hash/github` | replaced | Redirects to the payload page's GitHub tab. |
-| `history.tsx` | `/history` | implemented | Server-paged. |
-| `investigate.cidr.$cidr.tsx` | `/investigate/cidr/$cidr`<br>`/networks/$cidr` | replaced | Redirects to the network entity page. |
-| `investigate.cluster.tsx` | `/investigate/cluster`<br>`/clusters/$kind/$value` | replaced | Redirects to the cluster entity page. |
-| `investigate.ip.$ip.tsx` | `/investigate/ip/$ip`<br>`/sources/$ip` | replaced | Redirects to the source entity page. |
-| `investigate.lookup.tsx` | `/investigate/lookup`<br>`/iocs` | replaced | The lookup heads the Indicators hub. |
-| `ips.tsx` | `/ips`<br>`/sources/$ip` | implemented |  |
-| `kill-chain.tsx` | `/kill-chain` | implemented |  |
-| `llm-analysis.tsx` | `/llm-analysis`<br>`/llm-analysis/$id` | implemented |  |
-| `ml-anomalies.tsx` | `/ml-anomalies`<br>`/ml-anomalies/$id` | implemented |  |
-| `payload-analysis.$hash.tsx` | `/payload-analysis/$hash`<br>`/payloads/$hash` | replaced | Redirects to the payload entity page. |
-| `payloads.tsx` | `/payloads`<br>`/payloads/$hash` | implemented |  |
-| `payload-workbench.results.tsx` | `/payload-workbench/results` | implemented | Analyzers as top-bar tabs, with the CAPE, GitHub and RevDeck lists and the sandbox live view. |
-| `problem-reports.tsx` | `/problem-reports`<br>`/problem-reports/$id` | implemented | A tab of Source & pipeline health. |
-| `recordings.tsx` | `/recordings`<br>`/recordings/$shasum` | implemented |  |
-| `reports.tsx` | `/reports`<br>`/reports/generate`<br>`/reports/history`<br>`/reports/templates`<br>`/reports/library` | replaced | The studio split into four pages, one sidebar entry; the old path redirects. |
-| `revdeck.index.tsx` | `/revdeck` | implemented | A tab of Analysis results. |
-| `revdeck.$sha.tsx` | `/revdeck/$sha`<br>`/payloads/$hash/revdeck` | replaced | Redirects to the payload page's RevDeck tab. |
-| `sandbox.$job.tsx` | `/sandbox/$job`<br>`/payloads/$hash/sandbox` | replaced | Redirects to the payload page's Sandbox tab. |
-| `sandbox.vnc.tsx` | `/sandbox/vnc` | implemented | Under Analysis results → Sandbox → Live view. |
-| `search.tsx` | `/search` | implemented | Also the command palette. |
-| `sensors.index.tsx` | `/sensors`<br>`/sensors/$sensor` | replaced | Opens the busiest sensor's page; every sensor is one switch away. |
-| `sensors.$sensor.tsx` | `/sensors/$sensor` | implemented |  |
-| `sessions.$id.tsx` | `/sessions/$id` | implemented |  |
-| `settings.tsx` | `/settings`<br>`/` | replaced | The settings dialog (?settings=<pane>) over any page; the old path opens it. |
-| `source-health.tsx` | `/source-health` | implemented |  |
-| `topology.tsx` | `/topology` | implemented |  |
-| `tty-replay.$shasum.tsx` | `/tty-replay/$shasum`<br>`/recordings/$shasum` | replaced | Redirects to the recording entity page. |
-| `auth/login.ts` | `/auth/login` | implemented | Mock identity provider and the unavailable page; Keycloak PKCE in Phase 2 (#5). |
-| `auth/callback.ts` | `/auth/callback` | implemented | The three failures production tells apart; the code exchange and Redis session in Phase 2 (#5). |
-| `auth/logout.ts` | `/auth/logout` | implemented | Mock sign-out; RP-initiated logout and the cross-origin 403 in Phase 2 (#5). |
-| `api/artifact.$kind.$key.$filename.ts` | `/api/artifact/$kind/$key/$filename` | implemented | Mock files built from the run. |
-| `api/canarytoken.$id.download.ts` | `/api/canarytoken/$id/download` | implemented | Mock token files. |
-| `api/export.$name.ts` | `/api/export/$name` | implemented | Same allowlist; full scope, capped at the export limit. |
-| `api/payload.$hash.download.ts` | `/api/payload/$hash/download` | implemented | Admins only; a harmless stand-in for the live bytes. |
-| `api/raw-report.$kind.$sha.ts` | `/api/raw-report/$kind/$sha` | implemented |  |
-| `api/recording.$shasum.$format.ts` | `/api/recording/$shasum/$format` | implemented | asciicast v2 and the raw log. |
-| `api/report.$id.pdf.ts` | `/api/report/$id/pdf` | implemented | A real PDF from the report's sections. |
-| `api/chart.$name.ts` | — | pending | Chart payloads come through the data seam on mock data; the session-guarded proxy to the Rust tier is Phase 2 (#6). |
-| `api/live.ts` | — | pending | The live stream is simulated in the browser (src/data/liveStream.ts); the SSE proxy with its admission gate is Phase 2 (#6). |
-| `api/topology.flow.ts` | — | pending | The topology comes through the data seam on mock data; the proxy is Phase 2 (#6). |
-| `healthz.ts` | `/healthz` | implemented | Unauthenticated, always 200: the Traefik and Docker probe. |
-| `export.portbridge-manual-blackhole[.]txt.ts` | `/export/portbridge-manual-blackhole.txt` | implemented | The firewall puller's list, byte for byte; no session, 5xx on outage. |
-| `metrics.ts` | — | pending | Prometheus baseline behind the service token: Phase 2 (#5, #7). |
-| `bff.$.ts` | — | pending | The tier boundary for a split frontend host: Phase 2 (#5). |
-| `bff-mounted.$.ts` | — | pending | The same seam to backend-service-mounted: Phase 2 (#5). |
+| Canonical module | Rewrite | Status | Note | Slice |
+|---|---|---|---|---|
+| `index.tsx` | `/` | implemented | Overview with its five views as top-bar tabs. | #74 |
+| `agent-campaigns.tsx` | `/agent-campaigns`<br>`/agent-campaigns/$id` | implemented | List, and an entity page per campaign. | #74 |
+| `alerts.tsx` | `/alerts`<br>`/alerts/$key` | implemented | New and Acknowledged as tabs; an entity page per alert group. | #77 |
+| `attackers.tsx` | `/attackers`<br>`/identities/$id` | implemented | The attacker dossier became the identity entity page. | #76 |
+| `auth-events.tsx` | `/auth-events`<br>`/auth-events/$id` | implemented |  | #74 |
+| `campaigns.tsx` | `/campaigns`<br>`/campaigns/$cidr` | implemented |  | #76 |
+| `canarytokens.tsx` | `/canarytokens`<br>`/canarytokens/$id`<br>`/canarytokens/triggers/$id` | implemented | Tokens and fired tokens as tabs; creation as a dialog wizard. | #80 |
+| `cape.index.tsx` | `/cape` | implemented | A tab of Analysis results. | #78 |
+| `cape.$sha.tsx` | `/cape/$sha`<br>`/payloads/$hash/cape` | replaced | Redirects to the payload page's CAPE tab. | #78 |
+| `clusters.tsx` | `/clusters`<br>`/clusters/$kind/$value` | implemented |  | #76 |
+| `commands.tsx` | `/commands` | implemented | Under Indicators → Commands → Every execution; server-paged. | #75 |
+| `credentials.tsx` | `/credentials`<br>`/credentials/$id` | implemented | Provisioning as a dialog wizard. | #80 |
+| `dead-letters.tsx` | `/dead-letters`<br>`/dead-letters/$id` | implemented | A tab of Source & pipeline health. | #77 |
+| `event.$id.tsx` | `/event/$id`<br>`/events/$id` | replaced | Redirects to the event entity page. | #75 |
+| `events.tsx` | `/events`<br>`/events/$id` | implemented | Server-paged; tool links and exports as in production. | #75 |
+| `ghidra.$sha.tsx` | `/ghidra/$sha`<br>`/payloads/$hash/ghidra` | replaced | Redirects to the payload page's Ghidra tab. | #78 |
+| `github-analysis.index.tsx` | `/github-analysis` | implemented | A tab of Analysis results. | #78 |
+| `github-analysis.$sha.tsx` | `/github-analysis/$sha`<br>`/payloads/$hash/github` | replaced | Redirects to the payload page's GitHub tab. | #78 |
+| `history.tsx` | `/history` | implemented | Server-paged. | #75 |
+| `investigate.cidr.$cidr.tsx` | `/investigate/cidr/$cidr`<br>`/networks/$cidr` | replaced | Redirects to the network entity page. | #76 |
+| `investigate.cluster.tsx` | `/investigate/cluster`<br>`/clusters/$kind/$value` | replaced | Redirects to the cluster entity page. | #76 |
+| `investigate.ip.$ip.tsx` | `/investigate/ip/$ip`<br>`/sources/$ip` | replaced | Redirects to the source entity page. | #76 |
+| `investigate.lookup.tsx` | `/investigate/lookup`<br>`/iocs` | replaced | The lookup heads the Indicators hub. | #76 |
+| `ips.tsx` | `/ips`<br>`/sources/$ip` | implemented |  | #76 |
+| `kill-chain.tsx` | `/kill-chain` | implemented |  | #76 |
+| `llm-analysis.tsx` | `/llm-analysis`<br>`/llm-analysis/$id` | implemented |  | #74 |
+| `ml-anomalies.tsx` | `/ml-anomalies`<br>`/ml-anomalies/$id` | implemented |  | #74 |
+| `payload-analysis.$hash.tsx` | `/payload-analysis/$hash`<br>`/payloads/$hash` | replaced | Redirects to the payload entity page. | #78 |
+| `payloads.tsx` | `/payloads`<br>`/payloads/$hash` | implemented |  | #78 |
+| `payload-workbench.results.tsx` | `/payload-workbench/results` | implemented | Analyzers as top-bar tabs, with the CAPE, GitHub and RevDeck lists and the sandbox live view. | #78 |
+| `problem-reports.tsx` | `/problem-reports`<br>`/problem-reports/$id` | implemented | A tab of Source & pipeline health. | #77 |
+| `recordings.tsx` | `/recordings`<br>`/recordings/$shasum` | implemented |  | #75 |
+| `reports.tsx` | `/reports`<br>`/reports/generate`<br>`/reports/history`<br>`/reports/templates`<br>`/reports/library` | replaced | The studio split into four pages, one sidebar entry; the old path redirects. | #79 |
+| `revdeck.index.tsx` | `/revdeck` | implemented | A tab of Analysis results. | #78 |
+| `revdeck.$sha.tsx` | `/revdeck/$sha`<br>`/payloads/$hash/revdeck` | replaced | Redirects to the payload page's RevDeck tab. | #78 |
+| `sandbox.$job.tsx` | `/sandbox/$job`<br>`/payloads/$hash/sandbox` | replaced | Redirects to the payload page's Sandbox tab. | #78 |
+| `sandbox.vnc.tsx` | `/sandbox/vnc` | implemented | Under Analysis results → Sandbox → Live view. | #78 |
+| `search.tsx` | `/search` | implemented | Also the command palette. | #75 |
+| `sensors.index.tsx` | `/sensors`<br>`/sensors/$sensor` | replaced | Opens the busiest sensor's page; every sensor is one switch away. | #77 |
+| `sensors.$sensor.tsx` | `/sensors/$sensor` | implemented |  | #77 |
+| `sessions.$id.tsx` | `/sessions/$id` | implemented |  | #75 |
+| `settings.tsx` | `/settings`<br>`/` | replaced | The settings dialog (?settings=<pane>) over any page; the old path opens it. | #81 |
+| `source-health.tsx` | `/source-health` | implemented |  | #77 |
+| `topology.tsx` | `/topology` | implemented |  | #77 |
+| `tty-replay.$shasum.tsx` | `/tty-replay/$shasum`<br>`/recordings/$shasum` | replaced | Redirects to the recording entity page. | #75 |
+| `auth/login.ts` | `/auth/login` | implemented | Mock identity provider and the unavailable page; Keycloak PKCE in Phase 2 (#5). | #5 |
+| `auth/callback.ts` | `/auth/callback` | implemented | The three failures production tells apart; the code exchange and Redis session in Phase 2 (#5). | #5 |
+| `auth/logout.ts` | `/auth/logout` | implemented | Mock sign-out; RP-initiated logout and the cross-origin 403 in Phase 2 (#5). | #5 |
+| `api/artifact.$kind.$key.$filename.ts` | `/api/artifact/$kind/$key/$filename` | implemented | Mock files built from the run. | #83 |
+| `api/canarytoken.$id.download.ts` | `/api/canarytoken/$id/download` | implemented | Mock token files. | #80 |
+| `api/export.$name.ts` | `/api/export/$name` | implemented | Same allowlist; full scope, capped at the export limit. | #83 |
+| `api/payload.$hash.download.ts` | `/api/payload/$hash/download` | implemented | Admins only; a harmless stand-in for the live bytes. | #83 |
+| `api/raw-report.$kind.$sha.ts` | `/api/raw-report/$kind/$sha` | implemented |  | #83 |
+| `api/recording.$shasum.$format.ts` | `/api/recording/$shasum/$format` | implemented | asciicast v2 and the raw log. | #83 |
+| `api/report.$id.pdf.ts` | `/api/report/$id/pdf` | implemented | A real PDF from the report's sections. | #79 |
+| `api/chart.$name.ts` | — | pending | Chart payloads come through the data seam on mock data; the session-guarded proxy to the Rust tier is Phase 2 (#6). | #82 |
+| `api/live.ts` | — | pending | The live stream is simulated in the browser (src/data/liveStream.ts); the SSE proxy with its admission gate is Phase 2 (#6). | #82 |
+| `api/topology.flow.ts` | — | pending | The topology comes through the data seam on mock data; the proxy is Phase 2 (#6). | #82 |
+| `healthz.ts` | `/healthz` | implemented | Unauthenticated, always 200: the Traefik and Docker probe. | #83 |
+| `export.portbridge-manual-blackhole[.]txt.ts` | `/export/portbridge-manual-blackhole.txt` | implemented | The firewall puller's list, byte for byte; no session, 5xx on outage. | #83 |
+| `metrics.ts` | — | pending | Prometheus baseline behind the service token: Phase 2 (#5, #7). | #5 |
+| `bff.$.ts` | — | pending | The tier boundary for a split frontend host: Phase 2 (#5). | #5 |
+| `bff-mounted.$.ts` | — | pending | The same seam to backend-service-mounted: Phase 2 (#5). | #5 |
 
-Server functions, data fields and security owners, the rest of #2, follow in Phase 2.
+Each row links its Phase 2 slice (`slices.md`). Server functions with their permissions and data fields: `server-functions.md`; per-route data, mutations and states: `routes.md`; the shell: `shell.md`.

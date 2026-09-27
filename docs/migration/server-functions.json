@@ -1,0 +1,4859 @@
+[
+  {
+    "id": "src/components/ArtifactList.tsx#fetchArtifacts",
+    "name": "fetchArtifacts",
+    "file": "src/components/ArtifactList.tsx",
+    "line": 15,
+    "method": "GET",
+    "input": "{ kind: string; key: string }",
+    "output": "{ rows: ArtifactRow[] } | null",
+    "backend": [
+      "GET /api/v1/artifacts/{kind}/{key}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/components/ArtifactList.tsx",
+        "in": "ArtifactList"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "rows[].filename",
+      "rows[].kind",
+      "rows[].content_type",
+      "rows[].size_bytes",
+      "rows[].imported_at"
+    ]
+  },
+  {
+    "id": "src/components/AttackerGraph.tsx#fetchGraph",
+    "name": "fetchGraph",
+    "file": "src/components/AttackerGraph.tsx",
+    "line": 21,
+    "method": "GET",
+    "input": "{ id: string }",
+    "output": "Graph | null",
+    "backend": [
+      "GET /api/v1/attackers-graph?id={id}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/components/AttackerGraph.tsx",
+        "in": "AttackerGraph"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "nodes[].id",
+      "nodes[].label",
+      "nodes[].kind",
+      "edges[].source",
+      "edges[].target"
+    ]
+  },
+  {
+    "id": "src/components/CapturedMail.tsx#fetchMail",
+    "name": "fetchMail",
+    "file": "src/components/CapturedMail.tsx",
+    "line": 35,
+    "method": "GET",
+    "input": "{ id: string }",
+    "output": "Mail | null",
+    "backend": [
+      "GET /api/v1/mail/{id}"
+    ],
+    "permission": "session",
+    "callers": [],
+    "loader": false,
+    "fields": [
+      "session_id",
+      "body_path",
+      "size_bytes",
+      "imported_at",
+      "from.name",
+      "from.address",
+      "to[].name",
+      "to[].address",
+      "subject",
+      "date",
+      "message_id",
+      "body_text",
+      "attachments[].filename",
+      "attachments[].content_type",
+      "attachments[].size_bytes",
+      "attachments[].sha256"
+    ]
+  },
+  {
+    "id": "src/components/CapturedMail.tsx#fetchMailDetailed",
+    "name": "fetchMailDetailed",
+    "file": "src/components/CapturedMail.tsx",
+    "line": 121,
+    "method": "GET",
+    "input": "{ id: string }",
+    "output": "MailFetch",
+    "backend": [
+      "GET /api/v1/mail/{id}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/components/CapturedMail.tsx",
+        "in": "load"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "state",
+      "mail.session_id",
+      "mail.body_path",
+      "mail.size_bytes",
+      "mail.imported_at",
+      "mail.from.name",
+      "mail.from.address",
+      "mail.to[].name",
+      "mail.to[].address",
+      "mail.subject",
+      "mail.date",
+      "mail.message_id",
+      "mail.body_text",
+      "mail.attachments[].filename",
+      "mail.attachments[].content_type",
+      "mail.attachments[].size_bytes",
+      "mail.attachments[].sha256"
+    ]
+  },
+  {
+    "id": "src/components/CommandPalette.tsx#searchFn",
+    "name": "searchFn",
+    "file": "src/components/CommandPalette.tsx",
+    "line": 19,
+    "method": "GET",
+    "input": "{ q: string }",
+    "output": "SearchResult | null",
+    "backend": [
+      "GET /api/v1/search?q={q}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/components/CommandPalette.tsx",
+        "in": "CommandPalette"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "query",
+      "redirect",
+      "groups[].title",
+      "groups[].hits[].label",
+      "groups[].hits[].count",
+      "groups[].hits[].url",
+      "total"
+    ]
+  },
+  {
+    "id": "src/components/CuratedSensorViews.tsx#fetchSensors",
+    "name": "fetchSensors",
+    "file": "src/components/CuratedSensorViews.tsx",
+    "line": 80,
+    "method": "GET",
+    "input": "—",
+    "output": "SensorDetail | null",
+    "backend": [
+      "GET /api/v1/sensors"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/components/CuratedSensorViews.tsx",
+        "in": "CuratedSensorView"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "mailoney[].session_id",
+      "mailoney[].when",
+      "mailoney[].ip",
+      "mailoney[].port",
+      "mailoney[].logged_in",
+      "mailoney[].user",
+      "mailoney[].pass",
+      "mailoney[].mail_from",
+      "mailoney[].rcpt_to",
+      "mailoney[].body_size",
+      "mailoney[].truncated",
+      "mailoney[].body_path",
+      "mailoney[].body_preview",
+      "http_requests[].id",
+      "http_requests[].when",
+      "http_requests[].ip",
+      "http_requests[].method",
+      "http_requests[].host",
+      "http_requests[].path",
+      "http_requests[].query",
+      "http_requests[].user_agent",
+      "http_requests[].headers",
+      "http_requests[].body",
+      "http_requests[].username",
+      "http_requests[].password",
+      "http_requests[].auth_type",
+      "http_requests[].status",
+      "http_requests[].category",
+      "http_requests[].tarpitted",
+      "http_requests[].tarpit_bytes",
+      "http_requests[].tarpit_ms",
+      "tanner[].id",
+      "tanner[].when",
+      "tanner[].ip",
+      "tanner[].method",
+      "tanner[].path",
+      "tanner[].user_agent",
+      "tanner[].headers",
+      "tanner[].username",
+      "tanner[].password",
+      "tanner[].tarpitted",
+      "tanner[].tarpit_bytes",
+      "tanner[].tarpit_ms",
+      "tanner[].post_data",
+      "tanner[].cookies",
+      "tanner[].detection_name",
+      "tanner[].detection_payload"
+    ]
+  },
+  {
+    "id": "src/components/EsHistoryConsole.tsx#fetchConsoleHistory",
+    "name": "fetchConsoleHistory",
+    "file": "src/components/EsHistoryConsole.tsx",
+    "line": 18,
+    "method": "GET",
+    "input": "{ q: string }",
+    "output": "ConsolePage | null",
+    "backend": [
+      "GET /api/v1/events?offset=0&size=50&since=90d{query}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/components/EsHistoryConsole.tsx",
+        "in": "run"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows[].record"
+    ]
+  },
+  {
+    "id": "src/components/GhidraCallGraph.tsx#fetchCallGraph",
+    "name": "fetchCallGraph",
+    "file": "src/components/GhidraCallGraph.tsx",
+    "line": 28,
+    "method": "GET",
+    "input": "{ sha: string }",
+    "output": "Graph | null",
+    "backend": [
+      "GET /api/v1/ghidra-callgraph/{sha}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/components/GhidraCallGraph.tsx",
+        "in": "GhidraCallGraph"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "nodes[].id",
+      "nodes[].label",
+      "nodes[].kind",
+      "edges[].source",
+      "edges[].target",
+      "truncated"
+    ]
+  },
+  {
+    "id": "src/components/LiveToasts.tsx#fetchSourceHealth",
+    "name": "fetchSourceHealth",
+    "file": "src/components/LiveToasts.tsx",
+    "line": 74,
+    "method": "GET",
+    "input": "—",
+    "output": "SourceHealth | null",
+    "backend": [
+      "GET /api/v1/source-health"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/components/LiveToasts.tsx",
+        "in": "LiveToasts"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "cluster_status",
+      "sensors[].sensor",
+      "sensors[].state",
+      "sensors[].last_seen",
+      "ingest.state",
+      "ingest.age_seconds",
+      "pipeline.state",
+      "dead_letters"
+    ]
+  },
+  {
+    "id": "src/components/OverviewPanels.tsx#fetchVectors",
+    "name": "fetchVectors",
+    "file": "src/components/OverviewPanels.tsx",
+    "line": 119,
+    "method": "GET",
+    "input": "{ sensor: string }",
+    "output": "Vectors | null",
+    "backend": [
+      "GET /api/v1/attack-vectors?sensor={sensor}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/components/OverviewPanels.tsx",
+        "in": "AttackVectors"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "sensor",
+      "ports[].key",
+      "ports[].count",
+      "ports[].link",
+      "protocols[].key",
+      "protocols[].count",
+      "protocols[].link"
+    ]
+  },
+  {
+    "id": "src/components/ProblemReportButton.tsx#submitReport",
+    "name": "submitReport",
+    "file": "src/components/ProblemReportButton.tsx",
+    "line": 34,
+    "method": "POST",
+    "input": "{ page: string expected: string actual: string action_trail: ActionEntry[] console_errors: string[] network_failures: string[] api_calls: ApiCallEntry[] dom_snapshot: string user_agent: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/problem-reports?{query}"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/components/ProblemReportButton.tsx",
+        "in": "submit"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/components/Topbar.tsx#fetchOpenAlertCount",
+    "name": "fetchOpenAlertCount",
+    "file": "src/components/Topbar.tsx",
+    "line": 16,
+    "method": "GET",
+    "input": "—",
+    "output": "number",
+    "backend": [
+      "GET /api/v1/alerts?size=100"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/components/Topbar.tsx",
+        "in": "useOpenAlertCount"
+      }
+    ],
+    "loader": false,
+    "fields": []
+  },
+  {
+    "id": "src/lib/auth.ts#getAccountActions",
+    "name": "getAccountActions",
+    "file": "src/lib/auth.ts",
+    "line": 17,
+    "method": "GET",
+    "input": "—",
+    "output": "AccountActions",
+    "backend": [],
+    "permission": "public",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "manageAccount",
+      "profile",
+      "security",
+      "sessions"
+    ]
+  },
+  {
+    "id": "src/lib/auth.ts#getSessionUser",
+    "name": "getSessionUser",
+    "file": "src/lib/auth.ts",
+    "line": 22,
+    "method": "GET",
+    "input": "—",
+    "output": "User | null",
+    "backend": [],
+    "permission": "public",
+    "callers": [
+      {
+        "file": "src/routes/__root.tsx",
+        "in": "beforeLoad"
+      },
+      {
+        "file": "src/routes/credentials.tsx",
+        "in": "module"
+      },
+      {
+        "file": "src/routes/credentials.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "module"
+      },
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "module"
+      },
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "module"
+      },
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "module"
+      },
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "sub",
+      "username",
+      "displayName",
+      "role"
+    ]
+  },
+  {
+    "id": "src/lib/prefs.ts#fetchAppearance",
+    "name": "fetchAppearance",
+    "file": "src/lib/prefs.ts",
+    "line": 72,
+    "method": "GET",
+    "input": "—",
+    "output": "Appearance",
+    "backend": [
+      "GET /api/v1/preferences?{query}"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/lib/prefs.ts",
+        "in": "pullAppearance"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "mode",
+      "theme"
+    ]
+  },
+  {
+    "id": "src/lib/prefs.ts#fetchLiveToastPrefs",
+    "name": "fetchLiveToastPrefs",
+    "file": "src/lib/prefs.ts",
+    "line": 284,
+    "method": "GET",
+    "input": "—",
+    "output": "LiveToastPrefs",
+    "backend": [
+      "GET /api/v1/preferences?{query}"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/lib/prefs.ts",
+        "in": "pullLiveToastPrefs"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "enabled",
+      "intervalSeconds"
+    ]
+  },
+  {
+    "id": "src/lib/prefs.ts#fetchMapPrefs",
+    "name": "fetchMapPrefs",
+    "file": "src/lib/prefs.ts",
+    "line": 319,
+    "method": "GET",
+    "input": "—",
+    "output": "MapPrefs",
+    "backend": [
+      "GET /api/v1/preferences?{query}"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/lib/prefs.ts",
+        "in": "pullMapPrefs"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "basemap",
+      "clustering",
+      "animation"
+    ]
+  },
+  {
+    "id": "src/lib/prefs.ts#pushAppearancePreference",
+    "name": "pushAppearancePreference",
+    "file": "src/lib/prefs.ts",
+    "line": 35,
+    "method": "POST",
+    "input": "{ theme?: ThemeMode; palette?: string }",
+    "output": "void",
+    "backend": [
+      "GET /api/v1/preferences?{query}",
+      "PUT /api/v1/preferences"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/lib/prefs.ts",
+        "in": "applyTheme"
+      },
+      {
+        "file": "src/lib/prefs.ts",
+        "in": "applyPalette"
+      }
+    ],
+    "loader": false,
+    "fields": []
+  },
+  {
+    "id": "src/routes/__root.tsx#fetchShellConfig",
+    "name": "fetchShellConfig",
+    "file": "src/routes/__root.tsx",
+    "line": 36,
+    "method": "GET",
+    "input": "—",
+    "output": "ShellConfig",
+    "backend": [
+      "GET /api/v1/config"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/__root.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "banner.text",
+      "banner.severity",
+      "showProblemReportButton",
+      "appName",
+      "configFailed"
+    ]
+  },
+  {
+    "id": "src/routes/__root.tsx#getAppearance",
+    "name": "getAppearance",
+    "file": "src/routes/__root.tsx",
+    "line": 87,
+    "method": "GET",
+    "input": "—",
+    "output": "Appearance",
+    "backend": [],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/__root.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "mode",
+      "theme"
+    ]
+  },
+  {
+    "id": "src/routes/agent-campaigns.tsx#fetchPage",
+    "name": "fetchPage",
+    "file": "src/routes/agent-campaigns.tsx",
+    "line": 51,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "StorePage<AgentCampaignRow> | null",
+    "backend": [
+      "GET /api/v1/store/agent-campaigns?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/agent-campaigns.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows[].@timestamp",
+      "rows[].campaign_id",
+      "rows[].start",
+      "rows[].end",
+      "rows[].severity",
+      "rows[].matched_categories",
+      "rows[].correlation_identifiers",
+      "rows[].event_count",
+      "rows[].events[].event_id",
+      "rows[].events[].source_index",
+      "rows[].events[].timestamp",
+      "rows[].events[].matched_rules"
+    ]
+  },
+  {
+    "id": "src/routes/alerts.tsx#acknowledgeAlert",
+    "name": "acknowledgeAlert",
+    "file": "src/routes/alerts.tsx",
+    "line": 101,
+    "method": "POST",
+    "input": "{ key: string; ack: boolean }",
+    "output": "void",
+    "backend": [
+      "POST /api/v1/alerts/{key}/ack"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/routes/alerts.tsx",
+        "in": "Alerts"
+      }
+    ],
+    "loader": false,
+    "fields": []
+  },
+  {
+    "id": "src/routes/alerts.tsx#acknowledgeAll",
+    "name": "acknowledgeAll",
+    "file": "src/routes/alerts.tsx",
+    "line": 144,
+    "method": "POST",
+    "input": "—",
+    "output": "number",
+    "backend": [
+      "GET /api/v1/alerts?offset={offset}&size=100",
+      "POST /api/v1/alerts/{key}/ack"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/routes/alerts.tsx",
+        "in": "Alerts"
+      }
+    ],
+    "loader": false,
+    "fields": []
+  },
+  {
+    "id": "src/routes/alerts.tsx#acknowledgeKeys",
+    "name": "acknowledgeKeys",
+    "file": "src/routes/alerts.tsx",
+    "line": 120,
+    "method": "POST",
+    "input": "{ keys: string[]; ack: boolean }",
+    "output": "number",
+    "backend": [
+      "POST /api/v1/alerts/{key}/ack"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/routes/alerts.tsx",
+        "in": "Alerts"
+      }
+    ],
+    "loader": false,
+    "fields": []
+  },
+  {
+    "id": "src/routes/alerts.tsx#fetchAlerts",
+    "name": "fetchAlerts",
+    "file": "src/routes/alerts.tsx",
+    "line": 88,
+    "method": "GET",
+    "input": "—",
+    "output": "BoardFetch",
+    "backend": [
+      "GET /api/v1/alerts?offset={offset}&size=100"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/alerts.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/alerts.tsx",
+        "in": "Alerts"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "rows[].Key",
+      "rows[].Message",
+      "rows[].Link",
+      "rows[].FirstSeen",
+      "rows[].LastSeen",
+      "rows[].LastNotified",
+      "rows[].Count",
+      "rows[].Acknowledged",
+      "complete"
+    ]
+  },
+  {
+    "id": "src/routes/attackers.tsx#fetchAttackers",
+    "name": "fetchAttackers",
+    "file": "src/routes/attackers.tsx",
+    "line": 45,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/attackers?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/attackers.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/attackers.tsx",
+        "in": "Attackers"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows[].id",
+      "rows[].ips",
+      "rows[].fingerprints",
+      "rows[].payloads",
+      "rows[].credentials",
+      "rows[].sensors",
+      "rows[].events",
+      "rows[].first",
+      "rows[].last",
+      "rows[].updated",
+      "rows[].verdicts",
+      "rows[].techniques",
+      "rows[].scan",
+      "rows[].dest_ips",
+      "rows[].ports_touched"
+    ]
+  },
+  {
+    "id": "src/routes/auth-events.tsx#fetchPage",
+    "name": "fetchPage",
+    "file": "src/routes/auth-events.tsx",
+    "line": 14,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "StorePage | null",
+    "backend": [
+      "GET /api/v1/store/auth-events?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/auth-events.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/auth-events.tsx#fetchStatsWindow",
+    "name": "fetchStatsWindow",
+    "file": "src/routes/auth-events.tsx",
+    "line": 26,
+    "method": "GET",
+    "input": "—",
+    "output": "StorePage | null",
+    "backend": [
+      "GET /api/v1/store/auth-events?offset=0&size=200"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/auth-events.tsx",
+        "in": "AuthStats"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/campaigns.tsx#fetchCampaigns",
+    "name": "fetchCampaigns",
+    "file": "src/routes/campaigns.tsx",
+    "line": 42,
+    "method": "GET",
+    "input": "—",
+    "output": "{ total: number; rows: CampaignRow[]; } | null",
+    "backend": [
+      "GET /api/v1/campaigns?size=100"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/campaigns.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/campaigns.tsx",
+        "in": "Campaigns"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows[].cidr",
+      "rows[].score",
+      "rows[].events",
+      "rows[].unique_ips",
+      "rows[].sensors",
+      "rows[].ports",
+      "rows[].creds",
+      "rows[].payloads",
+      "rows[].alerts",
+      "rows[].providers",
+      "rows[].fingerprints",
+      "rows[].explanation",
+      "rows[].first",
+      "rows[].last",
+      "rows[].asns",
+      "rows[].sequence",
+      "rows[].generated",
+      "rows[].scan",
+      "rows[].dst_ips_touched",
+      "rows[].ports_touched_counted"
+    ]
+  },
+  {
+    "id": "src/routes/campaigns.tsx#fetchCredReuse",
+    "name": "fetchCredReuse",
+    "file": "src/routes/campaigns.tsx",
+    "line": 62,
+    "method": "GET",
+    "input": "—",
+    "output": "CredEdge[] | null",
+    "backend": [
+      "GET /api/v1/cred-reuse"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/campaigns.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "[].user",
+      "[].pass",
+      "[].unique_ips",
+      "[].ips",
+      "[].sensors",
+      "[].events",
+      "[].first",
+      "[].last"
+    ]
+  },
+  {
+    "id": "src/routes/canarytokens.tsx#createToken",
+    "name": "createToken",
+    "file": "src/routes/canarytokens.tsx",
+    "line": 57,
+    "method": "POST",
+    "input": "{ token_type: string memo: string include_text_snippet?: boolean text_snippet?: string file_base64?: string file_name?: string file_content_type?: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/canarytokens"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/routes/canarytokens.tsx",
+        "in": "MintForm"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/canarytokens.tsx#fetchFired",
+    "name": "fetchFired",
+    "file": "src/routes/canarytokens.tsx",
+    "line": 44,
+    "method": "GET",
+    "input": "—",
+    "output": "FiredPage | null",
+    "backend": [
+      "GET /api/v1/events?sensor=canarytokens&size=50&since=365d"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/canarytokens.tsx",
+        "in": "FiredTokens"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows[].time",
+      "rows[].src_ip",
+      "rows[].country",
+      "rows[].detail",
+      "rows[].record"
+    ]
+  },
+  {
+    "id": "src/routes/canarytokens.tsx#fetchPage",
+    "name": "fetchPage",
+    "file": "src/routes/canarytokens.tsx",
+    "line": 24,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "StorePage | null",
+    "backend": [
+      "GET /api/v1/store/canarytokens?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/canarytokens.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/canarytokens.tsx#fetchTypes",
+    "name": "fetchTypes",
+    "file": "src/routes/canarytokens.tsx",
+    "line": 52,
+    "method": "GET",
+    "input": "—",
+    "output": "TokenType[] | null",
+    "backend": [
+      "GET /api/v1/canarytokens/types"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/canarytokens.tsx",
+        "in": "MintForm"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "[].token_type",
+      "[].label",
+      "[].description",
+      "[].requires_upload",
+      "[].supports_snippet"
+    ]
+  },
+  {
+    "id": "src/routes/cape.$sha.tsx#fetchRun",
+    "name": "fetchRun",
+    "file": "src/routes/cape.$sha.tsx",
+    "line": 58,
+    "method": "GET",
+    "input": "{ sha: string }",
+    "output": "RunFetch",
+    "backend": [
+      "GET /api/v1/cape/{sha}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/cape.$sha.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/cape.$sha.tsx",
+        "in": "CapeDetail"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "run.sha256",
+      "run.requested_at",
+      "run.started_at",
+      "run.completed_at",
+      "run.exit_status",
+      "run.error",
+      "run.task_id",
+      "run.cape_status",
+      "run.route",
+      "run.score",
+      "run.category",
+      "run.signatures[].name",
+      "run.signatures[].description",
+      "run.signatures[].severity",
+      "run.report_summary.machine",
+      "run.report_summary.package",
+      "run.report_summary.route",
+      "run.report_summary.timeout",
+      "run.report_summary.duration",
+      "run.report_summary.malscore",
+      "run.report_summary.malstatus",
+      "run.report_summary.summary",
+      "run.report_summary.summary_keys",
+      "run.report_summary.processes",
+      "run.report_summary.total_calls",
+      "run.report_summary.payloads",
+      "run.report_summary.configs",
+      "run.report_summary.debug_log",
+      "run.report_summary.debug_errors"
+    ]
+  },
+  {
+    "id": "src/routes/cape.index.tsx#fetchPage",
+    "name": "fetchPage",
+    "file": "src/routes/cape.index.tsx",
+    "line": 13,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "StorePage | null",
+    "backend": [
+      "GET /api/v1/store/cape?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/cape.index.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/clusters.tsx#fetchClusters",
+    "name": "fetchClusters",
+    "file": "src/routes/clusters.tsx",
+    "line": 23,
+    "method": "GET",
+    "input": "—",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/clusters?size=100"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/clusters.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/clusters.tsx",
+        "in": "Clusters"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows[].kind",
+      "rows[].value",
+      "rows[].sources",
+      "rows[].events",
+      "rows[].sensors",
+      "rows[].generated"
+    ]
+  },
+  {
+    "id": "src/routes/commands.tsx#fetchCommands",
+    "name": "fetchCommands",
+    "file": "src/routes/commands.tsx",
+    "line": 25,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/events?kind=command&offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/commands.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/commands.tsx",
+        "in": "Commands"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "offset",
+      "rows[].time",
+      "rows[].sensor",
+      "rows[].src_ip",
+      "rows[].country",
+      "rows[].port",
+      "rows[].proto",
+      "rows[].detail",
+      "rows[].session",
+      "rows[].record"
+    ]
+  },
+  {
+    "id": "src/routes/credentials.tsx#createCredential",
+    "name": "createCredential",
+    "file": "src/routes/credentials.tsx",
+    "line": 52,
+    "method": "POST",
+    "input": "{ path: string; username: string; password: string; memo: string; content_template: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/credentials"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/credentials.tsx",
+        "in": "ProvisionForm"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/credentials.tsx#fetchCredentials",
+    "name": "fetchCredentials",
+    "file": "src/routes/credentials.tsx",
+    "line": 38,
+    "method": "GET",
+    "input": "—",
+    "output": "CredentialsResponse | null",
+    "backend": [
+      "GET /api/v1/credentials"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/credentials.tsx",
+        "in": "refresh"
+      },
+      {
+        "file": "src/routes/credentials.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "available",
+      "error",
+      "credentials[].id",
+      "credentials[].target",
+      "credentials[].path",
+      "credentials[].username",
+      "credentials[].password",
+      "credentials[].content_template",
+      "credentials[].memo",
+      "credentials[].linked_token_id",
+      "credentials[].created_by",
+      "credentials[].created_at",
+      "credentials[].rotated_by",
+      "credentials[].rotated_at"
+    ]
+  },
+  {
+    "id": "src/routes/credentials.tsx#fetchLinkableTokens",
+    "name": "fetchLinkableTokens",
+    "file": "src/routes/credentials.tsx",
+    "line": 46,
+    "method": "GET",
+    "input": "—",
+    "output": "TokenRecord[]",
+    "backend": [
+      "GET /api/v1/canarytokens"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/credentials.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "[].id",
+      "[].token_type",
+      "[].memo"
+    ]
+  },
+  {
+    "id": "src/routes/credentials.tsx#linkCredentialToken",
+    "name": "linkCredentialToken",
+    "file": "src/routes/credentials.tsx",
+    "line": 86,
+    "method": "POST",
+    "input": "{ id: string; token_id: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/credentials/{id}/link-token"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/credentials.tsx",
+        "in": "applyLink"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/credentials.tsx#rotateCredential",
+    "name": "rotateCredential",
+    "file": "src/routes/credentials.tsx",
+    "line": 70,
+    "method": "POST",
+    "input": "{ id: string; password: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/credentials/{id}/rotate"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/credentials.tsx",
+        "in": "rotate"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/dead-letters.tsx#fetchPage",
+    "name": "fetchPage",
+    "file": "src/routes/dead-letters.tsx",
+    "line": 16,
+    "method": "GET",
+    "input": "{ offset: number; q: string }",
+    "output": "StorePage | null",
+    "backend": [
+      "GET /api/v1/store/dead-letters?{query}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/dead-letters.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/dead-letters.tsx#purgeDeadLetters",
+    "name": "purgeDeadLetters",
+    "file": "src/routes/dead-letters.tsx",
+    "line": 25,
+    "method": "POST",
+    "input": "{ q: string }",
+    "output": "{ ok: boolean; deleted?: number; error?: string }",
+    "backend": [
+      "DELETE /api/v1/store/dead-letters?{query}"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/dead-letters.tsx",
+        "in": "doPurge"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "deleted",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/event.$id.tsx#fetchEvent",
+    "name": "fetchEvent",
+    "file": "src/routes/event.$id.tsx",
+    "line": 72,
+    "method": "GET",
+    "input": "{ id: string }",
+    "output": "EventFetch",
+    "backend": [
+      "GET /api/v1/event/{id}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/event.$id.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/event.$id.tsx",
+        "in": "EventDetailPage"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "event.id",
+      "event.index",
+      "event.time",
+      "event.sensor",
+      "event.src_ip",
+      "event.session",
+      "event.community_id",
+      "event.hashes",
+      "event.record",
+      "event.session_events.key",
+      "event.session_events.total",
+      "event.session_events.rows",
+      "event.flow_events.key",
+      "event.flow_events.total",
+      "event.flow_events.rows",
+      "event.source_events.key",
+      "event.source_events.total",
+      "event.source_events.rows",
+      "event.flow_link.community_id",
+      "event.flow_link.families",
+      "event.flow_link.sensors",
+      "event.flow_link.src_ip",
+      "event.flow_link.dst_ip",
+      "event.flow_link.dst_port",
+      "event.flow_link.first",
+      "event.flow_link.last",
+      "event.flow_link.events",
+      "event.flow_link.event_ids"
+    ]
+  },
+  {
+    "id": "src/routes/events.tsx#fetchEvents",
+    "name": "fetchEvents",
+    "file": "src/routes/events.tsx",
+    "line": 137,
+    "method": "GET",
+    "input": "{ offset: number; filters?: EventFilters }",
+    "output": "EventsPage | null",
+    "backend": [
+      "GET /api/v1/events?{params}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/events.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/events.tsx",
+        "in": "Events"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "offset",
+      "rows[].src_ip_claimed",
+      "rows[].id",
+      "rows[].time",
+      "rows[].sensor",
+      "rows[].src_ip",
+      "rows[].country",
+      "rows[].port",
+      "rows[].proto",
+      "rows[].detail",
+      "rows[].session",
+      "rows[].pivots.persona",
+      "rows[].pivots.site",
+      "rows[].pivots.asset",
+      "rows[].pivots.fingerprint",
+      "rows[].pivots.fingerprint_kind",
+      "rows[].pivots.command",
+      "rows[].pivots.user",
+      "rows[].pivots.pass",
+      "rows[].pivots.path",
+      "rows[].pivots.shasum",
+      "rows[].pivots.asn",
+      "rows[].pivots.org",
+      "rows[].pivots.provider",
+      "rows[].pivots.alert",
+      "rows[].pivots.category",
+      "rows[].pivots.tty_replay",
+      "rows[].pivots.ics_severity",
+      "rows[].pivots.payload_class",
+      "rows[].record",
+      "fingerprint_ips[].ip",
+      "fingerprint_ips[].count",
+      "fingerprint_ips[].checked"
+    ]
+  },
+  {
+    "id": "src/routes/events.tsx#fetchFilterValues",
+    "name": "fetchFilterValues",
+    "file": "src/routes/events.tsx",
+    "line": 148,
+    "method": "GET",
+    "input": "—",
+    "output": "FilterValues | null",
+    "backend": [
+      "GET /api/v1/filter-values"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/events.tsx",
+        "in": "Events"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "sensors",
+      "countries",
+      "cities",
+      "protos",
+      "ports",
+      "kinds"
+    ]
+  },
+  {
+    "id": "src/routes/events.tsx#fetchInvestigationConfig",
+    "name": "fetchInvestigationConfig",
+    "file": "src/routes/events.tsx",
+    "line": 164,
+    "method": "GET",
+    "input": "—",
+    "output": "InvestigationConfig",
+    "backend": [],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/events.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "kibana",
+      "evebox",
+      "arkime"
+    ]
+  },
+  {
+    "id": "src/routes/ghidra.$sha.tsx#fetchRun",
+    "name": "fetchRun",
+    "file": "src/routes/ghidra.$sha.tsx",
+    "line": 164,
+    "method": "GET",
+    "input": "{ sha: string }",
+    "output": "RunFetch",
+    "backend": [
+      "GET /api/v1/ghidra/{sha}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/ghidra.$sha.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/ghidra.$sha.tsx",
+        "in": "GhidraDetail"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "run"
+    ]
+  },
+  {
+    "id": "src/routes/ghidra.$sha.tsx#submitReanalysis",
+    "name": "submitReanalysis",
+    "file": "src/routes/ghidra.$sha.tsx",
+    "line": 177,
+    "method": "POST",
+    "input": "{ hash: string }",
+    "output": "SubmitResult",
+    "backend": [
+      "POST /api/v1/ghidra/submit (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/ghidra.$sha.tsx",
+        "in": "reanalyze"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/github-analysis.$sha.tsx#fetchRun",
+    "name": "fetchRun",
+    "file": "src/routes/github-analysis.$sha.tsx",
+    "line": 48,
+    "method": "GET",
+    "input": "{ sha: string }",
+    "output": "RunFetch",
+    "backend": [
+      "GET /api/v1/github-analysis/{sha}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/github-analysis.$sha.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/github-analysis.$sha.tsx",
+        "in": "GithubAnalysisDetail"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "run.sha256",
+      "run.requested_at",
+      "run.started_at",
+      "run.completed_at",
+      "run.exit_status",
+      "run.reason",
+      "run.daily_cap",
+      "run.error",
+      "run.commit",
+      "run.report_commit",
+      "run.run_id",
+      "run.run_url",
+      "run.sample_path",
+      "run.family",
+      "run.verdict.malicious",
+      "run.verdict.suspicious",
+      "run.verdict.total",
+      "run.verdict.level",
+      "run.scanners[].source",
+      "run.scanners[].ok",
+      "run.scanners[].positives",
+      "run.scanners[].total",
+      "run.scanners[].suspicious",
+      "run.scanners[].permalink",
+      "run.scanners[].error",
+      "run.yara_auto_rules",
+      "run.report_pdf",
+      "run.requested_by",
+      "run.view_url"
+    ]
+  },
+  {
+    "id": "src/routes/github-analysis.$sha.tsx#resubmitAnalysis",
+    "name": "resubmitAnalysis",
+    "file": "src/routes/github-analysis.$sha.tsx",
+    "line": 61,
+    "method": "POST",
+    "input": "{ hash: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/github-analysis/submit (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/github-analysis.$sha.tsx",
+        "in": "GithubAnalysisDetail"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/github-analysis.index.tsx#fetchPage",
+    "name": "fetchPage",
+    "file": "src/routes/github-analysis.index.tsx",
+    "line": 13,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "StorePage | null",
+    "backend": [
+      "GET /api/v1/store/github-analysis?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/github-analysis.index.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/history.tsx#fetchHistory",
+    "name": "fetchHistory",
+    "file": "src/routes/history.tsx",
+    "line": 26,
+    "method": "GET",
+    "input": "{ offset: number; q: string }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/events?offset={offset}&size=50&since=90d{query}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/history.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/history.tsx",
+        "in": "History"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "offset",
+      "rows[].time",
+      "rows[].sensor",
+      "rows[].src_ip",
+      "rows[].country",
+      "rows[].port",
+      "rows[].proto",
+      "rows[].detail",
+      "rows[].session",
+      "rows[].record"
+    ]
+  },
+  {
+    "id": "src/routes/index.tsx#fetchCampaignsSummary",
+    "name": "fetchCampaignsSummary",
+    "file": "src/routes/index.tsx",
+    "line": 110,
+    "method": "GET",
+    "input": "—",
+    "output": "{ total: number; rows: StoreRow[]; } | null",
+    "backend": [
+      "GET /api/v1/campaigns?size=15"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/index.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/index.tsx#fetchDashboard",
+    "name": "fetchDashboard",
+    "file": "src/routes/index.tsx",
+    "line": 95,
+    "method": "GET",
+    "input": "string[]",
+    "output": "Dashboard | null",
+    "backend": [
+      "GET /api/v1/overview/dashboard{query}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/index.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "protocols[].key",
+      "protocols[].count",
+      "protocols[].link",
+      "top_ports[].key",
+      "top_ports[].count",
+      "top_ports[].link",
+      "countries[].key",
+      "countries[].count",
+      "countries[].link",
+      "asns[].key",
+      "asns[].count",
+      "asns[].link",
+      "providers[].key",
+      "providers[].count",
+      "providers[].link",
+      "top_ips[].key",
+      "top_ips[].count",
+      "top_ips[].link",
+      "top_paths[].key",
+      "top_paths[].count",
+      "top_paths[].link",
+      "top_creds[].key",
+      "top_creds[].count",
+      "top_creds[].link",
+      "top_commands[].key",
+      "top_commands[].count",
+      "top_commands[].link",
+      "clients[].key",
+      "clients[].count",
+      "clients[].link",
+      "fingerprints[].key",
+      "fingerprints[].count",
+      "fingerprints[].link",
+      "alerts[].key",
+      "alerts[].count",
+      "alerts[].link",
+      "alert_cats[].key",
+      "alert_cats[].count",
+      "alert_cats[].link",
+      "payloads[].shasum",
+      "payloads[].download",
+      "payloads[].count",
+      "payloads[].link",
+      "payloads[].vt",
+      "logins",
+      "heatmap[].sensor",
+      "heatmap[].cells[].label",
+      "heatmap[].cells[].count",
+      "heatmap[].cells[].pct",
+      "map_points[].city",
+      "map_points[].country",
+      "map_points[].lat",
+      "map_points[].lon",
+      "map_points[].events",
+      "map_points[].ips",
+      "map_points[].url",
+      "sensors[].name",
+      "sensors[].count",
+      "sensors[].last_seen",
+      "sensors[].state"
+    ]
+  },
+  {
+    "id": "src/routes/index.tsx#fetchKpis",
+    "name": "fetchKpis",
+    "file": "src/routes/index.tsx",
+    "line": 84,
+    "method": "GET",
+    "input": "—",
+    "output": "OverviewKpis | null",
+    "backend": [
+      "GET /api/v1/overview/kpis"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/index.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "last24h",
+      "previous24h",
+      "change24h",
+      "unique_ips",
+      "hourly",
+      "logins",
+      "ready"
+    ]
+  },
+  {
+    "id": "src/routes/index.tsx#fetchPayloadsSummary",
+    "name": "fetchPayloadsSummary",
+    "file": "src/routes/index.tsx",
+    "line": 115,
+    "method": "GET",
+    "input": "—",
+    "output": "{ total: number; rows: StoreRow[]; } | null",
+    "backend": [
+      "GET /api/v1/payloads?size=15"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/index.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/index.tsx#fetchPresentation",
+    "name": "fetchPresentation",
+    "file": "src/routes/index.tsx",
+    "line": 89,
+    "method": "GET",
+    "input": "—",
+    "output": "Presentation | null",
+    "backend": [
+      "GET /api/v1/config"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/index.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "dashboard_title",
+      "dashboard_subtitle",
+      "footer_text",
+      "banner_text",
+      "banner_severity"
+    ]
+  },
+  {
+    "id": "src/routes/index.tsx#fetchRecent",
+    "name": "fetchRecent",
+    "file": "src/routes/index.tsx",
+    "line": 105,
+    "method": "GET",
+    "input": "—",
+    "output": "{ total: number; rows: EventRow[]; } | null",
+    "backend": [
+      "GET /api/v1/events?size=18"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/index.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows[].id",
+      "rows[].time",
+      "rows[].sensor",
+      "rows[].src_ip",
+      "rows[].country",
+      "rows[].port",
+      "rows[].detail",
+      "rows[].proto",
+      "rows[].session",
+      "rows[].record"
+    ]
+  },
+  {
+    "id": "src/routes/investigate.cidr.$cidr.tsx#fetchCorrelation",
+    "name": "fetchCorrelation",
+    "file": "src/routes/investigate.cidr.$cidr.tsx",
+    "line": 42,
+    "method": "GET",
+    "input": "{ cidr: string }",
+    "output": "CidrCorrelation | null",
+    "backend": [
+      "GET /api/v1/investigate/cidr/{cidr}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/investigate.cidr.$cidr.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "cidr",
+      "correlation.total",
+      "correlation.truncated",
+      "correlation.sensors[].key",
+      "correlation.sensors[].count",
+      "correlation.tunnel_connections",
+      "correlation.tunnel_os_guesses",
+      "correlation.records[].time",
+      "correlation.records[].sensor",
+      "correlation.records[].src_ip",
+      "correlation.records[].country",
+      "correlation.records[].port",
+      "correlation.records[].proto",
+      "correlation.records[].detail",
+      "correlation.records[].session",
+      "correlation.records[].record"
+    ]
+  },
+  {
+    "id": "src/routes/investigate.cluster.tsx#fetchCorrelation",
+    "name": "fetchCorrelation",
+    "file": "src/routes/investigate.cluster.tsx",
+    "line": 47,
+    "method": "GET",
+    "input": "SearchParams",
+    "output": "ClusterCorrelation | null",
+    "backend": [
+      "GET /api/v1/investigate/cluster?{query}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/investigate.cluster.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "kind",
+      "value",
+      "ip_count",
+      "correlation.total",
+      "correlation.truncated",
+      "correlation.sensors[].key",
+      "correlation.sensors[].count",
+      "correlation.tunnel_connections",
+      "correlation.tunnel_os_guesses",
+      "correlation.records[].time",
+      "correlation.records[].sensor",
+      "correlation.records[].src_ip",
+      "correlation.records[].country",
+      "correlation.records[].port",
+      "correlation.records[].proto",
+      "correlation.records[].detail",
+      "correlation.records[].session",
+      "correlation.records[].record"
+    ]
+  },
+  {
+    "id": "src/routes/investigate.ip.$ip.tsx#fetchBlockState",
+    "name": "fetchBlockState",
+    "file": "src/routes/investigate.ip.$ip.tsx",
+    "line": 84,
+    "method": "GET",
+    "input": "{ ip: string }",
+    "output": "BlockState | null",
+    "backend": [
+      "GET /api/v1/ip-block/{ip}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/investigate.ip.$ip.tsx",
+        "in": "BlockControl"
+      },
+      {
+        "file": "src/routes/investigate.ip.$ip.tsx",
+        "in": "apply"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "IP",
+      "Blocked",
+      "Active",
+      "BlockedBy",
+      "ExpiresAt"
+    ]
+  },
+  {
+    "id": "src/routes/investigate.ip.$ip.tsx#fetchProfile",
+    "name": "fetchProfile",
+    "file": "src/routes/investigate.ip.$ip.tsx",
+    "line": 75,
+    "method": "GET",
+    "input": "{ ip: string }",
+    "output": "ProfileFetch",
+    "backend": [
+      "GET /api/v1/investigate/ip/{ip}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/investigate.ip.$ip.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/investigate.ip.$ip.tsx",
+        "in": "InvestigateIp"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "profile.ip",
+      "profile.total",
+      "profile.first",
+      "profile.last",
+      "profile.country",
+      "profile.asn",
+      "profile.sensors[].key",
+      "profile.sensors[].count",
+      "profile.ports[].key",
+      "profile.ports[].count",
+      "profile.protos[].key",
+      "profile.protos[].count",
+      "profile.credentials[].key",
+      "profile.credentials[].count",
+      "profile.commands[].key",
+      "profile.commands[].count",
+      "profile.sessions[].key",
+      "profile.sessions[].count",
+      "profile.techniques[].id",
+      "profile.techniques[].name",
+      "profile.techniques[].domain",
+      "profile.techniques[].evidence",
+      "profile.techniques[].count",
+      "profile.techniques[].url",
+      "profile.confirmed_malicious",
+      "profile.payloads[].key",
+      "profile.payloads[].count",
+      "profile.alerts[].key",
+      "profile.alerts[].count",
+      "profile.fingerprints[].key",
+      "profile.fingerprints[].count",
+      "profile.paths[].key",
+      "profile.paths[].count",
+      "profile.events[].time",
+      "profile.events[].sensor",
+      "profile.events[].src_ip",
+      "profile.events[].country",
+      "profile.events[].port",
+      "profile.events[].proto",
+      "profile.events[].detail",
+      "profile.events[].session",
+      "profile.events[].record",
+      "profile.correlation.total",
+      "profile.correlation.truncated",
+      "profile.correlation.sensors",
+      "profile.correlation.tunnel_connections",
+      "profile.correlation.tunnel_os_guesses",
+      "profile.correlation.records"
+    ]
+  },
+  {
+    "id": "src/routes/investigate.ip.$ip.tsx#setBlock",
+    "name": "setBlock",
+    "file": "src/routes/investigate.ip.$ip.tsx",
+    "line": 92,
+    "method": "POST",
+    "input": "{ ip: string; blocked: boolean; expires_days?: number }",
+    "output": "boolean",
+    "backend": [
+      "POST /api/v1/ip-block"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/investigate.ip.$ip.tsx",
+        "in": "apply"
+      }
+    ],
+    "loader": false,
+    "fields": []
+  },
+  {
+    "id": "src/routes/investigate.lookup.tsx#resolveHashKind",
+    "name": "resolveHashKind",
+    "file": "src/routes/investigate.lookup.tsx",
+    "line": 57,
+    "method": "GET",
+    "input": "{ value: string }",
+    "output": "HashKindFetch",
+    "backend": [
+      "GET /api/v1/investigate/cluster?{query}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/investigate.lookup.tsx",
+        "in": "submit"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "state",
+      "kind"
+    ]
+  },
+  {
+    "id": "src/routes/ips.tsx#fetchMapPoints",
+    "name": "fetchMapPoints",
+    "file": "src/routes/ips.tsx",
+    "line": 38,
+    "method": "GET",
+    "input": "—",
+    "output": "MapPoint[] | null",
+    "backend": [
+      "GET /api/v1/overview/dashboard?parts=map_points"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/ips.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "[].city",
+      "[].country",
+      "[].lat",
+      "[].lon",
+      "[].events",
+      "[].ips",
+      "[].url"
+    ]
+  },
+  {
+    "id": "src/routes/ips.tsx#fetchSources",
+    "name": "fetchSources",
+    "file": "src/routes/ips.tsx",
+    "line": 26,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "SourcesPage | null",
+    "backend": [
+      "GET /api/v1/sources?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/ips.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/ips.tsx",
+        "in": "Sources"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total_unique",
+      "rows[].ip",
+      "rows[].country",
+      "rows[].events",
+      "rows[].logins",
+      "rows[].sessions",
+      "rows[].sensors",
+      "rows[].first",
+      "rows[].last"
+    ]
+  },
+  {
+    "id": "src/routes/llm-analysis.tsx#fetchPage",
+    "name": "fetchPage",
+    "file": "src/routes/llm-analysis.tsx",
+    "line": 99,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "StorePage | null",
+    "backend": [
+      "GET /api/v1/store/llm-analysis?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/llm-analysis.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/llm-analysis.tsx#semanticSearch",
+    "name": "semanticSearch",
+    "file": "src/routes/llm-analysis.tsx",
+    "line": 13,
+    "method": "GET",
+    "input": "{ q: string }",
+    "output": "SemanticResult | null",
+    "backend": [
+      "GET /api/v1/llm-search?q={q}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/llm-analysis.tsx",
+        "in": "SemanticSearchCard"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "available",
+      "reason",
+      "hits"
+    ]
+  },
+  {
+    "id": "src/routes/ml-anomalies.tsx#ackAll",
+    "name": "ackAll",
+    "file": "src/routes/ml-anomalies.tsx",
+    "line": 175,
+    "method": "POST",
+    "input": "—",
+    "output": "number | null",
+    "backend": [
+      "POST /api/v1/ml-anomalies/ack-all"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/ml-anomalies.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": []
+  },
+  {
+    "id": "src/routes/ml-anomalies.tsx#fetchAcks",
+    "name": "fetchAcks",
+    "file": "src/routes/ml-anomalies.tsx",
+    "line": 40,
+    "method": "GET",
+    "input": "—",
+    "output": "Record<string, AckRecord> | null",
+    "backend": [
+      "GET /api/v1/ml-anomalies/acks"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/ml-anomalies.tsx",
+        "in": "refreshAcks"
+      }
+    ],
+    "loader": false,
+    "fields": []
+  },
+  {
+    "id": "src/routes/ml-anomalies.tsx#fetchBacklog",
+    "name": "fetchBacklog",
+    "file": "src/routes/ml-anomalies.tsx",
+    "line": 335,
+    "method": "GET",
+    "input": "—",
+    "output": "Backlog | null",
+    "backend": [
+      "GET /api/v1/ml-anomalies/stats"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/ml-anomalies.tsx",
+        "in": "refreshBacklog"
+      },
+      {
+        "file": "src/routes/ml-anomalies.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "open"
+    ]
+  },
+  {
+    "id": "src/routes/ml-anomalies.tsx#fetchModelHealth",
+    "name": "fetchModelHealth",
+    "file": "src/routes/ml-anomalies.tsx",
+    "line": 58,
+    "method": "GET",
+    "input": "—",
+    "output": "ModelHealth[] | null",
+    "backend": [
+      "GET /api/v1/ml-health"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/ml-anomalies.tsx",
+        "in": "ModelHealthCard"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "[].model",
+      "[].timestamp",
+      "[].accepted",
+      "[].reason",
+      "[].anomaly_rate_new",
+      "[].anomaly_rate_previous",
+      "[].train_samples"
+    ]
+  },
+  {
+    "id": "src/routes/ml-anomalies.tsx#fetchPage",
+    "name": "fetchPage",
+    "file": "src/routes/ml-anomalies.tsx",
+    "line": 278,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "StorePage | null",
+    "backend": [
+      "GET /api/v1/store/ml-anomalies?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/ml-anomalies.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/ml-anomalies.tsx#fetchStats",
+    "name": "fetchStats",
+    "file": "src/routes/ml-anomalies.tsx",
+    "line": 299,
+    "method": "GET",
+    "input": "—",
+    "output": "KpiStats | null",
+    "backend": [
+      "GET /api/v1/store/ml-anomalies?offset=0&size=100&q={window}",
+      "GET /api/v1/store/ml-anomalies?offset=100&size=100&q={window}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/ml-anomalies.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total24h",
+      "scanned",
+      "bySeverity[].key",
+      "bySeverity[].count",
+      "topSrcIPs[].key",
+      "topSrcIPs[].count"
+    ]
+  },
+  {
+    "id": "src/routes/ml-anomalies.tsx#setAck",
+    "name": "setAck",
+    "file": "src/routes/ml-anomalies.tsx",
+    "line": 138,
+    "method": "POST",
+    "input": "{ key: string; ack: boolean }",
+    "output": "boolean",
+    "backend": [
+      "POST /api/v1/ml-anomalies/ack"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/ml-anomalies.tsx",
+        "in": "AckControl"
+      }
+    ],
+    "loader": false,
+    "fields": []
+  },
+  {
+    "id": "src/routes/ml-anomalies.tsx#setDisposition",
+    "name": "setDisposition",
+    "file": "src/routes/ml-anomalies.tsx",
+    "line": 156,
+    "method": "POST",
+    "input": "{ key: string; status: string; reason?: string }",
+    "output": "boolean",
+    "backend": [
+      "POST /api/v1/ml-anomalies/disposition"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/ml-anomalies.tsx",
+        "in": "apply"
+      }
+    ],
+    "loader": false,
+    "fields": []
+  },
+  {
+    "id": "src/routes/payload-analysis.$hash.tsx#fetchCorrelation",
+    "name": "fetchCorrelation",
+    "file": "src/routes/payload-analysis.$hash.tsx",
+    "line": 203,
+    "method": "GET",
+    "input": "{ key: string }",
+    "output": "CorrelationFetch",
+    "backend": [
+      "GET /api/v1/store/ghidra-runs?offset=0&size=5&q={q}",
+      "GET /api/v1/store/github-analysis?offset=0&size=5&q={q}",
+      "GET /api/v1/store/sandbox-runs?offset=0&size=25&q={q}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "PayloadAnalysis"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "state",
+      "correlation.sandbox_runs[].job",
+      "correlation.sandbox_runs[].completed_at",
+      "correlation.sandbox_runs[].exit_status",
+      "correlation.sandbox_runs[].changed",
+      "correlation.github.sha256",
+      "correlation.github.exit_status",
+      "correlation.github.malicious",
+      "correlation.github.total",
+      "correlation.github.level",
+      "correlation.github.family",
+      "correlation.ghidra.exit_status",
+      "correlation.ghidra.completed_at"
+    ]
+  },
+  {
+    "id": "src/routes/payload-analysis.$hash.tsx#fetchDetail",
+    "name": "fetchDetail",
+    "file": "src/routes/payload-analysis.$hash.tsx",
+    "line": 43,
+    "method": "GET",
+    "input": "{ hash: string }",
+    "output": "DetailFetch",
+    "backend": [
+      "GET /api/v1/payloads/{hash}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "PayloadAnalysis"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "detail.hash",
+      "detail.inventory",
+      "detail.analysis",
+      "detail.yara",
+      "detail.size_bytes",
+      "detail.hex_preview"
+    ]
+  },
+  {
+    "id": "src/routes/payload-analysis.$hash.tsx#fetchGoldenImageStatus",
+    "name": "fetchGoldenImageStatus",
+    "file": "src/routes/payload-analysis.$hash.tsx",
+    "line": 75,
+    "method": "GET",
+    "input": "—",
+    "output": "GoldenImageFetch",
+    "backend": [
+      "GET /api/v1/sandbox/golden-image-status (mounted)"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "status.configured",
+      "status.built_at",
+      "status.age_days",
+      "status.checksum_written",
+      "status.checksum_verified",
+      "status.stale_monthly",
+      "status.stale_iso_eval",
+      "status.checked_at",
+      "status.error"
+    ]
+  },
+  {
+    "id": "src/routes/payload-analysis.$hash.tsx#fetchRelatedEvents",
+    "name": "fetchRelatedEvents",
+    "file": "src/routes/payload-analysis.$hash.tsx",
+    "line": 272,
+    "method": "GET",
+    "input": "{ hash: string }",
+    "output": "RelatedFetch",
+    "backend": [
+      "GET {base}&offset={first.total - 1}",
+      "GET ‹base›"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "PayloadAnalysis"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "state",
+      "related.total",
+      "related.earliest.time",
+      "related.earliest.sensor",
+      "related.earliest.session"
+    ]
+  },
+  {
+    "id": "src/routes/payload-analysis.$hash.tsx#generatePdfReport",
+    "name": "generatePdfReport",
+    "file": "src/routes/payload-analysis.$hash.tsx",
+    "line": 150,
+    "method": "POST",
+    "input": "{ hash: string }",
+    "output": "{ ok: boolean; id?: string; error?: string }",
+    "backend": [
+      "POST /api/v1/payloads/{hash}/report (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "generateReport"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "id",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/payload-analysis.$hash.tsx#submitGhidra",
+    "name": "submitGhidra",
+    "file": "src/routes/payload-analysis.$hash.tsx",
+    "line": 113,
+    "method": "POST",
+    "input": "{ hash: string }",
+    "output": "SubmitResult",
+    "backend": [
+      "POST ‹path› (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "decompile"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "target",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/payload-analysis.$hash.tsx#submitGithubAnalysis",
+    "name": "submitGithubAnalysis",
+    "file": "src/routes/payload-analysis.$hash.tsx",
+    "line": 129,
+    "method": "POST",
+    "input": "{ hash: string }",
+    "output": "SubmitResult",
+    "backend": [
+      "POST ‹path› (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "publish"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "target",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/payload-analysis.$hash.tsx#submitSandbox",
+    "name": "submitSandbox",
+    "file": "src/routes/payload-analysis.$hash.tsx",
+    "line": 105,
+    "method": "POST",
+    "input": "{ hash: string }",
+    "output": "SubmitResult",
+    "backend": [
+      "POST ‹path› (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/payload-analysis.$hash.tsx",
+        "in": "detonate"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "target",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#abortGpuJob",
+    "name": "abortGpuJob",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 311,
+    "method": "POST",
+    "input": "{ job_id: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/gpu-queue/{job_id}/abort (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "Results"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#childActionFn",
+    "name": "childActionFn",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 251,
+    "method": "POST",
+    "input": "{ runId: string; analyzerId: string; action: 'cancel' | 'retry' }",
+    "output": "RunResult",
+    "backend": [
+      "POST /api/v1/workbench/runs/{runId}/children/{analyzerId}/{action} (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "act"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "run.id",
+      "run.payload_sha256",
+      "run.payload_kind",
+      "run.owner",
+      "run.recipe_id",
+      "run.recipe_name",
+      "run.state",
+      "run.created_at",
+      "run.updated_at",
+      "run.children[].analyzer_id",
+      "run.children[].display_name",
+      "run.children[].state",
+      "run.children[].reason",
+      "run.children[].summary",
+      "run.children[].result_url",
+      "run.children[].created_at",
+      "run.children[].updated_at",
+      "run.children[].attempts",
+      "run.children[].retryable",
+      "run.children[].cancelable",
+      "reused",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#fetchAnalyzerCatalog",
+    "name": "fetchAnalyzerCatalog",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 149,
+    "method": "GET",
+    "input": "{ hash: string }",
+    "output": "CatalogFetch",
+    "backend": [
+      "GET /api/v1/workbench/analyzers?hash={hash} (mounted)"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "loadCatalog"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "state",
+      "catalog.classification.code",
+      "catalog.classification.label",
+      "catalog.classification.platform",
+      "catalog.classification.category",
+      "catalog.classification.analysis_path",
+      "catalog.classification.dynamic",
+      "catalog.analyzers[].id",
+      "catalog.analyzers[].display_name",
+      "catalog.analyzers[].description",
+      "catalog.analyzers[].accepted_kinds",
+      "catalog.analyzers[].availability",
+      "catalog.analyzers[].available",
+      "catalog.analyzers[].applicable",
+      "catalog.analyzers[].reason",
+      "catalog.analyzers[].required_role",
+      "catalog.analyzers[].confirmation",
+      "catalog.analyzers[].local_only",
+      "catalog.analyzers[].detonates",
+      "catalog.analyzers[].gpu_consuming",
+      "catalog.analyzers[].requires_opt_in",
+      "catalog.analyzers[].default_options",
+      "catalog.analyzers[].option_schema"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#fetchGhidra",
+    "name": "fetchGhidra",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 123,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/store/ghidra-runs?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "Results"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#fetchGpuQueue",
+    "name": "fetchGpuQueue",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 299,
+    "method": "GET",
+    "input": "—",
+    "output": "GpuJob[] | null",
+    "backend": [
+      "GET /api/v1/gpu-queue"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "Results"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "[].job_id",
+      "[].job_type",
+      "[].ref",
+      "[].model",
+      "[].estimated_vram_mib",
+      "[].status",
+      "[].requested_at",
+      "[].started_at",
+      "[].finished_at",
+      "[].abort_requested",
+      "[].error",
+      "[].attempts"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#fetchModelHealth",
+    "name": "fetchModelHealth",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 342,
+    "method": "GET",
+    "input": "—",
+    "output": "ModelHealth[] | null",
+    "backend": [
+      "GET /api/v1/ml-health"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "ModelHealthCard"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "[].model",
+      "[].timestamp",
+      "[].accepted",
+      "[].reason",
+      "[].anomaly_rate_new",
+      "[].anomaly_rate_previous",
+      "[].train_samples"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#fetchOwnRuns",
+    "name": "fetchOwnRuns",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 171,
+    "method": "GET",
+    "input": "—",
+    "output": "{ runs: WorkbenchRun[] } | null",
+    "backend": [
+      "GET /api/v1/workbench/runs?owner={user?.username ?? ''}&limit=25 (mounted)"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "RecentRunsCard"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "runs[].id",
+      "runs[].payload_sha256",
+      "runs[].payload_kind",
+      "runs[].owner",
+      "runs[].recipe_id",
+      "runs[].recipe_name",
+      "runs[].state",
+      "runs[].created_at",
+      "runs[].updated_at",
+      "runs[].children[].analyzer_id",
+      "runs[].children[].display_name",
+      "runs[].children[].state",
+      "runs[].children[].reason",
+      "runs[].children[].summary",
+      "runs[].children[].result_url",
+      "runs[].children[].created_at",
+      "runs[].children[].updated_at",
+      "runs[].children[].attempts",
+      "runs[].children[].retryable",
+      "runs[].children[].cancelable"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#fetchRecipes",
+    "name": "fetchRecipes",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 161,
+    "method": "GET",
+    "input": "—",
+    "output": "{ recipes: WorkbenchRecipe[] } | null",
+    "backend": [
+      "GET /api/v1/workbench/recipes?owner={user?.username ?? ''} (mounted)"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "WorkbenchBuilder"
+      },
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "submit"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "recipes[].id",
+      "recipes[].revision",
+      "recipes[].name",
+      "recipes[].description",
+      "recipes[].owner",
+      "recipes[].scope",
+      "recipes[].created_at",
+      "recipes[].analyzers[].analyzer_id",
+      "recipes[].analyzers[].options"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#fetchSandbox",
+    "name": "fetchSandbox",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 116,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/store/sandbox-runs?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "Results"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#fetchStatic",
+    "name": "fetchStatic",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 102,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/store/static-analysis?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "Results"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#fetchWorkbench",
+    "name": "fetchWorkbench",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 95,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/store/workbench-runs?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "Results"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#fetchYara",
+    "name": "fetchYara",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 109,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/store/yara?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "Results"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#refreshRunFn",
+    "name": "refreshRunFn",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 184,
+    "method": "GET",
+    "input": "{ id: string }",
+    "output": "RunResult",
+    "backend": [
+      "GET /api/v1/workbench/runs/{id}?owner={user?.username ?? ''} (mounted)"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "refresh"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "run.id",
+      "run.payload_sha256",
+      "run.payload_kind",
+      "run.owner",
+      "run.recipe_id",
+      "run.recipe_name",
+      "run.state",
+      "run.created_at",
+      "run.updated_at",
+      "run.children[].analyzer_id",
+      "run.children[].display_name",
+      "run.children[].state",
+      "run.children[].reason",
+      "run.children[].summary",
+      "run.children[].result_url",
+      "run.children[].created_at",
+      "run.children[].updated_at",
+      "run.children[].attempts",
+      "run.children[].retryable",
+      "run.children[].cancelable",
+      "reused",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#saveRecipeFn",
+    "name": "saveRecipeFn",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 231,
+    "method": "POST",
+    "input": "{ id: string; name: string; description: string; scope: string; analyzers: WorkbenchSelection[]; base_revision: number }",
+    "output": "{ ok: boolean; recipe?: WorkbenchRecipe; error?: string }",
+    "backend": [
+      "POST /api/v1/workbench/recipes (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "submit"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "recipe.id",
+      "recipe.revision",
+      "recipe.name",
+      "recipe.description",
+      "recipe.owner",
+      "recipe.scope",
+      "recipe.created_at",
+      "recipe.analyzers[].analyzer_id",
+      "recipe.analyzers[].options",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/payload-workbench.results.tsx#submitRun",
+    "name": "submitRun",
+    "file": "src/routes/payload-workbench.results.tsx",
+    "line": 205,
+    "method": "POST",
+    "input": "{ payload_sha256: string; recipe_name: string; analyzers: WorkbenchSelection[] }",
+    "output": "RunResult",
+    "backend": [
+      "POST /api/v1/workbench/runs (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/payload-workbench.results.tsx",
+        "in": "submit"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "run.id",
+      "run.payload_sha256",
+      "run.payload_kind",
+      "run.owner",
+      "run.recipe_id",
+      "run.recipe_name",
+      "run.state",
+      "run.created_at",
+      "run.updated_at",
+      "run.children[].analyzer_id",
+      "run.children[].display_name",
+      "run.children[].state",
+      "run.children[].reason",
+      "run.children[].summary",
+      "run.children[].result_url",
+      "run.children[].created_at",
+      "run.children[].updated_at",
+      "run.children[].attempts",
+      "run.children[].retryable",
+      "run.children[].cancelable",
+      "reused",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/payloads.tsx#fetchGithubVerdicts",
+    "name": "fetchGithubVerdicts",
+    "file": "src/routes/payloads.tsx",
+    "line": 106,
+    "method": "GET",
+    "input": "—",
+    "output": "VerdictScan | null",
+    "backend": [
+      "GET /api/v1/store/github-analysis?offset={scanned}&size=100"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payloads.tsx",
+        "in": "Payloads"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "badges[].sha256",
+      "badges[].label",
+      "badges[].family",
+      "scanned",
+      "total"
+    ]
+  },
+  {
+    "id": "src/routes/payloads.tsx#fetchPayloads",
+    "name": "fetchPayloads",
+    "file": "src/routes/payloads.tsx",
+    "line": 40,
+    "method": "GET",
+    "input": "{ offset: number; source?: string }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/payloads?offset={offset}&size=12{filter}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payloads.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/payloads.tsx",
+        "in": "Payloads"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows[].Hash",
+      "rows[].Size",
+      "rows[].SizeH",
+      "rows[].MtimeUTC",
+      "rows[].MIME",
+      "rows[].Kind",
+      "rows[].Platform",
+      "rows[].AnalysisPath",
+      "rows[].Dynamic",
+      "rows[].Sources",
+      "rows[].Copies",
+      "rows[].Preview",
+      "rows[].PreviewTruncated"
+    ]
+  },
+  {
+    "id": "src/routes/payloads.tsx#fetchSourceCounts",
+    "name": "fetchSourceCounts",
+    "file": "src/routes/payloads.tsx",
+    "line": 61,
+    "method": "GET",
+    "input": "—",
+    "output": "SourceCensus | null",
+    "backend": [
+      "GET /api/v1/payloads?offset=0&size=1&aggs=sources"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/payloads.tsx",
+        "in": "Payloads"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "counts",
+      "other"
+    ]
+  },
+  {
+    "id": "src/routes/payloads.tsx#submitGithubAnalysis",
+    "name": "submitGithubAnalysis",
+    "file": "src/routes/payloads.tsx",
+    "line": 128,
+    "method": "POST",
+    "input": "{ hash: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/github-analysis/submit (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/payloads.tsx",
+        "in": "publish"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/problem-reports.tsx#fetchPage",
+    "name": "fetchPage",
+    "file": "src/routes/problem-reports.tsx",
+    "line": 14,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "StorePage | null",
+    "backend": [
+      "GET /api/v1/store/problem-reports?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/problem-reports.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/problem-reports.tsx#setStatus",
+    "name": "setStatus",
+    "file": "src/routes/problem-reports.tsx",
+    "line": 21,
+    "method": "POST",
+    "input": "{ id: string; status: 'open' | 'triaged' | 'closed' }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "PATCH /api/v1/problem-reports/{id}"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/problem-reports.tsx",
+        "in": "StatusControl"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/recordings.tsx#fetchRecordings",
+    "name": "fetchRecordings",
+    "file": "src/routes/recordings.tsx",
+    "line": 44,
+    "method": "GET",
+    "input": "{ offset: number; ip?: string }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/recordings?offset={offset}&size=25{ip}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/recordings.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/recordings.tsx",
+        "in": "Recordings"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows[].when",
+      "rows[].src_ip",
+      "rows[].country",
+      "rows[].session",
+      "rows[].shasum",
+      "rows[].size_bytes",
+      "rows[].duration_ms"
+    ]
+  },
+  {
+    "id": "src/routes/recordings.tsx#fetchReplay",
+    "name": "fetchReplay",
+    "file": "src/routes/recordings.tsx",
+    "line": 52,
+    "method": "GET",
+    "input": "{ shasum: string }",
+    "output": "Replay | null",
+    "backend": [
+      "GET /api/v1/recordings/{shasum}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/recordings.tsx",
+        "in": "ReplayPane"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "shasum",
+      "frames",
+      "duration_seconds",
+      "transcript"
+    ]
+  },
+  {
+    "id": "src/routes/reports.tsx#createDefinition",
+    "name": "createDefinition",
+    "file": "src/routes/reports.tsx",
+    "line": 152,
+    "method": "POST",
+    "input": "ReportDefinition",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/reports/definitions"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "DefinitionForm"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/reports.tsx#deleteDefinition",
+    "name": "deleteDefinition",
+    "file": "src/routes/reports.tsx",
+    "line": 184,
+    "method": "POST",
+    "input": "{ id: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "DELETE /api/v1/reports/definitions/{id}"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "remove"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/reports.tsx#deleteGenerated",
+    "name": "deleteGenerated",
+    "file": "src/routes/reports.tsx",
+    "line": 196,
+    "method": "POST",
+    "input": "{ id: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "DELETE /api/v1/reports/generated/{id}"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "removeGenerated"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/reports.tsx#fetchDefinitions",
+    "name": "fetchDefinitions",
+    "file": "src/routes/reports.tsx",
+    "line": 144,
+    "method": "GET",
+    "input": "—",
+    "output": "DefinitionsResponse | null",
+    "backend": [
+      "GET /api/v1/reports/definitions"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "refreshDefinitions"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "definitions[].id",
+      "definitions[].name",
+      "definitions[].template",
+      "definitions[].theme",
+      "definitions[].branding.title",
+      "definitions[].branding.author",
+      "definitions[].branding.header_left",
+      "definitions[].branding.header_right",
+      "definitions[].branding.footer_left",
+      "definitions[].branding.classification",
+      "definitions[].scope.window",
+      "definitions[].scope.ip",
+      "definitions[].scope.network",
+      "definitions[].scope.sensor",
+      "definitions[].scope.port",
+      "definitions[].scope.signature",
+      "definitions[].scope.country",
+      "definitions[].scope.asn",
+      "definitions[].scope.text",
+      "definitions[].scope.type",
+      "definitions[].scope.session",
+      "definitions[].scope.job",
+      "definitions[].scope.hash",
+      "definitions[].elements",
+      "definitions[].appendix_limit",
+      "definitions[].schedule.enabled",
+      "definitions[].schedule.frequency",
+      "definitions[].schedule.hour",
+      "definitions[].schedule.minute",
+      "definitions[].schedule.weekday",
+      "definitions[].schedule.month_day",
+      "definitions[].schedule.last_run_at",
+      "definitions[].schedule.next_run_at",
+      "definitions[].created",
+      "definitions[].updated"
+    ]
+  },
+  {
+    "id": "src/routes/reports.tsx#fetchGenerated",
+    "name": "fetchGenerated",
+    "file": "src/routes/reports.tsx",
+    "line": 88,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "Page | null",
+    "backend": [
+      "GET /api/v1/store/generated-reports?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "refreshGenerated"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/reports.tsx#fetchSandboxJobs",
+    "name": "fetchSandboxJobs",
+    "file": "src/routes/reports.tsx",
+    "line": 100,
+    "method": "GET",
+    "input": "—",
+    "output": "SandboxJobOption[] | null",
+    "backend": [
+      "GET /api/v1/store/sandbox-runs?offset=0&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "DefinitionForm"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "[].job",
+      "[].sha256",
+      "[].risk"
+    ]
+  },
+  {
+    "id": "src/routes/reports.tsx#fetchTemplates",
+    "name": "fetchTemplates",
+    "file": "src/routes/reports.tsx",
+    "line": 139,
+    "method": "GET",
+    "input": "—",
+    "output": "TemplatesResponse | null",
+    "backend": [
+      "GET /api/v1/reports/templates"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "Reports"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "templates[].id",
+      "templates[].name",
+      "templates[].description",
+      "templates[].title",
+      "templates[].theme",
+      "templates[].window",
+      "templates[].elements",
+      "templates[].sandbox",
+      "templates[].payload",
+      "templates[].ghidra",
+      "elements[].id",
+      "elements[].label",
+      "elements[].description"
+    ]
+  },
+  {
+    "id": "src/routes/reports.tsx#generateDefinition",
+    "name": "generateDefinition",
+    "file": "src/routes/reports.tsx",
+    "line": 208,
+    "method": "POST",
+    "input": "{ id: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/reports/definitions/{id}/generate"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "generate"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/reports.tsx#searchPayloads",
+    "name": "searchPayloads",
+    "file": "src/routes/reports.tsx",
+    "line": 119,
+    "method": "GET",
+    "input": "{ q: string }",
+    "output": "PayloadOption[] | null",
+    "backend": [
+      "GET /api/v1/payloads?offset=0&size=8{filter}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "DefinitionForm"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "[].hash",
+      "[].kind",
+      "[].size",
+      "[].sources"
+    ]
+  },
+  {
+    "id": "src/routes/reports.tsx#updateDefinition",
+    "name": "updateDefinition",
+    "file": "src/routes/reports.tsx",
+    "line": 168,
+    "method": "POST",
+    "input": "{ id: string; definition: ReportDefinition }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "PUT /api/v1/reports/definitions/{id}"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/reports.tsx",
+        "in": "DefinitionForm"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/revdeck.$sha.tsx#fetchRun",
+    "name": "fetchRun",
+    "file": "src/routes/revdeck.$sha.tsx",
+    "line": 42,
+    "method": "GET",
+    "input": "{ sha: string }",
+    "output": "RunFetch",
+    "backend": [
+      "GET /api/v1/revdeck/{sha}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/revdeck.$sha.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/revdeck.$sha.tsx",
+        "in": "RevdeckDetail"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "run.sha256",
+      "run.exit_status",
+      "run.error",
+      "run.revdeck.workflow",
+      "run.revdeck.status",
+      "run.revdeck.answer",
+      "run.revdeck.steps",
+      "run.revdeck.tool_calls",
+      "run.revdeck.citations",
+      "run.revdeck.warnings"
+    ]
+  },
+  {
+    "id": "src/routes/revdeck.index.tsx#fetchPage",
+    "name": "fetchPage",
+    "file": "src/routes/revdeck.index.tsx",
+    "line": 12,
+    "method": "GET",
+    "input": "{ offset: number }",
+    "output": "StorePage | null",
+    "backend": [
+      "GET /api/v1/store/revdeck?offset={offset}&size=25"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/revdeck.index.tsx",
+        "in": "Page"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "total",
+      "rows"
+    ]
+  },
+  {
+    "id": "src/routes/sandbox.$job.tsx#fetchRun",
+    "name": "fetchRun",
+    "file": "src/routes/sandbox.$job.tsx",
+    "line": 28,
+    "method": "GET",
+    "input": "{ job: string }",
+    "output": "RunFetch",
+    "backend": [
+      "GET /api/v1/sandbox/{job}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/sandbox.$job.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/sandbox.$job.tsx",
+        "in": "SandboxDetail"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "run"
+    ]
+  },
+  {
+    "id": "src/routes/sandbox.$job.tsx#resubmitSandbox",
+    "name": "resubmitSandbox",
+    "file": "src/routes/sandbox.$job.tsx",
+    "line": 40,
+    "method": "POST",
+    "input": "{ hash: string }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/sandbox/submit (mounted)"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/sandbox.$job.tsx",
+        "in": "reanalyze"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/sandbox.vnc.tsx#fetchVncStatus",
+    "name": "fetchVncStatus",
+    "file": "src/routes/sandbox.vnc.tsx",
+    "line": 23,
+    "method": "GET",
+    "input": "—",
+    "output": "{ status: VncStatus | null; error: string | null }",
+    "backend": [
+      "GET /api/v1/sandbox/vnc (mounted)"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/sandbox.vnc.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "status.sha256",
+      "status.bridge_ws",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/search.tsx#searchFn",
+    "name": "searchFn",
+    "file": "src/routes/search.tsx",
+    "line": 15,
+    "method": "GET",
+    "input": "{ q: string }",
+    "output": "SearchResult | null",
+    "backend": [
+      "GET /api/v1/search?q={q}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/search.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "query",
+      "redirect",
+      "groups[].title",
+      "groups[].hits[].label",
+      "groups[].hits[].count",
+      "groups[].hits[].url",
+      "groups[].more",
+      "groups[].more_url",
+      "total"
+    ]
+  },
+  {
+    "id": "src/routes/sensors.$sensor.tsx#fetchCatalog",
+    "name": "fetchCatalog",
+    "file": "src/routes/sensors.$sensor.tsx",
+    "line": 53,
+    "method": "GET",
+    "input": "—",
+    "output": "{ sensors: SensorSummary[] } | null",
+    "backend": [
+      "GET /api/v1/sensors/catalog"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/sensors.$sensor.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/sensors.$sensor.tsx",
+        "in": "SensorPage"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "sensors[].sensor",
+      "sensors[].events",
+      "sensors[].last_seen"
+    ]
+  },
+  {
+    "id": "src/routes/sensors.$sensor.tsx#fetchEvents",
+    "name": "fetchEvents",
+    "file": "src/routes/sensors.$sensor.tsx",
+    "line": 60,
+    "method": "GET",
+    "input": "{ sensor: string }",
+    "output": "{ sensor: string; total: number; rows: SensorEventRow[] } | null",
+    "backend": [
+      "GET /api/v1/sensors/{sensor}/events?limit=200"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/sensors.$sensor.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/sensors.$sensor.tsx",
+        "in": "SensorPage"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "sensor",
+      "total",
+      "rows[].id",
+      "rows[].when",
+      "rows[].src_ip",
+      "rows[].src_port",
+      "rows[].dst_port",
+      "rows[].fields"
+    ]
+  },
+  {
+    "id": "src/routes/sensors.$sensor.tsx#fetchOverview",
+    "name": "fetchOverview",
+    "file": "src/routes/sensors.$sensor.tsx",
+    "line": 44,
+    "method": "GET",
+    "input": "{ sensor: string }",
+    "output": "Overview | null",
+    "backend": [
+      "GET /api/v1/sensors/{sensor}/overview"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/sensors.$sensor.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/sensors.$sensor.tsx",
+        "in": "SensorPage"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "sensor",
+      "window",
+      "events",
+      "unique_sources",
+      "first_seen",
+      "last_seen",
+      "hourly",
+      "top_sources[].key",
+      "top_sources[].count",
+      "top_countries[].key",
+      "top_countries[].count",
+      "top_lists[].label",
+      "top_lists[].rows[].key",
+      "top_lists[].rows[].count",
+      "measures[].label",
+      "measures[].total",
+      "measures[].max",
+      "measures[].unit"
+    ]
+  },
+  {
+    "id": "src/routes/sensors.index.tsx#fetchCatalog",
+    "name": "fetchCatalog",
+    "file": "src/routes/sensors.index.tsx",
+    "line": 41,
+    "method": "GET",
+    "input": "—",
+    "output": "{ sensors: SensorSummary[] } | null",
+    "backend": [
+      "GET /api/v1/sensors/catalog"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/sensors.index.tsx",
+        "in": "beforeLoad"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "sensors[].sensor",
+      "sensors[].events"
+    ]
+  },
+  {
+    "id": "src/routes/sessions.$id.tsx#fetchSession",
+    "name": "fetchSession",
+    "file": "src/routes/sessions.$id.tsx",
+    "line": 53,
+    "method": "GET",
+    "input": "{ id: string }",
+    "output": "SessionFetch",
+    "backend": [
+      "GET /api/v1/sessions/{id}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/sessions.$id.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/sessions.$id.tsx",
+        "in": "SessionPage"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "session.id",
+      "session.ip",
+      "session.country",
+      "session.first",
+      "session.last",
+      "session.total",
+      "session.sensors[].key",
+      "session.sensors[].count",
+      "session.commands[].key",
+      "session.commands[].count",
+      "session.credentials[].key",
+      "session.credentials[].count",
+      "session.payloads[].key",
+      "session.payloads[].count",
+      "session.techniques[].id",
+      "session.techniques[].name",
+      "session.techniques[].domain",
+      "session.techniques[].evidence",
+      "session.techniques[].count",
+      "session.techniques[].url",
+      "session.sequences[].name",
+      "session.sequences[].severity",
+      "session.sequences[].summary",
+      "session.events[].time",
+      "session.events[].sensor",
+      "session.events[].src_ip",
+      "session.events[].country",
+      "session.events[].port",
+      "session.events[].proto",
+      "session.events[].detail",
+      "session.events[].session",
+      "session.events[].record"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#fetchAdminData",
+    "name": "fetchAdminData",
+    "file": "src/routes/settings.tsx",
+    "line": 134,
+    "method": "GET",
+    "input": "—",
+    "output": "AdminConfig | null",
+    "backend": [
+      "GET /api/v1/config",
+      "GET /api/v1/reports/templates",
+      "GET /api/v1/users"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "fetchSettingsData"
+      },
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "SettingsSurface"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "revision",
+      "presentation.app_name",
+      "presentation.product_label",
+      "presentation.dashboard_title",
+      "presentation.dashboard_subtitle",
+      "presentation.org_name",
+      "presentation.overview_intro",
+      "presentation.help_link_label",
+      "presentation.help_link_url",
+      "presentation.banner_text",
+      "presentation.banner_severity",
+      "presentation.banner_expires",
+      "presentation.footer_text",
+      "presentation.ai_disclaimer",
+      "presentation.privacy_notice",
+      "honeypot.alert_cooldown",
+      "honeypot.alert_campaign_score",
+      "honeypot.sandbox_alert_risk_score",
+      "honeypot.ml_alert_threshold",
+      "honeypot.yara_scan_interval_seconds",
+      "honeypot.yara_max_bytes",
+      "honeypot.payload_dedupe_interval_seconds",
+      "behavior.default_landing",
+      "behavior.default_time_window",
+      "behavior.rows_per_page_options",
+      "behavior.max_export_rows",
+      "behavior.refresh_interval_seconds_options",
+      "behavior.source_stale_minutes",
+      "behavior.map_provider",
+      "behavior.default_timezone",
+      "behavior.show_ml_panels",
+      "behavior.maintenance_mode",
+      "behavior.read_only",
+      "behavior.show_problem_report_button",
+      "reportPresets",
+      "reportTemplates[].id",
+      "reportTemplates[].name",
+      "reportTemplates[].description",
+      "users[].subject",
+      "users[].username",
+      "users[].role",
+      "users[].first_seen_at",
+      "users[].last_seen_at"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#fetchAudit",
+    "name": "fetchAudit",
+    "file": "src/routes/settings.tsx",
+    "line": 188,
+    "method": "GET",
+    "input": "{ action: string }",
+    "output": "AuditResponse | null",
+    "backend": [
+      "GET /api/v1/audit{query}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "fetchSettingsData"
+      },
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "applyFilter"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "events[].time",
+      "events[].actor_subject",
+      "events[].actor_username",
+      "events[].action",
+      "events[].fields",
+      "events[].revision",
+      "events[].result"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#fetchHistory",
+    "name": "fetchHistory",
+    "file": "src/routes/settings.tsx",
+    "line": 183,
+    "method": "GET",
+    "input": "—",
+    "output": "HistoryResponse | null",
+    "backend": [
+      "GET /api/v1/config/history"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "fetchSettingsData"
+      },
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "rollback"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "entries[].revision",
+      "entries[].time",
+      "entries[].actor_subject",
+      "entries[].actor_username",
+      "entries[].action",
+      "entries[].fields"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#fetchPreferences",
+    "name": "fetchPreferences",
+    "file": "src/routes/settings.tsx",
+    "line": 236,
+    "method": "GET",
+    "input": "—",
+    "output": "Prefs | null",
+    "backend": [
+      "GET /api/v1/preferences?{query}"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "fetchSettingsData"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "theme",
+      "palette",
+      "density",
+      "reduced_motion",
+      "collapsed_sidebar",
+      "landing_page",
+      "remember_filters",
+      "rows_per_page",
+      "wrap_long_values",
+      "timezone",
+      "clock",
+      "timestamps",
+      "auto_refresh",
+      "refresh_interval_seconds",
+      "live_toasts",
+      "live_toast_interval_seconds",
+      "map_basemap",
+      "map_clustering",
+      "map_animation",
+      "high_contrast",
+      "large_evidence_text",
+      "notify_severity",
+      "notify_sound",
+      "notify_desktop",
+      "default_event_window",
+      "preserve_filters",
+      "open_details_new_tab"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#fetchReporterStats",
+    "name": "fetchReporterStats",
+    "file": "src/routes/settings.tsx",
+    "line": 196,
+    "method": "GET",
+    "input": "—",
+    "output": "ReporterStats | null",
+    "backend": [
+      "GET /api/v1/reporter-stats"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "fetchSettingsData"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "available",
+      "stats",
+      "reason"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#fetchServiceLogs",
+    "name": "fetchServiceLogs",
+    "file": "src/routes/settings.tsx",
+    "line": 174,
+    "method": "GET",
+    "input": "{ name: string }",
+    "output": "{ name: string; lines: number; log: string } | null",
+    "backend": [
+      "GET /api/v1/services/{name}/logs?lines=200"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "viewLogs"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "name",
+      "lines",
+      "log"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#fetchServices",
+    "name": "fetchServices",
+    "file": "src/routes/settings.tsx",
+    "line": 169,
+    "method": "GET",
+    "input": "—",
+    "output": "ServicesResponse | null",
+    "backend": [
+      "GET /api/v1/services"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "fetchSettingsData"
+      },
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "refresh"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "available",
+      "services",
+      "reason"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#fetchStorage",
+    "name": "fetchStorage",
+    "file": "src/routes/settings.tsx",
+    "line": 116,
+    "method": "GET",
+    "input": "—",
+    "output": "EsStorage | null",
+    "backend": [
+      "GET /api/v1/settings/storage"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "fetchSettingsData"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "cluster_status",
+      "index_count",
+      "doc_count",
+      "store_bytes"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#putPreferences",
+    "name": "putPreferences",
+    "file": "src/routes/settings.tsx",
+    "line": 248,
+    "method": "POST",
+    "input": "{ patch: Prefs }",
+    "output": "{ ok: boolean; preferences?: Prefs; error?: string }",
+    "backend": [
+      "GET /api/v1/preferences?{query}",
+      "PUT /api/v1/preferences"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "requestSave"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "preferences.theme",
+      "preferences.palette",
+      "preferences.density",
+      "preferences.reduced_motion",
+      "preferences.collapsed_sidebar",
+      "preferences.landing_page",
+      "preferences.remember_filters",
+      "preferences.rows_per_page",
+      "preferences.wrap_long_values",
+      "preferences.timezone",
+      "preferences.clock",
+      "preferences.timestamps",
+      "preferences.auto_refresh",
+      "preferences.refresh_interval_seconds",
+      "preferences.live_toasts",
+      "preferences.live_toast_interval_seconds",
+      "preferences.map_basemap",
+      "preferences.map_clustering",
+      "preferences.map_animation",
+      "preferences.high_contrast",
+      "preferences.large_evidence_text",
+      "preferences.notify_severity",
+      "preferences.notify_sound",
+      "preferences.notify_desktop",
+      "preferences.default_event_window",
+      "preferences.preserve_filters",
+      "preferences.open_details_new_tab",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#resetPreferences",
+    "name": "resetPreferences",
+    "file": "src/routes/settings.tsx",
+    "line": 271,
+    "method": "POST",
+    "input": "—",
+    "output": "{ ok: boolean; preferences?: Prefs; error?: string }",
+    "backend": [
+      "POST /api/v1/preferences/reset"
+    ],
+    "permission": "session+",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "requestReset"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "preferences.theme",
+      "preferences.palette",
+      "preferences.density",
+      "preferences.reduced_motion",
+      "preferences.collapsed_sidebar",
+      "preferences.landing_page",
+      "preferences.remember_filters",
+      "preferences.rows_per_page",
+      "preferences.wrap_long_values",
+      "preferences.timezone",
+      "preferences.clock",
+      "preferences.timestamps",
+      "preferences.auto_refresh",
+      "preferences.refresh_interval_seconds",
+      "preferences.live_toasts",
+      "preferences.live_toast_interval_seconds",
+      "preferences.map_basemap",
+      "preferences.map_clustering",
+      "preferences.map_animation",
+      "preferences.high_contrast",
+      "preferences.large_evidence_text",
+      "preferences.notify_severity",
+      "preferences.notify_sound",
+      "preferences.notify_desktop",
+      "preferences.default_event_window",
+      "preferences.preserve_filters",
+      "preferences.open_details_new_tab",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#rollbackConfig",
+    "name": "rollbackConfig",
+    "file": "src/routes/settings.tsx",
+    "line": 390,
+    "method": "POST",
+    "input": "{ revision: number }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/config/rollback"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "rollback"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#runServiceAction",
+    "name": "runServiceAction",
+    "file": "src/routes/settings.tsx",
+    "line": 372,
+    "method": "POST",
+    "input": "{ name: string; action: 'start' | 'stop' | 'restart' }",
+    "output": "{ ok: boolean; error?: string }",
+    "backend": [
+      "POST /api/v1/services/{name}/{action}?{query}"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "act"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#saveConfigSection",
+    "name": "saveConfigSection",
+    "file": "src/routes/settings.tsx",
+    "line": 335,
+    "method": "POST",
+    "input": "{ section: 'honeypot' | 'behavior' | 'report-presets'; value: unknown; revision: number }",
+    "output": "ConfigSaveResult",
+    "backend": [
+      "PUT /api/v1/config/{section}?{query}"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "runConfigSave"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "conflict",
+      "revision",
+      "currentRevision",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#savePresentation",
+    "name": "savePresentation",
+    "file": "src/routes/settings.tsx",
+    "line": 312,
+    "method": "POST",
+    "input": "{ value: Presentation; revision: number }",
+    "output": "ConfigSaveResult",
+    "backend": [
+      "PUT /api/v1/config/presentation?{query}"
+    ],
+    "permission": "admin",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "runConfigSave"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "conflict",
+      "revision",
+      "currentRevision",
+      "error"
+    ]
+  },
+  {
+    "id": "src/routes/settings.tsx#validateConfig",
+    "name": "validateConfig",
+    "file": "src/routes/settings.tsx",
+    "line": 357,
+    "method": "POST",
+    "input": "{ patch: unknown }",
+    "output": "{ ok: boolean; problems: string[] } | null",
+    "backend": [
+      "POST /api/v1/config/validate"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/settings.tsx",
+        "in": "runConfigSave"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "ok",
+      "problems"
+    ]
+  },
+  {
+    "id": "src/routes/source-health.tsx#fetchHealth",
+    "name": "fetchHealth",
+    "file": "src/routes/source-health.tsx",
+    "line": 55,
+    "method": "GET",
+    "input": "—",
+    "output": "SourceHealth | null",
+    "backend": [
+      "GET /api/v1/source-health"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/source-health.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "cluster_status",
+      "total_documents",
+      "sensors[].sensor",
+      "sensors[].documents",
+      "sensors[].last_seen",
+      "sensors[].state",
+      "yara.enabled",
+      "yara.last_scan",
+      "yara.rules_sha256",
+      "yara.samples",
+      "yara.matched",
+      "yara.errors",
+      "runtime.uptime_seconds",
+      "runtime.rss_bytes",
+      "runtime.vm_bytes",
+      "ingest.state",
+      "ingest.last_ingest",
+      "ingest.age_seconds",
+      "ingest.recent_dead_letters",
+      "dead_letters",
+      "unattributed_24h",
+      "pipeline.state",
+      "pipeline.acked",
+      "pipeline.failed",
+      "pipeline.dropped",
+      "pipeline.active",
+      "pipeline.decode_failures"
+    ]
+  },
+  {
+    "id": "src/routes/topology.tsx#fetchHealth",
+    "name": "fetchHealth",
+    "file": "src/routes/topology.tsx",
+    "line": 63,
+    "method": "GET",
+    "input": "—",
+    "output": "SensorFreshness[] | null",
+    "backend": [
+      "GET /api/v1/source-health"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/topology.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "[].sensor",
+      "[].last_seen",
+      "[].state"
+    ]
+  },
+  {
+    "id": "src/routes/topology.tsx#fetchServices",
+    "name": "fetchServices",
+    "file": "src/routes/topology.tsx",
+    "line": 69,
+    "method": "GET",
+    "input": "—",
+    "output": "ContainerState[] | null",
+    "backend": [
+      "GET /api/v1/services"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/topology.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "[].name",
+      "[].state",
+      "[].exit_code",
+      "[].health"
+    ]
+  },
+  {
+    "id": "src/routes/topology.tsx#fetchTopology",
+    "name": "fetchTopology",
+    "file": "src/routes/topology.tsx",
+    "line": 58,
+    "method": "GET",
+    "input": "—",
+    "output": "Topology | null",
+    "backend": [
+      "GET /api/v1/topology"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/topology.tsx",
+        "in": "loader"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "generated_at",
+      "sensors[].sensor",
+      "sensors[].stack",
+      "sensors[].containers",
+      "sensors[].ingress",
+      "sensors[].hostnames",
+      "sensors[].ports[].proto",
+      "sensors[].ports[].public",
+      "sensors[].ports[].host",
+      "sensors[].ports[].proxy",
+      "sensors[].raw_index",
+      "stacks[].stack",
+      "stacks[].containers[].name",
+      "stacks[].containers[].adapter_visible"
+    ]
+  },
+  {
+    "id": "src/routes/tty-replay.$shasum.tsx#fetchProfile",
+    "name": "fetchProfile",
+    "file": "src/routes/tty-replay.$shasum.tsx",
+    "line": 151,
+    "method": "GET",
+    "input": "{ ip: string }",
+    "output": "ProfileFetch",
+    "backend": [
+      "GET /api/v1/investigate/ip/{ip}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/tty-replay.$shasum.tsx",
+        "in": "AttackerTab"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "state",
+      "profile.ip",
+      "profile.total",
+      "profile.country",
+      "profile.asn",
+      "profile.sensors[].key",
+      "profile.sensors[].count",
+      "profile.commands[].key",
+      "profile.commands[].count",
+      "profile.credentials[].key",
+      "profile.credentials[].count",
+      "profile.sessions[].key",
+      "profile.sessions[].count",
+      "profile.techniques[].key",
+      "profile.techniques[].count",
+      "profile.events[].time",
+      "profile.events[].sensor",
+      "profile.events[].detail",
+      "profile.events[].proto"
+    ]
+  },
+  {
+    "id": "src/routes/tty-replay.$shasum.tsx#fetchReplay",
+    "name": "fetchReplay",
+    "file": "src/routes/tty-replay.$shasum.tsx",
+    "line": 110,
+    "method": "GET",
+    "input": "{ shasum: string }",
+    "output": "ReplayFetch",
+    "backend": [
+      "GET /api/v1/recordings/{shasum}"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/tty-replay.$shasum.tsx",
+        "in": "loader"
+      },
+      {
+        "file": "src/routes/tty-replay.$shasum.tsx",
+        "in": "TtyReplay"
+      }
+    ],
+    "loader": true,
+    "fields": [
+      "state",
+      "replay.shasum",
+      "replay.size_bytes",
+      "replay.imported_at",
+      "replay.frames",
+      "replay.duration_seconds",
+      "replay.transcript",
+      "replay.ttylog_base64"
+    ]
+  },
+  {
+    "id": "src/routes/tty-replay.$shasum.tsx#fetchSourceIp",
+    "name": "fetchSourceIp",
+    "file": "src/routes/tty-replay.$shasum.tsx",
+    "line": 130,
+    "method": "GET",
+    "input": "{ shasum: string }",
+    "output": "SourceIpFetch",
+    "backend": [
+      "GET /api/v1/events?kind=cowrie.log.closed&shasum={shasum}&size=1&since=365d"
+    ],
+    "permission": "session",
+    "callers": [
+      {
+        "file": "src/routes/tty-replay.$shasum.tsx",
+        "in": "AttackerTab"
+      }
+    ],
+    "loader": false,
+    "fields": [
+      "state",
+      "ip"
+    ]
+  }
+]

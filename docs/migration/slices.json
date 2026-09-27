@@ -1,0 +1,12 @@
+{
+  "monitor": 74,
+  "events": 75,
+  "sources": 76,
+  "operations": 77,
+  "evidence": 78,
+  "reports": 79,
+  "tools": 80,
+  "shell": 81,
+  "streams": 82,
+  "downloads": 83
+}
