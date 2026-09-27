@@ -41,6 +41,7 @@ import { formatDateTime, formatNumber } from '#/lib/format'
 import { NAV_SECTIONS } from '#/lib/nav'
 import { prefetchEnabled, setPrefetchEnabled } from '#/lib/prefetch'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
+import { DEFAULT_TITLE_FORMAT, formatTitle } from '#/lib/title'
 import { forgetShellRead } from '#/lib/shellRead'
 import { useIsAdmin, useShellConfig } from '#/lib/session'
 import { accountLinks } from '#/lib/toolLinks'
@@ -369,6 +370,11 @@ function BrandingPanel() {
     <>
       <SettingsCard title="Identity">
         {text('appName', 'appName', 'Application name')}
+        <SettingsRow
+          setting="titleFormat"
+          control={<TextInput label="Browser tab title" isLabelHidden width={CONTROL_WIDTH} value={form.titleFormat} placeholder={DEFAULT_TITLE_FORMAT} status={statusOf('titleFormat')} onChange={(titleFormat) => set({ titleFormat })} />}
+          detail={<Text type="supporting">{`Preview: ${formatTitle(form.titleFormat, { page: 'Event explorer', app: form.appName || 'APIARY', section: 'Investigate' })}`}</Text>}
+        />
         {text('productLabel', 'productLabel', 'Product label')}
         {text('orgName', 'orgName', 'Organization', 'None')}
       </SettingsCard>
@@ -787,16 +793,44 @@ function PanelBody({ panel }: { panel: PaneId }) {
   }
 }
 
+// ---- Administration page --------------------------------------------------------
+
+/** One administration panel as a page (/admin?pane=…): the same panels the
+ * settings dialog used to hold, with the data they read and write. */
+export function AdminPanelView({ pane, initial }: { pane: PaneId; initial: SettingsData }) {
+  const navigate = useNavigate()
+  // The route loaded it; saving reloads it here.
+  const [data, setData] = useState<SettingsData>(initial)
+  useEffect(() => setData(initial), [initial])
+  const reload = useCallback(async () => {
+    setData(await getSettings())
+  }, [])
+  // Administration changes save per panel (Save / Revert); nothing personal
+  // is edited here.
+  const noop = useCallback(() => {}, [])
+  return (
+    <SettingsContext.Provider value={{ data, reload, prefs: data.preferences, setPref: noop, setDirty: noop, openPage: (href) => void navigate({ href }) }}>
+      <VStack gap={4}>
+        <PanelBody key={pane} panel={pane} />
+      </VStack>
+    </SettingsContext.Provider>
+  )
+}
+
+
 // ---- Dialog ----------------------------------------------------------------------
 
 export function SettingsDialog({ pane: asked, onPane, onClose }: { pane: PaneId; onPane: (pane: PaneId) => void; onClose: () => void }) {
   const titleId = useId()
   const navigate = useNavigate()
   const router = useRouter()
-  // Administration panels are for admins only: a viewer who follows a link
-  // to one lands on their own account instead.
+  // The administration panels live on their own page (/admin): an old link
+  // to one takes an admin there, and anyone else to their own account.
   const isAdmin = useIsAdmin()
-  const pane: PaneId = isAdminPanel(asked) && !isAdmin ? 'account' : asked
+  const pane: PaneId = isAdminPanel(asked) ? 'account' : asked
+  useEffect(() => {
+    if (isAdminPanel(asked) && isAdmin) void navigate({ to: '/admin', search: { pane: asked } })
+  }, [asked, isAdmin, navigate])
   const isNarrow = useMediaQuery(NARROW_VIEWPORT)
   const [data, setData] = useState<SettingsData | null>(null)
   const [prefs, setPrefs] = useState<Preferences | null>(null)

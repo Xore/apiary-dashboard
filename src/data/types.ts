@@ -1052,6 +1052,8 @@ export interface DashboardConfig {
   revision: number
   presentation: {
     appName: string
+    /** The browser tab's title, for everyone: {page}, {app}, {section}. */
+    titleFormat: string
     productLabel: string
     dashboardTitle: string
     dashboardSubtitle: string

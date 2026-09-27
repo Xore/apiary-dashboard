@@ -92,7 +92,7 @@ describe('ShellAppShell', () => {
     }
     const sidebar = screen.getByRole('navigation', { name: 'Side navigation' })
     for (const item of NAV_SECTIONS.flatMap((section) => section.items)) {
-      expect(within(sidebar).getByRole('link', { name: item.to === '/alerts' ? /^Alerts(, \d+ open)?$/ : item.label }).getAttribute('href')).toBe(item.to)
+      expect(within(sidebar).getByRole('link', { name: item.label }).getAttribute('href')).toBe(item.to)
     }
   })
 
@@ -155,10 +155,12 @@ describe('ShellAppShell', () => {
     expect(await screen.findByText('source content')).toBeTruthy()
   })
 
-  it('counts open alerts on the Alerts entry', async () => {
+  it('shows the open-alert count on the bell in the top bar', async () => {
     renderShell('/')
     await screen.findByText('overview content')
-    expect(await screen.findByLabelText(/^, \d+ open$/, {}, { timeout: 3000 })).toBeTruthy()
+    const header = screen.getByRole('navigation', { name: 'Page header' })
+    const bell = await within(header).findByRole('link', { name: /^Alerts, \d+ open$/ }, { timeout: 3000 })
+    expect(bell.getAttribute('href')).toBe('/alerts')
   })
 
   it("puts a page's views in the top bar and switches between them", async () => {

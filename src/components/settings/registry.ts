@@ -148,6 +148,7 @@ export const SETTINGS: Setting[] = [
   { id: 'mapBasemap', panel: 'map', title: 'Basemap', description: 'The tiles under the attack map.', icon: MapIcon, keywords: 'map tiles openstreetmap' },
   { id: 'mapClustering', panel: 'map', title: 'Cluster markers', description: 'Group nearby origins into one marker until you zoom in.', icon: MapIcon, keywords: 'map cluster' },
   { id: 'mapAnimation', panel: 'map', title: 'Map animation', description: 'Animate new origins as they arrive.', icon: SparklesIcon, keywords: 'map motion' },
+  { id: 'titleFormat', panel: 'branding', title: 'Browser tab title', description: 'For everyone. {page}, {app} and {section} are filled in; {page} is required.', icon: TagIcon, keywords: 'document title tab window heading' },
   { id: 'appName', panel: 'branding', title: 'Application name', description: 'Shown in the top bar and page titles. Required.', icon: TagIcon, keywords: 'brand title product' },
   { id: 'productLabel', panel: 'branding', title: 'Product label', description: 'The line under the application name.', icon: TagIcon, keywords: 'subtitle brand' },
   { id: 'orgName', panel: 'branding', title: 'Organization', description: 'Who runs this deployment.', icon: UsersIcon, keywords: 'company team' },

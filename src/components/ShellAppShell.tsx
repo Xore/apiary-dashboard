@@ -63,7 +63,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
   const navigate = useNavigate()
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
   const isAdmin = user.roles.includes('admin')
-  const searchSource = useMemo(() => paletteSource(PAGES, isAdmin), [isAdmin])
+  const searchSource = useMemo(() => paletteSource(isAdmin ? [...PAGES, { id: '/admin', label: 'Administration', auxiliaryData: { group: 'More', href: '/admin' } }] : PAGES, isAdmin), [isAdmin])
   const location = useLocation()
 
   useEffect(() => {
