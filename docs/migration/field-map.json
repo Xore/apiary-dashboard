@@ -96,5 +96,14 @@
     "default_event_window": "Preferences.defaultWindow",
     "preserve_filters": "Preferences.rememberFilters",
     "open_details_new_tab": "Preferences.openDetailsInNewTab"
+  },
+  "payload-workbench.results.tsx": {
+    "catalog.analyzers[].gpu_consuming": "AnalyzerInfo.gpu",
+    "catalog.analyzers[].default_options": "AnalysisRunConfig defaults (the run dialog's defaults per analyzer)",
+    "catalog.analyzers[].option_schema": "AnalysisRunConfig, a typed options form per analyzer in the run dialog",
+    "[].estimated_vram_mib": "GpuJob.vramMib",
+    "runs[].children[].result_url": "WorkbenchRunChild.resultHref",
+    "run.children[].result_url": "WorkbenchRunChild.resultHref",
+    "reused": "startAnalysisRun(...).reused"
   }
 }

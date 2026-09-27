@@ -21,8 +21,8 @@ import { Switch } from '@astryxdesign/core/Switch'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Token } from '@astryxdesign/core/Token'
-import { getAnalysisResults, getPayloads, startAnalysisRun } from '#/data/queries'
-import type { AnalysisResult, AnalysisResultsData, AnalysisRunConfig, AnalyzerId, CapturedPayload } from '#/data/types'
+import { getAnalysisResults, getAnalyzerCatalog, getPayloads, startAnalysisRun } from '#/data/queries'
+import type { AnalysisRunConfig, AnalyzerCatalog, AnalyzerId, CapturedPayload, WorkbenchRecipe, WorkbenchRun } from '#/data/types'
 import { formatNumber } from '#/lib/format'
 import { FilterSelect } from '../FilterSelect'
 import { WizardDialog, statusOf } from '../WizardDialog'
@@ -58,15 +58,6 @@ function imageFor(platform: string): string {
   return 'ubuntu-22.04-x86_64'
 }
 
-/** Why an analyzer cannot run on this sample, or undefined when it can. */
-function blockedFor(id: AnalyzerId, p: CapturedPayload | undefined): string | undefined {
-  if (!p) return undefined
-  if (id === 'sandbox' && (!p.dynamic || p.platform === 'windows')) return p.platform === 'windows' ? 'Linux only; use CAPE for Windows samples.' : 'No dynamic route for this sample (static only).'
-  if (id === 'cape' && p.kind !== 'PE32') return 'Windows PE files only.'
-  if ((id === 'ghidra' || id === 'revdeck') && p.kind === 'shell script') return 'Shell scripts are not decompiled.'
-  return undefined
-}
-
 function defaults(hash: string, payload?: CapturedPayload): AnalysisRunConfig {
   return {
     hash,
@@ -77,11 +68,19 @@ function defaults(hash: string, payload?: CapturedPayload): AnalysisRunConfig {
     cape: { image: 'win10-22h2', durationSeconds: 120, package: 'auto', network: 'simulated', humanInteraction: true },
     ghidra: { depth: 'standard', maxFunctions: 200, model: MODELS[0].value, capa: true, floss: true },
     revdeck: { model: MODELS[0].value, maxSteps: 20, requireCitations: true },
+    github: { dryRun: true },
     run: { priority: 'normal', label: '', notify: true, force: false },
   }
 }
 
-const ANALYZER_NOUN: Record<AnalyzerId, string> = { static: 'Static analysis', yara: 'YARA', sandbox: 'Linux sandbox', cape: 'CAPE (Windows)', ghidra: 'Ghidra', revdeck: 'RevDeck' }
+const ANALYZER_NOUN: Record<AnalyzerId, string> = { static: 'Static analysis', yara: 'YARA', sandbox: 'Linux sandbox', cape: 'CAPE (Windows)', ghidra: 'Ghidra', revdeck: 'RevDeck', github: 'GitHub scanners' }
+
+/** A recipe's options over the defaults, for the analyzers it runs. */
+function fromRecipe(config: AnalysisRunConfig, recipe: WorkbenchRecipe, applicable: (id: AnalyzerId) => boolean): AnalysisRunConfig {
+  const next = { ...config, analyzers: recipe.analyzers.map((a) => a.analyzerId).filter(applicable) }
+  for (const { analyzerId, options } of recipe.analyzers) Object.assign(next, { [analyzerId]: { ...(config[analyzerId] as object), ...options } })
+  return next
+}
 /** A SegmentedControl with a visible group label (its own label is only the
  * aria-label), as the form-wizard-dialog template does it. */
 function Segmented({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
@@ -100,15 +99,32 @@ function Segmented({ label, value, onChange, options }: { label: string; value: 
 
 const size = (bytes: number) => (bytes < 1024 ** 2 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 ** 2).toFixed(1)} MB`)
 
-export function AnalysisRunDialog({ isOpen, onOpenChange, initialHash, onQueued }: { isOpen: boolean; onOpenChange: (open: boolean) => void; initialHash?: string; onQueued?: (run: AnalysisResult) => void }) {
-  const [catalog, setCatalog] = useState<{ payloads: CapturedPayload[]; analyzers: AnalysisResultsData['analyzers'] } | null>(null)
+export function AnalysisRunDialog({ isOpen, onOpenChange, initialHash, onQueued }: { isOpen: boolean; onOpenChange: (open: boolean) => void; initialHash?: string; onQueued?: (queued: { run: WorkbenchRun; reused: boolean }) => void }) {
+  const [catalog, setCatalog] = useState<{ payloads: CapturedPayload[]; recipes: WorkbenchRecipe[] } | null>(null)
   const [config, setConfig] = useState<AnalysisRunConfig>(() => defaults(initialHash ?? ''))
+  // Which analyzers apply to the picked sample, and why not: the backend's
+  // answer for that sample.
+  const [forSample, setForSample] = useState<AnalyzerCatalog | null>(null)
 
   // The catalog loads when the dialog first opens, so any page can host it.
   useEffect(() => {
     if (!isOpen || catalog) return
-    void Promise.all([getPayloads(), getAnalysisResults()]).then(([p, r]) => setCatalog({ payloads: p.payloads, analyzers: r.analyzers }))
+    void Promise.all([getPayloads(), getAnalysisResults()]).then(([p, r]) => setCatalog({ payloads: p.payloads, recipes: r.recipes }))
   }, [isOpen, catalog])
+  useEffect(() => {
+    if (!isOpen || !config.hash) return setForSample(null)
+    let live = true
+    void getAnalyzerCatalog(config.hash).then((c) => {
+      if (!live) return
+      setForSample(c)
+      // Drop what the new sample cannot take.
+      if (c) setConfig((cur) => ({ ...cur, analyzers: cur.analyzers.filter((id) => c.analyzers.find((a) => a.id === id)?.applicable) }))
+    })
+    return () => {
+      live = false
+    }
+  }, [isOpen, config.hash])
+  const infoOf = (id: AnalyzerId) => forSample?.analyzers.find((a) => a.id === id)
   // Each opening starts from the host's sample, with options that fit it.
   useEffect(() => {
     if (isOpen) setConfig(defaults(initialHash ?? '', catalog?.payloads.find((p) => p.hash === initialHash)))
@@ -118,7 +134,7 @@ export function AnalysisRunDialog({ isOpen, onOpenChange, initialHash, onQueued 
   const set = <TKey extends keyof AnalysisRunConfig>(key: TKey, patch: Partial<AnalysisRunConfig[TKey]>) => setConfig((c) => ({ ...c, [key]: { ...(c[key] as object), ...patch } }))
   const pickSample = (hash: string) => {
     const next = catalog?.payloads.find((p) => p.hash === hash)
-    setConfig((c) => ({ ...c, hash, analyzers: c.analyzers.filter((a) => !blockedFor(a, next)), sandbox: { ...c.sandbox, image: imageFor(next?.platform ?? '') } }))
+    setConfig((c) => ({ ...c, hash, sandbox: { ...c.sandbox, image: imageFor(next?.platform ?? '') } }))
   }
   const gpu = config.analyzers.filter((a) => a === 'ghidra' || a === 'revdeck')
 
@@ -199,6 +215,12 @@ export function AnalysisRunDialog({ isOpen, onOpenChange, initialHash, onQueued 
             <Switch label="FLOSS obfuscated strings" value={config.ghidra.floss} onChange={(v) => set('ghidra', { floss: v })} labelPosition="start" labelSpacing="spread" />
           </FormLayout>
         )
+      case 'github':
+        return (
+          <FormLayout defaultOptionality="optional">
+            <Switch label="Dry run: scan without publishing" value={config.github.dryRun} onChange={(v) => set('github', { dryRun: v })} labelPosition="start" labelSpacing="spread" description="Checks the denylist and the quota, and stops before anything is public." />
+          </FormLayout>
+        )
       case 'revdeck':
         return (
           <FormLayout defaultOptionality="optional">
@@ -225,8 +247,8 @@ export function AnalysisRunDialog({ isOpen, onOpenChange, initialHash, onQueued 
       finishLabel="Queue the run"
       width={680}
       onFinish={async () => {
-        const run = await startAnalysisRun(config)
-        if (run) onQueued?.(run)
+        const queued = await startAnalysisRun(config)
+        if (queued) onQueued?.(queued)
       }}
       steps={[
         {
@@ -257,7 +279,8 @@ export function AnalysisRunDialog({ isOpen, onOpenChange, initialHash, onQueued 
                       </MetadataListItem>
                       <MetadataListItem label="File">{`${payload.kind} · ${payload.platform} · ${size(payload.sizeBytes)}`}</MetadataListItem>
                       <MetadataListItem label="Captured by">{payload.sources.join(', ')}</MetadataListItem>
-                      <MetadataListItem label="Route">{payload.dynamic ? 'static and dynamic' : 'static only'}</MetadataListItem>
+                      <MetadataListItem label="Classified as">{forSample ? `${forSample.classification.label} (${forSample.classification.code})` : '…'}</MetadataListItem>
+                      <MetadataListItem label="Analysis path">{forSample?.classification.analysisPath ?? (payload.dynamic ? 'static and dynamic' : 'static only')}</MetadataListItem>
                     </MetadataList>
                   </Card>
                 )}
@@ -267,20 +290,53 @@ export function AnalysisRunDialog({ isOpen, onOpenChange, initialHash, onQueued 
         {
           label: 'Analyzers',
           errors: config.analyzers.length ? {} : { analyzers: 'Pick at least one analyzer.' },
-          render: (shown) => (
-            <CheckboxList
-              label="Analyzers"
-              description="Unavailable ones say why; they depend on the sample picked."
-              value={config.analyzers}
-              onChange={(analyzers) => setConfig((c) => ({ ...c, analyzers: analyzers as AnalyzerId[] }))}
-              status={statusOf(shown, 'analyzers')}
-            >
-              {(catalog?.analyzers ?? []).map((a) => {
-                const blocked = blockedFor(a.id, payload)
-                return <CheckboxListItem key={a.id} value={a.id} label={a.label} description={blocked ?? a.description} isDisabled={Boolean(blocked)} endContent={a.gpu ? <Token size="sm" color="purple" label="GPU queue" /> : undefined} />
-              })}
-            </CheckboxList>
-          ),
+          render: (shown) =>
+            !forSample ? (
+              loading
+            ) : (
+              <VStack gap={4}>
+                {catalog && catalog.recipes.length > 0 && (
+                  <Selector
+                    label="Start from a recipe"
+                    placeholder="Pick analyzers by hand"
+                    options={catalog.recipes.map((r) => ({ value: r.id, label: `${r.name} (${r.scope}, rev ${r.revision})` }))}
+                    value={null}
+                    hasClear
+                    onChange={(id) => {
+                      const recipe = catalog.recipes.find((r) => r.id === id)
+                      if (recipe) setConfig((c) => fromRecipe(c, recipe, (a) => Boolean(infoOf(a)?.applicable)))
+                    }}
+                    description="Sets its analyzers and their options; what this sample cannot take is left out."
+                  />
+                )}
+                <CheckboxList
+                  label="Analyzers"
+                  description="Those that cannot take this sample say why."
+                  value={config.analyzers}
+                  onChange={(analyzers) => setConfig((c) => ({ ...c, analyzers: analyzers as AnalyzerId[] }))}
+                  status={statusOf(shown, 'analyzers')}
+                >
+                  {forSample.analyzers.map((a) => (
+                    <CheckboxListItem
+                      key={a.id}
+                      value={a.id}
+                      label={a.label}
+                      description={a.reason ?? (a.availability === 'degraded' && a.availabilityNote ? `${a.description} ${a.availabilityNote}` : a.description)}
+                      isDisabled={!a.applicable}
+                      endContent={
+                        <HStack gap={1}>
+                          {a.detonates && <Token size="sm" color="red" label="detonates" />}
+                          {!a.localOnly && <Token size="sm" color="orange" label="publishes" />}
+                          {a.gpu && <Token size="sm" color="purple" label="GPU queue" />}
+                          {a.requiredRole === 'admin' && <Token size="sm" label="admin" />}
+                          {a.availability === 'degraded' && <Token size="sm" color="yellow" label="degraded" />}
+                        </HStack>
+                      }
+                    />
+                  ))}
+                </CheckboxList>
+              </VStack>
+            ),
         },
         {
           label: 'Options',
@@ -314,6 +370,10 @@ export function AnalysisRunDialog({ isOpen, onOpenChange, initialHash, onQueued 
                   {config.analyzers.includes('yara') && <MetadataListItem label="YARA">{config.yara.rulesets.length ? `${formatNumber(config.yara.rulesets.length)} rule sets` : 'every rule set'}</MetadataListItem>}
                 </MetadataList>
               </Card>
+              {config.analyzers.flatMap((id) => {
+                const confirmation = infoOf(id)?.confirmation
+                return confirmation ? [<Banner key={id} status="warning" title={ANALYZER_NOUN[id]} description={config.analyzers.includes('github') && id === 'github' && config.github.dryRun ? 'Dry run: nothing is published.' : confirmation} />] : []
+              })}
               {gpu.length > 0 && <Banner status="info" title={`${gpu.map((a) => ANALYZER_NOUN[a]).join(' and ')} ${gpu.length === 1 ? 'waits' : 'wait'} on the GPU queue`} description="Other analyzers start right away; the GPU jobs run in queue order and can be aborted there." />}
             </FormLayout>
           ),

@@ -14,7 +14,8 @@ import { Panel } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { abortGpuJob, getAnalysisResults } from '#/data/queries'
 import { AnalysisRunDialog } from '#/components/dialogs/AnalysisRunDialog'
-import type { AnalysisResult, AnalysisResultsData, AnalyzerTab, GpuJob } from '#/data/types'
+import type { AnalysisResult, AnalysisResultsData, AnalyzerTab, GpuJob, WorkbenchRun } from '#/data/types'
+import { WorkbenchRuns, queuedMessage } from '#/components/analyzers/WorkbenchRuns'
 import { formatTime } from '#/lib/format'
 import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 import { useGuardedAction } from '#/lib/useGuardedAction'
@@ -103,6 +104,13 @@ function GpuQueue({ jobs }: { jobs: GpuJob[] }) {
     { key: 'model', header: 'Model', width: proportional(2), renderCell: (row) => <Text type="code">{row.model}</Text> },
     { key: 'status', header: 'Status', width: pixel(104), renderCell: (row) => <Token size="sm" label={row.status} color={row.status === 'failed' ? 'red' : row.status === 'running' ? 'blue' : 'gray'} /> },
     { key: 'attempts', header: 'Attempts', width: pixel(80), align: 'end' },
+    { key: 'vramMib', header: 'VRAM', width: pixel(88), align: 'end', renderCell: (row) => `${(row.vramMib / 1024).toFixed(1)} GB` },
+    {
+      key: 'finishedAt',
+      header: 'Ran',
+      width: proportional(2),
+      renderCell: (row) => <Text type="supporting">{row.error ?? (row.finishedAt ? `finished ${formatTime(row.finishedAt)}` : row.startedAt ? `since ${formatTime(row.startedAt)}` : 'waiting')}</Text>,
+    },
     {
       key: 'jobId',
       header: '',
@@ -142,11 +150,10 @@ function AnalysisResultsPage() {
   const { tab = 'workbench' } = Route.useSearch()
   const router = useRouter()
   const [creating, setCreating] = useState(false)
-  const [queued, setQueued] = useState<AnalysisResult | null>(null)
+  const [queued, setQueued] = useState<{ run: WorkbenchRun; reused: boolean } | null>(null)
   const [query, setQuery] = useState('')
   const needle = query.trim().toLowerCase()
   const rows = data.results.filter((r) => r.analyzer === tab && (!needle || JSON.stringify(r).toLowerCase().includes(needle)))
-  const myRuns = data.results.filter((r) => r.analyzer === 'workbench' && r.owner).slice(0, 5)
 
   return (
     <RecordList
@@ -168,10 +175,10 @@ function AnalysisResultsPage() {
       summary={
         tab === 'workbench' ? (
           <VStack gap={4}>
-            {queued && <Banner status="success" title={`Run ${queued.id} queued`} description={`${queued.recipe ?? ''} on ${queued.file}…`} isDismissable onDismiss={() => setQueued(null)} />}
+            {queued && <Banner status={queued.reused ? 'info' : 'success'} {...queuedMessage(queued)} isDismissable onDismiss={() => setQueued(null)} />}
             <Grid columns={{ minWidth: 380, repeat: 'fit' }} gap={4}>
               <Panel title="My recent runs">
-                <Table data={myRuns} columns={COLUMNS.workbench} idKey="id" density="compact" />
+                <WorkbenchRuns runs={data.runs} />
               </Panel>
               <Panel title="Approved local-model health">
                 <Text type="supporting">Advisory: each approved model's latest retrain outcome.</Text>

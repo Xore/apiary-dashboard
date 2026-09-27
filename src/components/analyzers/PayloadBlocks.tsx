@@ -12,6 +12,7 @@ import type { PayloadAction } from '#/data/queries'
 import type { Ioc, PayloadAnalysis } from '#/data/types'
 import { Panel } from '../DashboardBlocks'
 import { AnalysisRunDialog } from '../dialogs/AnalysisRunDialog'
+import { queuedMessage } from './WorkbenchRuns'
 import { EntityLink } from '../EntityLink'
 import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
 import { useGuardedAction } from '#/lib/useGuardedAction'
@@ -53,7 +54,7 @@ export function OperatorActions({ a }: { a: PayloadAnalysis }) {
         <Button label="Generate PDF report" variant="secondary" isLoading={busy === 'pdf'} isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => run('pdf')} />
         <Button label="Publish to GitHub…" variant="secondary" isLoading={busy === 'github'} isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmPublish(true)} />
       </HStack>
-      <AnalysisRunDialog isOpen={analyzing} onOpenChange={setAnalyzing} initialHash={a.payload.hash} onQueued={(queued) => setDone(`Analysis run ${queued.id} queued (${queued.recipe ?? ''}).`)} />
+      <AnalysisRunDialog isOpen={analyzing} onOpenChange={setAnalyzing} initialHash={a.payload.hash} onQueued={(queued) => setDone(queuedMessage(queued).title)} />
       {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}
       {done && <Banner status="success" title={done} description="Mock: nothing was actually queued." isDismissable onDismiss={() => setDone(null)} />}
       <AlertDialog
