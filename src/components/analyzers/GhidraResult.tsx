@@ -7,7 +7,7 @@ import { ActionLink } from '#/components/ActionLink'
 import { apiHref } from '#/lib/apiHref'
 import { ArtifactList } from './ArtifactList'
 import { useState } from 'react'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
@@ -420,7 +420,7 @@ export function GhidraResult({ g, fn, section }: { g: GhidraAnalysis; fn?: strin
         )}
       </VStack>
       {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}
-      <AlertDialog
+      <ConfirmDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Decompile this sample again?"

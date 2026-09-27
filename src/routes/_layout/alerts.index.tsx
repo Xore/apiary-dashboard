@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Button } from '@astryxdesign/core/Button'
 import { HStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -101,7 +101,7 @@ function AlertsPage() {
             : { title: 'Nothing acknowledged yet', description: 'Acknowledged alerts collect here until reopened.' }
         }
       />
-      <AlertDialog
+      <ConfirmDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Acknowledge every open alert?"

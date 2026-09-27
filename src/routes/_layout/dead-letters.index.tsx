@@ -1,7 +1,7 @@
 import { orPending } from '#/lib/pending'
 import { textParam } from '#/lib/searchParams'
 import { useState } from 'react'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Button } from '@astryxdesign/core/Button'
 import { HStack, StackItem } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -72,7 +72,7 @@ function DeadLettersPage() {
         getHref={(row) => `/dead-letters/${encodeURIComponent(row.id)}`}
         emptyState={{ title: 'No dead letters', description: 'Every document was accepted. This is the healthy state.' }}
       />
-      <AlertDialog
+      <ConfirmDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
         title={`Purge ${rows?.length ?? 0} dead letters?`}

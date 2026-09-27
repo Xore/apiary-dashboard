@@ -9,10 +9,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { CheckboxInput } from '@astryxdesign/core/CheckboxInput'
-import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Layout, LayoutContent, LayoutFooter } from '@astryxdesign/core/Layout'
+import { AppDialog, AppDialogHeader } from './AppDialog'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { TextArea } from '@astryxdesign/core/TextArea'
@@ -159,10 +159,10 @@ export function ProblemReportButton({ enabled, compact = false }: { enabled: boo
           setOpen(true)
         }}
       />
-      <Dialog isOpen={open} onOpenChange={setOpen} width={560} purpose="form">
+      <AppDialog isOpen={open} onClose={() => setOpen(false)} kind="form" isDirty={!filed && Boolean(expected.trim() || actual.trim())}>
         <Layout
           padding={4}
-          header={<DialogHeader title="Report a problem" onOpenChange={setOpen} />}
+          header={<AppDialogHeader title="Report a problem" />}
           content={
             <LayoutContent>
               {filed ? (
@@ -210,7 +210,7 @@ export function ProblemReportButton({ enabled, compact = false }: { enabled: boo
             </LayoutFooter>
           }
         />
-      </Dialog>
+      </AppDialog>
     </>
   )
 }

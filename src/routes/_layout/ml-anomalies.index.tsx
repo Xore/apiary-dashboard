@@ -1,7 +1,7 @@
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { useState } from 'react'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Button } from '@astryxdesign/core/Button'
 import { Grid } from '@astryxdesign/core/Grid'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -216,7 +216,7 @@ function MlAnomaliesPage() {
           description: 'Clear a filter, or wait for ml-worker to score new traffic.',
         }}
       />
-      <AlertDialog
+      <ConfirmDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Acknowledge all open anomalies?"

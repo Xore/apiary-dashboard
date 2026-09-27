@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
-import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog'
+import { AppDialog, AppDialogHeader } from '../AppDialog'
 import { Layout, LayoutContent } from '@astryxdesign/core/Layout'
 import { VStack } from '@astryxdesign/core/Stack'
 import { generatePayloadReport } from '#/data/queries'
@@ -27,13 +27,12 @@ export function PayloadReportButton({ hash }: { hash: string }) {
   return (
     <>
       {isAdmin && <Button label="Payload report" size="sm" variant="secondary" isLoading={busy} onClick={() => void generate()} />}
-      <Dialog isOpen={report !== null || error !== undefined} onOpenChange={(open) => !open && (setReport(null), clearError())} width={960} purpose="info">
+      <AppDialog isOpen={report !== null || error !== undefined} onClose={() => (setReport(null), clearError())} kind="large">
         <Layout
           padding={4}
           header={
-            <DialogHeader
+            <AppDialogHeader
               title={report?.title ?? 'Payload report'}
-              onOpenChange={(open) => !open && (setReport(null), clearError())}
               endContent={pdf && <Button label="Open in new tab" size="sm" variant="secondary" href={pdf} target="_blank" rel="noopener noreferrer" />}
             />
           }
@@ -46,7 +45,7 @@ export function PayloadReportButton({ hash }: { hash: string }) {
             </LayoutContent>
           }
         />
-      </Dialog>
+      </AppDialog>
     </>
   )
 }

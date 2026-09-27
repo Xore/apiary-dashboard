@@ -1,9 +1,9 @@
 /**
  * A short wizard in a modal (Astryx `form-wizard-dialog`): create something
  * without leaving the list it belongs to. A compact stepper marks the
- * position, Back and Continue in the footer are the whole navigation model,
- * and `purpose="form"` keeps a stray backdrop click from discarding a
- * half-finished draft (Escape and the close button still exit).
+ * position, Back and Continue in the footer are the whole navigation model.
+ * It closes like every dialog (AppDialog): the scrim, Escape and the close
+ * button, asking first once a draft is under way.
  *
  * Each step brings its own content and validation. A step's messages appear
  * once Continue has been tried on it, and a step left broken stays flagged in
@@ -13,7 +13,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '@astryxdesign/core/Button'
-import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog'
+import { AppDialog, AppDialogHeader } from './AppDialog'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { Layout, LayoutContent, LayoutFooter, LayoutHeader } from '@astryxdesign/core/Layout'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
@@ -38,11 +38,13 @@ type WizardDialogProps = {
   /** Runs on the last step's button; resolve to close, throw to stay open. */
   onFinish: () => Promise<void> | void
   width?: number
+  /** Unsaved input, so closing asks first; by default, once past step one. */
+  isDirty?: boolean
 }
 
 const blockedMessage = (count: number) => (count === 1 ? 'One problem above needs fixing first.' : `${count} problems above need fixing first.`)
 
-export function WizardDialog({ title, isOpen, onOpenChange, steps, finishLabel, onFinish, width = 620 }: WizardDialogProps) {
+export function WizardDialog({ title, isOpen, onOpenChange, steps, finishLabel, onFinish, width, isDirty }: WizardDialogProps) {
   const [step, setStep] = useState(0)
   const [attempted, setAttempted] = useState<ReadonlySet<number>>(new Set())
   const [busy, setBusy] = useState(false)
@@ -82,14 +84,14 @@ export function WizardDialog({ title, isOpen, onOpenChange, steps, finishLabel, 
   }
 
   return (
-    <Dialog isOpen={isOpen} onOpenChange={close} width={width} purpose="form">
+    <AppDialog isOpen={isOpen} onClose={() => close(false)} kind="wizard" width={width} isDirty={isDirty ?? step > 0}>
       <Layout
         height="fill"
         padding={4}
         defaultHasDividers
         header={
           <>
-            <DialogHeader title={title} onOpenChange={close} hasDivider={false} />
+            <AppDialogHeader title={title} hasDivider={false} />
             <LayoutHeader hasDivider={false}>
               <Stepper activeStep={current} orientation="horizontal" density="compact" label={`${title} progress`}>
                 {steps.map((s, i) => (
@@ -116,7 +118,7 @@ export function WizardDialog({ title, isOpen, onOpenChange, steps, finishLabel, 
           </LayoutFooter>
         }
       />
-    </Dialog>
+    </AppDialog>
   )
 }
 

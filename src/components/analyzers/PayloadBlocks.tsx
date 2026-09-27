@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -57,7 +57,7 @@ export function OperatorActions({ a }: { a: PayloadAnalysis }) {
       <AnalysisRunDialog isOpen={analyzing} onOpenChange={setAnalyzing} initialHash={a.payload.hash} onQueued={(queued) => setDone(queuedMessage(queued).title)} />
       {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}
       {done && <Banner status="success" title={done} description="Mock: nothing was actually queued." isDismissable onDismiss={() => setDone(null)} />}
-      <AlertDialog
+      <ConfirmDialog
         isOpen={confirmPublish}
         onOpenChange={setConfirmPublish}
         title="Publish to Xore/honeypot?"

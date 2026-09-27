@@ -1,7 +1,7 @@
 import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { reportPdfHref } from '#/lib/reportPdf'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Button } from '@astryxdesign/core/Button'
 import { HStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -112,7 +112,7 @@ function HistoryPage() {
         getHref={(row) => `/reports/generated/${row.id}`}
         emptyState={{ title: 'No reports yet', description: 'Generate one, or wait for a scheduled definition to run.' }}
       />
-      <AlertDialog
+      <ConfirmDialog
         isOpen={confirm !== null}
         onOpenChange={(open) => !open && setConfirm(null)}
         title="Delete this report?"

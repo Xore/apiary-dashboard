@@ -2,7 +2,7 @@ import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { Link } from '@astryxdesign/core/Link'
 import { apiHref } from '#/lib/apiHref'
-import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { ConfirmDialog } from '#/components/AppDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { Grid } from '@astryxdesign/core/Grid'
@@ -112,7 +112,7 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
         </Grid>
       </VStack>
       {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}
-      <AlertDialog
+      <ConfirmDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Resubmit for publication?"
