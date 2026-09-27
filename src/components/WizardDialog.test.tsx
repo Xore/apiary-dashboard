@@ -52,8 +52,11 @@ describe('WizardDialog', () => {
     render(<Harness />)
     expect(screen.queryByText('Name it first.')).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(screen.getByText('Name it first.')).toBeTruthy()
-    expect(screen.getByText('One problem above needs fixing first.')).toBeTruthy()
+    // The screen-reader announcement repeats the message a tick later, in a
+    // hidden live region: only the visible copy counts.
+    const visible = { ignore: 'script, style, [data-astryx-live-region]' }
+    expect(screen.getByText('Name it first.', visible)).toBeTruthy()
+    expect(screen.getByText('One problem above needs fixing first.', visible)).toBeTruthy()
     expect(screen.queryByText(/About to make/)).toBeNull()
   })
 
