@@ -260,6 +260,10 @@ function TabStrip({ model, hrefOf, go }: { model: ViewTabsModel; hrefOf: (id: st
     compute()
     const observer = new ResizeObserver(compute)
     observer.observe(strip)
+    // The copy grows when the web font replaces the fallback it was first
+    // measured in (and when counts arrive): measure again, or tabs overflow
+    // under the end controls.
+    observer.observe(measure)
     const end = document.getElementById(TOP_NAV_END_ID)
     if (end) observer.observe(end)
     window.addEventListener('resize', compute)
