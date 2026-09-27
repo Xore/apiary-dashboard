@@ -1,3 +1,4 @@
+import { ActionLink } from '#/components/ActionLink'
 import { textParam } from '#/lib/searchParams'
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
@@ -58,7 +59,7 @@ function SearchPage() {
                     />
                   ))}
                 </List>
-                {group.total > group.items.length && (group.moreHref ? <Link href={group.moreHref}>{`${group.total - group.items.length} more in event history`}</Link> : <Text type="supporting">{group.total - group.items.length} more not shown</Text>)}
+                {group.total > group.items.length && (group.moreHref ? <ActionLink href={group.moreHref}>{`${group.total - group.items.length} more in event history`}</ActionLink> : <Text type="supporting">{group.total - group.items.length} more not shown</Text>)}
               </Panel>
             ))}
           </Grid>
