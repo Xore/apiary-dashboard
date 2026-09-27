@@ -17,7 +17,7 @@ import { AnalysisRunDialog } from '#/components/dialogs/AnalysisRunDialog'
 import type { AnalysisResult, AnalysisResultsData, AnalyzerTab, GpuJob, WorkbenchRun } from '#/data/types'
 import { WorkbenchRuns, queuedMessage } from '#/components/analyzers/WorkbenchRuns'
 import { formatTime } from '#/lib/format'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 import { analysisTabs } from '#/lib/navFamilies'
 
@@ -116,12 +116,12 @@ function GpuQueue({ jobs }: { jobs: GpuJob[] }) {
       header: '',
       width: pixel(96),
       renderCell: (row) =>
-        row.status === 'queued' ? (
+        row.status === 'queued' && isAdmin ? (
           <Button
             label="Abort"
             size="sm"
             variant="secondary"
-            isLoading={busy === row.jobId} isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED}
+            isLoading={busy === row.jobId}
             onClick={async () => {
               setBusy(row.jobId)
               try {
@@ -161,7 +161,7 @@ function AnalysisResultsPage() {
       description="Launch an analysis run against a captured payload, then follow every analyzer's verdict: static analysis, YARA, sandbox detonations, and Ghidra decompilations."
       actions={
         <HStack gap={3} wrap="wrap" vAlign="center">
-          <Button label="New analysis run" size="sm" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setCreating(true)} />
+          {isAdmin && <Button label="New analysis run" size="sm" onClick={() => setCreating(true)} />}
           <AnalysisRunDialog
             isOpen={creating}
             onOpenChange={setCreating}

@@ -26,7 +26,7 @@ import { searchTabs } from '#/components/ViewTabs'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { ZoneHeader } from '#/components/ZoneHeader'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
 const STATUSES: AnomalyStatus[] = ['open', 'acknowledged', ...DISPOSITIONS]
@@ -176,14 +176,7 @@ function MlAnomaliesPage() {
         actions={
           <HStack gap={2} vAlign="center">
             {error && <FieldStatus type="error" variant="detached" message={error} />}
-            <Button
-            label="Acknowledge all open"
-            variant="secondary"
-            size="sm"
-            isDisabled={data.openBacklog === 0 || !isAdmin}
-            tooltip={isAdmin ? undefined : ADMIN_REQUIRED}
-            onClick={() => setConfirmOpen(true)}
-            />
+            {isAdmin && <Button label="Acknowledge all open" variant="secondary" size="sm" isDisabled={data.openBacklog === 0} onClick={() => setConfirmOpen(true)} />}
           </HStack>
         }
         summary={

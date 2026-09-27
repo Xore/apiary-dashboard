@@ -25,7 +25,7 @@ import { CallGraph } from './CallGraph'
 import { queuePayloadAction } from '#/data/queries'
 import type { GhidraAnalysis, GhidraFunction, IocEvidence } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 import { AiGenerated } from '../AiGenerated'
 
@@ -393,7 +393,7 @@ export function GhidraResult({ g, fn, section }: { g: GhidraAnalysis; fn?: strin
     <AnalyzerSection
       title="Ghidra result"
       description="Headless decompilation of one captured payload. Nothing here is executed."
-      actions={<Button label="Re-analyze" size="sm" variant="secondary" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />}
+      actions={isAdmin ? <Button label="Re-analyze" size="sm" variant="secondary" onClick={() => setConfirmOpen(true)} /> : undefined}
     >
       <VStack gap={5}>
         <HStack gap={3} wrap="wrap" vAlign="center">

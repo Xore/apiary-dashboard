@@ -7,7 +7,7 @@ import { VStack } from '@astryxdesign/core/Stack'
 import { useRouter } from '@tanstack/react-router'
 import { setProblemStatus } from '#/data/queries'
 import { describeError } from '#/lib/actionError'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 import type { ProblemReport, ProblemStatus } from '#/data/types'
 
 export function ReportInspector({ report }: { report: ProblemReport }) {
@@ -17,11 +17,11 @@ export function ReportInspector({ report }: { report: ProblemReport }) {
   const isAdmin = useIsAdmin()
   return (
     <VStack gap={4}>
+      {isAdmin ? (
       <Selector
         label="Status"
         value={report.status}
-        isDisabled={busy || !isAdmin}
-        description={isAdmin ? undefined : ADMIN_REQUIRED}
+        isDisabled={busy}
         status={error ? { type: 'error', message: error } : undefined}
         onChange={async (status) => {
           setBusy(true)
@@ -37,6 +37,11 @@ export function ReportInspector({ report }: { report: ProblemReport }) {
         }}
         options={['open', 'triaged', 'fixed', 'wontfix']}
       />
+      ) : (
+        <MetadataList label={{ position: 'start', width: 96 }}>
+          <MetadataListItem label="Status">{report.status}</MetadataListItem>
+        </MetadataList>
+      )}
       <MetadataList label={{ position: 'start', width: 96 }}>
         <MetadataListItem label="Page">
           <Text type="code">{report.page}</Text>

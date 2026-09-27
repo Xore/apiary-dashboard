@@ -17,7 +17,7 @@ import { queuePayloadAction } from '#/data/queries'
 import type { GithubStatus, GithubAnalysis } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 import { EntityLink } from '../EntityLink'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 
 const STATUS_BANNER: Record<Exclude<GithubStatus, 'published'>, { title: string; description: string }> = {
@@ -40,7 +40,7 @@ export function GithubResult({ g }: { g: GithubAnalysis }) {
       actions={
         <>
           <Button label="Raw report" size="sm" variant="secondary" href={apiHref(`/api/raw-report/github-analysis/${g.sha}`)} />
-          <Button label="Resubmit" size="sm" variant="secondary" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />
+          {isAdmin && <Button label="Resubmit" size="sm" variant="secondary" onClick={() => setConfirmOpen(true)} />}
         </>
       }
     >

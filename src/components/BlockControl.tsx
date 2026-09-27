@@ -6,7 +6,7 @@ import { HStack } from '@astryxdesign/core/Stack'
 import { useRouter } from '@tanstack/react-router'
 import { setIpBlocked } from '#/data/queries'
 import { describeError } from '#/lib/actionError'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 
 /** Add or remove an address on the portbridge manual blackhole list. */
 export function BlockControl({ ip, blocked }: { ip: string; blocked: boolean }) {
@@ -15,14 +15,14 @@ export function BlockControl({ ip, blocked }: { ip: string; blocked: boolean }) 
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
+  // Viewers cannot block, so they are not offered to.
+  if (!isAdmin) return null
   return (
     <HStack gap={2} vAlign="center">
       <Button
         label={blocked ? 'Unblock' : 'Block at portbridge'}
         size="sm"
         variant={blocked ? 'secondary' : 'destructive'}
-        isDisabled={!isAdmin}
-        tooltip={isAdmin ? undefined : ADMIN_REQUIRED}
         onClick={() => setConfirmOpen(true)}
       />
       {error && <FieldStatus type="error" variant="detached" message={error} />}

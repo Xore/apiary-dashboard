@@ -15,7 +15,7 @@ import type { AnomalyStatus, Disposition, MlAnomaly } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { useGuardedAction } from '#/lib/useGuardedAction'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 
 export const statusLabel = (status: AnomalyStatus) => status.replace('_', ' ')
@@ -111,9 +111,9 @@ export function AnomalyTriage({ anomaly }: { anomaly: MlAnomaly }) {
   }
   // A folded row stands for several anomalies; the mock keeps them as one.
   const ids = [anomaly.id]
-  // Triage is an admin's call; the backend refuses it for anyone else.
+  // Triage is an admin's call: viewers are not offered it.
   const isAdmin = useIsAdmin()
-  const why = isAdmin ? undefined : ADMIN_REQUIRED
+  if (!isAdmin) return null
 
   return (
     <Panel title="Triage">
@@ -126,8 +126,6 @@ export function AnomalyTriage({ anomaly }: { anomaly: MlAnomaly }) {
           variant="secondary"
           size="sm"
           isLoading={busy}
-          isDisabled={!isAdmin}
-          tooltip={why}
           onClick={() => run(() => acknowledgeAnomalies(ids))}
         />
       )}
@@ -155,8 +153,6 @@ export function AnomalyTriage({ anomaly }: { anomaly: MlAnomaly }) {
           }
           size="sm"
           isLoading={busy}
-          isDisabled={!isAdmin}
-          tooltip={why}
           onClick={() => run(() => setAnomalyDisposition(ids, verdict, reason))}
         />
         {isDisposed && (
@@ -164,8 +160,7 @@ export function AnomalyTriage({ anomaly }: { anomaly: MlAnomaly }) {
             label="Retract"
             variant="secondary"
             size="sm"
-            isDisabled={busy || !isAdmin}
-            tooltip={why}
+            isDisabled={busy}
             onClick={() => run(() => setAnomalyDisposition(ids, 'open', ''))}
           />
         )}

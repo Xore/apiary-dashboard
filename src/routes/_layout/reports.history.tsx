@@ -16,7 +16,7 @@ import { formatDateTime } from '#/lib/format'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { reportTabs } from '#/lib/navFamilies'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 
 export const Route = createFileRoute('/_layout/reports/history')({
   staticData: { viewTabs: reportTabs },
@@ -60,7 +60,7 @@ function HistoryPage() {
       renderCell: (row) => (
         <HStack gap={1}>
           <Button label="PDF" size="sm" variant="ghost" tooltip="Open the PDF in a new tab" href={reportPdfHref(row)} target="_blank" rel="noopener noreferrer" />
-          <Button label="Delete" size="sm" variant="ghost" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirm(row)} />
+          {isAdmin && <Button label="Delete" size="sm" variant="ghost" onClick={() => setConfirm(row)} />}
         </HStack>
       ),
     },

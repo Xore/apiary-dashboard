@@ -14,7 +14,7 @@ import { Panel } from '../DashboardBlocks'
 import { AnalysisRunDialog } from '../dialogs/AnalysisRunDialog'
 import { queuedMessage } from './WorkbenchRuns'
 import { EntityLink } from '../EntityLink'
-import { ADMIN_REQUIRED, useIsAdmin } from '#/lib/session'
+import { useIsAdmin } from '#/lib/session'
 import { useGuardedAction } from '#/lib/useGuardedAction'
 
 export const VERDICT_COLOR = { malicious: 'red', suspicious: 'orange', clean: 'green' } as const
@@ -50,9 +50,9 @@ export function OperatorActions({ a }: { a: PayloadAnalysis }) {
     <Panel title="Operator actions">
       <Text color="secondary">Queue more analysis of this sample. Nothing runs on this host; every job goes to an isolated worker.</Text>
       <HStack gap={2} wrap="wrap">
-        <Button label="New analysis run" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setAnalyzing(true)} />
-        <Button label="Generate PDF report" variant="secondary" isLoading={busy === 'pdf'} isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => run('pdf')} />
-        <Button label="Publish to GitHub…" variant="secondary" isLoading={busy === 'github'} isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmPublish(true)} />
+        {isAdmin && <Button label="New analysis run" onClick={() => setAnalyzing(true)} />}
+        {isAdmin && <Button label="Generate PDF report" variant="secondary" isLoading={busy === 'pdf'} onClick={() => run('pdf')} />}
+        {isAdmin && <Button label="Publish to GitHub…" variant="secondary" isLoading={busy === 'github'} onClick={() => setConfirmPublish(true)} />}
       </HStack>
       <AnalysisRunDialog isOpen={analyzing} onOpenChange={setAnalyzing} initialHash={a.payload.hash} onQueued={(queued) => setDone(queuedMessage(queued).title)} />
       {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}
