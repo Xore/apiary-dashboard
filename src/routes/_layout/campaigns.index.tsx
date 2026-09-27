@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Link } from '@astryxdesign/core/Link'
@@ -19,6 +21,7 @@ import { formatNumber, formatTime } from '#/lib/format'
 export const Route = createFileRoute('/_layout/campaigns/')({
   loader: () => getNetworkCampaigns(),
   component: CampaignsPage,
+  pendingComponent: CampaignsPage,
 })
 
 const cidrHref = (cidr: string) => `/campaigns/${encodeURIComponent(cidr)}`
@@ -48,14 +51,16 @@ const credColumns: TableColumn<CredEdge>[] = [
 
 
 function CampaignsPage() {
-  const { campaigns, credReuse } = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
+  const campaigns = data?.campaigns
+  const credReuse = data?.credReuse ?? []
   return (
     <RecordList
       title="Correlated campaigns"
       description="Related source networks grouped across sensors over a rolling 7-day window."
       actions={
         <>
-          <Text type="supporting">{campaigns.length} active networks</Text>
+          <Text type="supporting"><Pending>{campaigns && `${campaigns.length} active networks`}</Pending></Text>
           <Button
             label="CSV"
             size="sm"

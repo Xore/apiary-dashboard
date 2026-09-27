@@ -282,8 +282,12 @@ function TabStrip({ model, hrefOf, go }: { model: ViewTabsModel; hrefOf: (id: st
       />
     )
   }
-  const shown = visible ? visible.map((i) => model.tabs[i]) : model.tabs
-  const rest = visible ? model.tabs.filter((_, i) => !visible.includes(i)) : []
+  // `visible` was measured for the tabs on screen; after a navigation to a
+  // page with other tabs it is stale until measured again, so only indexes
+  // that exist in this page's tabs count.
+  const fits = visible?.filter((i) => i < model.tabs.length)
+  const shown = fits ? fits.map((i) => model.tabs[i]) : model.tabs
+  const rest = fits ? model.tabs.filter((_, i) => !fits.includes(i)) : []
   const restActive = rest.some((tab) => tab.id === model.value)
 
   return (

@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { reportPdfHref } from '#/lib/reportPdf'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
@@ -26,11 +27,12 @@ export const Route = createFileRoute('/_layout/reports/history')({
   }),
   loader: () => getReports(),
   component: HistoryPage,
+  pendingComponent: HistoryPage,
 })
 
 /** Every PDF generated, newest first; a row opens the report. */
 function HistoryPage() {
-  const data = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
   const { origin, template } = Route.useSearch()
   const navigate = Route.useNavigate()
   const origins = listParam(origin)
@@ -40,10 +42,10 @@ function HistoryPage() {
   const [confirm, setConfirm] = useState<GeneratedReport | null>(null)
   const [busy, setBusy] = useState(false)
   const { error, guard } = useGuardedAction()
-  const templateName = (id: string) => data.templates.find((t) => t.id === id)?.name ?? id
-  const definitionName = (id: string) => data.definitions.find((d) => d.id === id)?.name
-  const rows = data.generated.filter((r) => (!origins.length || origins.includes(r.origin)) && (!templates.length || templates.includes(r.template)))
-  const count = (of: (r: GeneratedReport) => string, value: string) => data.generated.filter((r) => of(r) === value).length
+  const templateName = (id: string) => data?.templates.find((t) => t.id === id)?.name ?? id
+  const definitionName = (id: string) => data?.definitions.find((d) => d.id === id)?.name
+  const rows = data?.generated.filter((r) => (!origins.length || origins.includes(r.origin)) && (!templates.length || templates.includes(r.template)))
+  const count = (of: (r: GeneratedReport) => string, value: string) => data?.generated.filter((r) => of(r) === value).length
 
   const isAdmin = useIsAdmin()
   const columns: TableColumn<GeneratedReport>[] = [
@@ -98,7 +100,7 @@ function HistoryPage() {
               size="sm"
               width={200}
               placeholder="Any template"
-              options={data.templates.map((t) => ({ value: t.id, label: t.name, count: count((r) => r.template, t.id) }))}
+              options={(data?.templates ?? []).map((t) => ({ value: t.id, label: t.name, count: count((r) => r.template, t.id) }))}
               value={templates}
               onChange={(values) => setFilter({ template: toParam(values) })}
             />

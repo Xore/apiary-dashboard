@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -9,11 +10,14 @@ const parent = getRouteApi('/_layout/alerts/$key')
 
 export const Route = createFileRoute('/_layout/alerts/$key/evidence')({
   component: AlertEvidence,
+  pendingComponent: AlertEvidence,
 })
 
 /** The addresses and files the alert records name. */
 function AlertEvidence() {
-  const { sources, hashes } = parent.useLoaderData()
+  const loaded = orPending(parent.useLoaderData())
+  const sources = loaded?.sources
+  const hashes = loaded?.hashes
   return (
     <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
       <ValueList
@@ -22,8 +26,8 @@ function AlertEvidence() {
         values={sources}
         empty="No address is named in these alerts."
       />
-      <Panel title={`File hashes (${hashes.length})`}>
-        {hashes.length ? (
+      <Panel title={hashes ? `File hashes (${hashes.length})` : "File hashes"}>
+        {hashes?.length ? (
           <VStack gap={1}>
             {hashes.map((h) => (
               <Text key={h} type="code">

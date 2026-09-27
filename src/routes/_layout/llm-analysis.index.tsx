@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
@@ -22,6 +24,7 @@ import { useShellConfig } from '#/lib/session'
 export const Route = createFileRoute('/_layout/llm-analysis/')({
   loader: () => getLlmAnalyses(),
   component: LlmAnalysisPage,
+  pendingComponent: LlmAnalysisPage,
 })
 
 const columns: TableColumn<LlmAnalysis>[] = [
@@ -109,12 +112,12 @@ function SemanticSearch() {
 
 function LlmAnalysisPage() {
   const aiDisclaimer = useShellConfig().presentation.aiDisclaimer
-  const rows = Route.useLoaderData()
+  const rows = orPending(Route.useLoaderData())
   return (
     <RecordList
       title="LLM analysis"
       description="Model-annotated sessions, payloads, and reports. Every judgment here is AI-guessed and unverified until a human confirms it."
-      actions={<Text type="supporting">{rows.length} analyses</Text>}
+      actions={<Text type="supporting"><Pending>{rows && `${rows.length} analyses`}</Pending></Text>}
       summary={
         <VStack gap={4}>
           <SemanticSearch />

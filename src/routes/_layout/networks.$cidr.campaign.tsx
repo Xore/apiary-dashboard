@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { Panel } from '#/components/DashboardBlocks'
@@ -8,9 +9,13 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 const parent = getRouteApi('/_layout/networks/$cidr')
 
 export const Route = createFileRoute('/_layout/networks/$cidr/campaign')({
-  component: () => {
-    const n = parent.useLoaderData()
-    return n.campaign ? (
+  component: TabView,
+  pendingComponent: TabView,
+})
+
+function TabView() {
+    const n = orPending(parent.useLoaderData())
+    return n?.campaign ? (
       <Panel title="Detected campaign">
         <VStack gap={2}>
           <EntityLink kind="campaign" id={n.campaign.cidr}>{`Open campaign ${n.campaign.cidr} · score ${n.campaign.score}`}</EntityLink>
@@ -23,5 +28,4 @@ export const Route = createFileRoute('/_layout/networks/$cidr/campaign')({
     ) : (
       <Text type="supporting">This prefix is not part of a detected campaign.</Text>
     )
-  },
-})
+  }

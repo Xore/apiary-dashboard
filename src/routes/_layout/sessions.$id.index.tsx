@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { VStack } from '@astryxdesign/core/Stack'
 import { createFileRoute } from '@tanstack/react-router'
 import { Timeline } from '#/components/EntityBlocks'
@@ -10,17 +11,18 @@ export const Route = createFileRoute('/_layout/sessions/$id/')({
     return { timeline, related }
   },
   component: SessionTimeline,
+  pendingComponent: SessionTimeline,
 })
 
 /** The session in order (it is a bounded thing, so the global range does
  * not apply), with what it touched above. */
 function SessionTimeline() {
-  const { timeline, related } = Route.useLoaderData()
+  const loaded = orPending(Route.useLoaderData())
   const { id } = Route.useParams()
   return (
     <VStack gap={4}>
-      <RelatedPanel center={id} groups={related} />
-      <Timeline items={timeline} empty="This session has no events." />
+      <RelatedPanel center={id} groups={loaded?.related} />
+      <Timeline items={loaded?.timeline} empty="This session has no events." />
     </VStack>
   )
 }

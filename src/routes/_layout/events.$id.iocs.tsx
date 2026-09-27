@@ -1,14 +1,18 @@
+import { SkeletonPanels, ValueList } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
-import { ValueList } from '#/components/EntityBlocks'
 
 const parent = getRouteApi('/_layout/events/$id')
 
-export const Route = createFileRoute('/_layout/events/$id/iocs')({ component: EventIocs })
+export const Route = createFileRoute('/_layout/events/$id/iocs')({ component: EventIocs, pendingComponent: EventIocs })
 
 /** Every value in this event you can pivot on. */
 function EventIocs() {
-  const { event, hashes } = parent.useLoaderData()
+  const loaded = orPending(parent.useLoaderData())
+  if (!loaded) return <SkeletonPanels count={4} lines={3} />
+  const event = loaded.event
+  const hashes = loaded.hashes
   const opt = (v?: string) => (v ? [v] : [])
   return (
     <Grid columns={{ minWidth: 280, repeat: 'fit' }} gap={4}>

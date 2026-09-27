@@ -42,6 +42,7 @@ import { NAV_SECTIONS } from '#/lib/nav'
 import { prefetchEnabled, setPrefetchEnabled } from '#/lib/prefetch'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { DEFAULT_TITLE_FORMAT, formatTitle } from '#/lib/title'
+import { forgetShellRead } from '#/lib/shellRead'
 import { useIsAdmin, useShellConfig } from '#/lib/session'
 import { accountLinks } from '#/lib/toolLinks'
 import { useGuardedAction } from '#/lib/useGuardedAction'
@@ -869,7 +870,9 @@ export function SettingsDialog({ pane: asked, onPane, onClose }: { pane: PaneId;
         void savePreferences(next)
           .then(async () => {
             setSaveState('saved')
-            // The whole app renders with these: apply them now.
+            // The whole app renders with these: apply them now, and let the
+            // navigation guard read them again.
+            forgetShellRead()
             await router.invalidate()
           })
           .catch(() => setSaveState('failed'))

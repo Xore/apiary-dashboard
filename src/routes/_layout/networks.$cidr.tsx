@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
@@ -18,29 +20,29 @@ export const Route = createFileRoute('/_layout/networks/$cidr')({
   },
   notFoundComponent: () => <NotFound title="Network" description="Invalid prefix, or no source in it was seen." />,
   component: NetworkLayout,
+  pendingComponent: NetworkLayout,
 })
 
 function NetworkLayout() {
-  const n = Route.useLoaderData()
+  const n = orPending(Route.useLoaderData())
+  const { cidr } = Route.useParams()
   return (
     <EntityFrame
       kind="Network"
-      title={n.cidr}
-      basePath={`/networks/${encodeURIComponent(n.cidr)}`}
-      tokens={
-        <>
+      title={<Pending width={320}>{n && n.cidr}</Pending>}
+      basePath={`/networks/${encodeURIComponent(cidr)}`}
+      tokens={n && (<>
           <EntityLink kind="country" id={n.country}>
             <Token size="sm" color="blue" label={n.country} />
           </EntityLink>
           {n.campaign && <Token size="sm" color="orange" label={`campaign · score ${n.campaign.score}`} />}
-        </>
-      }
+        </>)}
       facts={[
-        { label: 'Autonomous system', value: <EntityLink kind="asn" id={n.asn}>{`${n.asn} · ${n.org}`}</EntityLink> },
-        { label: 'Source IPs', value: formatNumber(n.group.members.length) },
-        { label: 'Events', value: formatNumber(n.group.events.length) },
-        { label: 'First seen', value: n.group.first ? formatDateTime(n.group.first) : '—' },
-        { label: 'Last seen', value: n.group.last ? formatDateTime(n.group.last) : '—' },
+        { label: 'Autonomous system', value: n && (<EntityLink kind="asn" id={n.asn}>{`${n.asn} · ${n.org}`}</EntityLink>)},
+        { label: 'Source IPs', value: n && (formatNumber(n.group.members.length))},
+        { label: 'Events', value: n && (formatNumber(n.group.events.length))},
+        { label: 'First seen', value: n && (n.group.first ? formatDateTime(n.group.first) : '—')},
+        { label: 'Last seen', value: n && (n.group.last ? formatDateTime(n.group.last) : '—')},
       ]}
     >
       <Outlet />
@@ -56,8 +58,8 @@ function tabsFor(loaded: unknown): ViewTab[] {
   return [
     { id: 'overview', label: 'Overview' },
     { id: 'breakdown', label: 'Breakdown' },
-    { id: 'sources', label: 'Sources', count: n.group.members.length },
-    { id: 'events', label: 'Events', count: n.group.events.length },
+    { id: 'sources', label: 'Sources', count: n?.group.members.length },
+    { id: 'events', label: 'Events', count: n?.group.events.length },
     { id: 'campaign', label: 'Campaign' },
     { id: 'timeline', label: 'Timeline' },
   ]

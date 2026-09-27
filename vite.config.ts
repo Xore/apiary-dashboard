@@ -15,7 +15,14 @@ const config = defineConfig({
   resolve: { tsconfigPaths: true },
   // Console piping off: with Vite's own client-console forwarding it echoes
   // every browser error between client and server without end.
-  plugins: [devtools({ consolePiping: { enabled: false } }), tailwindcss(), tanstackStart({ router: { routeFileIgnorePattern: '\\.test\\.' } }), viteReact()],
+  plugins: [devtools({ consolePiping: { enabled: false } }), tailwindcss(), tanstackStart({
+      router: {
+        routeFileIgnorePattern: '\\.test\\.',
+        // A page is its own pending state (its layout with skeletons), so
+        // the component and the pending component ship as one chunk.
+        codeSplittingOptions: { defaultBehavior: [['component', 'pendingComponent'], ['errorComponent'], ['notFoundComponent']] },
+      },
+    }), viteReact()],
 })
 
 export default config

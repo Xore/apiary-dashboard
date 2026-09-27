@@ -1,3 +1,7 @@
+import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { MetaItem } from '#/components/MetaItem'
+import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
@@ -15,31 +19,39 @@ const parent = getRouteApi('/_layout/payloads/$hash')
 export const Route = createFileRoute('/_layout/payloads/$hash/')({
   loader: ({ params }) => getRelated('payload', params.hash),
   component: PayloadOverview,
+  pendingComponent: PayloadOverview,
 })
 
 function PayloadOverview() {
-  const { analysis: a, cape, revdeck, github } = parent.useLoaderData()
-  const p = a.payload
-  const base = `/payloads/${p.hash}`
+  const loaded = orPending(parent.useLoaderData())
+  const a = loaded?.analysis
+  const cape = loaded?.cape
+  const revdeck = loaded?.revdeck
+  const github = loaded?.github
+  const p = a?.payload
+  // The hash is in the address.
+  const { hash } = parent.useParams()
+  const base = `/payloads/${hash}`
   const analyses: Array<[string, string, string | null]> = [
-    ['Sandbox', 'sandbox', a.sandbox ? `${a.sandbox.verdict}, risk ${a.sandbox.risk}` : null],
-    ['Ghidra', 'ghidra', a.ghidra ? 'decompiled' : null],
+    ['Sandbox', 'sandbox', a?.sandbox ? `${a.sandbox.verdict}, risk ${a.sandbox.risk}` : null],
+    ['Ghidra', 'ghidra', a?.ghidra ? 'decompiled' : null],
     ['CAPE', 'cape', cape ? `malscore ${cape.malscore}` : null],
     ['RevDeck', 'revdeck', revdeck ? revdeck.verdict : null],
     ['GitHub', 'github', github ? `${github.detections}/${github.engines} engines` : null],
   ]
   return (
     <VStack gap={4}>
-      <Text type="code">{p.hash}</Text>
+      <Text type="code">{hash}</Text>
       <Grid columns={{ minWidth: 180, repeat: 'fit' }} gap={4}>
-        <StatTile label="Static risk" value={a.staticRisk} caption="out of 100" href={`${base}/static`} />
-        <StatTile label="Packing likelihood" value={a.packingLikelihood} caption="percent" href={`${base}/static`} />
-        <StatTile label="Extracted IOCs" value={a.iocs.length} href={`${base}/indicators`} />
-        <StatTile label="YARA matches" value={a.yara.length} href={`${base}/indicators`} />
+        <StatTile label="Static risk" value={a?.staticRisk} caption="out of 100" href={`${base}/static`} />
+        <StatTile label="Packing likelihood" value={a?.packingLikelihood} caption="percent" href={`${base}/static`} />
+        <StatTile label="Extracted IOCs" value={a?.iocs.length} href={`${base}/indicators`} />
+        <StatTile label="YARA matches" value={a?.yara.length} href={`${base}/indicators`} />
       </Grid>
       <Panel title="Analyses of this sample">
         <HStack gap={4} wrap="wrap">
-          {analyses.map(([label, tab, result]) =>
+          {!loaded && <Skeleton width={480} height={14} />}
+          {loaded && analyses.map(([label, tab, result]) =>
             result ? (
               <Link key={tab} href={`${base}/${tab}`}>{`${label}: ${result}`}</Link>
             ) : (
@@ -51,29 +63,23 @@ function PayloadOverview() {
       <Grid columns={{ minWidth: 340, repeat: 'fit' }} gap={4}>
         <Panel title="What this file is">
           <MetadataList label={{ position: 'start', width: 128 }}>
-            <MetadataListItem label="File type">{a.fileType}</MetadataListItem>
-            <MetadataListItem label="Platform">{p.platform}</MetadataListItem>
-            <MetadataListItem label="MIME">{p.mime}</MetadataListItem>
-            <MetadataListItem label="Size">{`${p.sizeBytes.toLocaleString('en-US')} bytes`}</MetadataListItem>
-            <MetadataListItem label="Copies captured">{String(p.copies)}</MetadataListItem>
-            <MetadataListItem label="First captured">{formatDateTime(p.capturedAt)}</MetadataListItem>
-            {a.entryPoint && <MetadataListItem label="Entry point">{a.entryPoint}</MetadataListItem>}
-            {a.classification && <MetadataListItem label="Script class">{a.classification}</MetadataListItem>}
-            <MetadataListItem label="Analysis path">{p.dynamic ? 'static + dynamic (sandbox route available)' : 'static only'}</MetadataListItem>
-            <MetadataListItem label="MD5">
-              <Text type="code">{a.hashes.md5}</Text>
-            </MetadataListItem>
-            <MetadataListItem label="SHA-1">
-              <Text type="code">{a.hashes.sha1}</Text>
-            </MetadataListItem>
-            <MetadataListItem label="ssdeep">
-              <Text type="code">{a.hashes.ssdeep}</Text>
-            </MetadataListItem>
+            <MetaItem label="File type">{a?.fileType}</MetaItem>
+            <MetaItem label="Platform">{p && (p.platform)}</MetaItem>
+            <MetaItem label="MIME">{p && (p.mime)}</MetaItem>
+            <MetaItem label="Size">{p && (`${p.sizeBytes.toLocaleString('en-US')} bytes`)}</MetaItem>
+            <MetaItem label="Copies captured">{p && (String(p.copies))}</MetaItem>
+            <MetaItem label="First captured">{p && (formatDateTime(p.capturedAt))}</MetaItem>
+            {a?.entryPoint && <MetadataListItem label="Entry point">{a.entryPoint}</MetadataListItem>}
+            {a?.classification && <MetadataListItem label="Script class">{a.classification}</MetadataListItem>}
+            <MetaItem label="Analysis path">{p && (p.dynamic ? 'static + dynamic (sandbox route available)' : 'static only')}</MetaItem>
+            <MetaItem label="MD5">{a && <Text type="code">{a.hashes.md5}</Text>}</MetaItem>
+            <MetaItem label="SHA-1">{a && <Text type="code">{a.hashes.sha1}</Text>}</MetaItem>
+            <MetaItem label="ssdeep">{a && <Text type="code">{a.hashes.ssdeep}</Text>}</MetaItem>
           </MetadataList>
         </Panel>
-        <OperatorActions a={a} />
+        {a ? <OperatorActions a={a} /> : <SkeletonPanels count={1} />}
       </Grid>
-      <RelatedPanel center={`${p.hash.slice(0, 16)}…`} groups={Route.useLoaderData()} />
+      <RelatedPanel center={`${hash.slice(0, 16)}…`} groups={orPending(Route.useLoaderData())} />
     </VStack>
   )
 }

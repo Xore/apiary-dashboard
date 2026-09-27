@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { FusionRadar } from '#/components/charts'
@@ -10,8 +11,12 @@ const parent = getRouteApi('/_layout/identities/$id')
 
 export const Route = createFileRoute('/_layout/identities/$id/why')({
   loader: ({ params }) => getIdentityFusion(params.id),
-  component: () => {
-    const d = parent.useLoaderData()
+  component: TabView,
+  pendingComponent: TabView,
+})
+
+function TabView() {
+    const d = orPending(parent.useLoaderData())
     const fusion = Route.useLoaderData()
     return (
       <VStack gap={4}>
@@ -20,9 +25,8 @@ export const Route = createFileRoute('/_layout/identities/$id/why')({
           {fusion && <FusionRadar categories={fusion.categories} values={fusion.values} />}
         </Panel>
         <Panel title="Signals that joined these addresses">
-          <SharedSignalsTable signals={d.shared} />
+          <SharedSignalsTable signals={d?.shared} />
         </Panel>
       </VStack>
     )
-  },
-})
+  }

@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { HStack } from '@astryxdesign/core/Stack'
 import { RecordingDownloads } from '#/components/RecordingDownloads'
@@ -14,11 +15,12 @@ export const Route = createFileRoute('/_layout/sessions/$id/recording')({
     return shasum ? { shasum, detail: await getReplayDetail(shasum) } : null
   },
   component: SessionRecording,
+  pendingComponent: SessionRecording,
 })
 
 /** The session's terminal, played back right here. */
 function SessionRecording() {
-  const recording = Route.useLoaderData()
+  const recording = orPending(Route.useLoaderData())
   if (!recording?.detail)
     return (
       <Text type="supporting">

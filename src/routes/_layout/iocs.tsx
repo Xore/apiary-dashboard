@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { HStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -37,6 +38,7 @@ export const Route = createFileRoute('/_layout/iocs')({
     return { catalog, examples: [sources[0]?.ip, campaigns[0]?.cidr, catalog.hash[0]?.value, catalog.cve[0]?.value, catalog.credential[0]?.value].filter((v): v is string => Boolean(v)) }
   },
   component: IocsPage,
+  pendingComponent: IocsPage,
 })
 
 const columns: TableColumn<IocRow>[] = [
@@ -49,18 +51,18 @@ const columns: TableColumn<IocRow>[] = [
 
 /** Every indicator in one place, by kind; each opens its own page. */
 function IocsPage() {
-  const { catalog, examples } = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
   const { kind = 'hash' } = Route.useSearch()
   const [filter, setFilter] = useState('')
   const current = KINDS.find((k) => k.id === kind)!
   const needle = filter.trim().toLowerCase()
-  const rows = catalog[kind].filter((row) => !needle || row.value.toLowerCase().includes(needle))
+  const rows = data?.catalog[kind].filter((row) => !needle || row.value.toLowerCase().includes(needle))
 
   return (
     <RecordList
       title="Indicators"
       description="Hashes, domains, URLs, credentials, commands, fingerprints, CVEs and signatures seen across the fleet. Paste any value to jump to its page."
-      summary={<IocLookup examples={examples} />}
+      summary={<IocLookup examples={data?.examples ?? []} />}
       toolbar={
         <HStack gap={3} vAlign="center" wrap="wrap">
           <TextInput label={`Filter ${current.label.toLowerCase()}`} isLabelHidden size="sm" width={320} placeholder={`Filter ${current.label.toLowerCase()}`} value={filter} onChange={setFilter} />

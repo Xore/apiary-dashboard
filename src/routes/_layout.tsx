@@ -11,6 +11,7 @@ import { isScenario } from '#/data/scenarios'
 import { setNavigationScenario } from '#/data/serverFn'
 import type { MockScenario } from '#/data/scenarios'
 import { isNarrowViewport } from '#/lib/viewport'
+import { recentShellRead, rememberShellRead } from '#/lib/shellRead'
 import { pageFor, sectionFor } from '#/lib/nav'
 import { DEFAULT_TITLE_FORMAT, formatTitle } from '#/lib/title'
 
@@ -30,9 +31,12 @@ export const Route = createFileRoute('/_layout')({
     setNavigationScenario(search.mock)
     // The navigation guard: no session, no page. Sign-in brings the operator
     // back here.
-    const user = await getSessionUser()
+    // Reused for a moment in the browser (lib/shellRead).
+    const recent = recentShellRead()
+    const user = recent ? recent.user : await getSessionUser()
     if (!user) throw redirect({ href: `/auth/login?return_to=${encodeURIComponent(location.href)}` })
-    const prefs = await getPreferences()
+    const prefs = recent ? recent.prefs : await getPreferences()
+    if (!recent) rememberShellRead(user, prefs)
     // A fresh page load: every server render is one; in the browser only
     // the very first navigation (hydration of that same page) is.
     const fresh = typeof window === 'undefined' || firstClientLoad

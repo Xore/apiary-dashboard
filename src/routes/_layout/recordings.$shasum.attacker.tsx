@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -9,11 +10,13 @@ const parent = getRouteApi('/_layout/recordings/$shasum')
 
 export const Route = createFileRoute('/_layout/recordings/$shasum/attacker')({
   component: RecordingAttacker,
+  pendingComponent: RecordingAttacker,
 })
 
 /** Everything else the address behind this recording did. */
 function RecordingAttacker() {
-  const { attacker } = parent.useLoaderData()
+  const loaded = orPending(parent.useLoaderData())
+  const attacker = loaded?.attacker
   if (!attacker)
     return (
       <Panel title="Attacker">

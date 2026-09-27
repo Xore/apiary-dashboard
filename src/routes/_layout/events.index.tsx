@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { textParam } from '#/lib/searchParams'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
@@ -81,6 +83,7 @@ export const Route = createFileRoute('/_layout/events/')({
     return { ...events, facets }
   },
   component: EventsPage,
+  pendingComponent: EventsPage,
 })
 
 const columns: TableColumn<HoneypotEvent>[] = [
@@ -112,7 +115,7 @@ const columns: TableColumn<HoneypotEvent>[] = [
   },
   { key: 'dstPort', header: 'Port', width: pixel(96), renderCell: (row) => `${row.dstPort}/${row.protocol}` },
   { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <Text type="code">{row.summary}</Text> },
-  { key: 'openIn', header: '', width: pixel(56), renderCell: (row) => <EventOpenIn event={row} /> },
+  { key: 'openIn', header: '', width: pixel(64), align: 'end', renderCell: (row) => <EventOpenIn event={row} /> },
 ]
 
 function EventOpenIn({ event }: { event: HoneypotEvent }) {
@@ -121,7 +124,7 @@ function EventOpenIn({ event }: { event: HoneypotEvent }) {
 
 
 function EventsPage() {
-  const data = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
   // New events join the list as they arrive, a few seconds at a time.
@@ -137,7 +140,7 @@ function EventsPage() {
       description="Every normalized honeypot event, newest first. Filter by source, sensor, service, or time window."
       actions={
         <>
-          <Text type="supporting">{`${formatNumber(data.total)} events${arrived ? ` · ${formatNumber(arrived)} arrived live` : ''}`}</Text>
+          <Text type="supporting"><Pending>{data && `${formatNumber(data.total)} events${arrived ? ` · ${formatNumber(arrived)} arrived live` : ''}`}</Pending></Text>
           <Button
             label="CSV"
             size="sm"
@@ -152,7 +155,8 @@ function EventsPage() {
             variant="secondary"
             icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
             tooltip="The loaded rows' full records"
-            onClick={() => downloadJson('events.json', data.rows)}
+            isDisabled={!data}
+            onClick={() => data && downloadJson('events.json', data.rows)}
           />
         </>
       }
@@ -167,7 +171,7 @@ function EventsPage() {
                 size="sm"
                 width={f.width}
                 placeholder={f.label}
-                options={f.options(data.facets)}
+                options={data ? f.options(data.facets) : []}
                 allowCustom={f.key === 'ip' || f.key === 'port'}
                 value={listParam(search[f.key])}
                 onChange={(values) => setFilter({ [f.key]: f.key === 'port' ? toNumericParam(values) : toParam(values) })}
@@ -206,7 +210,7 @@ function EventsPage() {
           )}
         </VStack>
       }
-      rows={data.rows}
+      rows={data?.rows}
       paging={data}
       columns={columns}
       getHref={(row) => entityHref('event', row.id)!}

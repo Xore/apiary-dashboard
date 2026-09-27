@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { GroupOverview } from '#/components/EntityBlocks'
 import { VStack } from '@astryxdesign/core/Stack'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -8,13 +9,17 @@ const parent = getRouteApi('/_layout/asn/$asn')
 
 export const Route = createFileRoute('/_layout/asn/$asn/')({
   loader: ({ params }) => getRelated('asn', params.asn),
-  component: () => {
-    const a = parent.useLoaderData()
+  component: TabView,
+  pendingComponent: TabView,
+})
+
+function TabView() {
+    const a = orPending(parent.useLoaderData())
+    const { asn } = parent.useParams()
     return (
       <VStack gap={4}>
-        <GroupOverview group={a.group} base={`/asn/${encodeURIComponent(a.asn)}`} sourcesTab="sources" eventsTab="events" />
-        <RelatedPanel center={a.asn} groups={Route.useLoaderData()} />
+        <GroupOverview group={a?.group} base={`/asn/${encodeURIComponent(asn)}`} sourcesTab="sources" eventsTab="events" />
+        <RelatedPanel center={asn} groups={orPending(Route.useLoaderData())} />
       </VStack>
     )
-  },
-})
+  }

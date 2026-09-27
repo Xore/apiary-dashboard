@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
@@ -16,22 +18,24 @@ export const Route = createFileRoute('/_layout/clusters/$kind/$value')({
   },
   notFoundComponent: () => <NotFound title="Cluster" description="Unknown kind, or no source shares this value." />,
   component: ClusterLayout,
+  pendingComponent: ClusterLayout,
 })
 
 function ClusterLayout() {
-  const c = Route.useLoaderData()
+  const c = orPending(Route.useLoaderData())
+  const { value } = Route.useParams()
   return (
     <EntityFrame
-      kind={`Infrastructure cluster · ${c.kind}`}
-      title={c.value}
+      kind={`Infrastructure cluster · ${Route.useParams().kind}`}
+      title={<Pending width={320}>{c && c.value}</Pending>}
       description="Source IPs that share this signal."
-      basePath={`/clusters/${c.kind}/${encodeURIComponent(c.value)}`}
-      tokens={<Token size="sm" label={c.kind} />}
+      basePath={`/clusters/${c?.kind}/${encodeURIComponent(value)}`}
+      tokens={c && (<Token size="sm" label={c.kind} />)}
       facts={[
-        { label: 'Source IPs', value: formatNumber(c.group.members.length) },
-        { label: 'Events', value: formatNumber(c.group.events.length) },
-        { label: 'Sensors', value: formatNumber(c.group.sensors.length) },
-        { label: 'Last seen', value: c.group.last ? formatDateTime(c.group.last) : '—' },
+        { label: 'Source IPs', value: c && (formatNumber(c.group.members.length))},
+        { label: 'Events', value: c && (formatNumber(c.group.events.length))},
+        { label: 'Sensors', value: c && (formatNumber(c.group.sensors.length))},
+        { label: 'Last seen', value: c && (c.group.last ? formatDateTime(c.group.last) : '—')},
       ]}
     >
       <Outlet />
@@ -47,8 +51,8 @@ function tabsFor(loaded: unknown): ViewTab[] {
   return [
     { id: 'overview', label: 'Overview' },
     { id: 'breakdown', label: 'Breakdown' },
-    { id: 'members', label: 'Member IPs', count: c.group.members.length },
-    { id: 'events', label: 'Events', count: c.group.events.length },
+    { id: 'members', label: 'Member IPs', count: c?.group.members.length },
+    { id: 'events', label: 'Events', count: c?.group.events.length },
     { id: 'timeline', label: 'Timeline' },
   ]
 }

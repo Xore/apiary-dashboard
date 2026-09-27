@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -24,6 +26,7 @@ export const Route = createFileRoute('/_layout/commands')({
   // One page at a time: every execution is unbounded.
   loader: async ({ deps }) => getCommands(await pageRequest(deps.page)),
   component: CommandsPage,
+  pendingComponent: CommandsPage,
 })
 
 const columns: TableColumn<HoneypotEvent>[] = [
@@ -35,14 +38,14 @@ const columns: TableColumn<HoneypotEvent>[] = [
 
 
 function CommandsPage() {
-  const commands = Route.useLoaderData()
+  const commands = orPending(Route.useLoaderData())
   return (
     <RecordList
       title="Executed commands"
       description="Every shell command attackers typed into interactive honeypots, newest first."
       actions={
         <>
-          <Text type="supporting">{formatNumber(commands.total)} commands</Text>
+          <Text type="supporting"><Pending>{commands && `${formatNumber(commands.total)} commands`}</Pending></Text>
           <Button
             label="CSV"
             size="sm"
@@ -52,7 +55,7 @@ function CommandsPage() {
           />
         </>
       }
-      rows={commands.rows}
+      rows={commands?.rows}
       paging={commands}
       columns={columns}
       getHref={(row) => entityHref('event', row.id)!}

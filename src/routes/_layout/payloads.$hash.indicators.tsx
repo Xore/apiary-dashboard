@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { HStack } from '@astryxdesign/core/Stack'
 import { Table } from '@astryxdesign/core/Table'
@@ -9,14 +10,14 @@ import { Panel } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/payloads/$hash')
 
-export const Route = createFileRoute('/_layout/payloads/$hash/indicators')({ component: PayloadIndicators })
+export const Route = createFileRoute('/_layout/payloads/$hash/indicators')({ component: PayloadIndicators, pendingComponent: PayloadIndicators })
 
 function PayloadIndicators() {
-  const a = parent.useLoaderData().analysis
+  const a = orPending(parent.useLoaderData())?.analysis
   return (
     <Grid columns={{ minWidth: 340, repeat: 'fit' }} gap={4}>
       <Panel title="YARA rule matches">
-        {a.yara.length ? (
+        {a?.yara.length ? (
           <HStack gap={1} wrap="wrap">
             {a.yara.map((rule) => (
               <Token key={rule} size="sm" color="orange" label={rule} />
@@ -27,7 +28,7 @@ function PayloadIndicators() {
         )}
       </Panel>
       <Panel title="Extracted indicators">
-        <Table data={a.iocs} columns={iocColumns} idKey="id" density="compact" />
+        <Table data={a?.iocs} columns={iocColumns} idKey="id" density="compact" />
       </Panel>
     </Grid>
   )

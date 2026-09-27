@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { RecordingDownloads } from '#/components/RecordingDownloads'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
@@ -22,35 +24,42 @@ export const Route = createFileRoute('/_layout/events/$id')({
   },
   notFoundComponent: () => <NotFound title="Event" description="No event has this id. It may have aged out of the index." />,
   component: EventLayout,
+  pendingComponent: EventLayout,
 })
 
 function EventLayout() {
-  const { event, hashes, recordingShasum } = Route.useLoaderData()
+  const loaded = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
+  const event = loaded?.event
   const links = useShellConfig().links
 
   return (
     <EntityFrame
       kind="Event"
-      title={event.summary}
-      basePath={`/events/${encodeURIComponent(event.id)}`}
+      title={<Pending width={360}>{event?.summary}</Pending>}
+      basePath={`/events/${encodeURIComponent(id)}`}
       actions={
-        <>
-          {recordingShasum && <RecordingDownloads shasum={recordingShasum} />}
-          <OpenInMenu links={[...eventToolLinks(event, links), ...hashes.slice(0, 1).map((h) => virusTotalLink(h))]} />
-        </>
+        loaded && (
+          <>
+            {loaded.recordingShasum && <RecordingDownloads shasum={loaded.recordingShasum} />}
+            <OpenInMenu links={[...eventToolLinks(loaded.event, links), ...loaded.hashes.slice(0, 1).map((h) => virusTotalLink(h))]} />
+          </>
+        )
       }
       tokens={
-        <>
-          <SeverityToken severity={event.severity} />
-          <Token size="sm" label={event.type} />
-        </>
+        event && (
+          <>
+            <SeverityToken severity={event.severity} />
+            <Token size="sm" label={event.type} />
+          </>
+        )
       }
       facts={[
-        { label: 'Time', value: formatDateTime(event.timestamp) },
-        { label: 'Sensor', value: <EntityLink kind="sensor" id={event.sensor} /> },
-        { label: 'Service', value: `${event.protocol.toUpperCase()} ${event.dstPort}` },
-        { label: 'Source', value: <EntityLink kind="source" id={event.srcIp} /> },
-        { label: 'Session', value: <EntityLink kind="session" id={event.sessionId} /> },
+        { label: 'Time', value: event && formatDateTime(event.timestamp) },
+        { label: 'Sensor', value: event && <EntityLink kind="sensor" id={event.sensor} /> },
+        { label: 'Service', value: event && `${event.protocol.toUpperCase()} ${event.dstPort}` },
+        { label: 'Source', value: event && <EntityLink kind="source" id={event.srcIp} /> },
+        { label: 'Session', value: event && <EntityLink kind="session" id={event.sessionId} /> },
       ]}
     >
       <Outlet />
@@ -63,7 +72,7 @@ function tabsFor(loaded: unknown): ViewTab[] {
   if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'session', label: 'Session' }, { id: 'connection', label: 'Connection' }, { id: 'source', label: 'Source' }, { id: 'iocs', label: 'Indicators' }, { id: 'raw', label: 'Raw' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const { event, session, connection, source, hashes } = data
-  const iocs = hashes.length + [event.username, event.password, event.command].filter(Boolean).length + 3
+  const iocs = hashes?.length + [event?.username, event?.password, event?.command].filter(Boolean).length + 3
   return [
     { id: 'overview', label: 'Overview' },
     { id: 'session', label: 'Session', count: session.length },

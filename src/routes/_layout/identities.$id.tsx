@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
@@ -16,30 +17,31 @@ export const Route = createFileRoute('/_layout/identities/$id')({
   },
   notFoundComponent: () => <NotFound title="Attacker identity" description="No attacker identity has this id." />,
   component: IdentityLayout,
+  pendingComponent: IdentityLayout,
 })
 
 function IdentityLayout() {
-  const { identity: a } = Route.useLoaderData()
+  const loaded = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
+  const a = loaded?.identity
   return (
     <EntityFrame
       kind="Attacker identity"
-      title={a.id.slice(0, 8)}
+      title={id.slice(0, 8)}
       description="Addresses joined by shared fingerprints, payloads, or credentials. Behavior context only, never actor attribution."
-      basePath={`/identities/${a.id}`}
-      tokens={
-        <>
+      basePath={`/identities/${encodeURIComponent(id)}`}
+      tokens={a && (<>
           {a.scan && <Token size="sm" color="orange" label={`${a.scan} scan`} />}
           {a.verdicts.map((v) => (
             <Token key={v} size="sm" color="purple" label={v} />
           ))}
-        </>
-      }
+        </>)}
       facts={[
-        { label: 'Member IPs', value: formatNumber(a.ips.length) },
-        { label: 'Events', value: formatNumber(a.events) },
-        { label: 'First seen', value: formatDateTime(a.first) },
-        { label: 'Last seen', value: formatDateTime(a.last) },
-        { label: 'Updated', value: formatDateTime(a.updated) },
+        { label: 'Member IPs', value: a && (formatNumber(a.ips.length))},
+        { label: 'Events', value: a && (formatNumber(a.events))},
+        { label: 'First seen', value: a && (formatDateTime(a.first))},
+        { label: 'Last seen', value: a && (formatDateTime(a.last))},
+        { label: 'Updated', value: a && (formatDateTime(a.updated))},
       ]}
     >
       <Outlet />
@@ -52,7 +54,7 @@ function tabsFor(loaded: unknown): ViewTab[] {
   if (!loaded) return [{ id: 'overview', label: 'Overview' }, { id: 'breakdown', label: 'Breakdown' }, { id: 'members', label: 'Member IPs' }, { id: 'indicators', label: 'Indicators' }, { id: 'why', label: 'Why merged' }, { id: 'timeline', label: 'Timeline' }]
   const data = loaded as ReturnType<typeof Route.useLoaderData>
   const { identity: a, group, shared } = data
-  const indicators = a.fingerprints.length + a.payloads.length + a.credentials.length
+  const indicators = a?.fingerprints.length + a?.payloads.length + a?.credentials.length
   return [
     { id: 'overview', label: 'Overview' },
     { id: 'breakdown', label: 'Breakdown' },

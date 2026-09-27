@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { textParam } from '#/lib/searchParams'
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
@@ -26,6 +27,7 @@ export const Route = createFileRoute('/_layout/dead-letters/')({
   loaderDeps: ({ search }) => ({ q: search.q ?? '' }),
   loader: ({ deps }) => getDeadLetters(deps.q),
   component: DeadLettersPage,
+  pendingComponent: DeadLettersPage,
 })
 
 const columns: TableColumn<DeadLetter>[] = [
@@ -35,7 +37,7 @@ const columns: TableColumn<DeadLetter>[] = [
 ]
 
 function DeadLettersPage() {
-  const rows = Route.useLoaderData()
+  const rows = orPending(Route.useLoaderData())
   const { q } = Route.useSearch()
   const navigate = Route.useNavigate()
   const router = useRouter()
@@ -53,7 +55,7 @@ function DeadLettersPage() {
         actions={
           <HStack gap={2} vAlign="center">
             {error && <FieldStatus type="error" variant="detached" message={error} />}
-            {isAdmin && <Button label={`Purge ${rows.length} shown`} size="sm" variant="destructive" isDisabled={rows.length === 0} onClick={() => setConfirmOpen(true)} />}
+            {isAdmin && <Button label={rows ? `Purge ${rows.length} shown` : 'Purge shown'} size="sm" variant="destructive" isDisabled={!rows?.length} onClick={() => setConfirmOpen(true)} />}
           </HStack>
         }
         toolbar={
@@ -73,7 +75,7 @@ function DeadLettersPage() {
       <AlertDialog
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={`Purge ${rows.length} dead letters?`}
+        title={`Purge ${rows?.length ?? 0} dead letters?`}
         description={q ? `Deletes only the documents matching “${q}”. This cannot be undone.` : 'No query is set, so this deletes every dead letter. This cannot be undone.'}
         actionLabel="Purge"
         isActionLoading={busy}
@@ -81,7 +83,7 @@ function DeadLettersPage() {
           setBusy(true)
           setError(undefined)
           try {
-            await purgeDeadLetters(rows.map((r) => r.id))
+            await purgeDeadLetters((rows ?? []).map((r) => r.id))
             await router.invalidate()
           } catch (e) {
             setError(describeError(e))

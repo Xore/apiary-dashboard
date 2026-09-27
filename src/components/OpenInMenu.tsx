@@ -15,6 +15,8 @@ export function OpenInMenu({ links, compact = false }: { links: ToolLink[]; comp
       placement="below"
       alignment="end"
       menuWidth={280}
+      // In a table row it is one icon: no chevron to crowd it into an ellipsis.
+      hasChevron={!compact}
       button={{
         label: 'Open in',
         icon: <Icon icon={ArrowTopRightOnSquareIcon} size="sm" />,

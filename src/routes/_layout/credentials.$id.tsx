@@ -1,3 +1,6 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { CredentialInspector } from '#/components/details/BaitCredential'
 import { getCredentials } from '#/data/queries'
@@ -19,22 +22,24 @@ export const Route = createFileRoute('/_layout/credentials/$id')({
     />
   ),
   component: BaitCredentialPage,
+  pendingComponent: BaitCredentialPage,
 })
 
 function BaitCredentialPage() {
-  const d = Route.useLoaderData()
+  const d = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
   return (
     <EntityFrame
       kind="Bait credential"
-      title={`${d.username} @ ${d.target}`}
-      basePath={`/credentials/${encodeURIComponent(d.id)}`}
+      title={<Pending width={280}>{d && `${d.username} @ ${d.target}`}</Pending>}
+      basePath={`/credentials/${encodeURIComponent(id)}`}
       facts={[
-        { label: 'Planted', value: formatDateTime(d.createdAt) },
-        { label: 'Path', value: d.path },
-        { label: 'Template', value: d.template },
+        { label: 'Planted', value: d && formatDateTime(d.createdAt) },
+        { label: 'Path', value: d?.path },
+        { label: 'Template', value: d?.template },
       ]}
     >
-      <CredentialInspector key={d.id} credential={d} tokens={d.tokens} />
+      {d ? <CredentialInspector key={d.id} credential={d} tokens={d.tokens} /> : <SkeletonPanels />}
     </EntityFrame>
   )
 }

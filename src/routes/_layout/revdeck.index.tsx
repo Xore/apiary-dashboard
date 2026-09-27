@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Link } from '@astryxdesign/core/Link'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -16,6 +17,7 @@ export const Route = createFileRoute('/_layout/revdeck/')({
   staticData: { viewTabs: analysisTabs() },
   loader: () => getRevDeckRuns(),
   component: RevDeckIndexPage,
+  pendingComponent: RevDeckIndexPage,
 })
 
 const columns: TableColumn<RevDeckRun>[] = [
@@ -26,7 +28,7 @@ const columns: TableColumn<RevDeckRun>[] = [
 ]
 
 function RevDeckIndexPage() {
-  const runs = Route.useLoaderData()
+  const runs = orPending(Route.useLoaderData())
   return (
     <RecordList
       title="RevDeck"

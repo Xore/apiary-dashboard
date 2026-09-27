@@ -27,6 +27,8 @@ export const Route = createFileRoute('/_layout/alerts/')({
   }),
   loader: () => getAlerts(),
   component: AlertsPage,
+  // The page itself while its data loads: its own layout, skeleton rows.
+  pendingComponent: AlertsPage,
 })
 
 const columns: TableColumn<AlertGroup>[] = [
@@ -49,7 +51,9 @@ const columns: TableColumn<AlertGroup>[] = [
 ]
 
 function AlertsPage() {
-  const groups = Route.useLoaderData()
+  // Undefined while the route is pending (this component is its own
+  // pending state).
+  const groups: AlertGroup[] | undefined = Route.useLoaderData()
   const { view = 'new' } = Route.useSearch()
   const router = useRouter()
   const [filter, setFilter] = useState('')
@@ -57,11 +61,11 @@ function AlertsPage() {
   const { error, guard } = useGuardedAction()
   const [acking, setAcking] = useState(false)
 
-  const open = groups.filter((g) => !g.acknowledged)
-  const acked = groups.filter((g) => g.acknowledged)
-  const openRecords = open.reduce((sum, g) => sum + g.members.length, 0)
+  const open = groups?.filter((g) => !g.acknowledged)
+  const acked = groups?.filter((g) => g.acknowledged)
+  const openRecords = open?.reduce((sum, g) => sum + g.members.length, 0) ?? 0
   const needle = filter.trim().toLowerCase()
-  const rows = (view === 'new' ? open : acked).filter(
+  const rows = (view === 'new' ? open : acked)?.filter(
     (g) => !needle || g.message.toLowerCase().includes(needle) || g.members.some((m) => m.key.toLowerCase().includes(needle)),
   )
 

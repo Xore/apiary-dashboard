@@ -1,4 +1,5 @@
 import { ActionLink } from '#/components/ActionLink'
+import { Pending } from './Pending'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '@astryxdesign/core/Button'
@@ -30,8 +31,9 @@ type EntityFrameProps = {
   description?: string
   /** Identity tokens next to the title (country, severity, tags…). */
   tokens?: ReactNode
-  /** Key facts in one scannable strip. */
-  facts?: Array<{ label: string; value: ReactNode }>
+  /** Key facts in one scannable strip; a value still loading (undefined)
+   * is a skeleton. */
+  facts?: Array<{ label: string; value: ReactNode | undefined }>
   actions?: ReactNode
   /** The entity's base path, e.g. /sources/198.51.100.13 (encoded). Its tabs
    * are declared on the route (`entityTabs` in ViewTabs). */
@@ -152,7 +154,7 @@ export function EntityFrame({ kind, title, description, tokens, facts, actions, 
               <MetadataList orientation="horizontal" columns="multi">
                 {facts.map((fact) => (
                   <MetadataListItem key={fact.label} label={fact.label}>
-                    {fact.value}
+                    <Pending>{fact.value}</Pending>
                   </MetadataListItem>
                 ))}
               </MetadataList>

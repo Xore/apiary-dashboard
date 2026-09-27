@@ -1,3 +1,5 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
 import { HStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
@@ -7,8 +9,14 @@ import { Panel } from '#/components/DashboardBlocks'
 const parent = getRouteApi('/_layout/llm-analysis/$id')
 
 export const Route = createFileRoute('/_layout/llm-analysis/$id/behaviors')({
-  component: () => {
-    const { behaviors } = parent.useLoaderData().analysis
+  component: TabView,
+  pendingComponent: TabView,
+})
+
+function TabView() {
+    const analysis = orPending(parent.useLoaderData())?.analysis
+    if (!analysis) return <SkeletonPanels count={2} />
+    const { behaviors } = analysis
     return (
       <Panel title="Behaviors the model named">
         {behaviors.length ? (
@@ -22,5 +30,4 @@ export const Route = createFileRoute('/_layout/llm-analysis/$id/behaviors')({
         )}
       </Panel>
     )
-  },
-})
+  }
