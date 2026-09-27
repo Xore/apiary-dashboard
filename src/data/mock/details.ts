@@ -201,6 +201,7 @@ export const CONFIG: DashboardConfig = {
   revision: 14,
   presentation: {
     appName: 'APIARY',
+    titleFormat: '{page} — {app}',
     productLabel: 'Honeypot dashboard',
     dashboardTitle: 'Overview',
     dashboardSubtitle: 'What reached the decoys in the selected window',

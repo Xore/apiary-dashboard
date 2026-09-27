@@ -41,6 +41,7 @@ import { formatDateTime, formatNumber } from '#/lib/format'
 import { NAV_SECTIONS } from '#/lib/nav'
 import { prefetchEnabled, setPrefetchEnabled } from '#/lib/prefetch'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
+import { DEFAULT_TITLE_FORMAT, formatTitle } from '#/lib/title'
 import { useIsAdmin, useShellConfig } from '#/lib/session'
 import { accountLinks } from '#/lib/toolLinks'
 import { useGuardedAction } from '#/lib/useGuardedAction'
@@ -368,6 +369,11 @@ function BrandingPanel() {
     <>
       <SettingsCard title="Identity">
         {text('appName', 'appName', 'Application name')}
+        <SettingsRow
+          setting="titleFormat"
+          control={<TextInput label="Browser tab title" isLabelHidden width={CONTROL_WIDTH} value={form.titleFormat} placeholder={DEFAULT_TITLE_FORMAT} status={statusOf('titleFormat')} onChange={(titleFormat) => set({ titleFormat })} />}
+          detail={<Text type="supporting">{`Preview: ${formatTitle(form.titleFormat, { page: 'Event explorer', app: form.appName || 'APIARY', section: 'Investigate' })}`}</Text>}
+        />
         {text('productLabel', 'productLabel', 'Product label')}
         {text('orgName', 'orgName', 'Organization', 'None')}
       </SettingsCard>

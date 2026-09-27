@@ -2,6 +2,7 @@
 // preview that persists nothing and names every field it would refuse, so
 // the settings form can say what is wrong before anything is staged. Rules
 // follow the real validator (config.rs validate_*), field by field.
+import { titleFormatProblem } from '#/lib/title'
 import type { ConfigProblems, ConfigSection, DashboardConfig } from '../types'
 
 const TEXT_LIMIT = 500
@@ -43,6 +44,8 @@ export function validateSection<TSection extends ConfigSection>(section: TSectio
   if (section === 'presentation') {
     const p = value as DashboardConfig['presentation']
     text(problems, 'appName', p.appName, { required: true })
+    const titleProblem = titleFormatProblem(p.titleFormat)
+    if (titleProblem) problems.titleFormat = titleProblem
     for (const field of ['productLabel', 'dashboardTitle', 'dashboardSubtitle', 'orgName', 'overviewIntro', 'helpLinkLabel', 'bannerText', 'footerText', 'aiDisclaimer', 'privacyNotice'] as const) text(problems, field, p[field])
     if (p.helpLinkUrl !== '' && !/^https:\/\/[^\s/]+\.[^\s]+$/.test(p.helpLinkUrl)) problems.helpLinkUrl = 'Empty, or an https:// link.'
     if (!SEVERITIES.includes(p.bannerSeverity)) problems.bannerSeverity = 'Empty, info, success, warning or danger.'

@@ -11,7 +11,8 @@ import { isScenario } from '#/data/scenarios'
 import { setNavigationScenario } from '#/data/serverFn'
 import type { MockScenario } from '#/data/scenarios'
 import { isNarrowViewport } from '#/lib/viewport'
-import { pageFor } from '#/lib/nav'
+import { pageFor, sectionFor } from '#/lib/nav'
+import { DEFAULT_TITLE_FORMAT, formatTitle } from '#/lib/title'
 
 export const Route = createFileRoute('/_layout')({
   // `?settings=<pane>` opens the settings modal over any page; `?range=` is
@@ -54,8 +55,8 @@ export const Route = createFileRoute('/_layout')({
   head: ({ matches, loaderData }) => {
     // Index routes match with a trailing slash; the nav metadata has none.
     const pathname = (matches.at(-1)?.pathname ?? '/').replace(/(.)\/$/, '$1')
-    const app = loaderData?.config.presentation.appName || 'APIARY'
-    return { meta: [{ title: `${pageFor(pathname)} — ${app}` }] }
+    const presentation = loaderData?.config.presentation
+    return { meta: [{ title: formatTitle(presentation?.titleFormat ?? DEFAULT_TITLE_FORMAT, { page: pageFor(pathname), app: presentation?.appName || 'APIARY', section: sectionFor(pathname) }) }] }
   },
   component: LayoutComponent,
 })
