@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { AckButton } from '#/components/details/Alert'
@@ -23,31 +25,32 @@ export const Route = createFileRoute('/_layout/alerts/$key')({
     />
   ),
   component: AlertLayout,
+  pendingComponent: AlertLayout,
 })
 
 function AlertLayout() {
-  const { group } = Route.useLoaderData()
+  const loaded = orPending(Route.useLoaderData())
+  const { key } = Route.useParams()
+  const group = loaded?.group
   return (
     <EntityFrame
-      kind={`Alert · ${group.kind}`}
-      title={group.message}
-      basePath={`/alerts/${encodeURIComponent(group.id)}`}
-      tokens={
-        <>
+      kind={group ? `Alert · ${group.kind}` : "Alert"}
+      title={<Pending width={320}>{group && group.message}</Pending>}
+      basePath={`/alerts/${encodeURIComponent(key)}`}
+      tokens={group && (<>
           <SeverityToken severity={group.severity} />
           <Token
             label={group.acknowledged ? 'acknowledged' : 'new'}
             size="sm"
             color={group.acknowledged ? 'gray' : 'orange'}
           />
-        </>
-      }
-      actions={<AckButton group={group} />}
+        </>)}
+      actions={group && (<AckButton group={group} />)}
       facts={[
-        { label: 'Observed', value: formatNumber(group.count) },
-        { label: 'Records', value: formatNumber(group.members.length) },
-        { label: 'First seen', value: formatDateTime(group.firstSeen) },
-        { label: 'Last seen', value: formatDateTime(group.lastSeen) },
+        { label: 'Observed', value: group && (formatNumber(group.count))},
+        { label: 'Records', value: group && (formatNumber(group.members.length))},
+        { label: 'First seen', value: group && (formatDateTime(group.firstSeen))},
+        { label: 'Last seen', value: group && (formatDateTime(group.lastSeen))},
       ]}
     >
       <Outlet />
@@ -62,7 +65,7 @@ function tabsFor(loaded: unknown): ViewTab[] {
   const { group, sources, hashes } = data
   return [
     { id: 'overview', label: 'Overview' },
-    { id: 'members', label: 'Members', count: group.members.length },
+    { id: 'members', label: 'Members', count: group?.members.length },
     { id: 'evidence', label: 'Evidence', count: sources.length + hashes.length },
   ]
 }

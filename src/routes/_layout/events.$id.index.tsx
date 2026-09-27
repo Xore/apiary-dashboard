@@ -1,3 +1,5 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Grid } from '@astryxdesign/core/Grid'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
@@ -17,10 +19,17 @@ const parent = getRouteApi('/_layout/events/$id')
 export const Route = createFileRoute('/_layout/events/$id/')({
   loader: ({ params }) => getRelated('event', params.id),
   component: EventOverview,
+  pendingComponent: EventOverview,
 })
 
 function EventOverview() {
-  const { event, session, reading } = parent.useLoaderData()
+  const loaded = orPending(parent.useLoaderData())
+  const related = orPending(Route.useLoaderData())
+  // Its panels as skeletons until the event is here.
+  if (!loaded) return <SkeletonPanels count={4} />
+  const event = loaded.event
+  const session = loaded.session
+  const reading = loaded.reading
   // The artefacts this sensor exists to capture, each once, in its own terms.
   const artefacts = reading.artefacts
     .map((a) => ({ label: a.label, text: fieldBlock(readField(event.fields, a.field)) }))
@@ -133,7 +142,7 @@ function EventOverview() {
         </Panel>
       )}
       <EventsPanel title="Around it in this session" events={session.slice(0, 8)} action={<EntityLink kind="session" id={event.sessionId}>Full session</EntityLink>} empty="This event is the whole session." />
-      <RelatedPanel center={event.summary} groups={Route.useLoaderData()} />
+      <RelatedPanel center={event.summary} groups={related} />
     </VStack>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { List, ListItem } from '@astryxdesign/core/List'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -62,7 +63,18 @@ function ChildRow({ run, child }: { run: WorkbenchRun; child: WorkbenchRunChild 
 
 /** The operator's own runs, each with its analyzers' progress: results to
  * open, failures to retry, work still queued to cancel. */
-export function WorkbenchRuns({ runs }: { runs: WorkbenchRun[] }) {
+export function WorkbenchRuns({ runs }: { runs: WorkbenchRun[] | undefined }) {
+  if (!runs)
+    return (
+      <VStack gap={3} aria-busy>
+        {[0, 1, 2].map((i) => (
+          <VStack key={i} gap={1.5}>
+            <Skeleton width="60%" height={16} />
+            <Skeleton width="100%" height={48} />
+          </VStack>
+        ))}
+      </VStack>
+    )
   if (!runs.length) return <Text type="supporting">No runs yet. Start one with New analysis run.</Text>
   return (
     <VStack gap={4}>

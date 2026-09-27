@@ -1,3 +1,6 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { TokenInspector } from '#/components/details/Canary'
 import { getCanarytokens } from '#/data/queries'
@@ -16,22 +19,24 @@ export const Route = createFileRoute('/_layout/canarytokens/$id')({
     <NotFound title="Canarytoken" description="No canarytoken has this id." />
   ),
   component: CanaryTokenPage,
+  pendingComponent: CanaryTokenPage,
 })
 
 function CanaryTokenPage() {
-  const d = Route.useLoaderData()
+  const d = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
   return (
     <EntityFrame
       kind="Canarytoken"
-      title={d.memo}
-      basePath={`/canarytokens/${encodeURIComponent(d.id)}`}
+      title={<Pending width={280}>{d?.memo}</Pending>}
+      basePath={`/canarytokens/${encodeURIComponent(id)}`}
       facts={[
-        { label: 'Type', value: d.type },
-        { label: 'Created', value: formatDateTime(d.createdAt) },
-        { label: 'By', value: d.createdBy },
+        { label: 'Type', value: d?.type },
+        { label: 'Created', value: d && formatDateTime(d.createdAt) },
+        { label: 'By', value: d?.createdBy },
       ]}
     >
-      <TokenInspector token={d} triggers={d.triggers} />
+      {d ? <TokenInspector token={d} triggers={d.triggers} /> : <SkeletonPanels />}
     </EntityFrame>
   )
 }

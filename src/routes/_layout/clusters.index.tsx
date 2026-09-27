@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Link } from '@astryxdesign/core/Link'
@@ -17,6 +19,7 @@ import { formatNumber } from '#/lib/format'
 export const Route = createFileRoute('/_layout/clusters/')({
   loader: () => getInfraClusters(),
   component: ClustersPage,
+  pendingComponent: ClustersPage,
 })
 
 const rowHref = (row: InfraCluster) => clusterHref(row.kind, row.value)
@@ -40,14 +43,14 @@ const columns: TableColumn<InfraCluster>[] = [
 
 
 function ClustersPage() {
-  const clusters = Route.useLoaderData()
+  const clusters = orPending(Route.useLoaderData())
   return (
     <RecordList
       title="Infrastructure clusters"
       description="Fingerprints, payloads, autonomous systems, and providers shared by multiple source IPs."
       actions={
         <>
-          <Text type="supporting">{clusters.length} shared pivots</Text>
+          <Text type="supporting"><Pending>{clusters && `${clusters.length} shared pivots`}</Pending></Text>
           <Button
             label="CSV"
             size="sm"

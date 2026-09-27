@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -15,12 +17,13 @@ import { useIsAdmin } from '#/lib/session'
 export const Route = createFileRoute('/_layout/credentials/')({
   loader: () => getCredentials(),
   component: CredentialsPage,
+  pendingComponent: CredentialsPage,
 })
 
 function CredentialsPage() {
   const isAdmin = useIsAdmin()
-  const { credentials, tokens, targets } = Route.useLoaderData()
-  const tokenLabel = (id?: string) => tokens.find((t) => t.id === id)?.memo
+  const data = orPending(Route.useLoaderData())
+  const tokenLabel = (id?: string) => data?.tokens.find((t) => t.id === id)?.memo
   const router = useRouter()
   const [creating, setCreating] = useState(false)
 
@@ -43,10 +46,10 @@ function CredentialsPage() {
       description="Bait usernames and passwords planted live into honeypot filesystems. Provision, rotate, and optionally link one to a canarytoken."
       actions={
         <>
-          <Text type="supporting">{credentials.length} planted</Text>
+          <Text type="supporting"><Pending>{data && `${data.credentials.length} planted`}</Pending></Text>
           {isAdmin && <Button label="Plant bait credential" size="sm" onClick={() => setCreating(true)} />}
           <BaitCredentialDialog
-            targets={targets}
+            targets={data?.targets ?? []}
             isOpen={creating}
             onOpenChange={(open) => {
               setCreating(open)
@@ -55,7 +58,7 @@ function CredentialsPage() {
           />
         </>
       }
-      rows={credentials}
+      rows={data?.credentials}
       columns={columns}
       getId={(row) => row.id}
       getHref={(row) => `/credentials/${encodeURIComponent(row.id)}`}

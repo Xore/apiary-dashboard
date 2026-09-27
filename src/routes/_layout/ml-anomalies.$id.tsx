@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { StatusToken } from '#/components/details/Anomaly'
 import { EntityFrame } from '#/components/EntityFrame'
@@ -20,34 +22,35 @@ export const Route = createFileRoute('/_layout/ml-anomalies/$id')({
     <NotFound title="ML anomaly" description="No anomaly has this id." />
   ),
   component: AnomalyLayout,
+  pendingComponent: AnomalyLayout,
 })
 
 function AnomalyLayout() {
-  const { anomaly: a } = Route.useLoaderData()
+  const loaded = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
+  const a = loaded?.anomaly
   return (
     <EntityFrame
       kind="ML anomaly"
-      title={a.explanation}
-      basePath={`/ml-anomalies/${encodeURIComponent(a.id)}`}
-      tokens={
-        <>
+      title={<Pending width={320}>{a && a.explanation}</Pending>}
+      basePath={`/ml-anomalies/${encodeURIComponent(id)}`}
+      tokens={a && (<>
           <SeverityToken severity={a.severity} />
           <StatusToken status={a.status} />
-        </>
-      }
+        </>)}
       facts={[
-        { label: 'Composite score', value: a.compositeScore.toFixed(2) },
-        { label: 'Threshold', value: a.thresholdAtScoring.toFixed(2) },
-        { label: 'Time', value: formatDateTime(a.timestamp) },
+        { label: 'Composite score', value: a && (a.compositeScore.toFixed(2))},
+        { label: 'Threshold', value: a && (a.thresholdAtScoring.toFixed(2))},
+        { label: 'Time', value: a && (formatDateTime(a.timestamp))},
         {
           label: 'Source',
-          value: a.srcIp ? (
+          value: a && (a.srcIp ? (
             <EntityLink kind="source" id={a.srcIp} />
           ) : (
             'unattributed'
-          ),
+          )),
         },
-        { label: 'Sensor', value: <EntityLink kind="sensor" id={a.sensor} /> },
+        { label: 'Sensor', value: a && (<EntityLink kind="sensor" id={a.sensor} />)},
       ]}
     >
       <Outlet />

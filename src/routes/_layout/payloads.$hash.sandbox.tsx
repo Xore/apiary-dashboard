@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
 import { SANDBOX_SECTIONS, SandboxResult } from '#/components/analyzers/SandboxResult'
@@ -12,9 +13,12 @@ export const Route = createFileRoute('/_layout/payloads/$hash/sandbox')({
     section: SANDBOX_SECTIONS.some((s) => s.id === search.section) && search.section !== 'verdict' ? (search.section as SandboxSection) : undefined,
   }),
   loader: ({ params }) => getSandboxRun(params.hash),
-  component: () => {
-    const run = Route.useLoaderData()
+  component: TabView,
+  pendingComponent: TabView,
+})
+
+function TabView() {
+    const run = orPending(Route.useLoaderData())
     const { section } = Route.useSearch()
     return run ? <SandboxResult run={run} section={sectionOf(SANDBOX_SECTIONS, section) as SandboxSection} /> : <Text type="supporting">This sample has not been detonated. Shell scripts without a dynamic route are static-only.</Text>
-  },
-})
+  }

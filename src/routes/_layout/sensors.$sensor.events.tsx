@@ -1,3 +1,5 @@
+import { SkeletonTable } from '#/components/SkeletonTable'
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { Divider } from '@astryxdesign/core/Divider'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
@@ -16,7 +18,7 @@ import { ZoneHeader } from '#/components/ZoneHeader'
 
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
-export const Route = createFileRoute('/_layout/sensors/$sensor/events')({ component: SensorEvents })
+export const Route = createFileRoute('/_layout/sensors/$sensor/events')({ component: SensorEvents, pendingComponent: SensorEvents })
 
 const BADGE_COLOR = { danger: 'red', warning: 'orange', success: 'green', muted: 'gray', info: 'blue' } as const
 
@@ -58,15 +60,24 @@ function columnsFor(reading: SensorReading): TableColumn<HoneypotEvent>[] {
 
 /** Every sensor, read in its own terms. */
 function SensorEvents() {
-  const { detail } = parent.useLoaderData()
-  const { sensor, reading } = detail
+  const loaded = orPending(parent.useLoaderData())
+  // The sensor's id is in the address: the panel and its link need no data.
+  const { sensor: id } = parent.useParams()
+  const detail = loaded?.detail
   return (
     <VStack gap={4}>
-      <Panel title="What it captured" action={<ActionLink href={`/events?sensor=${sensor.id}`}>All events</ActionLink>}>
-        <Text type="supporting">{reading.what}. The newest events, with this sensor's own fields; open a row for the full record.</Text>
-        <Table data={detail.recentEvents} columns={columnsFor(reading)} idKey="id" density="compact" textOverflow="truncate" />
+      <Panel title="What it captured" action={<ActionLink href={`/events?sensor=${encodeURIComponent(id)}`}>All events</ActionLink>}>
+        {detail ? (
+          <>
+            <Text type="supporting">{detail.reading.what}. The newest events, with this sensor's own fields; open a row for the full record.</Text>
+            <Table data={detail.recentEvents} columns={columnsFor(detail.reading)} idKey="id" density="compact" textOverflow="truncate" />
+          </>
+        ) : (
+          // The columns are this sensor's own, known with its data.
+          <SkeletonTable columns={[{ key: 'time', header: 'Time' }, { key: 'a', header: '' }, { key: 'b', header: '' }, { key: 'c', header: '' }]} rows={10} density="compact" />
+        )}
       </Panel>
-      {sensor.id === 'mailoney' && <MailSessions events={detail.recentEvents} />}
+      {id === 'mailoney' && detail && <MailSessions events={detail.recentEvents} />}
     </VStack>
   )
 }

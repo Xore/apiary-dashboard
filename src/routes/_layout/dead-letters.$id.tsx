@@ -1,3 +1,6 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { DeadLetterDetail } from '#/components/details/DeadLetter'
 import { getDeadLetters } from '#/data/queries'
@@ -18,21 +21,23 @@ export const Route = createFileRoute('/_layout/dead-letters/$id')({
     />
   ),
   component: DeadLetterPage,
+  pendingComponent: DeadLetterPage,
 })
 
 function DeadLetterPage() {
-  const d = Route.useLoaderData()
+  const d = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
   return (
     <EntityFrame
       kind="Ingest dead letter"
-      title={d.index}
-      basePath={`/dead-letters/${encodeURIComponent(d.id)}`}
+      title={<Pending width={280}>{d?.index}</Pending>}
+      basePath={`/dead-letters/${encodeURIComponent(id)}`}
       facts={[
-        { label: 'Rejected', value: formatDateTime(d.timestamp) },
-        { label: 'Source', value: d.source },
+        { label: 'Rejected', value: d && formatDateTime(d.timestamp) },
+        { label: 'Source', value: d?.source },
       ]}
     >
-      <DeadLetterDetail row={d} />
+      {d ? <DeadLetterDetail row={d} /> : <SkeletonPanels />}
     </EntityFrame>
   )
 }

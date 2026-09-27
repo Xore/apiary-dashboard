@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
@@ -17,28 +18,29 @@ export const Route = createFileRoute('/_layout/campaigns/$cidr')({
   },
   notFoundComponent: () => <NotFound title="Campaign" description="No campaign was detected for this prefix." />,
   component: CampaignLayout,
+  pendingComponent: CampaignLayout,
 })
 
 function CampaignLayout() {
-  const { campaign: c } = Route.useLoaderData()
+  const loaded = orPending(Route.useLoaderData())
+  const { cidr } = Route.useParams()
+  const c = loaded?.campaign
   return (
     <EntityFrame
       kind="Campaign"
-      title={c.cidr}
-      description={c.explanation}
-      basePath={`/campaigns/${encodeURIComponent(c.cidr)}`}
-      tokens={
-        <>
+      title={cidr}
+      description={c?.explanation}
+      basePath={`/campaigns/${encodeURIComponent(cidr)}`}
+      tokens={c && (<>
           <Token size="sm" color="orange" label={`score ${c.score}`} />
           {c.scan && <Token size="sm" color="purple" label={`${c.scan} scan`} />}
-        </>
-      }
+        </>)}
       facts={[
-        { label: 'Network', value: <EntityLink kind="network" id={c.cidr} /> },
-        { label: 'Source IPs', value: formatNumber(c.uniqueIps) },
-        { label: 'Events', value: formatNumber(c.events) },
-        { label: 'First seen', value: formatDateTime(c.first) },
-        { label: 'Last seen', value: formatDateTime(c.last) },
+        { label: 'Network', value: c && (<EntityLink kind="network" id={c.cidr} />)},
+        { label: 'Source IPs', value: c && (formatNumber(c.uniqueIps))},
+        { label: 'Events', value: c && (formatNumber(c.events))},
+        { label: 'First seen', value: c && (formatDateTime(c.first))},
+        { label: 'Last seen', value: c && (formatDateTime(c.last))},
       ]}
     >
       <Outlet />

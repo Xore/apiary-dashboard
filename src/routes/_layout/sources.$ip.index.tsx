@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { Grid } from '@astryxdesign/core/Grid'
 import { VStack } from '@astryxdesign/core/Stack'
@@ -13,24 +14,25 @@ const parent = getRouteApi('/_layout/sources/$ip')
 export const Route = createFileRoute('/_layout/sources/$ip/')({
   loader: ({ params }) => getRelated('source', params.ip),
   component: SourceOverview,
+  pendingComponent: SourceOverview,
 })
 
 function SourceOverview() {
-  const p = parent.useLoaderData()
+  const p = orPending(parent.useLoaderData())
   const { ip } = parent.useParams()
   const base = `/sources/${ip}`
   return (
     <VStack gap={4}>
       <Grid columns={{ minWidth: 170, repeat: 'fit' }} gap={4}>
-        <StatTile label="Events" value={p.source.events} href={`${base}/events`} />
-        <StatTile label="Logins" value={p.source.logins} href={`/events?ip=${ip}&kind=login`} />
-        <StatTile label="Sessions" value={p.source.sessions} href={`${base}/sessions`} />
-        <StatTile label="Sensors reached" value={p.correlation.distinctSensors} href={`${base}/breakdown`} />
-        <StatTile label="Tunnel connections" value={p.correlation.tunnelConnections} caption={osGuessCaption(p.correlation.tunnelOsGuesses)} />
-        <StatTile label="ATT&CK techniques" value={p.techniques.length} href={`${base}/behavior`} />
+        <StatTile label="Events" value={p?.source.events} href={`${base}/events`} />
+        <StatTile label="Logins" value={p?.source.logins} href={`/events?ip=${ip}&kind=login`} />
+        <StatTile label="Sessions" value={p?.source.sessions} href={`${base}/sessions`} />
+        <StatTile label="Sensors reached" value={p?.correlation.distinctSensors} href={`${base}/breakdown`} />
+        <StatTile label="Tunnel connections" value={p?.correlation.tunnelConnections} caption={p ? osGuessCaption(p.correlation.tunnelOsGuesses) : ''} />
+        <StatTile label="ATT&CK techniques" value={p?.techniques.length} href={`${base}/behavior`} />
       </Grid>
-      <EventsPanel title="Newest events" events={p.events.slice(0, 5)} action={<ActionLink href={`${base}/events`}>All events</ActionLink>} />
-      <RelatedPanel center={parent.useParams().ip} groups={Route.useLoaderData()} />
+      <EventsPanel title="Newest events" events={p?.events.slice(0, 5)} action={<ActionLink href={`${base}/events`}>All events</ActionLink>} />
+      <RelatedPanel center={parent.useParams().ip} groups={orPending(Route.useLoaderData())} />
     </VStack>
   )
 }

@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { textParam } from '#/lib/searchParams'
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
@@ -26,6 +28,7 @@ export const Route = createFileRoute('/_layout/history')({
   loaderDeps: ({ search }) => ({ q: search.q ?? '', page: search.page }),
   loader: async ({ deps }) => searchHistory(deps.q, await pageRequest(deps.page)),
   component: HistoryPage,
+  pendingComponent: HistoryPage,
 })
 
 const EXAMPLES = ['honeypot.event:command.input', 'sensor:cowrie AND username:root', 'protocol:smb AND country:CN']
@@ -39,7 +42,7 @@ const columns: TableColumn<HoneypotEvent>[] = [
 ]
 
 function HistoryPage() {
-  const result = Route.useLoaderData()
+  const result = orPending(Route.useLoaderData())
   const { q } = Route.useSearch()
   const navigate = Route.useNavigate()
   const [draft, setDraft] = useState(q ?? '')
@@ -51,7 +54,7 @@ function HistoryPage() {
       description="Raw search across the full event archive: Lucene-style field:value terms joined with AND, 90-day window, exportable."
       actions={
         <>
-          <Text type="supporting">{formatNumber(result.total)} matches{result.total === 500 ? ' (capped)' : ''}</Text>
+          <Text type="supporting"><Pending>{result && `${formatNumber(result.total)} matches${result.total === 500 ? ' (capped)' : ''}`}</Pending></Text>
           <Button
             label="JSON"
             size="sm"
@@ -92,7 +95,7 @@ function HistoryPage() {
           </HStack>
         </VStack>
       }
-      rows={result.rows}
+      rows={result?.rows}
       paging={result}
       columns={columns}
       getHref={(row) => entityHref('event', row.id)!}

@@ -1,3 +1,6 @@
+import { CodeBlock } from '@astryxdesign/core/CodeBlock'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { SkeletonTable } from './SkeletonTable'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { Link } from '@astryxdesign/core/Link'
@@ -31,9 +34,24 @@ const KIND_LABEL: Record<TimelineKind, string> = {
 
 /** Everything that happened, newest first, grouped by hour; filter by kind.
  * Each item links to its own page. */
-export function Timeline({ items, empty = 'Nothing happened in this time range.' }: { items: TimelineItem[]; empty?: string }) {
-  const kinds = [...new Set(items.map((i) => i.kind))]
+export function Timeline({ items: loaded, empty = 'Nothing happened in this time range.' }: { items: TimelineItem[] | undefined; empty?: string }) {
   const [kind, setKind] = useState<'all' | TimelineKind>('all')
+  // Still loading: a few hours of entries as skeletons.
+  if (!loaded)
+    return (
+      <VStack gap={4} aria-busy>
+        {[0, 1, 2].map((hour) => (
+          <VStack key={hour} gap={2}>
+            <Skeleton width={140} height={14} />
+            {[0, 1, 2].map((row) => (
+              <Skeleton key={row} width={`${80 - row * 12}%`} height={16} />
+            ))}
+          </VStack>
+        ))}
+      </VStack>
+    )
+  const items = loaded
+  const kinds = [...new Set(items.map((i) => i.kind))]
   const shown = kind === 'all' ? items : items.filter((i) => i.kind === kind)
   const groups = new Map<string, TimelineItem[]>()
   for (const item of shown.slice(0, 300)) {
@@ -92,7 +110,8 @@ const sessionColumns: TableColumn<SessionSummary>[] = [
   { key: 'recordingShasum', header: 'Recording', width: pixel(96), renderCell: (row) => (row.recordingShasum ? <EntityLink kind="recording" id={row.recordingShasum}>replay</EntityLink> : '—') },
 ]
 
-export function SessionsTable({ sessions }: { sessions: SessionSummary[] }) {
+export function SessionsTable({ sessions }: { sessions: SessionSummary[] | undefined }) {
+  if (!sessions) return <SkeletonTable columns={sessionColumns} rows={8} density="compact" />
   return sessions.length ? (
     <Table data={sessions} columns={sessionColumns} idKey="id" density="compact" hasHover />
   ) : (
@@ -101,7 +120,17 @@ export function SessionsTable({ sessions }: { sessions: SessionSummary[] }) {
 }
 
 /** A titled list of values that each open their own page. */
-export function ValueList({ title, kind, values, empty = 'Nothing recorded.' }: { title: string; kind: Parameters<typeof EntityLink>[0]['kind']; values: string[]; empty?: string }) {
+export function ValueList({ title, kind, values, empty = 'Nothing recorded.' }: { title: string; kind: Parameters<typeof EntityLink>[0]['kind']; values: string[] | undefined; empty?: string }) {
+  if (!values)
+    return (
+      <Panel title={title}>
+        <VStack gap={1.5}>
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} width="60%" height={14} />
+          ))}
+        </VStack>
+      </Panel>
+    )
   return (
     <Panel title={`${title} (${values.length})`}>
       {values.length ? (
@@ -136,14 +165,16 @@ export const eventTimeline = (events: HoneypotEvent[]): TimelineItem[] =>
   }))
 
 /** A group's events inside the app-wide range, as a timeline. */
-export function RangeTimeline({ events }: { events: HoneypotEvent[] }) {
+export function RangeTimeline({ events }: { events: HoneypotEvent[] | undefined }) {
   const range = useRange()
+  if (!events) return <SkeletonBlock height={320} />
   return <Timeline items={eventTimeline(events.filter((e) => inRange(e.timestamp, range)))} />
 }
 
 /** A group's events inside the app-wide range, newest first. */
-export function RangeEvents({ events, action }: { events: HoneypotEvent[]; action?: React.ReactNode }) {
+export function RangeEvents({ events, action }: { events: HoneypotEvent[] | undefined; action?: React.ReactNode }) {
   const range = useRange()
+  if (!events) return <EventsPanel title={`Events · ${rangeLabel(range).toLowerCase()}`} events={undefined} showSource action={action} />
   const shown = events.filter((e) => inRange(e.timestamp, range))
   return (
     <VStack gap={2}>
@@ -164,7 +195,8 @@ const sourceColumns: TableColumn<SourceProfile>[] = [
 ]
 
 /** Source IPs, busiest first, each opening its own page. */
-export function SourcesTable({ sources, empty = 'No source addresses.' }: { sources: SourceProfile[]; empty?: string }) {
+export function SourcesTable({ sources, empty = 'No source addresses.' }: { sources: SourceProfile[] | undefined; empty?: string }) {
+  if (!sources) return <SkeletonTable columns={sourceColumns} rows={10} density="compact" />
   return sources.length ? <Table data={sources} columns={sourceColumns} idKey="ip" density="compact" hasHover /> : <Text type="supporting">{empty}</Text>
 }
 
@@ -189,7 +221,8 @@ const signalColumns: TableColumn<SharedSignal>[] = [
 ]
 
 /** Why these addresses are one group: the signals two or more share. */
-export function SharedSignalsTable({ signals }: { signals: SharedSignal[] }) {
+export function SharedSignalsTable({ signals }: { signals: SharedSignal[] | undefined }) {
+  if (!signals) return <SkeletonTable columns={signalColumns} rows={5} density="compact" />
   return signals.length ? (
     <Table data={signals} columns={signalColumns} idKey="id" density="compact" />
   ) : (
@@ -205,31 +238,70 @@ export function osGuessCaption(guesses: string[]): string {
 /** What a group page opens with: the headline numbers and its newest
  * events. The leaderboards live on the Breakdown tab. `sourcesTab` and
  * `eventsTab` name this entity's tabs for those lists, when it has them. */
-export function GroupOverview({ group, base, sourcesTab, eventsTab }: { group: SourceGroup; base: string; sourcesTab?: string; eventsTab?: string }) {
+export function GroupOverview({ group, base, sourcesTab, eventsTab }: { group: SourceGroup | undefined; base: string; sourcesTab?: string; eventsTab?: string }) {
   return (
     <VStack gap={4}>
       <Grid columns={{ minWidth: 170, repeat: 'fit' }} gap={4}>
-        <StatTile label="Source IPs" value={group.members.length} href={sourcesTab && `${base}/${sourcesTab}`} />
-        <StatTile label="Events" value={group.events.length} href={eventsTab && `${base}/${eventsTab}`} />
-        <StatTile label="Total matches" value={group.totalMatches} caption="honeypot, Suricata, portbridge" />
-        <StatTile label="Tunnel connections" value={group.tunnelConnections} caption={osGuessCaption(group.tunnelOsGuesses)} />
-        <StatTile label="Sensors reached" value={group.sensors.length} href={`${base}/breakdown`} />
+        <StatTile label="Source IPs" value={group?.members.length} href={sourcesTab && `${base}/${sourcesTab}`} />
+        <StatTile label="Events" value={group?.events.length} href={eventsTab && `${base}/${eventsTab}`} />
+        <StatTile label="Total matches" value={group?.totalMatches} caption="honeypot, Suricata, portbridge" />
+        <StatTile label="Tunnel connections" value={group?.tunnelConnections} caption={group ? osGuessCaption(group.tunnelOsGuesses) : ''} />
+        <StatTile label="Sensors reached" value={group?.sensors.length} href={`${base}/breakdown`} />
       </Grid>
-      <EventsPanel title="Newest events" events={group.events.slice(0, 5)} showSource action={eventsTab && <ActionLink href={`${base}/${eventsTab}`}>All events</ActionLink>} empty="No events." />
+      <EventsPanel title="Newest events" events={group?.events.slice(0, 5)} rows={5} showSource action={eventsTab && <ActionLink href={`${base}/${eventsTab}`}>All events</ActionLink>} empty="No events." />
     </VStack>
   )
 }
 
 /** Where the group's traffic went and what it tried, as leaderboards. */
-export function GroupBreakdown({ group }: { group: SourceGroup }) {
+export function GroupBreakdown({ group }: { group: SourceGroup | undefined }) {
   return (
     <Grid columns={{ minWidth: 300, repeat: 'fit' }} gap={4}>
-      <MiniTable title="Sensors" header="Sensor" rows={group.sensors} entity="sensor" />
-      <MiniTable title="Targeted ports" header="Port" rows={group.ports} entity="port" />
-      <MiniTable title="Credentials tried" header="user:password" rows={group.credentials.slice(0, 10)} entity="credential" />
-      <MiniTable title="Commands" header="Command" rows={group.commands.slice(0, 10)} entity="command" />
-      <MiniTable title="Networks" header="Prefix" rows={group.networks.slice(0, 10)} entity="network" />
-      <MiniTable title="Countries" header="Country" rows={group.countries} entity="country" />
+      <MiniTable title="Sensors" header="Sensor" rows={group?.sensors} entity="sensor" />
+      <MiniTable title="Targeted ports" header="Port" rows={group?.ports} entity="port" />
+      <MiniTable title="Credentials tried" header="user:password" rows={group?.credentials.slice(0, 10)} entity="credential" />
+      <MiniTable title="Commands" header="Command" rows={group?.commands.slice(0, 10)} entity="command" />
+      <MiniTable title="Networks" header="Prefix" rows={group?.networks.slice(0, 10)} entity="network" />
+      <MiniTable title="Countries" header="Country" rows={group?.countries} entity="country" />
     </Grid>
   )
+}
+
+/** A block of content still loading, at its real height. */
+export function SkeletonBlock({ height }: { height: number }) {
+  return <Skeleton height={height} />
+}
+
+/** A detail page's body still loading: `count` panels of skeleton lines. */
+export function SkeletonPanels({ count = 2, lines = 5 }: { count?: number; lines?: number }) {
+  return (
+    <Grid columns={{ minWidth: 340, repeat: 'fit' }} gap={4}>
+      {Array.from({ length: count }, (_panel, i) => (
+        <Panel key={i} title={<Skeleton width={160} height={18} />}>
+          <VStack gap={2} aria-busy>
+            {Array.from({ length: lines }, (_, j) => (
+              <Skeleton key={j} width={`${90 - j * 9}%`} height={14} />
+            ))}
+          </VStack>
+        </Panel>
+      ))}
+    </Grid>
+  )
+}
+
+/** Lines of text still loading. */
+export function SkeletonLines({ count = 4 }: { count?: number }) {
+  return (
+    <VStack gap={2} aria-busy>
+      {Array.from({ length: count }, (_, i) => (
+        <Skeleton key={i} width={`${92 - (i % 4) * 11}%`} height={14} />
+      ))}
+    </VStack>
+  )
+}
+
+/** A record as JSON, or a skeleton of its height while it loads. */
+export function JsonBlock({ value, maxHeight = 640 }: { value: unknown; maxHeight?: number }) {
+  if (value === undefined) return <Skeleton height={Math.min(maxHeight, 360)} />
+  return <CodeBlock code={JSON.stringify(value, null, 2)} language="json" maxHeight={maxHeight} />
 }

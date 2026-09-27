@@ -1,3 +1,5 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
 import { Grid } from '@astryxdesign/core/Grid'
 import { VStack } from '@astryxdesign/core/Stack'
@@ -9,11 +11,12 @@ import { Panel } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/payloads/$hash')
 
-export const Route = createFileRoute('/_layout/payloads/$hash/static')({ component: PayloadStatic })
+export const Route = createFileRoute('/_layout/payloads/$hash/static')({ component: PayloadStatic, pendingComponent: PayloadStatic })
 
 /** Bounded static analysis. The sample is never executed here. */
 function PayloadStatic() {
-  const a = parent.useLoaderData().analysis
+  const a = orPending(parent.useLoaderData())?.analysis
+  if (!a) return <SkeletonPanels count={3} />
   return (
     <VStack gap={4}>
       <CodeBlock code={a.preview} title="Hex / ASCII, first 128 bytes" hasCopyButton={false} />

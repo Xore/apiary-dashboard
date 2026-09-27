@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
@@ -16,6 +17,7 @@ export const Route = createFileRoute('/_layout/ioc/$kind/$value')({
   },
   notFoundComponent: () => <NotFound title="Indicator" description="No captured event carries this value." />,
   component: IocLayout,
+  pendingComponent: IocLayout,
 })
 
 const NOUN: Record<string, string> = {
@@ -33,19 +35,21 @@ const NOUN: Record<string, string> = {
 
 /** One indicator and everything that carried it (epic #25). */
 function IocLayout() {
-  const ioc = Route.useLoaderData()
+  const ioc = orPending(Route.useLoaderData())
+  // The kind and the value are in the address.
+  const { kind, value } = Route.useParams()
   return (
     <EntityFrame
-      kind={`Indicator · ${NOUN[ioc.kind] ?? ioc.kind}`}
-      title={ioc.value.length > 80 ? `${ioc.value.slice(0, 79)}…` : ioc.value}
-      basePath={`/ioc/${ioc.kind}/${encodeURIComponent(ioc.value)}`}
-      tokens={<Token size="sm" label={ioc.kind} />}
+      kind={`Indicator · ${(NOUN as Record<string, string | undefined>)[kind] ?? kind}`}
+      title={value.length > 80 ? `${value.slice(0, 79)}…` : value}
+      basePath={`/ioc/${kind}/${encodeURIComponent(value)}`}
+      tokens={ioc && <Token size="sm" label={ioc.kind} />}
       facts={[
-        { label: 'Events', value: formatNumber(ioc.events.length) },
-        { label: 'Source IPs', value: formatNumber(ioc.group.members.length) },
-        { label: 'Sessions', value: formatNumber(ioc.sessions.length) },
-        { label: 'First seen', value: ioc.events.length ? formatDateTime(ioc.events.at(-1)!.timestamp) : '—' },
-        { label: 'Last seen', value: ioc.events.length ? formatDateTime(ioc.events[0].timestamp) : '—' },
+        { label: 'Events', value: ioc && formatNumber(ioc.events.length) },
+        { label: 'Source IPs', value: ioc && formatNumber(ioc.group.members.length) },
+        { label: 'Sessions', value: ioc && formatNumber(ioc.sessions.length) },
+        { label: 'First seen', value: ioc && (ioc.events.length ? formatDateTime(ioc.events.at(-1)!.timestamp) : '—') },
+        { label: 'Last seen', value: ioc && (ioc.events.length ? formatDateTime(ioc.events[0].timestamp) : '—') },
       ]}
     >
       <Outlet />
@@ -61,10 +65,10 @@ function tabsFor(loaded: unknown): ViewTab[] {
   return [
     { id: 'overview', label: 'Overview' },
     { id: 'breakdown', label: 'Breakdown' },
-    { id: 'sources', label: 'Sources', count: ioc.group.members.length },
-    { id: 'sessions', label: 'Sessions', count: ioc.sessions.length },
-    { id: 'events', label: 'Events', count: ioc.events.length },
-    { id: 'payloads', label: 'Payloads', count: ioc.payloads.length },
+    { id: 'sources', label: 'Sources', count: ioc?.group.members.length },
+    { id: 'sessions', label: 'Sessions', count: ioc?.sessions.length },
+    { id: 'events', label: 'Events', count: ioc?.events.length },
+    { id: 'payloads', label: 'Payloads', count: ioc?.payloads.length },
     { id: 'timeline', label: 'Timeline' },
   ]
 }

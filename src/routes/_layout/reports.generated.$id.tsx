@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Button } from '@astryxdesign/core/Button'
 import { Link } from '@astryxdesign/core/Link'
 import { Token } from '@astryxdesign/core/Token'
@@ -27,30 +29,33 @@ export const Route = createFileRoute('/_layout/reports/generated/$id')({
     />
   ),
   component: GeneratedReportPage,
+  pendingComponent: GeneratedReportPage,
 })
 
 function GeneratedReportPage() {
-  const { report: r, definition, template } = Route.useLoaderData()
-  const pdf = reportPdfHref(r)
+  const loaded = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
+  const r = loaded?.report
+  const definition = loaded?.definition
+  const template = loaded?.template
+  const pdf = reportPdfHref({ id })
   return (
     <EntityFrame
       kind="Generated report"
-      title={r.title}
-      basePath={`/reports/generated/${r.id}`}
-      tokens={
-        <Token
+      title={<Pending width={320}>{r && r.title}</Pending>}
+      basePath={`/reports/generated/${encodeURIComponent(id)}`}
+      tokens={r && (<Token
           size="sm"
           label={r.origin}
           color={r.origin === 'schedule' ? 'blue' : 'gray'}
-        />
-      }
+        />)}
       facts={[
-        { label: 'Created', value: formatDateTime(r.createdAt) },
-        { label: 'Template', value: template?.name ?? r.template },
-        { label: 'Size', value: `${Math.round(r.sizeBytes / 1024)} KB` },
+        { label: 'Created', value: r && (formatDateTime(r.createdAt))},
+        { label: 'Template', value: r && (template?.name ?? r.template)},
+        { label: 'Size', value: r && (`${Math.round(r.sizeBytes / 1024)} KB`)},
         {
           label: 'Definition',
-          value: definition ? (
+          value: r && (definition ? (
             <Link href={`/reports/definitions/${definition.id}`}>
               {definition.name}
             </Link>
@@ -58,13 +63,13 @@ function GeneratedReportPage() {
             'deleted'
           ) : (
             'one-off'
-          ),
+          )),
         },
       ]}
     >
       <Panel title="Document" action={<Button label="Open PDF" size="sm" variant="secondary" href={pdf} target="_blank" rel="noopener noreferrer" />}>
         {/* The browser's own PDF viewer; the document is served inline. */}
-        <iframe title={`${r.title} (PDF)`} src={pdf} style={{ width: '100%', height: 'calc(70dvh / var(--ui-zoom, 1))', border: 0, borderRadius: 8 }} />
+        <iframe title={`${r?.title ?? "Report"} (PDF)`} src={pdf} style={{ width: '100%', height: 'calc(70dvh / var(--ui-zoom, 1))', border: 0, borderRadius: 8 }} />
       </Panel>
     </EntityFrame>
   )

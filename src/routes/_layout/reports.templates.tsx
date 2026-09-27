@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Button } from '@astryxdesign/core/Button'
 import { HStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -14,16 +15,17 @@ export const Route = createFileRoute('/_layout/reports/templates')({
   staticData: { viewTabs: reportTabs },
   loader: () => getReports(),
   component: TemplatesPage,
+  pendingComponent: TemplatesPage,
 })
 
 type Row = ReportTemplate & Record<string, unknown>
 
 /** The starting points: what each template includes, and a way to use it. */
 function TemplatesPage() {
-  const data = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
   const navigate = useNavigate()
-  const label = (id: string) => data.elements.find((e) => e.id === id)?.label ?? id
-  const inUse = (id: string) => data.definitions.filter((d) => d.template === id).length
+  const label = (id: string) => data?.elements.find((e) => e.id === id)?.label ?? id
+  const inUse = (id: string) => data?.definitions.filter((d) => d.template === id).length ?? 0
   const use = (id: string) => `/reports/generate?template=${id}`
 
   const columns: TableColumn<Row>[] = [
@@ -49,7 +51,7 @@ function TemplatesPage() {
     <RecordList
       title="Report templates"
       description="Each template preselects the sections a kind of report needs. Pick one to start the Generate wizard from it; every section can still be changed there."
-      rows={data.templates as Row[]}
+      rows={data?.templates as Row[] | undefined}
       columns={columns}
       getId={(row) => row.id}
       getHref={(row) => use(row.id)}

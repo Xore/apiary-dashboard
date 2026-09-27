@@ -1,3 +1,6 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { ReportInspector } from '#/components/details/ProblemReport'
 import { getProblemReports } from '#/data/queries'
@@ -18,22 +21,24 @@ export const Route = createFileRoute('/_layout/problem-reports/$id')({
     />
   ),
   component: ProblemReportPage,
+  pendingComponent: ProblemReportPage,
 })
 
 function ProblemReportPage() {
-  const d = Route.useLoaderData()
+  const d = orPending(Route.useLoaderData())
+  const { id } = Route.useParams()
   return (
     <EntityFrame
       kind="Problem report"
-      title={`Problem on ${d.page}`}
-      basePath={`/problem-reports/${encodeURIComponent(d.id)}`}
+      title={<Pending width={280}>{d && `Problem on ${d.page}`}</Pending>}
+      basePath={`/problem-reports/${encodeURIComponent(id)}`}
       facts={[
-        { label: 'Submitted', value: formatDateTime(d.submittedAt) },
-        { label: 'By', value: d.submittedBy },
-        { label: 'Status', value: d.status },
+        { label: 'Submitted', value: d && formatDateTime(d.submittedAt) },
+        { label: 'By', value: d?.submittedBy },
+        { label: 'Status', value: d?.status },
       ]}
     >
-      <ReportInspector key={d.id} report={d} />
+      {d ? <ReportInspector key={d.id} report={d} /> : <SkeletonPanels />}
     </EntityFrame>
   )
 }

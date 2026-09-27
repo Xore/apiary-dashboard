@@ -1,3 +1,5 @@
+import { GroupOverview, SkeletonPanels } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { attckUrl } from '#/components/DetailBlocks'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
@@ -8,18 +10,22 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
 import { Panel } from '#/components/DashboardBlocks'
-import { GroupOverview } from '#/components/EntityBlocks'
 
 const parent = getRouteApi('/_layout/identities/$id')
 
 export const Route = createFileRoute('/_layout/identities/$id/')({
   loader: ({ params }) => getRelated('identity', params.id),
   component: IdentityOverview,
+  pendingComponent: IdentityOverview,
 })
 
 
 function IdentityOverview() {
-  const { identity: a, group } = parent.useLoaderData()
+  const loaded = orPending(parent.useLoaderData())
+  const related = orPending(Route.useLoaderData())
+  if (!loaded) return <SkeletonPanels count={3} />
+  const a = loaded.identity
+  const group = loaded.group
   return (
     <VStack gap={4}>
       <Panel title="Identity">
@@ -43,7 +49,7 @@ function IdentityOverview() {
         {a.ips.length > 0 && <ActionLink href={`/recordings?ip=${encodeURIComponent(a.ips[0])}`}>Session recordings</ActionLink>}
       </Panel>
       <GroupOverview group={group} base={`/identities/${a.id}`} sourcesTab="members" />
-      <RelatedPanel center={a.id.slice(0, 8)} groups={Route.useLoaderData()} />
+      <RelatedPanel center={a.id.slice(0, 8)} groups={related} />
     </VStack>
   )
 }

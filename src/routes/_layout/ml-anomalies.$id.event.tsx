@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -9,11 +10,14 @@ const parent = getRouteApi('/_layout/ml-anomalies/$id')
 
 export const Route = createFileRoute('/_layout/ml-anomalies/$id/event')({
   component: AnomalyEvent,
+  pendingComponent: AnomalyEvent,
 })
 
 /** The raw event the models scored. */
 function AnomalyEvent() {
-  const { anomaly: a, event } = parent.useLoaderData()
+  const loaded = orPending(parent.useLoaderData())
+  const a = loaded?.anomaly
+  const event = loaded?.event
   if (!event)
     return (
       <Text type="supporting">The source event has aged out of the index.</Text>
@@ -37,7 +41,7 @@ function AnomalyEvent() {
           <EntityLink kind="session" id={event.sessionId} />
         </MetadataListItem>
         <MetadataListItem label="Index">
-          <Text type="code">{a.sourceIndex}</Text>
+          <Text type="code">{a?.sourceIndex}</Text>
         </MetadataListItem>
       </MetadataList>
     </Panel>

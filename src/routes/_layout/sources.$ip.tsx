@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { Token } from '@astryxdesign/core/Token'
 import { Tooltip } from '@astryxdesign/core/Tooltip'
@@ -20,10 +21,11 @@ export const Route = createFileRoute('/_layout/sources/$ip')({
   },
   notFoundComponent: () => <NotFound title="Source IP" description="No events from this address." />,
   component: SourceLayout,
+  pendingComponent: SourceLayout,
 })
 
 function SourceLayout() {
-  const p = Route.useLoaderData()
+  const p = orPending(Route.useLoaderData())
   const { ip } = Route.useParams()
 
   return (
@@ -32,6 +34,7 @@ function SourceLayout() {
       title={ip}
       basePath={`/sources/${ip}`}
       tokens={
+        p && (
         <>
           <EntityLink kind="country" id={p.source.country}>
             <Token size="sm" color="blue" label={p.source.country} />
@@ -48,19 +51,20 @@ function SourceLayout() {
             </Tooltip>
           )}
         </>
+        )
       }
       facts={[
-        { label: 'Network', value: <EntityLink kind="asn" id={p.source.asn}>{`${p.source.asn} · ${p.source.org}`}</EntityLink> },
-        { label: 'First seen', value: formatDateTime(p.source.first) },
-        { label: 'Last seen', value: formatDateTime(p.source.last) },
-        { label: 'Events', value: formatNumber(p.source.events) },
-        { label: 'Risk score', value: String(p.source.riskScore) },
-        ...(p.block ? [{ label: 'Blocked', value: `by ${p.block.by}, ${formatDateTime(p.block.at)}${p.block.expiresAt ? `, expires ${formatDateTime(p.block.expiresAt)}` : ', until lifted'}` }] : []),
+        { label: 'Network', value: p && <EntityLink kind="asn" id={p.source.asn}>{`${p.source.asn} · ${p.source.org}`}</EntityLink> },
+        { label: 'First seen', value: p && formatDateTime(p.source.first) },
+        { label: 'Last seen', value: p && formatDateTime(p.source.last) },
+        { label: 'Events', value: p && formatNumber(p.source.events) },
+        { label: 'Risk score', value: p && String(p.source.riskScore) },
+        ...(p?.block ? [{ label: 'Blocked', value: `by ${p.block.by}, ${formatDateTime(p.block.at)}${p.block.expiresAt ? `, expires ${formatDateTime(p.block.expiresAt)}` : ', until lifted'}` }] : []),
       ]}
       actions={
         <>
           <ActionLink href={`/recordings?ip=${ip}`}>Recordings</ActionLink>
-          <BlockControl ip={ip} blocked={p.blocked} />
+          {p && <BlockControl ip={ip} blocked={p.blocked} />}
         </>
       }
     >

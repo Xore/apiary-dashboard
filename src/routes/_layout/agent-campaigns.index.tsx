@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Grid } from '@astryxdesign/core/Grid'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -6,7 +8,7 @@ import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute } from '@tanstack/react-router'
-import { StatTile } from '#/components/DashboardBlocks'
+import { SkeletonTiles, StatTile } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { SeverityToken } from '#/components/SeverityToken'
 import { getAgentCampaigns } from '#/data/queries'
@@ -21,6 +23,7 @@ export const Route = createFileRoute('/_layout/agent-campaigns/')({
   }),
   loader: () => getAgentCampaigns(),
   component: AgentCampaignsPage,
+  pendingComponent: AgentCampaignsPage,
 })
 
 const columns: TableColumn<AgentCampaign>[] = [
@@ -43,15 +46,15 @@ const columns: TableColumn<AgentCampaign>[] = [
 ]
 
 function AgentCampaignsPage() {
-  const campaigns = Route.useLoaderData()
+  const campaigns = orPending(Route.useLoaderData())
   const { category } = Route.useSearch()
 
   const counts = new Map<string, number>()
-  for (const campaign of campaigns) {
+  for (const campaign of campaigns ?? []) {
     for (const cat of campaign.categories) counts.set(cat, (counts.get(cat) ?? 0) + 1)
   }
   const tiles = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-  const rows = category ? campaigns.filter((campaign) => campaign.categories.includes(category)) : campaigns
+  const rows = category ? campaigns?.filter((campaign) => campaign.categories.includes(category)) : campaigns
 
   return (
     <RecordList
@@ -60,7 +63,7 @@ function AgentCampaignsPage() {
       actions={
         <>
           <Text type="supporting">
-            {category ? `${rows.length} of ${campaigns.length}` : campaigns.length} campaigns
+            <Pending>{campaigns && rows && `${category ? `${rows.length} of ${campaigns.length}` : campaigns.length} campaigns`}</Pending>
           </Text>
           {category && (
             <Token label={`category: ${categoryLabel(category)}`} size="sm" color="blue" href="/agent-campaigns" description="Clear the category filter" />
@@ -75,6 +78,7 @@ function AgentCampaignsPage() {
             description="Every campaign crossed a named trust boundary through a rule in criticality_rules.py, not a model's judgment call."
           />
           <Grid columns={{ minWidth: 180, repeat: 'fit' }} gap={4}>
+            {!campaigns && <SkeletonTiles count={4} />}
             {tiles.map(([cat, count]) => (
               <StatTile key={cat} label={categoryLabel(cat)} value={count} caption="campaigns" href={`/agent-campaigns?category=${cat}`} />
             ))}

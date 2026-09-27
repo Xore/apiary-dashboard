@@ -1,3 +1,4 @@
+import { SkeletonTable } from './SkeletonTable'
 import { HStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -21,17 +22,21 @@ const eventColumns = (showSource: boolean): TableColumn<HoneypotEvent>[] => [
 ]
 
 /** Events around a subject, each linking to its full event page. */
-export function EventsPanel({ title, events, showSource = false, action, empty = 'No events.' }: {
+export function EventsPanel({ title, events, showSource = false, action, empty = 'No events.', rows = 10 }: {
   title: string
-  events: HoneypotEvent[]
+  /** Undefined while loading: the columns and `rows` skeleton rows. */
+  events: HoneypotEvent[] | undefined
   showSource?: boolean
   action?: React.ReactNode
   empty?: string
+  rows?: number
 }) {
   const prefs = usePreferences()
   return (
     <Panel title={title} action={action}>
-      {events.length ? (
+      {!events ? (
+        <SkeletonTable columns={eventColumns(showSource)} rows={rows} density={tableDensity(prefs)} />
+      ) : events.length ? (
         <Table data={events} columns={eventColumns(showSource)} idKey="id" density={tableDensity(prefs)} textOverflow={prefs?.wrapLongValues ? 'wrap' : 'truncate'} />
       ) : (
         <Text type="supporting">{empty}</Text>
@@ -59,10 +64,12 @@ const techniqueColumns: TableColumn<Technique>[] = [
 ]
 
 /** ATT&CK behavior mapping: context about what happened, never attribution. */
-export function TechniquesPanel({ techniques }: { techniques: Technique[] }) {
+export function TechniquesPanel({ techniques }: { techniques: Technique[] | undefined }) {
   return (
     <Panel title="MITRE ATT&CK behavior mapping">
-      {techniques.length ? (
+      {!techniques ? (
+        <SkeletonTable columns={techniqueColumns} rows={4} density="compact" />
+      ) : techniques.length ? (
         <Table data={techniques} columns={techniqueColumns} idKey="id" density="compact" />
       ) : (
         <Text type="supporting">No technique evidence in these events.</Text>

@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Grid } from '@astryxdesign/core/Grid'
@@ -22,6 +23,7 @@ import { formatNumber, formatTime } from '#/lib/format'
 export const Route = createFileRoute('/_layout/ips')({
   loader: () => getSourceProfiles(),
   component: SourcesPage,
+  pendingComponent: SourcesPage,
 })
 
 const columns: TableColumn<SourceProfile>[] = [
@@ -38,10 +40,12 @@ const columns: TableColumn<SourceProfile>[] = [
 /** Where attacks come from, then every source as one scannable row that
  * opens its page. */
 function SourcesPage() {
-  const { sources, mapPoints } = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
+  const sources = data?.sources
+  const mapPoints = data?.mapPoints
   const [filter, setFilter] = useState('')
   const needle = filter.trim().toLowerCase()
-  const rows = sources.filter((s) => !needle || s.ip.includes(needle) || s.org.toLowerCase().includes(needle) || s.country.toLowerCase() === needle)
+  const rows = sources?.filter((s) => !needle || s.ip.includes(needle) || s.org.toLowerCase().includes(needle) || s.country.toLowerCase() === needle)
 
   return (
     <RecordList
@@ -59,20 +63,20 @@ function SourcesPage() {
       summary={
         <Grid columns={{ minWidth: 460, repeat: 'fit' }} gap={4}>
           <Panel title="Attack origins" action={<Text type="supporting">Click a country to see its events</Text>}>
-            <WorldMap points={mapPoints} />
+            <WorldMap points={mapPoints ?? []} />
           </Panel>
           <VStack gap={4}>
             <Grid columns={{ minWidth: 150, repeat: 'fit' }} gap={3}>
-              <StatTile label="Unique source IPs" value={sources.length} />
-              <StatTile label="Countries" value={mapPoints.length} />
-              <StatTile label="Sessions" value={sources.reduce((n, s) => n + s.sessions, 0)} />
-              <StatTile label="Login attempts" value={sources.reduce((n, s) => n + s.logins, 0)} href="/events?kind=login" />
+              <StatTile label="Unique source IPs" value={sources?.length} />
+              <StatTile label="Countries" value={mapPoints?.length} />
+              <StatTile label="Sessions" value={sources?.reduce((n, s) => n + s.sessions, 0)} />
+              <StatTile label="Login attempts" value={sources?.reduce((n, s) => n + s.logins, 0)} href="/events?kind=login" />
             </Grid>
             <Panel title="By country">
               <CountTable
                 header="Country"
                 countHeader="Events"
-                rows={[...mapPoints].sort((a, b) => b.events - a.events).slice(0, 8).map((p) => ({ id: p.country, label: p.country, count: p.events }))}
+                rows={mapPoints && [...mapPoints].sort((a, b) => b.events - a.events).slice(0, 8).map((p) => ({ id: p.country, label: p.country, count: p.events }))}
                 linkTo={(c) => `/events?country=${c}`}
               />
             </Panel>

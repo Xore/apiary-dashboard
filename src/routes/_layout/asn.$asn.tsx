@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { EntityFrame } from '#/components/EntityFrame'
 import { entityTabs } from '#/components/ViewTabs'
@@ -15,22 +17,24 @@ export const Route = createFileRoute('/_layout/asn/$asn')({
   },
   notFoundComponent: () => <NotFound title="Autonomous system" description="No source from this autonomous system was seen." />,
   component: AsnLayout,
+  pendingComponent: AsnLayout,
 })
 
 function AsnLayout() {
-  const a = Route.useLoaderData()
+  const a = orPending(Route.useLoaderData())
+  const { asn } = Route.useParams()
   return (
     <EntityFrame
       kind="Autonomous system"
-      title={a.asn}
-      description={a.orgs.join(', ')}
-      basePath={`/asn/${encodeURIComponent(a.asn)}`}
+      title={<Pending width={320}>{a && a.asn}</Pending>}
+      description={a?.orgs.join(', ')}
+      basePath={`/asn/${encodeURIComponent(asn)}`}
       facts={[
-        { label: 'Source IPs', value: formatNumber(a.group.members.length) },
-        { label: 'Networks', value: formatNumber(a.group.networks.length) },
-        { label: 'Events', value: formatNumber(a.group.events.length) },
-        { label: 'First seen', value: a.group.first ? formatDateTime(a.group.first) : '—' },
-        { label: 'Last seen', value: a.group.last ? formatDateTime(a.group.last) : '—' },
+        { label: 'Source IPs', value: a && (formatNumber(a.group.members.length))},
+        { label: 'Networks', value: a && (formatNumber(a.group.networks.length))},
+        { label: 'Events', value: a && (formatNumber(a.group.events.length))},
+        { label: 'First seen', value: a && (a.group.first ? formatDateTime(a.group.first) : '—')},
+        { label: 'Last seen', value: a && (a.group.last ? formatDateTime(a.group.last) : '—')},
       ]}
     >
       <Outlet />
@@ -46,9 +50,9 @@ function tabsFor(loaded: unknown): ViewTab[] {
   return [
     { id: 'overview', label: 'Overview' },
     { id: 'breakdown', label: 'Breakdown' },
-    { id: 'sources', label: 'Sources', count: a.group.members.length },
-    { id: 'networks', label: 'Networks', count: a.group.networks.length },
-    { id: 'events', label: 'Events', count: a.group.events.length },
+    { id: 'sources', label: 'Sources', count: a?.group.members.length },
+    { id: 'networks', label: 'Networks', count: a?.group.networks.length },
+    { id: 'events', label: 'Events', count: a?.group.events.length },
     { id: 'timeline', label: 'Timeline' },
   ]
 }

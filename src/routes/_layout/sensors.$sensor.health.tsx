@@ -1,3 +1,5 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Text } from '@astryxdesign/core/Text'
@@ -9,12 +11,15 @@ import { formatDateTime, formatNumber } from '#/lib/format'
 
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
-export const Route = createFileRoute('/_layout/sensors/$sensor/health')({ component: SensorHealth })
+export const Route = createFileRoute('/_layout/sensors/$sensor/health')({ component: SensorHealth, pendingComponent: SensorHealth })
 
 const FEED_COLOR = { fresh: 'green', delayed: 'orange', stale: 'orange', silent: 'red' } as const satisfies Record<FeedState, string>
 
 function SensorHealth() {
-  const { detail, feed } = parent.useLoaderData()
+  const loaded = orPending(parent.useLoaderData())
+  if (!loaded) return <SkeletonPanels count={2} />
+  const detail = loaded.detail
+  const feed = loaded.feed
   return (
     <Panel title="Is its data arriving" action={<ActionLink href="/source-health">Source & pipeline health</ActionLink>}>
       {feed ? (

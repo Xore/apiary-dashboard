@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
 import { RecordingDownloads } from '#/components/RecordingDownloads'
 import { EntityFrame } from '#/components/EntityFrame'
@@ -22,13 +23,17 @@ export const Route = createFileRoute('/_layout/recordings/$shasum')({
     />
   ),
   component: RecordingLayout,
+  pendingComponent: RecordingLayout,
 })
 
 /** One terminal recording, shared by every session that produced the same
  * bytes, since bot traffic repeats itself. */
 function RecordingLayout() {
-  const { replay, sessions, attacker } = Route.useLoaderData()
+  const loaded = orPending(Route.useLoaderData())
   const { shasum } = Route.useParams()
+  const replay = loaded?.replay
+  const sessions = loaded?.sessions
+  const attacker = loaded?.attacker
   return (
     <EntityFrame
       kind="Session recording"
@@ -40,20 +45,16 @@ function RecordingLayout() {
       facts={[
         {
           label: 'Duration',
-          value: `${formatNumber(replay.durationSeconds)} s`,
+          value: replay && (`${formatNumber(replay.durationSeconds)} s`),
         },
-        { label: 'Sessions', value: formatNumber(sessions.length) },
+        { label: 'Sessions', value: sessions && formatNumber(sessions.length) },
         {
           label: 'First closed',
-          value: sessions[0] ? formatDateTime(sessions[0].when) : '—',
+          value: sessions && (sessions[0] ? formatDateTime(sessions[0].when) : '—'),
         },
         {
           label: 'Source',
-          value: attacker ? (
-            <EntityLink kind="source" id={attacker.ip} />
-          ) : (
-            'unattributed'
-          ),
+          value: loaded && (attacker ? <EntityLink kind="source" id={attacker.ip} /> : 'unattributed'),
         },
       ]}
     >
@@ -69,7 +70,7 @@ function tabsFor(loaded: unknown): ViewTab[] {
   const { sessions } = data
   return [
     { id: 'playback', label: 'Playback' },
-    { id: 'sessions', label: 'Sessions', count: sessions.length },
+    { id: 'sessions', label: 'Sessions', count: sessions?.length },
     { id: 'attacker', label: 'Attacker' },
   ]
 }

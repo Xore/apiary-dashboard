@@ -1,3 +1,5 @@
+import { SkeletonPanels } from '#/components/EntityBlocks'
+import { orPending } from '#/lib/pending'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -8,11 +10,14 @@ const parent = getRouteApi('/_layout/ml-anomalies/$id')
 
 export const Route = createFileRoute('/_layout/ml-anomalies/$id/scores')({
   component: AnomalyScores,
+  pendingComponent: AnomalyScores,
 })
 
 /** Each detector's say in the composite score. */
 function AnomalyScores() {
-  const { anomaly: a } = parent.useLoaderData()
+  const loaded = orPending(parent.useLoaderData())
+  if (!loaded) return <SkeletonPanels count={1} lines={4} />
+  const a = loaded.anomaly
   const rows = [
     { label: 'Isolation forest', value: a.modelScores.isolationForest },
     { label: 'LSTM autoencoder', value: a.modelScores.lstmAe },
