@@ -13,6 +13,8 @@ export function describeError(error: unknown): string {
       return 'Your session expired. Sign in again, then retry.'
     case 'overloaded':
       return `The backend is busy. Try again${api.retryAfter ? ` in ${api.retryAfter} s` : ' shortly'}.`
+    case 'invalid':
+      return api.detail ?? 'The input was refused. Nothing changed.'
     case 'unavailable':
       return 'The backend did not answer. Nothing changed; try again.'
     default:

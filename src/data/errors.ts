@@ -2,9 +2,9 @@
 // operator's next step differs: wait and retry, sign in again, ask an
 // admin, or accept that the thing is gone.
 
-export type ApiErrorKind = 'unavailable' | 'overloaded' | 'expired' | 'forbidden' | 'locked'
+export type ApiErrorKind = 'unavailable' | 'overloaded' | 'expired' | 'forbidden' | 'locked' | 'invalid'
 
-const STATUS: Record<ApiErrorKind, number> = { unavailable: 502, overloaded: 503, expired: 401, forbidden: 403, locked: 423 }
+const STATUS: Record<ApiErrorKind, number> = { unavailable: 502, overloaded: 503, expired: 401, forbidden: 403, locked: 423, invalid: 400 }
 
 export class ApiError extends Error {
   readonly kind: ApiErrorKind
@@ -13,20 +13,23 @@ export class ApiError extends Error {
   readonly endpoint: string
   /** Seconds the backend asked us to wait, when it said (503 Retry-After). */
   readonly retryAfter?: number
+  /** Why the backend refused the input (400), in words for the operator. */
+  readonly detail?: string
 
-  constructor(kind: ApiErrorKind, endpoint: string, options: { retryAfter?: number } = {}) {
+  constructor(kind: ApiErrorKind, endpoint: string, options: { retryAfter?: number; detail?: string } = {}) {
     // The message carries everything, so the error survives serialization
     // from a server-side loader, where only name and message make it across.
-    super(`${endpoint}: ${STATUS[kind]} ${kind}${options.retryAfter ? ` retry-after=${options.retryAfter}` : ''}`)
+    super(`${endpoint}: ${STATUS[kind]} ${kind}${options.retryAfter ? ` retry-after=${options.retryAfter}` : ''}${options.detail ? ` — ${options.detail}` : ''}`)
     this.name = 'ApiError'
     this.kind = kind
     this.status = STATUS[kind]
     this.endpoint = endpoint
     this.retryAfter = options.retryAfter
+    this.detail = options.detail
   }
 }
 
-const MESSAGE = /^(\w+): \d{3} (unavailable|overloaded|expired|forbidden|locked)(?: retry-after=(\d+))?/
+const MESSAGE = /^(\w+): \d{3} (unavailable|overloaded|expired|forbidden|locked|invalid)(?: retry-after=(\d+))?(?: — (.+))?$/s
 
 /** An ApiError, or one rebuilt from its message: errors thrown in a
  * server-side loader reach the client as plain errors. */
@@ -35,5 +38,5 @@ export function asApiError(error: unknown): ApiError | undefined {
   const message = error instanceof Error ? error.message : typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : ''
   const match = MESSAGE.exec(message)
   if (!match) return undefined
-  return new ApiError(match[2] as ApiErrorKind, match[1], { retryAfter: match[3] ? Number(match[3]) : undefined })
+  return new ApiError(match[2] as ApiErrorKind, match[1], { retryAfter: match[3] ? Number(match[3]) : undefined, detail: match[4] })
 }

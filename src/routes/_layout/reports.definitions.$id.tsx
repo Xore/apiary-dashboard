@@ -82,6 +82,8 @@ function DefinitionPage() {
       actions={<ActionLink href="/reports/library">Report library</ActionLink>}
       facts={[
         { label: 'Schedule', value: describeSchedule(d.schedule) },
+        ...(d.schedule?.nextRunAt ? [{ label: 'Next run', value: formatDateTime(d.schedule.nextRunAt) }] : []),
+        ...(d.schedule?.lastRunAt ? [{ label: 'Last scheduled run', value: formatDateTime(d.schedule.lastRunAt) }] : []),
         { label: 'Created', value: formatDateTime(d.created) },
         { label: 'PDFs produced', value: String(generated.length) },
       ]}

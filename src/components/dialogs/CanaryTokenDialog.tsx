@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Card } from '@astryxdesign/core/Card'
+import { FileInput } from '@astryxdesign/core/FileInput'
 import { FormLayout } from '@astryxdesign/core/FormLayout'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { RadioList, RadioListItem } from '@astryxdesign/core/RadioList'
@@ -14,24 +15,20 @@ import { createCanarytoken } from '#/data/queries'
 import type { CanaryToken, CanaryTokenType } from '#/data/types'
 import { WizardDialog, statusOf } from '../WizardDialog'
 
-// What the extra text field means for the types that take one.
-const TEXT_FIELD: Record<string, { label: string; placeholder: string; required: boolean }> = {
-  qr_code: { label: 'Text or URL to encode', placeholder: 'https://wifi.example.test/guest', required: false },
-  clonedsite: { label: 'Domain of the real site', placeholder: 'portal.example.test', required: true },
-}
 
 export function CanaryTokenDialog({ types, isOpen, onOpenChange, onCreated }: { types: CanaryTokenType[]; isOpen: boolean; onOpenChange: (open: boolean) => void; onCreated: (token: CanaryToken) => void }) {
-  const [type, setType] = useState('aws_keys')
+  const [type, setType] = useState(types[0].type)
   const [memo, setMemo] = useState('')
-  const [text, setText] = useState('')
+  const [snippet, setSnippet] = useState('')
+  const [image, setImage] = useState<File | null>(null)
   const selected = types.find((t) => t.type === type) ?? types[0]
-  const field = TEXT_FIELD[type] as (typeof TEXT_FIELD)[string] | undefined
 
   const reset = (open: boolean) => {
     if (!open) {
-      setType('aws_keys')
+      setType(types[0].type)
       setMemo('')
-      setText('')
+      setSnippet('')
+      setImage(null)
     }
     onOpenChange(open)
   }
@@ -42,7 +39,17 @@ export function CanaryTokenDialog({ types, isOpen, onOpenChange, onCreated }: { 
       isOpen={isOpen}
       onOpenChange={reset}
       finishLabel="Create token"
-      onFinish={async () => onCreated(await createCanarytoken({ type, memo: memo.trim(), text: text.trim() || undefined }))}
+      onFinish={async () =>
+        onCreated(
+          await createCanarytoken({
+            type,
+            memo: memo.trim(),
+            ...(selected.supportsSnippet && snippet.trim() ? { snippet: snippet.trim() } : {}),
+            // Mock: the platform would receive the file; only its name is sent.
+            ...(selected.requiresUpload && image ? { imageName: image.name } : {}),
+          }),
+        )
+      }
       steps={[
         {
           label: 'Type',
@@ -59,12 +66,17 @@ export function CanaryTokenDialog({ types, isOpen, onOpenChange, onCreated }: { 
           label: 'Details',
           errors: {
             ...(memo.trim() ? {} : { memo: 'Say where you will plant it; the alert shows this.' }),
-            ...(field?.required && !text.trim() ? { text: `${field.label} is needed for this type.` } : {}),
+            ...(selected.requiresUpload && !image ? { image: 'Choose the image the token serves.' } : {}),
           },
           render: (shown) => (
             <FormLayout defaultOptionality="optional">
-              <TextInput label="Memo" isRequired value={memo} onChange={setMemo} placeholder="AWS keys in home/deploy/.aws/credentials on cowrie" description="What the alert says when the token fires, so name the place and the host." status={statusOf(shown, 'memo')} />
-              {field && <TextInput label={field.label} isRequired={field.required} value={text} onChange={setText} placeholder={field.placeholder} status={statusOf(shown, 'text')} />}
+              <TextInput label="Memo" isRequired value={memo} onChange={setMemo} placeholder="Salaries.docx on the SMB share of fileserver01" description="What the alert says when the token fires, so name the place and the host." status={statusOf(shown, 'memo')} />
+              {selected.requiresUpload && (
+                <FileInput label="Image" isRequired accept="image/png,image/jpeg,image/gif" value={image} onChange={(file) => setImage(Array.isArray(file) ? (file[0] ?? null) : file)} description="The picture the token serves; loading it fires the alert." status={statusOf(shown, 'image')} />
+              )}
+              {selected.supportsSnippet && (
+                <TextInput label="Text snippet" value={snippet} onChange={setSnippet} placeholder="Q3 salary adjustments, final" description="A line of text inside the document, so it looks lived-in when opened." />
+              )}
             </FormLayout>
           ),
         },
@@ -77,7 +89,8 @@ export function CanaryTokenDialog({ types, isOpen, onOpenChange, onCreated }: { 
                 <MetadataList orientation="vertical">
                   <MetadataListItem label="Type">{selected.label}</MetadataListItem>
                   <MetadataListItem label="Memo">{memo.trim()}</MetadataListItem>
-                  {field && text.trim() && <MetadataListItem label={field.label}>{text.trim()}</MetadataListItem>}
+                  {selected.requiresUpload && image && <MetadataListItem label="Image">{image.name}</MetadataListItem>}
+                  {selected.supportsSnippet && snippet.trim() && <MetadataListItem label="Text snippet">{snippet.trim()}</MetadataListItem>}
                 </MetadataList>
               </Card>
               <Banner status="info" title="The token is live as soon as it is created" description="Its URL and any file to plant appear on the page once this closes." />

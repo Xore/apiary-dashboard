@@ -21,6 +21,7 @@ const READING: Record<ApiErrorKind | 'unknown', Reading> = {
   expired: { icon: ArrowRightEndOnRectangleIcon, title: 'Your session expired', description: 'Sign in again to continue; you come back to this page.' },
   locked: { icon: LockClosedIcon, title: 'The dashboard is read-only', description: 'An admin has frozen changes for everyone. Reading still works.' },
   forbidden: { icon: LockClosedIcon, title: 'Not available to your role', description: 'This needs the admin role. Ask an admin, or open a page your role can see.' },
+  invalid: { icon: ExclamationTriangleIcon, title: 'The request was refused', description: 'The backend did not accept what this page asked for (400). Check the address or the filters.' },
   unknown: { icon: ExclamationTriangleIcon, title: 'This page failed to load', description: 'The request failed. Nothing here is cached, so retrying asks again.' },
 }
 

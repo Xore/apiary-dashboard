@@ -4,6 +4,7 @@
 // scripts/gen-queries.ts), run in the page's scenario by ./backend.ts.
 // Wiring the real backend replaces what answers behind those functions;
 // the signatures here are the contract.
+import { ApiError } from './errors'
 import { ghidraArtifacts, sandboxArtifacts, sizeOf } from './mock/artifacts'
 import type { ArtifactFile } from './mock/artifacts'
 import { EVENTS, MOCK_USER, PASSWORDS, SENSORS, SOURCES, USERNAMES, credentialOf } from './mock/fixtures'
@@ -29,6 +30,7 @@ import {
 } from './mock/evidence'
 import {
   AUDIT_LOG,
+  OPERATORS,
   BLOCKED_IPS,
   CONFIG_HISTORY,
   DEAD_LETTERS,
@@ -63,7 +65,7 @@ import { AGENT_CAMPAIGNS, AUTH_FAILURES, LLM_ANALYSES, ML_ANOMALIES, MODEL_HEALT
 import { OVERVIEW_VIEWS } from './mock/overview'
 import { readingOf, sensorReading } from './mock/sensors'
 import { MOCK_NOW, createRng } from './mock/random'
-import { generatePassword, inRange, redact } from './shared'
+import { generatePassword, inRange, nextScheduledRun, redact } from './shared'
 import { clusterHref } from '#/lib/entities'
 import type {
   AgentCampaign,
@@ -622,7 +624,10 @@ export async function getReports(): Promise<ReportsData> {
 /** Mock write: creates (empty id) or replaces a definition. */
 export async function saveReportDefinition(definition: ReportDefinition): Promise<ReportDefinition> {
   await mockDelay()
-  const saved = { ...structuredClone(definition), id: definition.id || `def-${Date.now().toString(36)}`, created: definition.created || new Date(MOCK_NOW).toISOString() }
+  const draft = structuredClone(definition)
+  // The scheduler recomputes the next run from the saved schedule.
+  const schedule = draft.schedule ? { ...draft.schedule, nextRunAt: nextScheduledRun(draft.schedule, MOCK_NOW) } : null
+  const saved = { ...draft, schedule, id: definition.id || `def-${Date.now().toString(36)}`, created: definition.created || new Date(MOCK_NOW).toISOString() }
   const index = REPORT_DEFINITIONS.findIndex((d) => d.id === saved.id)
   if (index >= 0) REPORT_DEFINITIONS[index] = saved
   else REPORT_DEFINITIONS.unshift(saved)
@@ -712,7 +717,7 @@ export async function previewReport(definition: ReportDefinition): Promise<Repor
     payloads: events.filter((e) => DOWNLOAD_HASH.has(e.id)).length,
     campaigns: NETWORK_CAMPAIGNS.filter((c) => [...sources].some((x) => membersOfCidr(c.cidr)?.includes(x))).length,
     attck: techniquesFor(events).length,
-    appendix: Math.min(events.length, 500),
+    appendix: Math.min(events.length, definition.appendixLimit),
   }
   // The first rows each section prints, so the review step shows real content.
   const top = (values: Array<string | undefined>): Array<[string, string]> => {
@@ -804,8 +809,13 @@ export async function getCanarytokens(): Promise<{ types: CanaryTokenType[]; tok
 }
 
 /** Mock write: mints a token as the self-hosted Canarytokens platform would. */
-export async function createCanarytoken(input: { type: string; memo: string; text?: string }): Promise<CanaryToken> {
+export async function createCanarytoken(input: { type: string; memo: string; snippet?: string; imageName?: string }): Promise<CanaryToken> {
   await mockDelay()
+  // What the platform itself refuses, before anything is minted.
+  const kind = CANARY_TYPES.find((t) => t.type === input.type)
+  if (!kind) throw new ApiError('invalid', 'createCanarytoken', { detail: `Unknown token type ${input.type}.` })
+  if (kind.requiresUpload && !input.imageName) throw new ApiError('invalid', 'createCanarytoken', { detail: `${kind.label} needs an image to serve.` })
+  if (input.snippet && !kind.supportsSnippet) throw new ApiError('invalid', 'createCanarytoken', { detail: `${kind.label} does not take a text snippet.` })
   const id = Array.from(crypto.getRandomValues(new Uint8Array(13)), (b) => b.toString(16).padStart(2, '0')).join('').slice(0, 25)
   const token: CanaryToken = {
     id,
@@ -815,7 +825,8 @@ export async function createCanarytoken(input: { type: string; memo: string; tex
     hostname: `${id}.canary.example.test`,
     createdAt: new Date(MOCK_NOW).toISOString(),
     createdBy: MOCK_USER.name,
-    artifact: ['aws_keys', 'kubeconfig', 'ms_word', 'pdf', 'qr_code'].includes(input.type) ? `${input.type}-${id.slice(0, 6)}` : undefined,
+    // A web image is served from the platform, not planted as a file.
+    artifact: input.type === 'web_image' ? undefined : `${input.type}-${id.slice(0, 6)}`,
   }
   CANARY_TOKENS.unshift(token)
   return token
@@ -1149,6 +1160,7 @@ export async function getSettings(): Promise<SettingsData> {
   await mockDelay()
   return {
     user: MOCK_USER,
+    users: OPERATORS.map((o) => ({ ...o })),
     preferences: { ...PREFERENCES },
     services: SERVICES.map((s) => ({ ...s })),
     history: [...CONFIG_HISTORY],

@@ -571,7 +571,11 @@ export interface ReportDefinition extends Record<string, unknown> {
   /** Each filter matches any of its values; an empty list means no filter. */
   scope: { window: string; ip: string[]; sensor: string[]; port: string[]; signature: string[] }
   branding: { title: string; author: string; headerLeft: string; headerRight: string; footerLeft: string; classification: string }
-  schedule: { frequency: ReportFrequency; hour: number; minute: number; weekday: number; monthDay: number } | null
+  /** When it runs by itself, and (kept by the scheduler) when it last ran
+   * and runs next. */
+  schedule: { frequency: ReportFrequency; hour: number; minute: number; weekday: number; monthDay: number; lastRunAt?: string; nextRunAt?: string } | null
+  /** At most this many rows in each table of the appendix. */
+  appendixLimit: number
   created: string
 }
 
@@ -673,7 +677,10 @@ export interface CanaryTokenType {
   type: string
   label: string
   description: string
-  needs?: 'text' | 'image'
+  /** Minting it needs a file from the operator (the custom web image). */
+  requiresUpload: boolean
+  /** The document can carry a line of the operator's text, to look lived-in. */
+  supportsSnippet: boolean
 }
 
 export interface BaitCredential extends Record<string, unknown> {
@@ -1056,8 +1063,20 @@ export interface AuditEntry extends Record<string, unknown> {
   result: 'ok' | 'rejected'
 }
 
+/** Someone who has signed in, as the session store saw them (read only:
+ * accounts live in the identity provider). */
+export interface DashboardOperator {
+  subject: string
+  username: string
+  name: string
+  role: 'admin' | 'viewer'
+  firstSeenAt: string
+  lastSeenAt: string
+}
+
 export interface SettingsData {
   user: SessionUser
+  users: DashboardOperator[]
   preferences: Preferences
   services: ServiceStatus[]
   history: ConfigRevision[]
