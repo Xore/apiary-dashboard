@@ -17,9 +17,10 @@ import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
+import { Tooltip } from '@astryxdesign/core/Tooltip'
 import { MiniTable, Panel, StatTile } from '../DashboardBlocks'
 import { TechniquesPanel } from '../DetailBlocks'
-import type { SandboxRun, WindowsForensics } from '#/data/types'
+import type { GoldenImageStatus, SandboxRun, WindowsForensics } from '#/data/types'
 import { AnalyzerSection } from './AnalyzerSection'
 import { queuePayloadAction } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
@@ -334,6 +335,27 @@ function Raw({ run }: { run: SandboxRun }) {
 
 // ---- The result -------------------------------------------------------------------
 
+/** What the Windows golden image means for the next detonation: nothing
+ * when it is fine (no news), otherwise why a rerun may come back thin. It
+ * never blocks the rerun. */
+function goldenImageNote(g: GoldenImageStatus): { color: 'red' | 'orange' | 'default'; label: string; detail: string } | null {
+  if (g.error) return { color: 'red', label: 'Golden image missing', detail: g.error }
+  if (g.staleIsoEval) return { color: 'red', label: `Golden image ${g.ageDays} d old`, detail: 'The evaluation ISO it was built from has likely expired (90-day limit): a full rebuild is due.' }
+  if (g.staleMonthly) return { color: 'orange', label: `Golden image ${g.ageDays} d old`, detail: `Past the monthly rebuild cadence. Built ${formatDateTime(g.builtAt)}, checked ${formatDateTime(g.checkedAt)}.` }
+  if (g.checksumWritten && !g.checksumVerified) return { color: 'default', label: 'Checksum unverified', detail: 'Not yet verified against a live clone this build.' }
+  return null
+}
+
+function GoldenImageNote({ image }: { image: GoldenImageStatus }) {
+  const note = goldenImageNote(image)
+  if (!note) return null
+  return (
+    <Tooltip content={note.detail} focusTrigger="always">
+      <Token size="sm" color={note.color} label={note.label} />
+    </Tooltip>
+  )
+}
+
 export function SandboxResult({ run, section }: { run: SandboxRun; section: SandboxSection }) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const isAdmin = useIsAdmin()
@@ -349,6 +371,7 @@ export function SandboxResult({ run, section }: { run: SandboxRun; section: Sand
       actions={
         <HStack gap={2} vAlign="center">
           <Token size="sm" color={VERDICT_COLOR[run.verdict]} label={run.verdict} />
+          {run.goldenImage && <GoldenImageNote image={run.goldenImage} />}
           <Button label="Re-analyze" size="sm" variant="secondary" isDisabled={!isAdmin} tooltip={isAdmin ? undefined : ADMIN_REQUIRED} onClick={() => setConfirmOpen(true)} />
         </HStack>
       }

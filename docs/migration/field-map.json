@@ -51,5 +51,34 @@
   },
   "tty-replay.$shasum.tsx": {
     "replay.ttylog_base64": "waived: the raw ttylog transport; the rewrite's Replay carries the decoded frames"
+  },
+  "payload-analysis.$hash.tsx": {
+    "detail.hex_preview": "CapturedPayload.preview, on the Static tab",
+    "status.configured": "SandboxRun.goldenImage (absent when unconfigured)",
+    "status.built_at": "GoldenImageStatus.builtAt",
+    "status.age_days": "GoldenImageStatus.ageDays",
+    "status.checksum_written": "GoldenImageStatus.checksumWritten",
+    "status.checksum_verified": "GoldenImageStatus.checksumVerified",
+    "status.stale_monthly": "GoldenImageStatus.staleMonthly",
+    "status.stale_iso_eval": "GoldenImageStatus.staleIsoEval",
+    "status.checked_at": "GoldenImageStatus.checkedAt"
+  },
+  "github-analysis.$sha.tsx": {
+    "run.report_commit": "GithubAnalysis.commit.sha",
+    "run.run_id": "GithubAnalysis.runUrl",
+    "run.sample_path": "GithubAnalysis.repoPath",
+    "run.scanners[].positives": "GithubAnalysis.results[].verdict, one engine per row; detections and engines in total",
+    "run.yara_auto_rules": "GithubAnalysis.yaraRules",
+    "run.daily_cap": "GithubAnalysis.dailyCap",
+    "run.report_pdf": "GithubAnalysis.reportPdf",
+    "run.requested_by": "GithubAnalysis.requestedBy",
+    "run.view_url": "GithubAnalysis.viewUrl"
+  },
+  "cape.$sha.tsx": {
+    "run.report_summary.summary_keys": "CapeRun.sections",
+    "run.report_summary.debug_log": "CapeRun.log"
+  },
+  "revdeck.$sha.tsx": {
+    "run.revdeck.tool_calls": "RevDeckRun.steps.length"
   }
 }

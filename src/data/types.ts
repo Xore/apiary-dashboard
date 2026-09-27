@@ -1096,7 +1096,24 @@ export interface PayloadAnalysis {
   github?: { status: GithubStatus; detections: number; engines: number }
 }
 
+/** The Windows sandbox's golden image: how old it is and whether its
+ * checksum was verified against a live clone. Absent when unconfigured. */
+export interface GoldenImageStatus {
+  builtAt: string
+  ageDays: number
+  checksumWritten: boolean
+  checksumVerified: boolean
+  /** Past the monthly rebuild cadence. */
+  staleMonthly: boolean
+  /** Built from an evaluation ISO that has likely expired (90 days). */
+  staleIsoEval: boolean
+  checkedAt: string
+  error?: string
+}
+
 export interface SandboxRun {
+  /** On Windows runs: the image the next detonation would start from. */
+  goldenImage?: GoldenImageStatus
   job: string
   hash: string
   at: string
@@ -1224,6 +1241,8 @@ export interface RevDeckRun extends Record<string, unknown> {
   steps: Array<{ tool: string; input: string; output: string }>
   citations: { valid: string[]; invalid: string[] }
   error?: string
+  /** The RevDeck workflow that drove the walk (which prompt and tool set). */
+  workflow: string
 }
 
 export interface CapeRun extends Record<string, unknown> {
@@ -1236,6 +1255,18 @@ export interface CapeRun extends Record<string, unknown> {
   dumps: string[]
   config: Record<string, string>
   log: string
+  /** CAPE's own task number, and its raw task status (`reported`,
+   * `failed_analysis`, …). */
+  taskId: number
+  capeStatus: string
+  /** CAPE's verdict word for the score (Malicious, Suspicious, Clean). */
+  malstatus: string
+  /** API calls the behavior log recorded. */
+  totalCalls: number
+  /** The report's top-level sections, so a missing one is visible. */
+  sections: string[]
+  /** Errors from CAPE's own analysis log. */
+  debugErrors: string[]
 }
 
 export type GithubStatus = 'published' | 'dry_run' | 'denylist_blocked' | 'quota_exceeded'
@@ -1255,6 +1286,13 @@ export interface GithubAnalysis extends Record<string, unknown> {
   /** The commit that published the sample, and the Actions run that scanned it. */
   commit?: { sha: string; url: string }
   runUrl?: string
+  /** Who asked for the publication. */
+  requestedBy: string
+  /** The publications-per-day cap, reported when it refused this one. */
+  dailyCap?: number
+  /** The report the Actions run rendered, and where it can be read. */
+  reportPdf?: string
+  viewUrl?: string
 }
 
 // ---- Overview views --------------------------------------------------------
