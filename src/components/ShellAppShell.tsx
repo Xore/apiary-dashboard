@@ -15,7 +15,7 @@ import { LiveToasts } from './LiveToasts'
 import { ProblemReportButton } from './ProblemReportButton'
 import { SettingsDialog } from './SettingsDialog'
 import type { PaneId } from './SettingsDialog'
-import { ShellBanners, ShellFooter } from './ShellNotices'
+import { ShellBanners, ShellFloatingActions } from './ShellNotices'
 import { ShellSideNav } from './ShellSideNav'
 import { PhoneViewBar, ShellTopNav } from './ShellTopNav'
 import { rememberViewportWidth } from '#/lib/viewport'
@@ -104,7 +104,7 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           <div key={timeKey} style={{ flex: 1, minHeight: 0 }}>
             <Outlet />
           </div>
-          <ShellFooter config={config} />
+
         </div>
       </AppShell>
       <CommandPalette
@@ -122,9 +122,9 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           else void navigate({ to })
         }}
       />
+      <ShellFloatingActions config={config} problemReport={(compact) => <ProblemReportButton enabled={config.behavior.showProblemReportButton} compact={compact} />} />
       <LiveToasts />
       <EventNotifications />
-      <ProblemReportButton />
       {settingsPane && <SettingsDialog pane={settingsPane} onPane={onSettingsPane} onClose={() => onSettingsPane(undefined)} />}
     </ToastViewport>
   )

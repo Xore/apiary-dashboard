@@ -18,7 +18,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { TextArea } from '@astryxdesign/core/TextArea'
 import { ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/outline'
 import { useRouterState } from '@tanstack/react-router'
-import { getSettings, submitProblemReport } from '#/data/queries'
+import { submitProblemReport } from '#/data/queries'
 import { API_CALL } from '#/data/scenarios'
 import type { ApiCallRecord } from '#/data/scenarios'
 import { describeError } from '#/lib/actionError'
@@ -87,13 +87,8 @@ function useCapture(enabled: boolean) {
   return { page, trail, consoleErrors, failures, calls }
 }
 
-export function ProblemReportButton() {
-  const [enabled, setEnabled] = useState(false)
-  useEffect(() => {
-    void getSettings()
-      .then((s) => setEnabled(s.config.behavior.showProblemReportButton))
-      .catch(() => setEnabled(true))
-  }, [])
+/** In the footer, when the admin switch (Dashboard defaults) allows it. */
+export function ProblemReportButton({ enabled, compact = false }: { enabled: boolean; compact?: boolean }) {
   const capture = useCapture(enabled)
   const [open, setOpen] = useState(false)
   const [expected, setExpected] = useState('')
@@ -152,18 +147,17 @@ export function ProblemReportButton() {
 
   return (
     <>
-      <div style={{ position: 'fixed', insetInlineEnd: 16, insetBlockEnd: 16, zIndex: 20 }}>
-        <Button
-          label="Report a problem"
-          variant="secondary"
-          size="sm"
-          icon={<Icon icon={ChatBubbleLeftEllipsisIcon} size="sm" />}
-          onClick={() => {
-            reset()
-            setOpen(true)
-          }}
-        />
-      </div>
+      <Button
+        label="Report a problem"
+        variant="secondary"
+        size="sm"
+        isIconOnly={compact}
+        icon={<Icon icon={ChatBubbleLeftEllipsisIcon} size="sm" />}
+        onClick={() => {
+          reset()
+          setOpen(true)
+        }}
+      />
       <Dialog isOpen={open} onOpenChange={setOpen} width={560} purpose="form">
         <Layout
           padding={4}

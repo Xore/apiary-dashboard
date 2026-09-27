@@ -2,10 +2,15 @@
 // expires, dismissible for the session), maintenance and read-only notices,
 // and a footer with the footer text, help link and privacy notice.
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
-import { Link } from '@astryxdesign/core/Link'
-import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
+import { Button } from '@astryxdesign/core/Button'
+import { Icon } from '@astryxdesign/core/Icon'
+import { Popover } from '@astryxdesign/core/Popover'
+import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
+import { ArrowTopRightOnSquareIcon, BookOpenIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
+import { useMediaQuery } from '@astryxdesign/core/hooks'
 import type { ShellConfig } from '#/data/types'
 
 const STATUS = { info: 'info', success: 'success', warning: 'warning', danger: 'error' } as const
@@ -49,23 +54,36 @@ export function ShellBanners({ config }: { config: ShellConfig }) {
   )
 }
 
-export function ShellFooter({ config }: { config: ShellConfig }) {
+/** The shell's standing actions, floating over the content, pinned to the
+ * bottom right: how evidence is handled, the help link, and reporting a
+ * problem. One group, so they never overlap each other. */
+export function ShellFloatingActions({ config, problemReport }: { config: ShellConfig; problemReport?: (compact: boolean) => ReactNode }) {
   const { presentation: p } = config
-  if (!p.footerText && !p.helpLinkUrl && !p.privacyNotice) return null
+  // On a phone the labels would run off the screen: icons, named for
+  // assistive tech and on hover.
+  const compact = useMediaQuery('(max-width: 640px)')
+  if (!p.helpLinkUrl && !p.privacyNotice && !problemReport) return null
   return (
-    <HStack gap={3} vAlign="center" wrap="wrap" style={{ padding: '6px 24px', borderTop: '1px solid var(--color-border)' }}>
-      {p.footerText && <Text type="supporting">{p.footerText}</Text>}
-      <StackItem size="fill" />
+    <HStack gap={2} vAlign="center" style={{ position: 'fixed', insetInlineEnd: 16, insetBlockEnd: 16, zIndex: 20 }}>
       {p.privacyNotice && (
-        <span title={p.privacyNotice}>
-          <Text type="supporting">Evidence handling</Text>
-        </span>
+        <Popover label="Evidence handling" placement="above" content={<Text>{p.privacyNotice}</Text>}>
+          <Button label="Evidence handling" size="sm" variant="secondary" isIconOnly={compact} icon={<Icon icon={ShieldCheckIcon} size="sm" />} />
+        </Popover>
       )}
       {p.helpLinkUrl && (
-        <Link href={p.helpLinkUrl} target="_blank" rel="noopener noreferrer">
-          {p.helpLinkLabel || 'Help'}
-        </Link>
+        <Button
+          label={p.helpLinkLabel || 'Help'}
+          href={p.helpLinkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          size="sm"
+          variant="secondary"
+          isIconOnly={compact}
+          icon={compact ? <Icon icon={BookOpenIcon} size="sm" /> : undefined}
+          endContent={compact ? undefined : <Icon icon={ArrowTopRightOnSquareIcon} size="sm" />}
+        />
       )}
+      {problemReport?.(compact)}
     </HStack>
   )
 }

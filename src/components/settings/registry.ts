@@ -171,7 +171,7 @@ export const SETTINGS: Setting[] = [
   { id: 'sourceStaleMinutes', panel: 'behavior', title: 'Stale after', description: 'A sensor feed with nothing newer is flagged stale.', icon: ClockIcon, keywords: 'source health threshold' },
   { id: 'mapProvider', panel: 'behavior', title: 'Map provider', description: 'The tile source behind every map.', icon: MapIcon, keywords: 'basemap openstreetmap' },
   { id: 'showMlPanels', panel: 'behavior', title: 'ML panels', description: 'Machine-learning scores on overview and detail pages.', icon: CpuChipIcon, keywords: 'machine learning anomalies experimental' },
-  { id: 'showProblemReportButton', panel: 'behavior', title: 'Report a problem button', description: 'The floating button that captures what led up to a problem.', icon: MegaphoneIcon, keywords: 'feedback bug' },
+  { id: 'showProblemReportButton', panel: 'behavior', title: 'Report a problem button', description: 'The footer button that captures what led up to a problem.', icon: MegaphoneIcon, keywords: 'feedback bug' },
   { id: 'maintenanceMode', panel: 'behavior', title: 'Maintenance mode', description: 'Tells every user the platform is being worked on.', icon: AdjustmentsHorizontalIcon, keywords: 'banner downtime' },
   { id: 'readOnly', panel: 'behavior', title: 'Read only', description: 'Freezes every write for everyone, admins included.', icon: NoSymbolIcon, keywords: 'freeze lock' },
   { id: 'reporter', panel: 'honeypot', title: 'Report sender', description: 'What the abuse-report sender attempted and sent, by its own counters.', icon: EnvelopeIcon, keywords: 'abuseipdb reporter sent suppressed dry run failed cooldown' },
