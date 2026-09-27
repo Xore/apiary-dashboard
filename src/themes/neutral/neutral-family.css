@@ -741,9 +741,63 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
   }
 }
 
-@scope (:where([data-astryx-theme="neutral"], [data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
+@scope (:where([data-astryx-theme="neutral"])) to ([data-astryx-theme]) {
   :scope {
     --color-neutral: light-dark(#0000000F, #ffffff1A);
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-neutral: light-dark(rgba(47, 44, 39, 0.04), rgba(233, 228, 223, 0.06));
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-neutral: light-dark(rgba(47, 43, 39, 0.04), rgba(233, 230, 223, 0.06));
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-neutral: light-dark(rgba(41, 39, 47, 0.04), rgba(227, 223, 233, 0.06));
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-neutral: light-dark(rgba(45, 47, 39, 0.04), rgba(230, 233, 223, 0.06));
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-neutral: light-dark(rgba(39, 47, 46, 0.04), rgba(209, 224, 222, 0.06));
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-neutral: light-dark(rgba(39, 44, 47, 0.04), rgba(223, 230, 233, 0.06));
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-neutral: light-dark(rgba(47, 39, 41, 0.04), rgba(233, 223, 226, 0.06));
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-neutral: light-dark(rgba(39, 47, 39, 0.04), rgba(223, 233, 224, 0.06));
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-neutral: light-dark(rgba(39, 43, 47, 0.04), rgba(223, 227, 233, 0.06));
   }
 }
 
@@ -1110,7 +1164,7 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
 
 @scope (:where([data-astryx-theme="neutral-amber"])) to ([data-astryx-theme]) {
   :scope {
-    --color-text-accent: light-dark(#825d0e, #d9a842);
+    --color-text-accent: light-dark(#73540d, #deb256);
   }
 }
 
@@ -1122,7 +1176,7 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
 
 @scope (:where([data-astryx-theme="neutral-claude"])) to ([data-astryx-theme]) {
   :scope {
-    --color-text-accent: light-dark(#9b4f3a, #de866b);
+    --color-text-accent: light-dark(#a2472b, #e38f74);
   }
 }
 
@@ -1134,7 +1188,7 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
 
 @scope (:where([data-astryx-theme="neutral-lavender"])) to ([data-astryx-theme]) {
   :scope {
-    --color-text-accent: light-dark(#6d4fc4, #ab93e3);
+    --color-text-accent: light-dark(#613fc0, #baa7e8);
   }
 }
 
@@ -1146,7 +1200,7 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
 
 @scope (:where([data-astryx-theme="neutral-lime"])) to ([data-astryx-theme]) {
   :scope {
-    --color-text-accent: light-dark(#536d1b, #b3cf5a);
+    --color-text-accent: light-dark(#4d6519, #b3cf5a);
   }
 }
 
@@ -1158,7 +1212,7 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
 
 @scope (:where([data-astryx-theme="neutral-neon"])) to ([data-astryx-theme]) {
   :scope {
-    --color-text-accent: light-dark(#0c7162, #3ee6c8);
+    --color-text-accent: light-dark(#0b675a, #3ee6c8);
   }
 }
 
@@ -1170,7 +1224,7 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
 
 @scope (:where([data-astryx-theme="neutral-ocean"])) to ([data-astryx-theme]) {
   :scope {
-    --color-text-accent: light-dark(#1d69a0, #55a7d8);
+    --color-text-accent: light-dark(#195d90, #7dbbe2);
   }
 }
 
@@ -1182,7 +1236,7 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
 
 @scope (:where([data-astryx-theme="neutral-rose"])) to ([data-astryx-theme]) {
   :scope {
-    --color-text-accent: light-dark(#a0435e, #d98298);
+    --color-text-accent: light-dark(#903c56, #e09ead);
   }
 }
 
@@ -1194,7 +1248,7 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
 
 @scope (:where([data-astryx-theme="neutral-sage"])) to ([data-astryx-theme]) {
   :scope {
-    --color-text-accent: light-dark(#456e3a, #8fb27b);
+    --color-text-accent: light-dark(#3f6534, #a4c090);
   }
 }
 
@@ -1206,7 +1260,7 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
 
 @scope (:where([data-astryx-theme="neutral-slate"])) to ([data-astryx-theme]) {
   :scope {
-    --color-text-accent: light-dark(#44618a, #8aa2c0);
+    --color-text-accent: light-dark(#3e5b81, #9cb4cc);
   }
 }
 

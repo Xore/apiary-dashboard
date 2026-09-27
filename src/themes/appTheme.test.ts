@@ -58,3 +58,39 @@ describe('appTheme', () => {
     }
   })
 })
+
+// WCAG AA (4.5:1) for the two places a palette's text sits on its own
+// translucent fills, in every palette and mode: secondary text on two layers
+// of the neutral fill over the chrome (a keyboard hint in a button), and
+// accent text on the accent's soft fill (the selected navigation item).
+type Rgba = [number, number, number, number]
+const rgba = (color: string): Rgba => {
+  const fn = color.match(/rgba?\(([^)]+)\)/)
+  if (fn) {
+    const [r, g, b, a = 1] = fn[1].split(',').map((x) => Number(x.trim()))
+    return [r, g, b, a]
+  }
+  return [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16)).concat(1) as Rgba
+}
+const over = (top: Rgba, bottom: Rgba): Rgba => [0, 1, 2].map((i) => top[i] * top[3] + bottom[i] * (1 - top[3])).concat(1) as Rgba
+const luminance = (c: Rgba) => 0.2126 * channel(c[0]) + 0.7152 * channel(c[1]) + 0.0722 * channel(c[2])
+const channel = (v: number) => (v / 255 <= 0.03928 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4)
+const contrast = (a: Rgba, b: Rgba) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x)
+  return (hi + 0.05) / (lo + 0.05)
+}
+
+describe('palette contrast', () => {
+  it('keeps text on the palette\'s own fills at 4.5:1', () => {
+    for (const p of PALETTES) {
+      for (const mode of ['light', 'dark'] as const) {
+        const tokens = resolveThemeTokens(appTheme(p), { mode })
+        const role = APIARY_PALETTES[p][mode]
+        const chrome = rgba(tokens['--color-background-body'])
+        const fill = rgba(tokens['--color-neutral'])
+        expect(contrast(rgba(tokens['--color-text-secondary']), over(fill, over(fill, chrome))), `${p} ${mode} key hint`).toBeGreaterThanOrEqual(4.5)
+        expect(contrast(rgba(tokens['--color-text-accent']), over(rgba(role['accent-soft']), chrome)), `${p} ${mode} selected item`).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+})

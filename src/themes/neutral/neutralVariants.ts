@@ -26,6 +26,15 @@ const mix = (palette: ApiaryPalette, a: Role, b: Role, share: number): TokenValu
   return [`color-mix(in oklab, ${light[a]} ${share}%, ${light[b]})`, `color-mix(in oklab, ${dark[a]} ${share}%, ${dark[b]})`];
 };
 
+/** A palette's ink as a translucent fill, for the neutral controls that stack
+ * on the chrome (a keyboard hint inside a button). Kept light enough that
+ * secondary text on two layers of it still reads at 4.5:1 in every palette. */
+const inkFill = (palette: ApiaryPalette): TokenValue => {
+  const rgba = (hex: string, alpha: number) => `rgba(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')}, ${alpha})`;
+  const {light, dark} = APIARY_PALETTES[palette];
+  return [rgba(light['text-000'], 0.04), rgba(dark['text-000'], 0.06)];
+};
+
 /** Every colour role a palette owns, mapped onto Astryx's tokens. The app's
  * chrome (sidebar, top bar) is the body; the page it frames is the surface. */
 function paletteTokens(p: ApiaryPalette): Tokens {
@@ -35,6 +44,7 @@ function paletteTokens(p: ApiaryPalette): Tokens {
     '--color-background-card': role(p, 'bg-100'),
     '--color-background-popover': role(p, 'bg-raised'),
     '--color-background-muted': role(p, 'bg-200'),
+    '--color-neutral': inkFill(p),
     '--color-skeleton': role(p, 'bg-300'),
 
     '--color-border': role(p, 'border-200'),
@@ -49,7 +59,10 @@ function paletteTokens(p: ApiaryPalette): Tokens {
 
     '--color-accent': role(p, 'accent'),
     '--color-accent-muted': role(p, 'accent-soft'),
-    '--color-text-accent': role(p, 'text-link'),
+    // Accent-coloured text sits on the accent's soft fill (the selected
+    // navigation item) as often as on a plain surface: APIARY's
+    // text-on-soft reads on both.
+    '--color-text-accent': role(p, 'accent-text-on-soft'),
     '--color-icon-accent': role(p, 'accent'),
     '--color-on-accent': role(p, 'text-on-accent'),
 
