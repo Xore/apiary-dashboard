@@ -8,6 +8,7 @@ import type {
   GithubAnalysis,
   GithubStatus,
   PayloadAnalysis,
+  RevDeckMessage,
   RevDeckRun,
   SandboxRun,
 } from '../types'
@@ -424,26 +425,81 @@ export function buildGhidraAnalysis(payload: CapturedPayload): GhidraAnalysis {
   }
 }
 
+const REVDECK_PROMPTS: Record<string, string> = {
+  'triage-v2': 'You are RevDeck triage. Classify one Linux or Windows binary from its Ghidra project in at most eight tool calls. Cite every claim as function@address; say "unknown" rather than guess.',
+  'deep-walk-v1': 'You are RevDeck deep walk. Trace the sample from its entry point to every network or persistence behavior. Cite each step as function@address. Stop when the call graph is covered or after twenty tool calls.',
+}
+
+const REVDECK_VERDICTS = {
+  'botnet client': {
+    family: 'Mirai-style bot', walk: 'main → connect_cnc → handle_commands', table: 'UDP, SYN and GRE flood vectors',
+    functions: '212 functions, 10 named: main, connect_cnc, handle_commands, killer_init, attack_udp, attack_syn, …',
+    main: 'void main(int argc, char **argv) {\n  killer_init();\n  table_unlock();\n  while (1) {\n    fd = connect_cnc(resolve_cnc());\n    handle_commands(fd);\n  }\n}',
+    xref: ['attack_udp', 'referenced from handle_commands table @0x401a20 (index 0)'], strings: 'KILLATTK, LOLNOGTFO, /bin/busybox, /proc/net/tcp',
+    second: '`handle_commands` dispatches on a table. Checking what references the attack routines, and the strings, to confirm.',
+  },
+  dropper: {
+    family: 'shell dropper', walk: 'main → fetch_stage2 → exec_payload', table: 'a download-and-execute loop over three mirrors',
+    functions: '64 functions, 6 named: main, fetch_stage2, exec_payload, mirror_next, chmod_x, …',
+    main: 'int main(void) {\n  for (i = 0; i < 3; i++) {\n    if (fetch_stage2(mirror_next(i), "/tmp/.x") == 0) break;\n  }\n  chmod_x("/tmp/.x");\n  return exec_payload("/tmp/.x");\n}',
+    xref: ['mirror_next', 'referenced from main @0x401000; reads a table of three URLs @0x404100'], strings: 'http://203.0.113.251/x, /tmp/.x, chmod 777, wget -q -O',
+    second: '`main` loops over mirrors. Checking where the mirror list lives, and the strings, to confirm.',
+  },
+  'cryptominer loader': {
+    family: 'XMRig loader', walk: 'main → kill_competitors → spawn_miner', table: 'pool addresses and a CPU-throttle config',
+    functions: '148 functions, 9 named: main, kill_competitors, spawn_miner, write_config, hide_process, …',
+    main: 'int main(void) {\n  kill_competitors();\n  write_config("/dev/shm/.c");\n  hide_process();\n  return spawn_miner("/dev/shm/.m", "/dev/shm/.c");\n}',
+    xref: ['write_config', 'referenced from main @0x401000; formats a JSON config from table @0x405200'], strings: 'pool.example.test:3333, "max-threads-hint": 50, kinsing, kdevtmpfsi',
+    second: 'It writes a config before spawning the miner. Checking the config table and the strings to confirm.',
+  },
+} as const
+
+/** A run's conversation: the workflow prompt, the dashboard's request, then
+ * the model reasoning between tool calls, ending in its verdict. */
+function revDeckTranscript(rng: Rng, payload: { hash: string; kind: string }, workflow: string, at: string, verdict: keyof typeof REVDECK_VERDICTS | null, error?: string): RevDeckMessage[] {
+  const end = Date.parse(at)
+  let t = end - int(rng, 60, 240) * 1000
+  const tick = (seconds: number) => new Date((t += seconds * 1000)).toISOString()
+  const call = (tool: string, input: string, output: string, fail?: string) => ({ tool, input, output, durationMs: int(rng, 40, 2400), ...(fail ? { error: fail } : {}) })
+  const messages: RevDeckMessage[] = [
+    { role: 'system', at: tick(0), text: REVDECK_PROMPTS[workflow] },
+    { role: 'user', at: tick(1), text: `Reverse-engineer \`${payload.hash.slice(0, 16)}…\` (${payload.kind}). Its Ghidra project is loaded; decide what it does and how it reaches the network.` },
+  ]
+  if (!verdict) {
+    messages.push(
+      { role: 'assistant', at: tick(4), text: 'Starting with the function list to find the entry point.', toolCalls: [call('list_functions', '{}', '', error)] },
+    )
+    return messages
+  }
+  const v = REVDECK_VERDICTS[verdict]
+  messages.push(
+    { role: 'assistant', at: tick(3), text: 'Starting with the function list to find the entry point and anything already named.', toolCalls: [call('list_functions', '{}', v.functions)] },
+    { role: 'assistant', at: tick(int(rng, 5, 20)), text: '`main` is named, so I decompile it first.', toolCalls: [call('decompile', '{"name":"main"}', v.main)] },
+    { role: 'assistant', at: tick(int(rng, 5, 20)), text: v.second, toolCalls: [call('xrefs_to', `{"name":"${v.xref[0]}"}`, v.xref[1]), call('strings', '{"min":6}', v.strings)] },
+    { role: 'assistant', at: tick(int(rng, 5, 30)), text: `**Verdict: ${verdict}** (${v.family}).\n\nThe walk goes ${v.walk}; the table it reads decodes to ${v.table}.\n\nCited: \`main@0x401000\`, \`${v.xref[0]}@0x401a20\`.` },
+  )
+  return messages
+}
+
 export const REVDECK_RUNS: RevDeckRun[] = PAYLOADS.filter((p) => p.kind !== 'shell script').filter((_, i) => i % 2 === 0).map((payload, i) => {
   const rng = createRng(seedFor(payload.hash) ^ 0x7e7e)
   const failed = i === 4
+  const at = isoMinutesAgo(i * 210 + int(rng, 0, 90))
+  const verdict = failed ? null : pick(rng, ['botnet client', 'dropper', 'cryptominer loader'] as const)
+  const workflow = i % 3 === 0 ? 'triage-v2' : 'deep-walk-v1'
+  const error = failed ? 'Ghidra REST service timed out after 600s' : undefined
+  const transcript = revDeckTranscript(rng, payload, workflow, at, verdict, error)
   return {
     sha: payload.hash,
-    at: isoMinutesAgo(i * 210 + int(rng, 0, 90)),
+    at,
     status: failed ? 'failed' : 'completed',
-    verdict: failed ? '—' : pick(rng, ['botnet client', 'dropper', 'cryptominer loader']),
-    summary: failed ? '' : 'Walked main → connect_cnc → handle_commands; command table decodes to flood vectors. Kill-switch string present but unused.',
-    steps: failed
-      ? []
-      : [
-          { tool: 'list_functions', input: '{}', output: '212 functions, 10 named' },
-          { tool: 'decompile', input: '{"name":"main"}', output: 'calls connect_cnc, killer_init' },
-          { tool: 'xrefs_to', input: '{"name":"attack_udp"}', output: 'referenced from handle_commands table' },
-          { tool: 'strings', input: '{"min":6}', output: 'KILLATTK, LOLNOGTFO, /bin/busybox' },
-        ],
-    citations: { valid: failed ? [] : ['main@0x401000', 'handle_commands@0x401a20'], invalid: failed ? [] : rng() < 0.4 ? ['attack_http@0x402000'] : [] },
-    error: failed ? 'Ghidra REST service timed out after 600s' : undefined,
-    workflow: i % 3 === 0 ? 'triage-v2' : 'deep-walk-v1',
+    verdict: verdict ?? '—',
+    summary: verdict ? `Walked ${REVDECK_VERDICTS[verdict].walk}; the table it reads decodes to ${REVDECK_VERDICTS[verdict].table}.` : '',
+    steps: failed ? [] : transcript.flatMap((m) => (m.toolCalls ?? []).map(({ tool, input, output }) => ({ tool, input, output }))),
+    citations: { valid: verdict ? ['main@0x401000', `${REVDECK_VERDICTS[verdict].xref[0]}@0x401a20`] : [], invalid: failed ? [] : rng() < 0.4 ? ['attack_http@0x402000'] : [] },
+    error,
+    workflow,
+    transcript,
   }
 })
 
