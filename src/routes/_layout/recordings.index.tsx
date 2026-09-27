@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -17,6 +19,7 @@ export const Route = createFileRoute('/_layout/recordings/')({
   loaderDeps: ({ search }) => ({ ip: search.ip }),
   loader: ({ deps }) => getRecordings(deps.ip),
   component: RecordingsPage,
+  pendingComponent: RecordingsPage,
 })
 
 const columns: TableColumn<Recording>[] = [
@@ -30,7 +33,7 @@ const columns: TableColumn<Recording>[] = [
 
 
 function RecordingsPage() {
-  const recordings = Route.useLoaderData()
+  const recordings = orPending(Route.useLoaderData())
   const { ip } = Route.useSearch()
   return (
     <RecordList
@@ -38,7 +41,7 @@ function RecordingsPage() {
       description="Terminal recordings of interactive honeypot sessions. Many sessions share one recording because bot traffic repeats itself."
       actions={
         <>
-          <Text type="supporting">{formatNumber(recordings.length)} recordings</Text>
+          <Text type="supporting"><Pending>{recordings && `${formatNumber(recordings.length)} recordings`}</Pending></Text>
           {ip && <Token label={`ip: ${ip}`} size="sm" color="blue" href="/recordings" description="Clear the IP filter" />}
         </>
       }

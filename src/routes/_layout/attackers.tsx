@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { HStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -13,6 +15,7 @@ import { formatNumber, formatTime } from '#/lib/format'
 export const Route = createFileRoute('/_layout/attackers')({
   loader: () => getAttackers(),
   component: AttackersPage,
+  pendingComponent: AttackersPage,
 })
 
 const columns: TableColumn<AttackerEntity>[] = [
@@ -56,15 +59,15 @@ const columns: TableColumn<AttackerEntity>[] = [
 ]
 
 function AttackersPage() {
-  const attackers = Route.useLoaderData()
-  const merged = attackers.filter((a) => a.ips.length > 1).length
+  const attackers = orPending(Route.useLoaderData())
+  const merged = attackers?.filter((a) => a.ips.length > 1).length
   return (
     <RecordList
       title="Attacker identities"
       description="Durable entities merged across IP churn by shared fingerprint, payload, and credential signals."
       actions={
         <>
-          <Text type="supporting">{attackers.length} identities</Text>
+          <Text type="supporting"><Pending>{attackers && `${attackers.length} identities`}</Pending></Text>
           <Token label={`${merged} merged across >1 IP`} size="sm" />
         </>
       }

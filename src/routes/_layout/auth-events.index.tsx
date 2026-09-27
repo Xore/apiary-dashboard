@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -15,6 +17,7 @@ import { SourceIp } from '#/components/details/AuthFailure'
 export const Route = createFileRoute('/_layout/auth-events/')({
   loader: () => getAuthEvents(),
   component: AuthEventsPage,
+  pendingComponent: AuthEventsPage,
 })
 
 const columns: TableColumn<AuthFailure>[] = [
@@ -27,28 +30,28 @@ const columns: TableColumn<AuthFailure>[] = [
 ]
 
 function AuthEventsPage() {
-  const data = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
   return (
     <RecordList
       title="Auth-failure events"
       description="Failed logins against Keycloak, across every gateway-fronted app and the dashboard's own sign-in. Redacted: never tokens, codes, or cookies."
-      actions={<Text type="supporting">{data.events.length} events</Text>}
+      actions={<Text type="supporting"><Pending>{data && `${data.events.length} events`}</Pending></Text>}
       summary={
         <VStack gap={4}>
           <Grid columns={{ minWidth: 200, repeat: 'fit' }} gap={4}>
-            <StatTile label="Failed logins, 24h" value={data.failed24h} />
+            <StatTile label="Failed logins, 24h" value={data?.failed24h} />
           </Grid>
           <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
             <Panel title="Failures by client, 24h">
-              <CountTable header="Client" rows={data.byClient} countHeader="Failures" />
+              <CountTable header="Client" rows={data?.byClient} countHeader="Failures" />
             </Panel>
             <Panel title="Top source IPs, 24h">
-              <CountTable header="Source IP" rows={data.topSources} countHeader="Failures" />
+              <CountTable header="Source IP" rows={data?.topSources} countHeader="Failures" />
             </Panel>
           </Grid>
         </VStack>
       }
-      rows={data.events}
+      rows={data?.events}
       columns={columns}
       getId={(row) => row.id}
       getHref={(row) => `/auth-events/${encodeURIComponent(row.id)}`}

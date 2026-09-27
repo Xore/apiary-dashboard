@@ -1,3 +1,5 @@
+import { SkeletonTable } from './SkeletonTable'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import type { ReactNode } from 'react'
 import { Card } from '@astryxdesign/core/Card'
 import { ClickableCard } from '@astryxdesign/core/ClickableCard'
@@ -32,7 +34,8 @@ export function Panel({ title, action, children }: { title: string; action?: Rea
 
 type StatTileProps = {
   label: string
-  value: number
+  /** Undefined while the page's data loads: a skeleton in its place. */
+  value: number | undefined
   /** Previous-period value; shows a signed change when present. */
   previous?: number
   caption?: string
@@ -43,6 +46,18 @@ type StatTileProps = {
 
 /** Headline number tile. */
 export function StatTile({ label, value, previous, caption, trend, href }: StatTileProps) {
+  if (value === undefined)
+    return (
+      <Card aria-busy>
+        <VStack gap={2}>
+          <Text type="label" color="secondary">
+            {label}
+          </Text>
+          <Skeleton width={72} height={28} />
+          {caption !== undefined && <Skeleton width="60%" height={12} />}
+        </VStack>
+      </Card>
+    )
   const body = (
     <VStack gap={2}>
       <Text type="label" color="secondary">
@@ -67,7 +82,8 @@ export function StatTile({ label, value, previous, caption, trend, href }: StatT
 /** Two-column "value, count" table for top-N breakdowns. */
 export function CountTable({ header, rows, countHeader = 'Count', isCode = false, linkTo, entity }: {
   header: string
-  rows: CountRow[]
+  /** Undefined while loading: the columns, and skeleton rows. */
+  rows: CountRow[] | undefined
   countHeader?: string
   isCode?: boolean
   /** Makes each value a link, e.g. to its own detail page. */
@@ -89,6 +105,7 @@ export function CountTable({ header, rows, countHeader = 'Count', isCode = false
     },
     { key: 'count', header: countHeader, width: pixel(88), align: 'end', renderCell: (row) => formatNumber(row.count) },
   ]
+  if (!rows) return <SkeletonTable columns={columns} rows={8} density={tableDensity(prefs)} />
   return <Table data={rows} columns={columns} idKey="id" density={tableDensity(prefs)} />
 }
 
@@ -98,17 +115,34 @@ export function MiniTable({ title, header = 'Value', countHeader, rows, isCode, 
   header?: string
   countHeader?: string
   entity?: EntityKind
-  rows: CountRow[]
+  rows: CountRow[] | undefined
   isCode?: boolean
   linkTo?: (label: string) => string
 }) {
   return (
     <Panel title={title}>
-      {rows.length ? (
+      {!rows || rows.length ? (
         <CountTable header={header} countHeader={countHeader} rows={rows} isCode={isCode} linkTo={linkTo} entity={entity} />
       ) : (
         <Text type="supporting">Nothing recorded.</Text>
       )}
     </Panel>
+  )
+}
+
+/** Tiles whose labels come with the data: `count` skeleton tiles in their
+ * place while it loads. */
+export function SkeletonTiles({ count }: { count: number }) {
+  return (
+    <>
+      {Array.from({ length: count }, (_, i) => (
+        <Card key={i} aria-busy>
+          <VStack gap={2}>
+            <Skeleton width="50%" height={14} />
+            <Skeleton width={72} height={28} />
+          </VStack>
+        </Card>
+      ))}
+    </>
   )
 }

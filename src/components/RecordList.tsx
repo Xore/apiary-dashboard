@@ -4,6 +4,7 @@ import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Layout, LayoutContent, LayoutHeader } from '@astryxdesign/core/Layout'
 import { Pagination } from '@astryxdesign/core/Pagination'
+import { SkeletonTable } from './SkeletonTable'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -24,7 +25,9 @@ type RecordListProps<T extends Record<string, unknown>> = {
   summary?: ReactNode
   /** Filter row directly above the table. */
   toolbar?: ReactNode
-  rows: T[]
+  /** Undefined while the page's data loads: the table keeps its columns
+   * and shows a full page of skeleton rows. */
+  rows: T[] | undefined
   columns: TableColumn<T>[]
   getId: (row: T) => string
   /** The row's entity page: a row opens it (epic #25). */
@@ -75,6 +78,7 @@ export function RecordList<T extends Record<string, unknown>>({
     }
   }
 
+  if (!rows) return <ListFrame title={title} description={description} actions={actions} summary={summary} toolbar={toolbar} body={<SkeletonTable columns={columns} rows={pageSize} density={tableDensity(prefs)} withCount />} />
   const total = paging ? paging.total : rows.length
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   const currentPage = paging ? Math.floor(paging.offset / pageSize) + 1 : Math.min(page, pageCount)
@@ -107,29 +111,14 @@ export function RecordList<T extends Record<string, unknown>>({
   const activation = useRowActivation<T>({ onActivate: openRow })
 
   return (
-    <Layout
-      height="fill"
-      padding={6}
-      header={
-        <LayoutHeader>
-          <HStack hAlign="between" vAlign="center" gap={4} wrap="wrap">
-            <VStack gap={1}>
-              <Heading level={1}>{title}</Heading>
-              {description && <Text color="secondary">{description}</Text>}
-            </VStack>
-            {actions && (
-              <HStack gap={2} vAlign="center" wrap="wrap">
-                {actions}
-              </HStack>
-            )}
-          </HStack>
-        </LayoutHeader>
-      }
-      content={
-        <LayoutContent>
-          <VStack gap={5}>
-            {summary}
-            {toolbar}
+    <ListFrame
+      title={title}
+      description={description}
+      actions={actions}
+      summary={summary}
+      toolbar={toolbar}
+      body={
+        <>
             {total === 0 ? (
               <EmptyState icon={<Icon icon={InboxIcon} size="lg" />} {...emptyState} />
             ) : (
@@ -162,6 +151,39 @@ export function RecordList<T extends Record<string, unknown>>({
                 )}
               </VStack>
             )}
+        </>
+      }
+    />
+  )
+}
+
+/** The page around the table: header, summary band and filter row. */
+function ListFrame({ title, description, actions, summary, toolbar, body }: { title: string; description?: string; actions?: ReactNode; summary?: ReactNode; toolbar?: ReactNode; body: ReactNode }) {
+  return (
+    <Layout
+      height="fill"
+      padding={6}
+      header={
+        <LayoutHeader>
+          <HStack hAlign="between" vAlign="center" gap={4} wrap="wrap">
+            <VStack gap={1}>
+              <Heading level={1}>{title}</Heading>
+              {description && <Text color="secondary">{description}</Text>}
+            </VStack>
+            {actions && (
+              <HStack gap={2} vAlign="center" wrap="wrap">
+                {actions}
+              </HStack>
+            )}
+          </HStack>
+        </LayoutHeader>
+      }
+      content={
+        <LayoutContent>
+          <VStack gap={5}>
+            {summary}
+            {toolbar}
+            {body}
           </VStack>
         </LayoutContent>
       }

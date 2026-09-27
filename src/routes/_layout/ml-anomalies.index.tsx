@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Button } from '@astryxdesign/core/Button'
@@ -53,6 +55,7 @@ export const Route = createFileRoute('/_layout/ml-anomalies/')({
   }),
   loader: () => getMlAnomalies(),
   component: MlAnomaliesPage,
+  pendingComponent: MlAnomaliesPage,
 })
 
 const columns: TableColumn<MlAnomaly>[] = [
@@ -150,7 +153,7 @@ function ModelHealthView({ data }: { data: ReturnType<typeof Route.useLoaderData
 }
 
 function MlAnomaliesPage() {
-  const data = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
   const router = useRouter()
@@ -159,11 +162,11 @@ function MlAnomaliesPage() {
   const [acking, setAcking] = useState(false)
 
   const anyOf = (list: string | undefined, value: string) => !list || list.split(',').includes(value)
-  const rows = data.anomalies.filter((row) => anyOf(search.severity, row.severity) && anyOf(search.eventType, row.eventType) && anyOf(search.status, row.status))
+  const rows = data?.anomalies.filter((row) => anyOf(search.severity, row.severity) && anyOf(search.eventType, row.eventType) && anyOf(search.status, row.status))
   const counted = (values: readonly string[], of: (row: MlAnomaly) => string, label = (v: string) => v): FilterOption[] =>
-    values.map((value) => ({ value, label: label(value), count: data.anomalies.filter((row) => of(row) === value).length }))
+    values.map((value) => ({ value, label: label(value), count: data?.anomalies.filter((row) => of(row) === value).length }))
   const setFilter = (patch: Search) => void navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true })
-  const severityCount = (severity: Severity) => data.bySeverity.find((row) => row.label === severity)?.count ?? 0
+  const severityCount = (severity: Severity) => (data ? (data.bySeverity.find((row) => row.label === severity)?.count ?? 0) : undefined)
   const isAdmin = useIsAdmin()
 
   if (search.view === 'models') return <ModelHealthView data={data} />
@@ -176,13 +179,13 @@ function MlAnomaliesPage() {
         actions={
           <HStack gap={2} vAlign="center">
             {error && <FieldStatus type="error" variant="detached" message={error} />}
-            {isAdmin && <Button label="Acknowledge all open" variant="secondary" size="sm" isDisabled={data.openBacklog === 0} onClick={() => setConfirmOpen(true)} />}
+            {isAdmin && <Button label="Acknowledge all open" variant="secondary" size="sm" isDisabled={!data?.openBacklog} onClick={() => setConfirmOpen(true)} />}
           </HStack>
         }
         summary={
           <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
-              <StatTile label="Anomalies, 24h" value={data.total24h} />
-              <StatTile label="Open (all time)" value={data.openBacklog} href="/ml-anomalies?status=open" />
+              <StatTile label="Anomalies, 24h" value={data?.total24h} />
+              <StatTile label="Open (all time)" value={data?.openBacklog} href="/ml-anomalies?status=open" />
               {SEVERITIES.map((severity) => (
                 <StatTile
                   key={severity}
@@ -197,10 +200,10 @@ function MlAnomaliesPage() {
         toolbar={
           <HStack gap={3} wrap="wrap">
             <FilterSelect label="Severity" isLabelHidden size="sm" width={160} placeholder="All severities" options={counted(SEVERITIES, (r) => r.severity)} value={listParam(search.severity)} onChange={(v) => setFilter({ severity: toParam(v) })} />
-            <FilterSelect label="Event type" isLabelHidden size="sm" width={200} placeholder="All event types" options={counted(data.eventTypes, (r) => r.eventType)} value={listParam(search.eventType)} onChange={(v) => setFilter({ eventType: toParam(v) })} />
+            <FilterSelect label="Event type" isLabelHidden size="sm" width={200} placeholder="All event types" options={counted(data?.eventTypes ?? [], (r) => r.eventType)} value={listParam(search.eventType)} onChange={(v) => setFilter({ eventType: toParam(v) })} />
             <FilterSelect label="Status" isLabelHidden size="sm" width={180} placeholder="All statuses" options={counted(STATUSES, (r) => r.status, (v) => statusLabel(v as AnomalyStatus))} value={listParam(search.status)} onChange={(v) => setFilter({ status: toParam(v) })} />
             <Text type="supporting">
-              {formatNumber(rows.length)} of {formatNumber(data.anomalies.length)} anomalies
+              <Pending>{data && rows && `${formatNumber(rows.length)} of ${formatNumber(data.anomalies.length)} anomalies`}</Pending>
             </Text>
           </HStack>
         }
@@ -217,7 +220,7 @@ function MlAnomaliesPage() {
         isOpen={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Acknowledge all open anomalies?"
-        description={`Marks ${formatNumber(data.openBacklog)} open anomalies as seen without a verdict. You can still record a disposition afterwards.`}
+        description={`Marks ${formatNumber(data?.openBacklog ?? 0)} open anomalies as seen without a verdict. You can still record a disposition afterwards.`}
         actionLabel="Acknowledge all"
         actionVariant="primary"
         isActionLoading={acking}

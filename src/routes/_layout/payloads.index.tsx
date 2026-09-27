@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
@@ -28,6 +29,7 @@ export const Route = createFileRoute('/_layout/payloads/')({
   }),
   loader: () => getPayloads(),
   component: PayloadsPage,
+  pendingComponent: PayloadsPage,
 })
 
 const VERDICT_COLOR = { malicious: 'red', suspicious: 'orange', clean: 'green' } as const
@@ -90,7 +92,9 @@ const columns = (onPublish: (payload: CapturedPayload) => void, onAnalyze: (hash
  * the payload's own page. */
 function PayloadsPage() {
   const isAdmin = useIsAdmin()
-  const { payloads, sources } = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
+  const payloads = data?.payloads
+  const sources = data?.sources ?? []
   const { source } = Route.useSearch()
   const [publishing, setPublishing] = useState<CapturedPayload | null>(null)
   const [published, setPublished] = useState<string | null>(null)
@@ -99,7 +103,7 @@ function PayloadsPage() {
   const [queued, setQueued] = useState<{ run: WorkbenchRun; reused: boolean } | null>(null)
   const navigate = useNavigate()
   const picked = listParam(source)
-  const visible = picked.length ? payloads.filter((p) => p.sources.some((s) => picked.includes(s))) : payloads
+  const visible = picked.length ? payloads?.filter((p) => p.sources.some((s) => picked.includes(s))) : payloads
 
   return (
     <>

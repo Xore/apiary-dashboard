@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Link } from '@astryxdesign/core/Link'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/_layout/github-analysis/')({
   staticData: { viewTabs: analysisTabs() },
   loader: () => getGithubAnalyses(),
   component: GithubIndexPage,
+  pendingComponent: GithubIndexPage,
 })
 
 const STATUS_COLOR = { published: 'green', dry_run: 'gray', denylist_blocked: 'orange', quota_exceeded: 'red' } as const satisfies Record<GithubStatus, string>
@@ -28,7 +30,7 @@ const columns: TableColumn<GithubAnalysis>[] = [
 ]
 
 function GithubIndexPage() {
-  const rows = Route.useLoaderData()
+  const rows = orPending(Route.useLoaderData())
   return (
     <RecordList
       title="GitHub analysis"

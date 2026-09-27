@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { Link } from '@astryxdesign/core/Link'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/_layout/cape/')({
   staticData: { viewTabs: analysisTabs() },
   loader: () => getCapeRuns(),
   component: CapeIndexPage,
+  pendingComponent: CapeIndexPage,
 })
 
 const columns: TableColumn<CapeRun>[] = [
@@ -25,7 +27,7 @@ const columns: TableColumn<CapeRun>[] = [
 ]
 
 function CapeIndexPage() {
-  const runs = Route.useLoaderData()
+  const runs = orPending(Route.useLoaderData())
   return (
     <RecordList
       title="CAPE"

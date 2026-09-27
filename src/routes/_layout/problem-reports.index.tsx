@@ -1,3 +1,5 @@
+import { Pending } from '#/components/Pending'
+import { orPending } from '#/lib/pending'
 import { Text } from '@astryxdesign/core/Text'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
@@ -13,6 +15,7 @@ export const Route = createFileRoute('/_layout/problem-reports/')({
   staticData: { viewTabs: healthTabs },
   loader: () => getProblemReports(),
   component: ProblemReportsPage,
+  pendingComponent: ProblemReportsPage,
 })
 
 const STATUS_COLOR = { open: 'orange', triaged: 'blue', fixed: 'green', wontfix: 'gray' } as const satisfies Record<ProblemStatus, string>
@@ -27,12 +30,12 @@ const columns: TableColumn<ProblemReport>[] = [
 ]
 
 function ProblemReportsPage() {
-  const reports = Route.useLoaderData()
+  const reports = orPending(Route.useLoaderData())
   return (
     <RecordList
       title="Problem reports"
       description="Operator-submitted UI problem reports, with the action trail and request context captured at submit time. Admin only: captures can include a DOM snapshot."
-      actions={<Text type="supporting">{reports.filter((r) => r.status === 'open').length} open</Text>}
+      actions={<Text type="supporting"><Pending>{reports && `${reports.filter((r) => r.status === 'open').length} open`}</Pending></Text>}
       rows={reports}
       columns={columns}
       getId={(row) => row.id}

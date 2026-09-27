@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
@@ -22,11 +23,12 @@ export const Route = createFileRoute('/_layout/reports/library')({
   staticData: { viewTabs: reportTabs },
   loader: () => getReports(),
   component: LibraryPage,
+  pendingComponent: LibraryPage,
 })
 
 /** Saved definitions: generate one now, reopen it in the wizard, or drop it. */
 function LibraryPage() {
-  const data = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
   const router = useRouter()
   const navigate = useNavigate()
   const [busy, setBusy] = useState<string | null>(null)
@@ -34,7 +36,7 @@ function LibraryPage() {
   const [confirm, setConfirm] = useState<ReportDefinition | null>(null)
   const isAdmin = useIsAdmin()
   const [generated, setGenerated] = useState<GeneratedReport | null>(null)
-  const lastRun = (id: string) => data.generated.find((r) => r.definitionId === id)?.createdAt
+  const lastRun = (id: string) => data?.generated.find((r) => r.definitionId === id)?.createdAt
 
   const act = async (id: string, write: () => Promise<unknown>) => {
     setBusy(id)
@@ -50,7 +52,7 @@ function LibraryPage() {
 
   const columns: TableColumn<ReportDefinition>[] = [
     { key: 'name', header: 'Definition', width: proportional(2), renderCell: (row) => <Text weight="semibold">{row.name}</Text> },
-    { key: 'template', header: 'Template', width: pixel(168), renderCell: (row) => data.templates.find((t) => t.id === row.template)?.name ?? row.template },
+    { key: 'template', header: 'Template', width: pixel(168), renderCell: (row) => data?.templates.find((t) => t.id === row.template)?.name ?? row.template },
     {
       key: 'schedule',
       header: 'Runs',
@@ -99,7 +101,7 @@ function LibraryPage() {
             />
           )
         }
-        rows={data.definitions}
+        rows={data?.definitions}
         columns={columns}
         getId={(row) => row.id}
         getHref={(row) => `/reports/definitions/${row.id}`}

@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
@@ -24,6 +25,7 @@ export const Route = createFileRoute('/_layout/canarytokens/')({
   }),
   loader: () => getCanarytokens(),
   component: CanarytokensPage,
+  pendingComponent: CanarytokensPage,
 })
 
 const tokenColumns: TableColumn<CanaryToken>[] = [
@@ -51,7 +53,8 @@ const triggerColumns: TableColumn<CanaryTrigger>[] = [
 ]
 
 function CanarytokensPage() {
-  const { types, tokens, triggers } = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
+  const types = data?.types ?? []
   const { view = 'deployed' } = Route.useSearch()
   const router = useRouter()
   const [creating, setCreating] = useState(false)
@@ -82,7 +85,7 @@ function CanarytokensPage() {
           <Banner status="success" title={`Token created: ${minted.memo}`} description={minted.url} isDismissable onDismiss={() => setMinted(null)} endContent={<ActionLink href={`/canarytokens/${encodeURIComponent(minted.id)}`}>Open token</ActionLink>} />
         )
       }
-      rows={tokens}
+      rows={data?.tokens}
       columns={tokenColumns}
       getId={(row) => row.id}
       getHref={(row) => `/canarytokens/${encodeURIComponent(row.id)}`}
@@ -93,7 +96,7 @@ function CanarytokensPage() {
       title="Canarytokens"
       description="Every planted token that phoned home, wherever it was opened."
       actions={create}
-      rows={triggers}
+      rows={data?.triggers}
       columns={triggerColumns}
       getId={(row) => row.id}
       getHref={(row) => `/canarytokens/triggers/${encodeURIComponent(row.id)}`}

@@ -1,3 +1,4 @@
+import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
@@ -14,7 +15,8 @@ import { Panel } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { abortGpuJob, getAnalysisResults } from '#/data/queries'
 import { AnalysisRunDialog } from '#/components/dialogs/AnalysisRunDialog'
-import type { AnalysisResult, AnalysisResultsData, AnalyzerTab, GpuJob, WorkbenchRun } from '#/data/types'
+import type { AnalysisResult, AnalysisResultsData, AnalyzerTab, GpuJob, ModelHealth, WorkbenchRun } from '#/data/types'
+import { SkeletonTable } from '#/components/SkeletonTable'
 import { WorkbenchRuns, queuedMessage } from '#/components/analyzers/WorkbenchRuns'
 import { formatTime } from '#/lib/format'
 import { useIsAdmin } from '#/lib/session'
@@ -40,6 +42,7 @@ export const Route = createFileRoute('/_layout/payload-workbench/results')({
   }),
   loader: () => getAnalysisResults(),
   component: AnalysisResultsPage,
+  pendingComponent: AnalysisResultsPage,
 })
 
 const STATE_COLOR = { queued: 'gray', running: 'blue', succeeded: 'green', failed: 'red', cancelled: 'gray' } as const
@@ -93,7 +96,13 @@ function resultHref(row: AnalysisResult): string {
 
 
 
-function GpuQueue({ jobs }: { jobs: GpuJob[] }) {
+const MODEL_HEALTH_COLUMNS: TableColumn<ModelHealth>[] = [
+                    { key: 'model', header: 'Model', width: proportional(1), renderCell: (row) => <Text type="code">{row.model}</Text> },
+                    { key: 'accepted', header: 'Last retrain', width: pixel(112), renderCell: (row) => <Token size="sm" color={row.accepted ? 'green' : 'orange'} label={row.accepted ? 'accepted' : 'rejected'} /> },
+                    { key: 'timestamp', header: 'When', width: pixel(96), renderCell: (row) => <Text type="supporting">{formatTime(row.timestamp)}</Text> },
+                  ]
+
+function GpuQueue({ jobs }: { jobs: GpuJob[] | undefined }) {
   const router = useRouter()
   const [busy, setBusy] = useState<string | null>(null)
   const isAdmin = useIsAdmin()
@@ -139,21 +148,21 @@ function GpuQueue({ jobs }: { jobs: GpuJob[] }) {
     <Panel title="GPU queue">
       <Text type="supporting">Only queued jobs can be aborted; a generation already running finishes.</Text>
       {error && <Banner status="error" title="Not aborted" description={error} isDismissable onDismiss={clearError} />}
-      <Table data={jobs} columns={columns} idKey="jobId" density="compact" />
+      {jobs ? <Table data={jobs} columns={columns} idKey="jobId" density="compact" /> : <SkeletonTable columns={columns} rows={4} density="compact" />}
     </Panel>
   )
 }
 
 function AnalysisResultsPage() {
   const isAdmin = useIsAdmin()
-  const data = Route.useLoaderData()
+  const data = orPending(Route.useLoaderData())
   const { tab = 'workbench' } = Route.useSearch()
   const router = useRouter()
   const [creating, setCreating] = useState(false)
   const [queued, setQueued] = useState<{ run: WorkbenchRun; reused: boolean } | null>(null)
   const [query, setQuery] = useState('')
   const needle = query.trim().toLowerCase()
-  const rows = data.results.filter((r) => r.analyzer === tab && (!needle || JSON.stringify(r).toLowerCase().includes(needle)))
+  const rows = data?.results.filter((r) => r.analyzer === tab && (!needle || JSON.stringify(r).toLowerCase().includes(needle)))
 
   return (
     <RecordList
@@ -178,25 +187,25 @@ function AnalysisResultsPage() {
             {queued && <Banner status={queued.reused ? 'info' : 'success'} {...queuedMessage(queued)} isDismissable onDismiss={() => setQueued(null)} />}
             <Grid columns={{ minWidth: 380, repeat: 'fit' }} gap={4}>
               <Panel title="My recent runs">
-                <WorkbenchRuns runs={data.runs} />
+                <WorkbenchRuns runs={data?.runs} />
               </Panel>
               <Panel title="Approved local-model health">
                 <Text type="supporting">Advisory: each approved model's latest retrain outcome.</Text>
+                {data ? (
                 <Table
                   data={data.modelHealth}
-                  columns={[
-                    { key: 'model', header: 'Model', width: proportional(1), renderCell: (row) => <Text type="code">{row.model}</Text> },
-                    { key: 'accepted', header: 'Last retrain', width: pixel(112), renderCell: (row) => <Token size="sm" color={row.accepted ? 'green' : 'orange'} label={row.accepted ? 'accepted' : 'rejected'} /> },
-                    { key: 'timestamp', header: 'When', width: pixel(96), renderCell: (row) => <Text type="supporting">{formatTime(row.timestamp)}</Text> },
-                  ]}
+                  columns={MODEL_HEALTH_COLUMNS}
                   idKey="model"
                   density="compact"
                 />
+                ) : (
+                  <SkeletonTable columns={MODEL_HEALTH_COLUMNS} rows={3} density="compact" />
+                )}
               </Panel>
             </Grid>
           </VStack>
         ) : tab === 'ghidra' ? (
-          <GpuQueue jobs={data.gpuQueue} />
+          <GpuQueue jobs={data?.gpuQueue} />
         ) : undefined
       }
       toolbar={
