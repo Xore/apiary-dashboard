@@ -167,6 +167,7 @@ export const reportPdf = (id: string) => async (_search: URLSearchParams, q: Bac
     template: report.template,
     theme: 'light',
     elements: template?.elements ?? [],
+    appendixLimit: 120,
     scope: { window: '24h', ip: [], sensor: [], port: [], signature: [] },
     branding: { title: report.title, author: 'APIARY', headerLeft: '', headerRight: '', footerLeft: '', classification: 'TLP:AMBER' },
     schedule: null,
@@ -216,24 +217,23 @@ export const artifactFile = (kind: string, key: string, filename: string) => asy
   return file(artifact.body, artifact.contentType, artifact.filename)
 }
 
+// What each kind hands over to plant: small stand-ins for the real formats,
+// pointing only at the mock platform (example.test).
 const CANARY_FILES: Record<string, (memo: string, url: string, hostname: string) => { body: Body; type: string; extension: string }> = {
-  aws_keys: (memo, _url, hostname) => ({
-    body: `# ${memo}\n[default]\naws_access_key_id = AKIA${hostname.replace(/[^A-Z0-9]/gi, '').slice(0, 16).toUpperCase().padEnd(16, 'X')}\naws_secret_access_key = mock/${hostname.slice(0, 32)}\nregion = us-east-2\n`,
-    type: 'text/plain',
-    extension: 'credentials',
-  }),
-  kubeconfig: (memo, url) => ({
-    body: `# ${memo}\napiVersion: v1\nkind: Config\nclusters:\n- name: prod\n  cluster:\n    server: ${url}\ncontexts:\n- name: prod\n  context: { cluster: prod, user: deploy }\ncurrent-context: prod\nusers:\n- name: deploy\n  user: { token: mock-canary-token }\n`,
-    type: 'application/yaml',
-    extension: 'kubeconfig',
-  }),
+  adobe_pdf: (memo, url) => ({ body: buildPdf([{ text: memo, size: 16, bold: true }, { text: `Canarytoken document: opening it calls ${url}.`, size: 10 }], memo), type: 'application/pdf', extension: 'pdf' }),
   ms_word: (memo, url) => ({
     // An RTF opens in Word the way the real .docx does; the beacon is a field.
     body: `{\\rtf1\\ansi{\\fonttbl{\\f0 Calibri;}}\\f0\\fs24 ${memo}\\par{\\field{\\*\\fldinst INCLUDEPICTURE "${url}" \\\\d}}\\par}\n`,
     type: 'application/rtf',
     extension: 'rtf',
   }),
-  pdf: (memo, url) => ({ body: buildPdf([{ text: memo, size: 16, bold: true }, { text: `Canarytoken document: opening it calls ${url}.`, size: 10 }], memo), type: 'application/pdf', extension: 'pdf' }),
+  ms_excel: (memo, url) => ({ body: `${memo}\nQuarter,Budget\nQ1,120000\nQ2,135000\n\n# opening the real workbook calls ${url}\n`, type: 'text/csv', extension: 'csv' }),
+  windows_dir: (memo, _url, hostname) => ({ body: `; ${memo}\r\n[.ShellClassInfo]\r\nIconResource=\\\\%USERNAME%.%COMPUTERNAME%.%USERDOMAIN%.INI.${hostname}\\resource.dll\r\n`, type: 'text/plain', extension: 'desktop.ini' }),
+  qr_code: (memo, url) => ({
+    body: `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="260" viewBox="0 0 240 260"><rect width="240" height="260" fill="#fff"/><rect x="20" y="20" width="200" height="200" fill="none" stroke="#000" stroke-width="8"/><text x="120" y="125" font-family="sans-serif" font-size="12" text-anchor="middle">QR stand-in</text><text x="120" y="245" font-family="sans-serif" font-size="9" text-anchor="middle">${memo.replace(/[<&>]/g, '')} · ${url.replace(/[<&>]/g, '')}</text></svg>`,
+    type: 'image/svg+xml',
+    extension: 'svg',
+  }),
 }
 
 export const canarytokenFile = (id: string) => async (_search: URLSearchParams, q: Backend) => {

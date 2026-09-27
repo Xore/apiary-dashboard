@@ -62,6 +62,7 @@ export function ReviewStep({
           .join(', ') || 'none'}
       </MetadataListItem>
       <MetadataListItem label="Theme">{draft.theme}</MetadataListItem>
+      <MetadataListItem label="Appendix">{`up to ${draft.appendixLimit} rows per table`}</MetadataListItem>
       <MetadataListItem label="Window">
         {WINDOWS.find((w) => w.value === draft.scope.window)?.label ??
           draft.scope.window}

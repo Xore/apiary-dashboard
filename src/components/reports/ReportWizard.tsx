@@ -95,6 +95,7 @@ export function emptyDraft(data: ReportsData, templateId?: string): ReportDefini
     scope: { window: '24h', ip: [], sensor: [], port: [], signature: [] },
     branding: { title: 'APIARY honeypot report', author: '', headerLeft: 'APIARY', headerRight: '', footerLeft: '', classification: 'TLP:AMBER' },
     schedule: null,
+    appendixLimit: 120,
     created: '',
   }
 }
@@ -230,7 +231,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
       case 0:
         return `${draft.name} · ${template.name}`
       case 1:
-        return `${plural(draft.elements.length, 'section')} · ${draft.theme} theme`
+        return `${plural(draft.elements.length, 'section')} · ${draft.theme} theme · appendix ${draft.appendixLimit} rows`
       case 2:
         return `Last ${WINDOWS.find((w) => w.value === draft.scope.window)?.label ?? draft.scope.window} · ${scopeSummary.length ? scopeSummary.join(', ') : 'all captured activity'}`
       case 3:
@@ -390,6 +391,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
                         <SegmentedControlItem value="dark" label="Dark" />
                         <SegmentedControlItem value="light" label="Light" />
                       </SegmentedControl>
+                      <NumberInput label="Appendix rows" description="At most this many rows in each appendix table; the PDF says when a table was cut." value={draft.appendixLimit} onChange={(appendixLimit) => update({ appendixLimit: Math.min(1000, Math.max(10, appendixLimit)) })} />
                       {stepActions('Continue', index)}
                     </FormLayout>
                   )}

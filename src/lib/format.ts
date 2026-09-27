@@ -40,16 +40,19 @@ export const formatDay = (iso: string) => formats.day.format(new Date(iso))
 /** Time of day only, for table cells whose header names the zone. */
 export const formatClock = (iso: string) => formats.time.format(new Date(iso))
 
-/** "5 min ago" from the (mock) clock, for the relative-timestamps preference. */
+/** "5 min ago", or "in 3 h" for what is still to come (a scheduled run,
+ * an expiry), from the (mock) clock, for the relative-timestamps preference. */
 export function formatRelative(iso: string): string {
-  const seconds = Math.round((settings.now() - Date.parse(iso)) / 1000)
+  const signed = Math.round((settings.now() - Date.parse(iso)) / 1000)
+  const seconds = Math.abs(signed)
   if (seconds < 45) return 'just now'
+  const say = (amount: string) => (signed < 0 ? `in ${amount}` : `${amount} ago`)
   const minutes = Math.round(seconds / 60)
-  if (minutes < 60) return `${minutes} min ago`
+  if (minutes < 60) return say(`${minutes} min`)
   const hours = Math.round(minutes / 60)
-  if (hours < 24) return `${hours} h ago`
+  if (hours < 24) return say(`${hours} h`)
   const days = Math.round(hours / 24)
-  return days < 30 ? `${days} d ago` : formatDay(iso)
+  return days < 30 ? say(`${days} d`) : formatDay(iso)
 }
 
 /** A full timestamp: relative or absolute, as the operator prefers. */

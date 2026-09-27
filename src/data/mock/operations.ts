@@ -19,6 +19,7 @@ import type {
 } from '../types'
 import { EVENTS, SENSORS, SOURCES } from './fixtures'
 import { FLEET } from './fleet'
+import { nextScheduledRun } from '../shared'
 import { MOCK_NOW, createRng, hex, int, isoMinutesAgo, pick, pickSkewed } from './random'
 
 // ---- Alerts ----------------------------------------------------------------
@@ -187,9 +188,9 @@ const defaultBranding = { title: 'APIARY honeypot report', author: 'Operator', h
 const emptyScope = { window: '24h', ip: [] as string[], sensor: [] as string[], port: [] as string[], signature: [] as string[] }
 
 export const REPORT_DEFINITIONS: ReportDefinition[] = [
-  { id: 'def-weekly', name: 'Weekly board briefing', template: 'executive', theme: 'light', elements: ['summary', 'timeline', 'campaigns'], scope: { ...emptyScope, window: '7d' }, branding: defaultBranding, schedule: { frequency: 'weekly', hour: 6, minute: 0, weekday: 1, monthDay: 1 }, created: isoMinutesAgo(60 * 24 * 21) },
-  { id: 'def-daily', name: 'Daily ops digest', template: 'operations', theme: 'dark', elements: REPORT_TEMPLATES[1].elements, scope: emptyScope, branding: defaultBranding, schedule: { frequency: 'daily', hour: 6, minute: 30, weekday: 1, monthDay: 1 }, created: isoMinutesAgo(60 * 24 * 40) },
-  { id: 'def-cowrie', name: 'Cowrie deep dive', template: 'incident', theme: 'dark', elements: REPORT_TEMPLATES[3].elements, scope: { ...emptyScope, sensor: ['cowrie'], window: '7d' }, branding: defaultBranding, schedule: null, created: isoMinutesAgo(60 * 24 * 3) },
+  { id: 'def-weekly', name: 'Weekly board briefing', template: 'executive', theme: 'light', elements: ['summary', 'timeline', 'campaigns'], scope: { ...emptyScope, window: '7d' }, branding: defaultBranding, schedule: { frequency: 'weekly', hour: 6, minute: 0, weekday: 1, monthDay: 1 }, appendixLimit: 60, created: isoMinutesAgo(60 * 24 * 21) },
+  { id: 'def-daily', name: 'Daily ops digest', template: 'operations', theme: 'dark', elements: REPORT_TEMPLATES[1].elements, scope: emptyScope, branding: defaultBranding, schedule: { frequency: 'daily', hour: 6, minute: 30, weekday: 1, monthDay: 1 }, appendixLimit: 120, created: isoMinutesAgo(60 * 24 * 40) },
+  { id: 'def-cowrie', name: 'Cowrie deep dive', template: 'incident', theme: 'dark', elements: REPORT_TEMPLATES[3].elements, scope: { ...emptyScope, sensor: ['cowrie'], window: '7d' }, branding: defaultBranding, schedule: null, appendixLimit: 500, created: isoMinutesAgo(60 * 24 * 3) },
 ]
 
 export const GENERATED_REPORTS: GeneratedReport[] = (() => {
@@ -208,23 +209,31 @@ export const GENERATED_REPORTS: GeneratedReport[] = (() => {
   })
 })()
 
+// The scheduler's own bookkeeping: when each scheduled definition last
+// produced a report, and when it fires next.
+for (const definition of REPORT_DEFINITIONS) {
+  if (!definition.schedule) continue
+  const last = GENERATED_REPORTS.filter((r) => r.definitionId === definition.id && r.origin === 'schedule').map((r) => r.createdAt).sort().at(-1)
+  definition.schedule = { ...definition.schedule, ...(last ? { lastRunAt: last } : {}), nextRunAt: nextScheduledRun(definition.schedule, MOCK_NOW) }
+}
+
 // ---- Canarytokens ----------------------------------------------------------
 
+/** The Canarytokens kinds the dashboard can mint: canonical's catalogue
+ * (backend-service canarytokens.rs), the files it hands over to plant. */
 export const CANARY_TYPES: CanaryTokenType[] = [
-  { type: 'aws_keys', label: 'AWS API keys', description: 'Fake credentials that alert when used against AWS.' },
-  { type: 'web_bug', label: 'Web bug / URL', description: 'A URL that alerts when visited.' },
-  { type: 'dns', label: 'DNS hostname', description: 'A hostname that alerts when resolved.' },
-  { type: 'ms_word', label: 'Word document', description: 'A .docx that alerts when opened.' },
-  { type: 'pdf', label: 'PDF document', description: 'A PDF that alerts when opened in Acrobat.' },
-  { type: 'kubeconfig', label: 'Kubeconfig', description: 'A cluster config that alerts when used.' },
-  { type: 'qr_code', label: 'QR code', description: 'An image that alerts when scanned.', needs: 'text' },
-  { type: 'clonedsite', label: 'Cloned website', description: 'Alerts when a page is served from another domain.', needs: 'text' },
+  { type: 'adobe_pdf', label: 'PDF document', description: 'A decoy PDF that fires when opened.', requiresUpload: false, supportsSnippet: false },
+  { type: 'ms_word', label: 'Word document', description: 'A decoy .docx that fires when opened.', requiresUpload: false, supportsSnippet: true },
+  { type: 'ms_excel', label: 'Excel workbook', description: 'A decoy .xlsx that fires when opened.', requiresUpload: false, supportsSnippet: true },
+  { type: 'web_image', label: 'Custom web image', description: 'A web bug behind your own image; fires on load.', requiresUpload: true, supportsSnippet: false },
+  { type: 'windows_dir', label: 'Windows Folder token', description: 'A desktop.ini + icon bundle that fires when the folder is opened in Explorer.', requiresUpload: false, supportsSnippet: false },
+  { type: 'qr_code', label: 'QR code', description: 'A PNG QR code that fires when scanned and opened.', requiresUpload: false, supportsSnippet: false },
 ]
 
 export const CANARY_TOKENS: CanaryToken[] = (() => {
   const rng = createRng(0xca11)
-  const memos = ['AWS keys in home/deploy/.aws/credentials', 'Backup script URL in /root/backup.sh', 'Fake kubeconfig in /etc/kubernetes', 'Salaries.docx on the SMB share', 'DNS name in /etc/hosts', 'Invoice PDF in ftp root']
-  const types = ['aws_keys', 'web_bug', 'kubeconfig', 'ms_word', 'dns', 'pdf']
+  const memos = ['Budget 2027.xlsx in /home/finance on the SMB share', 'Logo image on the intranet wiki start page', 'Folder "Backups" on the file server', 'Salaries.docx on the SMB share', 'Guest Wi-Fi QR on the lobby poster', 'Invoice PDF in ftp root']
+  const types = ['ms_excel', 'web_image', 'windows_dir', 'ms_word', 'qr_code', 'adobe_pdf']
   return memos.map((memo, i) => {
     const id = hex(rng, 25)
     return {
@@ -235,7 +244,7 @@ export const CANARY_TOKENS: CanaryToken[] = (() => {
       hostname: `${id}.canary.example.test`,
       createdAt: isoMinutesAgo(int(rng, 60 * 24, 60 * 24 * 60)),
       createdBy: 'operator',
-      artifact: ['aws_keys', 'kubeconfig', 'ms_word', 'pdf'].includes(types[i]) ? `${types[i]}-${id.slice(0, 6)}` : undefined,
+      artifact: types[i] === 'web_image' ? undefined : `${types[i]}-${id.slice(0, 6)}`,
     }
   })
 })()
@@ -251,7 +260,7 @@ export const CANARY_TRIGGERS: CanaryTrigger[] = (() => {
       type: token.type,
       triggeredAt: isoMinutesAgo(i * 290 + int(rng, 0, 200)),
       srcIp: pick(rng, SOURCES).ip,
-      userAgent: pick(rng, ['aws-cli/2.15.0 Python/3.11', 'curl/8.4.0', 'Microsoft Office Word 2016', 'kubectl/v1.29.1', 'python-requests/2.31']),
+      userAgent: pick(rng, ['Microsoft Office Excel 2016', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Microsoft-WebDAV-MiniRedir/10.0.19045', 'Microsoft Office Word 2016', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X)']),
       location: pick(rng, ['Beijing, CN', 'Moscow, RU', 'Amsterdam, NL', 'São Paulo, BR']),
       manageUrl: `https://canarytokens.example.test/manage?token=${token.id}`,
     }

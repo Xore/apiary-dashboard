@@ -2,7 +2,7 @@
 // and during SSR) and the mock backend. Nothing here holds or reads data, so
 // importing it never pulls the mock into the browser bundle.
 import { MOCK_NOW } from './mock/random'
-import type { AlertGroup } from './types'
+import type { AlertGroup, ReportDefinition } from './types'
 
 const HOUR = 3_600_000
 const DAY = 24 * HOUR
@@ -33,4 +33,13 @@ export function redact(text: string): string {
     .replace(/\beyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]{8,}/g, '[redacted jwt]')
     .replace(/\b(bearer)\s+[\w.~+/-]{8,}=*/gi, '$1 [redacted]')
     .replace(/\b(authorization|cookie|set-cookie|x-api-key|api[_-]?key|token|access_token|refresh_token|session|password|passwd|secret)(["']?\s*[:=]\s*["']?)[^\s"'&,;}]+/gi, '$1$2[redacted]')
+}
+
+/** The first time a report schedule fires strictly after `after` (UTC). */
+export function nextScheduledRun(schedule: NonNullable<ReportDefinition['schedule']>, after: number): string {
+  const t = new Date(after)
+  t.setUTCHours(schedule.hour, schedule.minute, 0, 0)
+  const matches = (d: Date) => (schedule.frequency === 'weekly' ? d.getUTCDay() === schedule.weekday : schedule.frequency === 'monthly' ? d.getUTCDate() === schedule.monthDay : true)
+  while (t.getTime() <= after || !matches(t)) t.setUTCDate(t.getUTCDate() + 1)
+  return t.toISOString()
 }

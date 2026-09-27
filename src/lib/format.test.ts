@@ -49,5 +49,9 @@ describe('time preferences', () => {
     expect(formatDateTime('2026-09-21T12:00:00Z')).toBe('2 d ago')
     // Newer than the clock (a live event): still "just now".
     expect(formatRelative('2026-09-23T12:00:30Z')).toBe('just now')
+    // What is still to come (a scheduled run, an expiry) counts forward.
+    expect(formatDateTime('2026-09-23T12:20:00Z')).toBe('in 20 min')
+    expect(formatDateTime('2026-09-24T06:30:00Z')).toBe('in 19 h')
+    expect(formatDateTime('2026-09-28T12:00:00Z')).toBe('in 5 d')
   })
 })

@@ -2,6 +2,7 @@
 // computed from the shared event set; the rest is small seeded data.
 import type {
   BlockRecord,
+  DashboardOperator,
   AuditEntry,
   DashboardConfig,
   DeploymentLinks,
@@ -171,6 +172,12 @@ export const CONFIG_HISTORY: ConfigRevision[] = [
   { id: 'rev-40', at: isoMinutesAgo(60 * 30), actor: 'operator', section: 'honeypot', summary: 'Changed alertCooldown' },
   { id: 'rev-39', at: isoMinutesAgo(60 * 24 * 3), actor: 'operator', section: 'presentation', summary: 'Changed bannerText, bannerSeverity' },
   { id: 'rev-38', at: isoMinutesAgo(60 * 24 * 9), actor: 'analyst', section: 'report-presets', summary: 'Renamed “Ops digest” preset' },
+]
+
+export const OPERATORS: DashboardOperator[] = [
+  { subject: 'mock-operator', username: 'operator', name: 'Operator', role: 'admin', firstSeenAt: isoMinutesAgo(60 * 24 * 71), lastSeenAt: isoMinutesAgo(0) },
+  { subject: 'mock-analyst', username: 'analyst', name: 'Analyst', role: 'viewer', firstSeenAt: isoMinutesAgo(60 * 24 * 19), lastSeenAt: isoMinutesAgo(60 * 18 + 20) },
+  { subject: 'mock-oncall', username: 'oncall', name: 'On-call responder', role: 'admin', firstSeenAt: isoMinutesAgo(60 * 24 * 44), lastSeenAt: isoMinutesAgo(60 * 24 * 6) },
 ]
 
 export const AUDIT_LOG: AuditEntry[] = [

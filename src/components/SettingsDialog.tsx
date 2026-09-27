@@ -261,7 +261,7 @@ const TIMEZONES = ['browser', 'UTC', 'Europe/Berlin', 'Europe/London', 'America/
 const timezoneOption = (zone: string) => ({ value: zone, label: zone === 'browser' ? 'Browser time zone' : zone })
 
 function TimePanel() {
-  const { prefs, setPref } = useSettings()
+  const { data, prefs, setPref } = useSettings()
   return (
     <>
       <SettingsCard title="Time">
@@ -289,7 +289,7 @@ function TimePanel() {
         <SettingsRow setting="autoRefresh" control={<Switch label="Refresh automatically" isLabelHidden value={prefs.autoRefresh} onChange={(autoRefresh) => setPref({ autoRefresh })} />} />
         <SettingsRow
           setting="refresh"
-          control={<Selector label="Refresh every" isLabelHidden width={CONTROL_WIDTH} isDisabled={!prefs.autoRefresh} value={String(prefs.refreshSeconds)} onChange={(v) => setPref({ refreshSeconds: Number(v) })} options={[10, 15, 30, 60, 120, 300].map((n) => ({ value: String(n), label: n < 60 ? `${n} seconds` : `${n / 60} minute${n === 60 ? '' : 's'}` }))} />}
+          control={<Selector label="Refresh every" isLabelHidden width={CONTROL_WIDTH} isDisabled={!prefs.autoRefresh} value={String(prefs.refreshSeconds)} onChange={(v) => setPref({ refreshSeconds: Number(v) })} options={refreshChoices(data.config.behavior.refreshIntervalOptions, prefs.refreshSeconds).map((n) => ({ value: String(n), label: n < 60 ? `${n} seconds` : `${n / 60} minute${n === 60 ? '' : 's'}` }))} />}
         />
         <SettingsRow setting="liveToasts" control={<Switch label="Operational toasts" isLabelHidden value={prefs.liveToasts} onChange={(liveToasts) => setPref({ liveToasts })} />} />
         <SettingsRow
@@ -584,21 +584,26 @@ function StoragePanel() {
   )
 }
 
+/** The refresh intervals an admin offers (Dashboard defaults), plus the
+ * operator's own if it is no longer among them, so it still shows. */
+function refreshChoices(offered: number[], current: number): number[] {
+  return [...new Set([...offered, current])].sort((a, b) => a - b)
+}
+
 function UsersPanel() {
+  const { data } = useSettings()
   return (
     <SettingsCard>
       <SettingsRow
         setting="users"
         detail={
           <Table
-            data={[
-              { id: 'operator', name: 'Operator', roles: 'admin', lastSeen: formatDateTime('2026-09-23T12:00:00Z') },
-              { id: 'analyst', name: 'Analyst', roles: 'viewer', lastSeen: formatDateTime('2026-09-22T17:40:00Z') },
-            ]}
+            data={data.users.map((u) => ({ ...u, id: u.subject }))}
             columns={[
-              { key: 'name', header: 'User', width: proportional(1) },
-              { key: 'roles', header: 'Roles', width: pixel(120) },
-              { key: 'lastSeen', header: 'Last seen', width: pixel(200) },
+              { key: 'name', header: 'User', width: proportional(1), renderCell: (row) => <VStack gap={0}><Text>{row.name}</Text><Text type="supporting">{row.username}</Text></VStack> },
+              { key: 'role', header: 'Role', width: pixel(96) },
+              { key: 'firstSeenAt', header: 'First seen', width: pixel(168), renderCell: (row) => formatDateTime(row.firstSeenAt) },
+              { key: 'lastSeenAt', header: 'Last seen', width: pixel(168), renderCell: (row) => formatDateTime(row.lastSeenAt) },
             ]}
             idKey="id"
             density="compact"

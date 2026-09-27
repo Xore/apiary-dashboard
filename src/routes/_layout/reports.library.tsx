@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
-import { HStack } from '@astryxdesign/core/Stack'
+import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -51,7 +51,17 @@ function LibraryPage() {
   const columns: TableColumn<ReportDefinition>[] = [
     { key: 'name', header: 'Definition', width: proportional(2), renderCell: (row) => <Text weight="semibold">{row.name}</Text> },
     { key: 'template', header: 'Template', width: pixel(168), renderCell: (row) => data.templates.find((t) => t.id === row.template)?.name ?? row.template },
-    { key: 'schedule', header: 'Runs', width: proportional(2), renderCell: (row) => describeSchedule(row.schedule) },
+    {
+      key: 'schedule',
+      header: 'Runs',
+      width: proportional(2),
+      renderCell: (row) => (
+        <VStack gap={0}>
+          <Text>{describeSchedule(row.schedule)}</Text>
+          {row.schedule?.nextRunAt && <Text type="supporting">{`next ${formatDateTime(row.schedule.nextRunAt)}`}</Text>}
+        </VStack>
+      ),
+    },
     { key: 'created', header: 'Last generated', width: pixel(184), renderCell: (row) => <Text type="supporting">{lastRun(row.id) ? formatDateTime(lastRun(row.id)!) : 'never'}</Text> },
     {
       key: 'id',
