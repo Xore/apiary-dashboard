@@ -8,6 +8,7 @@ import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
 import { AuthFrame, AuthProblem } from '#/components/auth/AuthFrame'
+import { getSignInAvailable } from '#/data/auth'
 import { returnAfterSignIn, safeReturnTo } from '#/lib/returnTo'
 
 type LoginSearch = { return_to?: string; signed_out?: boolean; fail?: 'unavailable' }
@@ -18,14 +19,16 @@ export const Route = createFileRoute('/auth/login')({
     signed_out: search.signed_out === true || search.signed_out === 1 || search.signed_out === '1' || undefined,
     fail: search.fail === 'unavailable' ? 'unavailable' : undefined,
   }),
+  loader: async () => ({ available: await getSignInAvailable() }),
   head: () => ({ meta: [{ title: 'Sign in · APIARY' }] }),
   component: Login,
 })
 
 function Login() {
   const { return_to, signed_out, fail } = Route.useSearch()
+  const { available } = Route.useLoaderData()
   const returnTo = safeReturnTo(return_to)
-  if (fail === 'unavailable') {
+  if (fail === 'unavailable' || !available) {
     return <AuthProblem heading="Sign-in is temporarily unavailable" detail="The identity provider or session store did not answer, so this sign-in could not start. Reload to retry; if it persists the Keycloak tier may be degraded." />
   }
   const callback = (role: 'admin' | 'viewer') => `/auth/callback?code=mock&role=${role}&return_to=${encodeURIComponent(returnTo)}`

@@ -5,6 +5,7 @@
 // session (RP-initiated logout) in #5.
 import { createFileRoute } from '@tanstack/react-router'
 import { crossOriginResponse, hasSameOriginHeader } from '#/server/origin'
+import { warnThrottled } from '#/server/faults'
 import { clearSessionCookie, sessions, sidFrom } from '#/server/session'
 
 export const Route = createFileRoute('/auth/logout')({
@@ -12,7 +13,9 @@ export const Route = createFileRoute('/auth/logout')({
     handlers: {
       GET: async ({ request }) => {
         if (!hasSameOriginHeader(request)) return crossOriginResponse()
-        await sessions.destroy(sidFrom(request))
+        // Best effort: a store that does not answer still lets the operator
+        // out here (the cookie goes), and the session expires on its own.
+        await sessions.destroy(sidFrom(request)).catch((error: unknown) => warnThrottled('[session] could not end a session:', error))
         return new Response(null, { status: 303, headers: { location: '/auth/login?signed_out=1', 'set-cookie': clearSessionCookie() } })
       },
     },

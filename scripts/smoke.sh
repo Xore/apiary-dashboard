@@ -172,6 +172,28 @@ check "cross-site sign-out" "$(curl -s -o /dev/null -w '%{http_code}' -b "$OTHER
 check "sign-out" "$(curl -s -o /dev/null -w '%{http_code}' -b "$OTHER" -H "Referer: http://localhost:$PORT/events" "http://localhost:$PORT/auth/logout")" 303
 check "a page after sign-out" "$(curl -s -o /dev/null -w '%{http_code}' -b "$OTHER" "http://localhost:$PORT/events")" 307
 
+step "when the session store or the identity provider does not answer"
+# A second server with the mock faults on (src/server/faults.ts): nothing
+# crashes, nobody is signed in by accident, and the sign-in pages say why.
+FAULT_PORT=$((PORT + 1))
+body() { curl -s --max-time 5 "${@:2}" "http://localhost:$FAULT_PORT$1"; }
+code() { curl -s -o /dev/null -w '%{http_code}' --max-time 5 "${@:2}" "http://localhost:$FAULT_PORT$1"; }
+contains() { if grep -q "$3" <<<"$2"; then printf '  ok   %s\n' "$1"; else printf '  FAIL %s (no "%s")\n' "$1" "$3"; failed=1; fi; }
+for fault in session-store identity-provider; do
+  APIARY_MOCK_FAULTS="$fault" SERVICE_TOKEN=smoke-token PORT="$FAULT_PORT" bun run start >"$WORK/fault.log" 2>&1 &
+  FAULT_PID=$!
+  for _ in $(seq 1 50); do curl -s -o /dev/null "http://localhost:$FAULT_PORT/healthz" && break; sleep 0.2; done
+  echo "  -- $fault down"
+  check "a page with a cookie goes to sign-in" "$(code /events -b "$COOKIE")" 307
+  check "a direct handler refuses" "$(code /api/live -b "$COOKIE")" 401
+  check "the probe still answers" "$(code /healthz)" 200
+  contains "the sign-in page says it is unavailable" "$(body /auth/login)" "temporarily unavailable"
+  contains "the callback says sign-in failed" "$(body '/auth/callback?code=mock&role=admin')" "could not be completed"
+  if curl -s -D - -o /dev/null "http://localhost:$FAULT_PORT/auth/callback?code=mock&role=admin" | grep -qi '^set-cookie: __Host-apiary_bff=[^;]'; then printf '  FAIL the callback set a session\n'; failed=1; else printf '  ok   no session is set\n'; fi
+  check "sign-out still lets the operator out" "$(code /auth/logout -b "$COOKIE" -H "Referer: http://localhost:$FAULT_PORT/")" 303
+  kill "$FAULT_PID" 2>/dev/null; wait "$FAULT_PID" 2>/dev/null || true
+done
+
 step "SSR link crawl, every entity tab"
 bun scripts/crawl.ts "http://localhost:$PORT" 2 || failed=1
 

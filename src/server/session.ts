@@ -3,6 +3,7 @@
 // this process's memory behind the same interface, so the sign-in flow,
 // the navigation guard and every role check run for real. Server-only.
 import { randomBytes } from 'node:crypto'
+import { Unavailable, faulty } from './faults'
 
 export type Role = 'admin' | 'viewer'
 
@@ -31,12 +32,14 @@ export class MemorySessionStore implements SessionStore {
   constructor(private readonly now: () => number = Date.now) {}
 
   create(data: Omit<Session, 'createdAt'>): Promise<string> {
+    if (faulty('session-store')) return Promise.reject(new Unavailable('session-store'))
     const sid = randomBytes(32).toString('base64url')
     this.sessions.set(sid, { session: { ...data, createdAt: this.now() }, expires: this.now() + SESSION_TTL_SECONDS * 1000 })
     return Promise.resolve(sid)
   }
 
   get(sid: string | undefined): Promise<Session | null> {
+    if (faulty('session-store')) return Promise.reject(new Unavailable('session-store'))
     if (!sid || sid.length > 128) return Promise.resolve(null)
     const entry = this.sessions.get(sid)
     if (!entry) return Promise.resolve(null)
@@ -48,6 +51,7 @@ export class MemorySessionStore implements SessionStore {
   }
 
   destroy(sid: string | undefined): Promise<void> {
+    if (faulty('session-store')) return Promise.reject(new Unavailable('session-store'))
     if (sid) this.sessions.delete(sid)
     return Promise.resolve()
   }

@@ -5,6 +5,9 @@
 import { createServerFn } from '@tanstack/react-start'
 import type { Role } from '#/server/session'
 
+/** Whether sign-in can start now; the sign-in page says so when not. */
+export const getSignInAvailable = createServerFn({ method: 'GET' }).handler(async () => (await import('#/server/signIn')).signInAvailable())
+
 export const signInMock = createServerFn({ method: 'POST' })
   .validator((data: { role: Role }) => data)
   .handler(async ({ data }) => {

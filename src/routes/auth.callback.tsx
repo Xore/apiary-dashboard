@@ -4,7 +4,8 @@
 // - the provider refused the attempt (`?error=`, 400),
 // - the attempt expired or was already used (400),
 // - the token exchange failed (502).
-// The mock reads which one from `?code=expired|failed`, and answers 200:
+// The mock reads which one from `?code=expired|failed`, or fails for real
+// under APIARY_MOCK_FAULTS (src/server/faults.ts), and answers 200:
 // the router renders only 200, 404 and 500.
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AuthProblem } from '#/components/auth/AuthFrame'
@@ -25,8 +26,13 @@ export const Route = createFileRoute('/auth/callback')({
   }),
   beforeLoad: async ({ search }) => {
     if (search.error || !search.code || search.code === 'expired' || search.code === 'failed') return
-    // The mock provider's answer: a session for the chosen account.
-    await signInMock({ data: { role: search.role ?? 'admin' } })
+    // The mock provider's answer: a session for the chosen account. When
+    // the exchange or the session write fails, the page says so.
+    try {
+      await signInMock({ data: { role: search.role ?? 'admin' } })
+    } catch {
+      return { failed: true }
+    }
     throw redirect({ href: returnAfterSignIn(search.return_to ?? '/') })
   },
   head: () => ({ meta: [{ title: 'Sign in · APIARY' }] }),
@@ -35,10 +41,11 @@ export const Route = createFileRoute('/auth/callback')({
 
 function Callback() {
   const { code, error } = Route.useSearch()
+  const failed = Route.useRouteContext()?.failed
   if (error) {
     return <AuthProblem heading="Sign-in was not completed" detail={`The identity provider refused this sign-in attempt (${error}). This usually means the attempt expired or was already used.`} retryHref="/auth/login" />
   }
-  if (code === 'failed') {
+  if (code === 'failed' || failed) {
     return <AuthProblem heading="Sign-in could not be completed" detail="The identity provider did not accept the token exchange. If this keeps happening, the Keycloak tier may be degraded." retryHref="/auth/login" />
   }
   return <AuthProblem heading="Login attempt expired" detail="This sign-in took too long or was already completed. Start again to continue." retryHref="/auth/login" />
