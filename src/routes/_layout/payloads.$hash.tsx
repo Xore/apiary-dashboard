@@ -1,16 +1,11 @@
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
-import { VERDICT_COLOR } from '#/components/analyzers/PayloadBlocks'
+import { PayloadOperatorMenu, VERDICT_COLOR } from '#/components/analyzers/PayloadBlocks'
 import { EntityFrame } from '#/components/EntityFrame'
 import { OpenInMenu } from '#/components/OpenInMenu'
 import { PayloadReportButton } from '#/components/analyzers/PayloadReportButton'
 import { virusTotalLink } from '#/lib/toolLinks'
-import { apiHref } from '#/lib/apiHref'
-import { useIsAdmin } from '#/lib/session'
-import { Button } from '@astryxdesign/core/Button'
-import { Icon } from '@astryxdesign/core/Icon'
-import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import { entityTabs } from '#/components/ViewTabs'
 import type { ViewTab } from '#/components/ViewTabs'
 import { NotFound } from '#/components/NotFound'
@@ -47,7 +42,6 @@ function PayloadLayout() {
   const a = loaded?.analysis
   const delivery = loaded?.delivery
   const p = a?.payload
-  const isAdmin = useIsAdmin()
 
   return (
     <EntityFrame
@@ -57,17 +51,8 @@ function PayloadLayout() {
       basePath={`/payloads/${hash}`}
       actions={
         <>
-          {isAdmin && (
-            <Button
-              label="Download sample"
-              size="sm"
-              variant="secondary"
-              icon={<Icon icon={ArrowDownTrayIcon} size="sm" />}
-              tooltip="Live malware: the captured bytes, unchanged"
-              href={apiHref(`/api/payload/${hash}/download`)}
-            />
-          )}
           <PayloadReportButton hash={hash} />
+          <PayloadOperatorMenu hash={hash} />
           <OpenInMenu links={[virusTotalLink(hash)]} />
         </>
       }
