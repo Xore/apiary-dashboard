@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { VStack } from '@astryxdesign/core/Stack'
@@ -9,6 +10,7 @@ import { ValueList } from '#/components/EntityBlocks'
 const parent = getRouteApi('/_layout/alerts/$key')
 
 export const Route = createFileRoute('/_layout/alerts/$key/evidence')({
+  ssr: pageSsr,
   component: AlertEvidence,
   pendingComponent: AlertEvidence,
 })

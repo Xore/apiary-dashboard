@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Grid } from '@astryxdesign/core/Grid'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
@@ -18,6 +19,7 @@ import type { TopologySensor } from '#/data/types'
 import { EntityLink } from '#/components/EntityLink'
 
 export const Route = createFileRoute('/_layout/topology')({
+  ssr: pageSsr,
   loader: () => getTopology(),
   component: TopologyPage,
   pendingComponent: TopologyPage,

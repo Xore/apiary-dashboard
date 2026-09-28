@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonPanels } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
@@ -12,7 +13,7 @@ import { formatDateTime, formatNumber } from '#/lib/format'
 
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
-export const Route = createFileRoute('/_layout/sensors/$sensor/')({ component: SensorOverview, pendingComponent: SensorOverview })
+export const Route = createFileRoute('/_layout/sensors/$sensor/')({ ssr: pageSsr, component: SensorOverview, pendingComponent: SensorOverview })
 
 function SensorOverview() {
   const loaded = orPending(parent.useLoaderData())

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
@@ -12,6 +13,7 @@ import { getAlertDetail } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/alerts/$key')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Alert views', basePath: (params) => `/alerts/${encodeURIComponent(params.key)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const detail = await getAlertDetail(params.key)

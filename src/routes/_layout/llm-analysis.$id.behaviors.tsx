@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonPanels } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -9,6 +10,7 @@ import { Panel } from '#/components/DashboardBlocks'
 const parent = getRouteApi('/_layout/llm-analysis/$id')
 
 export const Route = createFileRoute('/_layout/llm-analysis/$id/behaviors')({
+  ssr: pageSsr,
   component: TabView,
   pendingComponent: TabView,
 })

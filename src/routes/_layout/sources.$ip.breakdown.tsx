@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -5,7 +6,7 @@ import { MiniTable } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/sources/$ip')
 
-export const Route = createFileRoute('/_layout/sources/$ip/breakdown')({ component: SourceBreakdown, pendingComponent: SourceBreakdown })
+export const Route = createFileRoute('/_layout/sources/$ip/breakdown')({ ssr: pageSsr, component: SourceBreakdown, pendingComponent: SourceBreakdown })
 
 /** What this address reached and what it tried, as leaderboards. */
 function SourceBreakdown() {

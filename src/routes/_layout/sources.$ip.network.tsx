@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
@@ -11,6 +12,7 @@ import { getSourceNetwork } from '#/data/queries'
 import { formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/sources/$ip/network')({
+  ssr: pageSsr,
   loader: ({ params }) => getSourceNetwork(params.ip),
   component: SourceNetworkTab,
   pendingComponent: SourceNetworkTab,

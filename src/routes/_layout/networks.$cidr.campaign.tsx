@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -9,6 +10,7 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 const parent = getRouteApi('/_layout/networks/$cidr')
 
 export const Route = createFileRoute('/_layout/networks/$cidr/campaign')({
+  ssr: pageSsr,
   component: TabView,
   pendingComponent: TabView,
 })

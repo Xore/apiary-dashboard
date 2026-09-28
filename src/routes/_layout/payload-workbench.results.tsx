@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { Banner } from '@astryxdesign/core/Banner'
@@ -32,6 +33,7 @@ const TABS: Array<{ id: AnalyzerTab; label: string }> = [
 ]
 
 export const Route = createFileRoute('/_layout/payload-workbench/results')({
+  ssr: pageSsr,
   staticData: {
     // Shared with the CAPE, GitHub and RevDeck lists and the sandbox's live
     // view, which are tabs of these results in the top bar.

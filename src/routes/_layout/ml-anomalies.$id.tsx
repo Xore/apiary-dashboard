@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
@@ -12,6 +13,7 @@ import { getAnomaly } from '#/data/queries'
 import { formatDateTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/ml-anomalies/$id')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'ML anomaly views', basePath: (params) => `/ml-anomalies/${encodeURIComponent(params.id)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const detail = await getAnomaly(params.id)

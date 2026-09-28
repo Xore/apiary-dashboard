@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -13,6 +14,7 @@ import { getAgentCampaign } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/agent-campaigns/$id')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Agent campaign views', basePath: (params) => `/agent-campaigns/${encodeURIComponent(params.id)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const detail = await getAgentCampaign(params.id)

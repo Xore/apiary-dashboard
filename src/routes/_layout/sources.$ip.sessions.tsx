@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { createFileRoute } from '@tanstack/react-router'
 import { Panel } from '#/components/DashboardBlocks'
@@ -6,6 +7,7 @@ import { getSourceSessions } from '#/data/queries'
 
 
 export const Route = createFileRoute('/_layout/sources/$ip/sessions')({
+  ssr: pageSsr,
   loaderDeps: ({ search }) => ({ range: search.range }),
   loader: ({ params, deps }) => getSourceSessions(params.ip, deps.range),
   component: TabView,

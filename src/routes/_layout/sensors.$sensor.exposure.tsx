@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
@@ -10,7 +11,7 @@ import { Panel } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
-export const Route = createFileRoute('/_layout/sensors/$sensor/exposure')({ component: SensorExposure, pendingComponent: SensorExposure })
+export const Route = createFileRoute('/_layout/sensors/$sensor/exposure')({ ssr: pageSsr, component: SensorExposure, pendingComponent: SensorExposure })
 
 /** How the internet reaches this sensor: ingress path, names, and ports. */
 function SensorExposure() {

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { ActionLink } from '#/components/ActionLink'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -10,6 +11,7 @@ import { orPending } from '#/lib/pending'
 import { getKillChain } from '#/data/queries'
 
 export const Route = createFileRoute('/_layout/kill-chain')({
+  ssr: pageSsr,
   loader: () => getKillChain(),
   component: KillChainPage,
   pendingComponent: KillChainPage,

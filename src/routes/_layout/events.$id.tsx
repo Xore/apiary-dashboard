@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
@@ -16,6 +17,7 @@ import { useShellConfig } from '#/lib/session'
 import { eventToolLinks, virusTotalLink } from '#/lib/toolLinks'
 
 export const Route = createFileRoute('/_layout/events/$id')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Event views', basePath: (params) => `/events/${encodeURIComponent(params.id)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const detail = await getEventDetail(params.id)

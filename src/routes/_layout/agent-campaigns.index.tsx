@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Banner } from '@astryxdesign/core/Banner'
@@ -18,6 +19,7 @@ import { categoryLabel } from '#/components/details/AgentCampaign'
 import { entityHref } from '#/lib/entities'
 
 export const Route = createFileRoute('/_layout/agent-campaigns/')({
+  ssr: pageSsr,
   validateSearch: (search: Record<string, unknown>): { category?: string } => ({
     category: typeof search.category === 'string' && search.category ? search.category : undefined,
   }),

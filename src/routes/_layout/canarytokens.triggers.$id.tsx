@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonPanels } from '#/components/EntityBlocks'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
@@ -9,6 +10,7 @@ import { NotFound } from '#/components/NotFound'
 import { formatDateTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/canarytokens/triggers/$id')({
+  ssr: pageSsr,
   loader: async ({ params }) => {
     const trigger = (await getCanarytokens()).triggers.find(
       (t) => t.id === params.id,

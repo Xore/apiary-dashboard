@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
@@ -9,6 +10,7 @@ import { getIdentity } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/identities/$id')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Attacker identity views', basePath: (params) => `/identities/${encodeURIComponent(params.id)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const identity = await getIdentity(params.id)

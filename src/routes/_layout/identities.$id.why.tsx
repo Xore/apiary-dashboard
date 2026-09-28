@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -10,6 +11,7 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 const parent = getRouteApi('/_layout/identities/$id')
 
 export const Route = createFileRoute('/_layout/identities/$id/why')({
+  ssr: pageSsr,
   loader: ({ params }) => getIdentityFusion(params.id),
   component: TabView,
   pendingComponent: TabView,

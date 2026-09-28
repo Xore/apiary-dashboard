@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonPanels, ValueList } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
@@ -5,7 +6,7 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 
 const parent = getRouteApi('/_layout/events/$id')
 
-export const Route = createFileRoute('/_layout/events/$id/iocs')({ component: EventIocs, pendingComponent: EventIocs })
+export const Route = createFileRoute('/_layout/events/$id/iocs')({ ssr: pageSsr, component: EventIocs, pendingComponent: EventIocs })
 
 /** Every value in this event you can pivot on. */
 function EventIocs() {

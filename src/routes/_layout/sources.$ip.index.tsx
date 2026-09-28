@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { Grid } from '@astryxdesign/core/Grid'
@@ -12,6 +13,7 @@ import { osGuessCaption } from '#/components/EntityBlocks'
 const parent = getRouteApi('/_layout/sources/$ip')
 
 export const Route = createFileRoute('/_layout/sources/$ip/')({
+  ssr: pageSsr,
   loader: ({ params }) => getRelated('source', params.ip),
   component: SourceOverview,
   pendingComponent: SourceOverview,

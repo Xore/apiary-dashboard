@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { Button } from '@astryxdesign/core/Button'
@@ -21,6 +22,7 @@ import { apiHref } from '#/lib/apiHref'
 import { formatNumber, formatTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/ips')({
+  ssr: pageSsr,
   loader: () => getSourceProfiles(),
   component: SourcesPage,
   pendingComponent: SourcesPage,

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { ActionLink } from '#/components/ActionLink'
 import { textParam } from '#/lib/searchParams'
 import { useState } from 'react'
@@ -20,6 +21,7 @@ import { SkeletonPanels } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
 
 export const Route = createFileRoute('/_layout/search')({
+  ssr: pageSsr,
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
     q: textParam(search.q),
   }),

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
@@ -12,6 +13,7 @@ import { getLlmAnalysis } from '#/data/queries'
 import { formatDateTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/llm-analysis/$id')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'LLM analysis views', basePath: (params) => `/llm-analysis/${encodeURIComponent(params.id)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const detail = await getLlmAnalysis(params.id)

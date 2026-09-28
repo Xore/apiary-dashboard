@@ -4,13 +4,13 @@
 // routes are derived from the route files: `sources.$ip.timeline.tsx` means
 // every /sources/<ip> page has a /timeline tab.
 //
-//   bun scripts/crawl.ts http://localhost:3000 [maxPerShape] [--scenarios]
+//   bun scripts/crawl.ts http://localhost:3000 [maxPerShape] [--scenarios] [--samples-out <file>]
 //
 // With --scenarios it then opens one page of every route shape under each
 // mock scenario (?mock=…) and checks the page says the right thing: empty
 // and viewer pages render without an error, outages show their own error
 // state, and nothing anywhere falls through to the generic crash state.
-import { readdirSync } from 'node:fs'
+import { readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { backend } from '../src/data/backend'
 import { alertKeyOf } from '../src/data/shared'
@@ -124,6 +124,9 @@ while (queue.length) {
 }
 
 console.log(`crawled ${fetched} pages across ${perShape.size} route shapes`)
+// One page per route shape, for the browser checks (scripts/skeletons.ts).
+const samplesOut = process.argv[process.argv.indexOf('--samples-out') + 1]
+if (process.argv.includes('--samples-out') && samplesOut) writeFileSync(samplesOut, JSON.stringify([...samples.values()], null, 2))
 
 // Titles the error boundary shows (DefaultCatchBoundary), by failure kind.
 const BOUNDARY = {

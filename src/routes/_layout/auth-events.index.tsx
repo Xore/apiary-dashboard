@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
@@ -15,6 +16,7 @@ import { formatTime } from '#/lib/format'
 import { SourceIp } from '#/components/details/AuthFailure'
 
 export const Route = createFileRoute('/_layout/auth-events/')({
+  ssr: pageSsr,
   loader: () => getAuthEvents(),
   component: AuthEventsPage,
   pendingComponent: AuthEventsPage,

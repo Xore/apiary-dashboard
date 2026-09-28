@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { createFileRoute } from '@tanstack/react-router'
 import { MailMessage } from '#/components/CapturedMail'
@@ -6,6 +7,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { getMail } from '#/data/queries'
 
 export const Route = createFileRoute('/_layout/sessions/$id/mail')({
+  ssr: pageSsr,
   loader: ({ params }) => getMail(params.id),
   component: SessionMail,
   pendingComponent: SessionMail,

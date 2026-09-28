@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonPanels } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
@@ -17,6 +18,7 @@ import { fieldBlock, readField } from '#/lib/sensorFields'
 const parent = getRouteApi('/_layout/events/$id')
 
 export const Route = createFileRoute('/_layout/events/$id/')({
+  ssr: pageSsr,
   loader: ({ params }) => getRelated('event', params.id),
   component: EventOverview,
   pendingComponent: EventOverview,

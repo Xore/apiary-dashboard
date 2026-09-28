@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { Grid } from '@astryxdesign/core/Grid'
@@ -11,6 +12,7 @@ import { EventsPanel } from '#/components/DetailBlocks'
 const parent = getRouteApi('/_layout/ioc/$kind/$value')
 
 export const Route = createFileRoute('/_layout/ioc/$kind/$value/')({
+  ssr: pageSsr,
   loader: ({ params }) => getRelated('ioc', `${params.kind}:${params.value}`),
   component: IocOverview,
   pendingComponent: IocOverview,

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { useSyncExternalStore } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Link } from '@astryxdesign/core/Link'
@@ -11,7 +12,8 @@ import { formatDateTime } from '#/lib/format'
 import { getPins, getServerPins, subscribe, unpin } from '#/lib/watchlist'
 import type { Pin } from '#/lib/watchlist'
 
-export const Route = createFileRoute('/_layout/watchlist')({ component: WatchlistPage })
+// Pins live in this browser: the server renders the list's skeleton.
+export const Route = createFileRoute('/_layout/watchlist')({ ssr: pageSsr, component: WatchlistPage, pendingComponent: () => <WatchlistList pins={undefined} /> })
 
 type Row = Pin & Record<string, unknown>
 
@@ -24,7 +26,10 @@ const columns: TableColumn<Row>[] = [
 
 /** Entities pinned from their pages, newest first. Kept in this browser. */
 function WatchlistPage() {
-  const pins = useSyncExternalStore(subscribe, getPins, getServerPins) as Row[]
+  return <WatchlistList pins={useSyncExternalStore(subscribe, getPins, getServerPins)} />
+}
+
+function WatchlistList({ pins }: { pins: Row[] | undefined }) {
   return (
     <RecordList
       title="Watchlist"

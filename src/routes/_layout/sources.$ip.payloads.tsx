@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { MiniTable } from '#/components/DashboardBlocks'
@@ -5,6 +6,7 @@ import { MiniTable } from '#/components/DashboardBlocks'
 const parent = getRouteApi('/_layout/sources/$ip')
 
 export const Route = createFileRoute('/_layout/sources/$ip/payloads')({
+  ssr: pageSsr,
   component: TabView,
   pendingComponent: TabView,
 })

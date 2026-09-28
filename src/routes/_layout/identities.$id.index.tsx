@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { GroupOverview, SkeletonPanels } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
@@ -14,6 +15,7 @@ import { Panel } from '#/components/DashboardBlocks'
 const parent = getRouteApi('/_layout/identities/$id')
 
 export const Route = createFileRoute('/_layout/identities/$id/')({
+  ssr: pageSsr,
   loader: ({ params }) => getRelated('identity', params.id),
   component: IdentityOverview,
   pendingComponent: IdentityOverview,

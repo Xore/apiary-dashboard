@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
@@ -20,6 +21,7 @@ import { formatTime } from '#/lib/format'
 import { useIsAdmin } from '#/lib/session'
 
 export const Route = createFileRoute('/_layout/payloads/')({
+  ssr: pageSsr,
   validateSearch: (search: Record<string, unknown>): { source?: string } => ({
     source: toParam(listParam(search.source)),
   }),

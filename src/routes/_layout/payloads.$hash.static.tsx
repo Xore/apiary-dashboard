@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonPanels } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
@@ -11,7 +12,7 @@ import { Panel } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/payloads/$hash')
 
-export const Route = createFileRoute('/_layout/payloads/$hash/static')({ component: PayloadStatic, pendingComponent: PayloadStatic })
+export const Route = createFileRoute('/_layout/payloads/$hash/static')({ ssr: pageSsr, component: PayloadStatic, pendingComponent: PayloadStatic })
 
 /** Bounded static analysis. The sample is never executed here. */
 function PayloadStatic() {

@@ -195,7 +195,12 @@ for fault in session-store identity-provider; do
 done
 
 step "SSR link crawl, every entity tab"
-bun scripts/crawl.ts "http://localhost:$PORT" 2 || failed=1
+bun scripts/crawl.ts "http://localhost:$PORT" 2 --samples-out "$WORK/samples.json" || failed=1
+
+step "every page loads skeleton first in a browser, then its data"
+# Needs a browser; exit 2 means none was found and the check is skipped.
+bun scripts/skeletons.ts "http://localhost:$PORT" "$WORK/samples.json"
+case $? in 0 | 2) ;; *) failed=1 ;; esac
 
 step "every route shape under every mock scenario"
 bun scripts/crawl.ts "http://localhost:$PORT" 1 --scenarios || failed=1

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { VStack } from '@astryxdesign/core/Stack'
 import { createFileRoute } from '@tanstack/react-router'
@@ -6,6 +7,7 @@ import { RelatedPanel } from '#/components/Related'
 import { getEntityTimeline, getRelated } from '#/data/queries'
 
 export const Route = createFileRoute('/_layout/sessions/$id/')({
+  ssr: pageSsr,
   loader: async ({ params }) => {
     const [timeline, related] = await Promise.all([getEntityTimeline('session', params.id, 'all'), getRelated('session', params.id)])
     return { timeline, related }

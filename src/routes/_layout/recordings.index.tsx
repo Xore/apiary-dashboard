@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -13,6 +14,7 @@ import { formatClock, formatNumber } from '#/lib/format'
 import { ZoneHeader } from '#/components/ZoneHeader'
 
 export const Route = createFileRoute('/_layout/recordings/')({
+  ssr: pageSsr,
   validateSearch: (search: Record<string, unknown>): { ip?: string } => ({
     ip: typeof search.ip === 'string' && search.ip ? search.ip : undefined,
   }),

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -9,6 +10,7 @@ import { Player } from '#/components/details/Recording'
 import { getReplayDetail, getSessionDetail } from '#/data/queries'
 
 export const Route = createFileRoute('/_layout/sessions/$id/recording')({
+  ssr: pageSsr,
   loader: async ({ params }) => {
     const session = await getSessionDetail(params.id)
     const shasum = session?.recordingShasum

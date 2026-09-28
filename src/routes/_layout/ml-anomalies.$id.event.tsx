@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Text } from '@astryxdesign/core/Text'
@@ -9,6 +10,7 @@ import { formatDateTime } from '#/lib/format'
 const parent = getRouteApi('/_layout/ml-anomalies/$id')
 
 export const Route = createFileRoute('/_layout/ml-anomalies/$id/event')({
+  ssr: pageSsr,
   component: AnomalyEvent,
   pendingComponent: AnomalyEvent,
 })

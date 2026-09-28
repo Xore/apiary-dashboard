@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
@@ -10,6 +11,7 @@ import { getCluster } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/clusters/$kind/$value')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Infrastructure cluster views', basePath: (params) => `/clusters/${params.kind}/${encodeURIComponent(params.value)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const cluster = await getCluster(params.kind, params.value)

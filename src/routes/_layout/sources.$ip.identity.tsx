@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
@@ -12,6 +13,7 @@ import { getSourceIdentity } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/sources/$ip/identity')({
+  ssr: pageSsr,
   loader: ({ params }) => getSourceIdentity(params.ip),
   component: SourceIdentityTab,
   pendingComponent: SourceIdentityTab,

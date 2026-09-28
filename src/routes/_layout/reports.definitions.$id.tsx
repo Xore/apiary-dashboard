@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonTable } from '#/components/SkeletonTable'
 import { SkeletonLines } from '#/components/EntityBlocks'
 import { Pending } from '#/components/Pending'
@@ -19,6 +20,7 @@ import type { GeneratedReport } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/reports/definitions/$id')({
+  ssr: pageSsr,
   loader: async ({ params }) => {
     const data = await getReports()
     const definition = data.definitions.find((d) => d.id === params.id)

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -6,6 +7,7 @@ import { MiniTable } from '#/components/DashboardBlocks'
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
 export const Route = createFileRoute('/_layout/sensors/$sensor/sources')({
+  ssr: pageSsr,
   component: TabView,
   pendingComponent: TabView,
 })

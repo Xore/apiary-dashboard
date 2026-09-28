@@ -12,10 +12,13 @@ export function getRouter() {
     defaultPreloadStaleTime: 0,
     defaultNotFoundComponent: () => <NotFound />,
     defaultErrorComponent: DefaultCatchBoundary,
-    // A slow load shows the page's shape after a beat instead of freezing
-    // on the previous page.
+    // Every navigation shows the page's own skeleton at once while its data
+    // loads (each page is its own pendingComponent; this is the fallback),
+    // held long enough to read as loading rather than a flicker. A full load
+    // does the same from the server (lib/pageSsr).
     defaultPendingComponent: PagePending,
-    defaultPendingMs: 300,
+    defaultPendingMs: 0,
+    defaultPendingMinMs: 250,
   })
 
   return router

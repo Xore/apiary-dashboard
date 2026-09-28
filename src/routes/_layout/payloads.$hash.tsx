@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
@@ -17,6 +18,7 @@ import { SANDBOX_SECTIONS } from '#/components/analyzers/SandboxResult'
 const LINUX_SANDBOX = SANDBOX_SECTIONS.filter((s) => s.id !== 'file')
 
 export const Route = createFileRoute('/_layout/payloads/$hash')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Payload views', basePath: (params) => `/payloads/${params.hash}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const [analysis, cape, revdeck, github, delivery] = await Promise.all([
