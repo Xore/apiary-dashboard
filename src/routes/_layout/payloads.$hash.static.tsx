@@ -19,7 +19,7 @@ function PayloadStatic() {
   if (!a) return <SkeletonPanels count={3} />
   return (
     <VStack gap={4}>
-      <CodeBlock code={a.preview} title="Hex / ASCII, first 128 bytes" hasCopyButton={false} />
+      <CodeBlock isWrapped code={a.preview} title="Hex / ASCII, first 128 bytes" hasCopyButton={false} />
       <Grid columns={{ minWidth: 340, repeat: 'fit' }} gap={4}>
         <Panel title="Extracted strings">
           <VStack gap={1}>

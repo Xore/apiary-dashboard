@@ -20,7 +20,7 @@ function toolCalls(calls: NonNullable<RevDeckMessage['toolCalls']>): ChatToolCal
     status: call.error ? 'error' : 'complete',
     duration: duration(call.durationMs),
     errorMessage: call.error,
-    resultDetail: call.output ? <CodeBlock code={call.output} maxHeight={240} /> : undefined,
+    resultDetail: call.output ? <CodeBlock isWrapped code={call.output} maxHeight={240} /> : undefined,
   }))
 }
 

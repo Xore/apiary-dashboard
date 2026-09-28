@@ -53,7 +53,7 @@ export function RevDeckResult({ run }: { run: RevDeckRun }) {
           </Panel>
         )}
         <Panel title="Raw record">
-          <CodeBlock code={JSON.stringify(run, null, 2)} language="json" maxHeight={360} />
+          <CodeBlock isWrapped code={JSON.stringify(run, null, 2)} language="json" maxHeight={360} />
         </Panel>
       </VStack>
     </AnalyzerSection>

@@ -60,7 +60,7 @@ function List({ items, empty = 'Nothing recorded.' }: { items: string[]; empty?:
 function Evidence({ title, body, open = false }: { title: string; body: string; open?: boolean }) {
   return (
     <Collapsible trigger={title} defaultIsOpen={open}>
-      {body.trim() ? <CodeBlock code={body} language="text" maxHeight={320} /> : <Text type="supporting">Empty for this run.</Text>}
+      {body.trim() ? <CodeBlock isWrapped code={body} language="text" maxHeight={320} /> : <Text type="supporting">Empty for this run.</Text>}
     </Collapsible>
   )
 }
@@ -327,7 +327,7 @@ function Raw({ run }: { run: SandboxRun }) {
         />
       </Panel>
       <Panel title="Behavior record">
-        <CodeBlock code={JSON.stringify(run, null, 2)} language="json" maxHeight={560} />
+        <CodeBlock isWrapped code={JSON.stringify(run, null, 2)} language="json" maxHeight={560} />
       </Panel>
     </VStack>
   )

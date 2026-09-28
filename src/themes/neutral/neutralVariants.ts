@@ -8,7 +8,7 @@
 // APIARY's contrast-checked theme.css). Typography, shape, motion, chart
 // series and component anatomy stay the neutral ones. `bun run theme:build`
 // compiles neutralTheme and every member into neutral-family.css / .js / .d.ts.
-import {defineTheme} from '@astryxdesign/core/theme';
+import {defineSyntaxTheme, defineTheme} from '@astryxdesign/core/theme';
 import type {DefinedTheme, TokenValue} from '@astryxdesign/core/theme';
 import {APIARY_PALETTES} from './apiaryPalettes.generated';
 import type {ApiaryPalette} from './apiaryPalettes.generated';
@@ -97,6 +97,35 @@ function highContrastTokens(p: ApiaryPalette): Tokens {
   };
 }
 
+/** Code colours from the palette's own roles, so a code block belongs to its
+ * theme: the accent for keywords, the status tones for literals, the text
+ * ramp for the rest, on the palette's muted surface. APIARY tunes its
+ * text-on-soft tones to read on tinted grounds, which keeps every token at
+ * 4.5:1 or better on that surface (appTheme.test.ts checks it). */
+export function paletteSyntax(p: ApiaryPalette) {
+  const {light, dark} = APIARY_PALETTES[p];
+  const tone = (name: Role): [string, string] => [light[name], dark[name]];
+  return defineSyntaxTheme({
+    name: `apiary-${p}`,
+    tokens: {
+      keyword: tone('accent-text-on-soft'),
+      string: tone('success-text-on-soft'),
+      comment: tone('text-100'),
+      number: tone('warning-text-on-soft'),
+      function: tone('info-text-on-soft'),
+      type: tone('accent-text-on-soft'),
+      variable: tone('text-000'),
+      operator: tone('text-100'),
+      constant: tone('warning-text-on-soft'),
+      tag: tone('danger-text-on-soft'),
+      attribute: tone('warning-text-on-soft'),
+      property: tone('info-text-on-soft'),
+      punctuation: tone('text-100'),
+      background: tone('bg-200'),
+    },
+  });
+}
+
 /** Where the app shows "you are here": the selected side-nav and top-nav
  * items take the accent's tint, as APIARY's navigation does. */
 const accentSelection = {
@@ -118,6 +147,7 @@ export function paletteTheme(palette: ApiaryPalette): DefinedTheme {
   return defineTheme({
     name: `neutral-${palette}`,
     extends: neutralTheme,
+    syntax: paletteSyntax(palette),
     tokens: paletteTokens(palette),
     components: accentSelection,
   });
@@ -127,6 +157,7 @@ export function paletteHighContrastTheme(palette: ApiaryPalette): DefinedTheme {
   return defineTheme({
     name: `neutral-${palette}-hc`,
     extends: neutralTheme,
+    syntax: paletteSyntax(palette),
     tokens: {...paletteTokens(palette), ...highContrastTokens(palette)},
     components: accentSelection,
   });

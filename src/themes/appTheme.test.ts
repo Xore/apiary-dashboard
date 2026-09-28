@@ -1,3 +1,4 @@
+import { paletteSyntax } from './neutral/neutralVariants'
 import { describe, expect, it } from 'vitest'
 import { resolveThemeTokens } from '@astryxdesign/core/theme/tokens'
 import { appTheme } from './appTheme'
@@ -90,6 +91,20 @@ describe('palette contrast', () => {
         const fill = rgba(tokens['--color-neutral'])
         expect(contrast(rgba(tokens['--color-text-secondary']), over(fill, over(fill, chrome))), `${p} ${mode} key hint`).toBeGreaterThanOrEqual(4.5)
         expect(contrast(rgba(tokens['--color-text-accent']), over(rgba(role['accent-soft']), chrome)), `${p} ${mode} selected item`).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+})
+
+describe('palette syntax themes', () => {
+  it('keeps every code token at 4.5:1 on its code background', () => {
+    for (const p of PALETTES) {
+      const tokens = paletteSyntax(p).__inputTokens as Record<string, [string, string]>
+      for (const [side, mode] of [[0, 'light'], [1, 'dark']] as const) {
+        const background = rgba(tokens.background[side])
+        for (const [token, value] of Object.entries(tokens)) {
+          if (token !== 'background') expect(contrast(rgba(value[side]), background), `${p} ${mode} ${token}`).toBeGreaterThanOrEqual(4.5)
+        }
       }
     }
   })

@@ -136,7 +136,7 @@ function EventOverview() {
           {artefacts.map((a) => (
             <VStack key={a.label} gap={1}>
               <Text type="label">{a.label}</Text>
-              <CodeBlock code={a.text} language={a.text.startsWith('{') || a.text.startsWith('[') ? 'json' : 'text'} maxHeight={320} />
+              <CodeBlock isWrapped code={a.text} language={a.text.startsWith('{') || a.text.startsWith('[') ? 'json' : 'text'} maxHeight={320} />
             </VStack>
           ))}
         </Panel>

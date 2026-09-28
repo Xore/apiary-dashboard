@@ -303,5 +303,5 @@ export function SkeletonLines({ count = 4 }: { count?: number }) {
 /** A record as JSON, or a skeleton of its height while it loads. */
 export function JsonBlock({ value, maxHeight = 640 }: { value: unknown; maxHeight?: number }) {
   if (value === undefined) return <Skeleton height={Math.min(maxHeight, 360)} />
-  return <CodeBlock code={JSON.stringify(value, null, 2)} language="json" maxHeight={maxHeight} />
+  return <CodeBlock isWrapped code={JSON.stringify(value, null, 2)} language="json" maxHeight={maxHeight} />
 }

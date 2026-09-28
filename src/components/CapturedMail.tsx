@@ -59,7 +59,7 @@ export function MailMessage({ mail }: { mail: CapturedMail }) {
         <MetadataListItem label="Size">{`${formatNumber(mail.sizeBytes)} bytes`}</MetadataListItem>
       </MetadataList>
       {mail.fromHtml && <Banner status="info" title="HTML message, shown as text" description="The message had only an HTML part. It was decoded to text and is never rendered: links and scripts in it cannot run here." />}
-      <CodeBlock code={mail.bodyText || '(empty body)'} title="Body" language="text" maxHeight={360} />
+      <CodeBlock isWrapped code={mail.bodyText || '(empty body)'} title="Body" language="text" maxHeight={360} />
       {mail.attachments.length > 0 && (
         <VStack gap={2}>
           <Text type="label">{`Attachments (${mail.attachments.length}): metadata only, the bytes are not offered`}</Text>
