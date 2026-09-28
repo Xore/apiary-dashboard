@@ -46,7 +46,7 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
           actions={api?.kind === 'expired' ? <Button label="Sign in again" onClick={signIn} /> : api?.kind === 'forbidden' ? undefined : <Button label="Try again" onClick={() => void router.invalidate()} />}
         />
         {api && <Text type="supporting" color="secondary">{`Failed call: ${api.endpoint} (${api.status})`}</Text>}
-        {!api && import.meta.env.DEV && <CodeBlock code={error instanceof Error ? (error.stack ?? error.message) : String(error)} title="Error" maxHeight={240} />}
+        {!api && import.meta.env.DEV && <CodeBlock isWrapped code={error instanceof Error ? (error.stack ?? error.message) : String(error)} title="Error" maxHeight={240} />}
       </VStack>
     </PageFrame>
   )

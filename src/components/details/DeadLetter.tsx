@@ -18,7 +18,7 @@ export function DeadLetterDetail({ row }: { row: DeadLetter }) {
           <Text type="code">{row.index}</Text>
         </MetadataListItem>
       </MetadataList>
-      <CodeBlock
+      <CodeBlock isWrapped
         code={JSON.stringify(row.document, null, 2)}
         language="json"
         title="Original document"

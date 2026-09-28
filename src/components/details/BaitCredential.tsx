@@ -71,7 +71,7 @@ export function CredentialInspector({
       </MetadataList>
       <VStack gap={2}>
         <Heading level={3}>File as planted</Heading>
-        <CodeBlock
+        <CodeBlock isWrapped
           code={rendered}
           title={credential.path.split('/').at(-1)}
           hasCopyButton={false}

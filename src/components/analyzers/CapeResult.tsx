@@ -83,7 +83,7 @@ export function CapeResult({ run }: { run: CapeRun }) {
             {run.debugErrors.length > 0 && (
               <Banner status="warning" title={`${run.debugErrors.length} ${run.debugErrors.length === 1 ? 'error' : 'errors'} in CAPE's log`} description={run.debugErrors.join(' · ')} />
             )}
-            <CodeBlock code={run.log} hasCopyButton={false} />
+            <CodeBlock isWrapped code={run.log} hasCopyButton={false} />
           </VStack>
         </Panel>
       </VStack>

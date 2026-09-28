@@ -195,7 +195,7 @@ function FunctionDetail({ f, onSelect }: { f: GhidraFunction; onSelect: (name: s
         <MetadataListItem label="Called by">{refs(f.callers)}</MetadataListItem>
         <MetadataListItem label="Calls">{refs(f.callees)}</MetadataListItem>
       </MetadataList>
-      <CodeBlock code={f.decompiled} language="c" title="Decompiled" maxHeight={420} />
+      <CodeBlock isWrapped code={f.decompiled} language="c" title="Decompiled" maxHeight={420} />
     </VStack>
   )
 }
@@ -414,7 +414,7 @@ export function GhidraResult({ g, fn, section }: { g: GhidraAnalysis; fn?: strin
           <>
             <ArtifactList kind="ghidra" artifactKey={g.hash} />
             <Panel title="Analysis record">
-              <CodeBlock code={JSON.stringify(g, null, 2)} language="json" maxHeight={640} />
+              <CodeBlock isWrapped code={JSON.stringify(g, null, 2)} language="json" maxHeight={640} />
             </Panel>
           </>
         )}
