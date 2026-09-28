@@ -1,5 +1,4 @@
 import { Skeleton } from '@astryxdesign/core/Skeleton'
-import { SkeletonPanels } from '#/components/EntityBlocks'
 import { MetaItem } from '#/components/MetaItem'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
@@ -10,7 +9,6 @@ import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
-import { OperatorActions } from '#/components/analyzers/PayloadBlocks'
 import { Panel, StatTile } from '#/components/DashboardBlocks'
 import { formatDateTime } from '#/lib/format'
 
@@ -77,7 +75,6 @@ function PayloadOverview() {
             <MetaItem label="ssdeep">{a && <Text type="code">{a.hashes.ssdeep}</Text>}</MetaItem>
           </MetadataList>
         </Panel>
-        {a ? <OperatorActions a={a} /> : <SkeletonPanels count={1} />}
       </Grid>
       <RelatedPanel center={`${hash.slice(0, 16)}…`} groups={orPending(Route.useLoaderData())} />
     </VStack>

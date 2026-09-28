@@ -1,21 +1,22 @@
 import { useState } from 'react'
 import { ConfirmDialog } from '#/components/AppDialog'
-import { Banner } from '@astryxdesign/core/Banner'
-import { Button } from '@astryxdesign/core/Button'
-import { HStack } from '@astryxdesign/core/Stack'
+import { DropdownMenu, DropdownMenuItem } from '@astryxdesign/core/DropdownMenu'
+import { Icon } from '@astryxdesign/core/Icon'
+import { useToast } from '@astryxdesign/core/Toast'
+import { ArrowDownTrayIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/outline'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { queuePayloadAction } from '#/data/queries'
 import type { PayloadAction } from '#/data/queries'
-import type { Ioc, PayloadAnalysis } from '#/data/types'
-import { Panel } from '../DashboardBlocks'
+import type { Ioc } from '#/data/types'
 import { AnalysisRunDialog } from '../dialogs/AnalysisRunDialog'
 import { queuedMessage } from './WorkbenchRuns'
 import { EntityLink } from '../EntityLink'
 import { useIsAdmin } from '#/lib/session'
-import { useGuardedAction } from '#/lib/useGuardedAction'
+import { describeError } from '#/lib/actionError'
+import { apiHref } from '#/lib/apiHref'
 
 export const VERDICT_COLOR = { malicious: 'red', suspicious: 'orange', clean: 'green' } as const
 
@@ -30,33 +31,36 @@ export const iocColumns: TableColumn<Ioc>[] = [
   },
 ]
 
-export function OperatorActions({ a }: { a: PayloadAnalysis }) {
+/** The operator's actions on one sample, as one menu in the payload's header
+ * next to "Open in": queue more analysis, publish, take the bytes. Admins
+ * only; nothing runs on this host, every job goes to an isolated worker. */
+export function PayloadOperatorMenu({ hash }: { hash: string }) {
   const isAdmin = useIsAdmin()
-  const { error, guard, clearError } = useGuardedAction()
-  const [busy, setBusy] = useState<PayloadAction | null>(null)
-  const [done, setDone] = useState<string | null>(null)
+  const toast = useToast()
   const [confirmPublish, setConfirmPublish] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
+  if (!isAdmin) return null
   const run = async (action: PayloadAction) => {
-    setBusy(action)
     try {
-      const queued = await guard(() => queuePayloadAction(a.payload.hash, action))
-      if (queued) setDone(queued)
-    } finally {
-      setBusy(null)
+      toast({ body: `${await queuePayloadAction(hash, action)} (mock: nothing was actually queued)` })
+    } catch (e) {
+      toast({ type: 'error', body: `Not queued: ${describeError(e)}` })
     }
   }
   return (
-    <Panel title="Operator actions">
-      <Text color="secondary">Queue more analysis of this sample. Nothing runs on this host; every job goes to an isolated worker.</Text>
-      <HStack gap={2} wrap="wrap">
-        {isAdmin && <Button label="New analysis run" onClick={() => setAnalyzing(true)} />}
-        {isAdmin && <Button label="Generate PDF report" variant="secondary" isLoading={busy === 'pdf'} onClick={() => run('pdf')} />}
-        {isAdmin && <Button label="Publish to GitHub…" variant="secondary" isLoading={busy === 'github'} onClick={() => setConfirmPublish(true)} />}
-      </HStack>
-      <AnalysisRunDialog isOpen={analyzing} onOpenChange={setAnalyzing} initialHash={a.payload.hash} onQueued={(queued) => setDone(queuedMessage(queued).title)} />
-      {error && <Banner status="error" title="Not queued" description={error} isDismissable onDismiss={clearError} />}
-      {done && <Banner status="success" title={done} description="Mock: nothing was actually queued." isDismissable onDismiss={() => setDone(null)} />}
+    <>
+      <DropdownMenu
+        placement="below"
+        alignment="end"
+        menuWidth={300}
+        button={{ label: 'Operator actions', size: 'sm', variant: 'secondary', icon: <Icon icon={WrenchScrewdriverIcon} size="sm" /> }}
+      >
+        <DropdownMenuItem label="New analysis run…" description="Pick analyzers or a recipe for this sample" onClick={() => setAnalyzing(true)} />
+        <DropdownMenuItem label="Generate PDF report" description="Queued; appears under Reports when done" onClick={() => void run('pdf')} />
+        <DropdownMenuItem label="Publish to GitHub…" description="Public, and sent to third-party scanners" onClick={() => setConfirmPublish(true)} />
+        <DropdownMenuItem label="Download sample" description="Live malware: the captured bytes, unchanged" endContent={<Icon icon={ArrowDownTrayIcon} size="sm" />} onClick={() => void window.location.assign(apiHref(`/api/payload/${encodeURIComponent(hash)}/download`))} />
+      </DropdownMenu>
+      <AnalysisRunDialog isOpen={analyzing} onOpenChange={setAnalyzing} initialHash={hash} onQueued={(queued) => void toast({ body: queuedMessage(queued).title })} />
       <ConfirmDialog
         isOpen={confirmPublish}
         onOpenChange={setConfirmPublish}
@@ -68,6 +72,6 @@ export function OperatorActions({ a }: { a: PayloadAnalysis }) {
           await run('github')
         }}
       />
-    </Panel>
+    </>
   )
 }

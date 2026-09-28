@@ -1,11 +1,9 @@
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
-import { ConfirmDialog } from '#/components/AppDialog'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
-import { MoreMenu } from '@astryxdesign/core/MoreMenu'
-import { HStack, VStack } from '@astryxdesign/core/Stack'
+import { HStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -13,8 +11,6 @@ import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { FilterSelect, listParam, toParam } from '#/components/FilterSelect'
 import { AnalysisRunDialog } from '#/components/dialogs/AnalysisRunDialog'
-import { virusTotalLink } from '#/lib/toolLinks'
-import { apiHref } from '#/lib/apiHref'
 import { RecordList } from '#/components/RecordList'
 import { getPayloads } from '#/data/queries'
 import type { CapturedPayload, WorkbenchRun } from '#/data/types'
@@ -38,32 +34,8 @@ function formatSize(bytes: number): string {
   return bytes < 1024 ? `${bytes} B` : bytes < 1024 ** 2 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 ** 2).toFixed(1)} MB`
 }
 
-/** The actions a card used to carry; clicking the row opens the payload. */
-function PayloadActions({ payload, onPublish, onAnalyze }: { payload: CapturedPayload; onPublish: (payload: CapturedPayload) => void; onAnalyze: (hash: string) => void }) {
-  const isAdmin = useIsAdmin()
-  const navigate = useNavigate()
-  const hash = encodeURIComponent(payload.hash)
-  return (
-    <MoreMenu
-      size="sm"
-      label="Payload actions"
-      items={[
-        { label: 'Static analysis', onClick: () => void navigate({ href: `/payloads/${hash}/static` }) },
-        ...(isAdmin ? [{ label: 'New analysis run…', onClick: () => onAnalyze(payload.hash) }] : []),
-        { label: 'Who delivered it', onClick: () => void navigate({ href: `/payloads/${hash}/delivered-by` }) },
-        ...(isAdmin
-          ? [
-              { label: 'Publish to GitHub…', onClick: () => onPublish(payload) },
-              { label: 'Download sample', description: 'Live malware: the captured bytes', onClick: () => void window.location.assign(apiHref(`/api/payload/${hash}/download`)) },
-            ]
-          : []),
-        { label: 'Look up on VirusTotal', description: 'Opens in a new tab', onClick: () => void window.open(virusTotalLink(payload.hash).href, '_blank', 'noopener,noreferrer') },
-      ]}
-    />
-  )
-}
-
-const columns = (onPublish: (payload: CapturedPayload) => void, onAnalyze: (hash: string) => void): TableColumn<CapturedPayload>[] => [
+// A row opens the payload; what can be done with one is on its page.
+const columns: TableColumn<CapturedPayload>[] = [
   { key: 'hash', header: 'SHA-256', width: proportional(2), renderCell: (row) => <Text type="code" maxLines={1}>{`${row.hash.slice(0, 24)}…`}</Text> },
   {
     key: 'verdict',
@@ -85,7 +57,6 @@ const columns = (onPublish: (payload: CapturedPayload) => void, onAnalyze: (hash
   { key: 'sources', header: 'Captured by', width: pixel(144), renderCell: (row) => row.sources.join(' ') },
   { key: 'copies', header: 'Copies', width: pixel(72), align: 'end' },
   { key: 'capturedAt', header: 'Captured', width: pixel(104), renderCell: (row) => <Text type="supporting">{formatTime(row.capturedAt)}</Text> },
-  { key: 'preview', header: '', width: pixel(56), renderCell: (row) => <PayloadActions payload={row} onPublish={onPublish} onAnalyze={onAnalyze} /> },
 ]
 
 /** Every captured file as one row; its bytes, verdicts and analyses live on
@@ -96,8 +67,6 @@ function PayloadsPage() {
   const payloads = data?.payloads
   const sources = data?.sources ?? []
   const { source } = Route.useSearch()
-  const [publishing, setPublishing] = useState<CapturedPayload | null>(null)
-  const [published, setPublished] = useState<string | null>(null)
   // undefined: closed; '' opens with no sample picked; a hash opens with it.
   const [analyzing, setAnalyzing] = useState<string | undefined>(undefined)
   const [queued, setQueued] = useState<{ run: WorkbenchRun; reused: boolean } | null>(null)
@@ -112,12 +81,7 @@ function PayloadsPage() {
         description="Every file attackers dropped or downloaded, with its verdict and where it was captured. Open one for its bytes and every analysis."
         actions={isAdmin ? <Button label="New analysis run" size="sm" onClick={() => setAnalyzing('')} /> : undefined}
         summary={
-          (published || queued) && (
-            <VStack gap={2}>
-              {published && <Banner status="success" title="Submitted for publication" description={`${published.slice(0, 16)}… was queued for the public analysis repository (mock).`} isDismissable onDismiss={() => setPublished(null)} />}
-              {queued && <Banner status={queued.reused ? 'info' : 'success'} {...queuedMessage(queued)} isDismissable onDismiss={() => setQueued(null)} endContent={<ActionLink href="/payload-workbench/results">Analysis results</ActionLink>} />}
-            </VStack>
-          )
+          queued && <Banner status={queued.reused ? 'info' : 'success'} {...queuedMessage(queued)} isDismissable onDismiss={() => setQueued(null)} endContent={<ActionLink href="/payload-workbench/results">Analysis results</ActionLink>} />
         }
         toolbar={
           <FilterSelect
@@ -132,23 +96,12 @@ function PayloadsPage() {
           />
         }
         rows={visible}
-        columns={columns(setPublishing, setAnalyzing)}
+        columns={columns}
         getId={(row) => row.hash}
         getHref={(row) => entityHref('payload', row.hash)!}
         emptyState={{ title: 'No payloads from this sensor', description: 'Pick another source, or All.' }}
       />
       <AnalysisRunDialog isOpen={analyzing !== undefined} onOpenChange={(open) => !open && setAnalyzing(undefined)} initialHash={analyzing || undefined} onQueued={setQueued} />
-      <ConfirmDialog
-        isOpen={publishing !== null}
-        onOpenChange={(open) => !open && setPublishing(null)}
-        title="Publish to Xore/honeypot?"
-        description="The sample's analysis becomes public in the GitHub repository. This cannot be undone from the dashboard."
-        actionLabel="Publish"
-        onAction={() => {
-          setPublished(publishing?.hash ?? null)
-          setPublishing(null)
-        }}
-      />
     </>
   )
 }
