@@ -5,7 +5,7 @@ import type { IconType } from '@astryxdesign/core/Icon'
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSubMenu } from '@astryxdesign/core/DropdownMenu'
 import { TopNavItem, TopNavMenu } from '@astryxdesign/core/TopNav'
 import { ArrowRightIcon, CheckIcon } from '@heroicons/react/24/outline'
-import { useRouter, useRouterState } from '@tanstack/react-router'
+import { useHydrated, useRouter, useRouterState } from '@tanstack/react-router'
 import { formatNumber } from '#/lib/format'
 
 export type ViewTab = {
@@ -120,6 +120,9 @@ export function useViewTabs(): ViewTabsModel | null {
   const router = useRouter()
   const location = useRouterState({ select: (state) => state.location })
   const committed = useRouterState({ select: (state) => state.matches })
+  // The server paints a page's skeleton without its data (lib/pageSsr), so
+  // counts wait for hydration too, or the first render would not match.
+  const hydrated = useHydrated()
   const [routes, params] = router.getMatchedRoutes(location.pathname)
   const route = [...routes].reverse().find((r) => r.options.staticData?.viewTabs)
   if (!route) return null
@@ -129,7 +132,7 @@ export function useViewTabs(): ViewTabsModel | null {
     params,
     search: location.search,
     pathname: location.pathname,
-    data: match?.status === 'success' ? match.loaderData : undefined,
+    data: hydrated && match?.status === 'success' ? match.loaderData : undefined,
   })
   return model.tabs.length < 2 ? null : model
 }

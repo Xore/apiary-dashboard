@@ -11,4 +11,11 @@ const sameOrigin = createMiddleware({ type: 'function' }).server(async ({ next }
   return next()
 })
 
-export const startInstance = createStart(() => ({ functionMiddleware: [sameOrigin] }))
+// Every HTTP request runs inside its Content-Security-Policy nonce's scope
+// (lib/cspNonce.server.ts), before anything renders.
+const csp = createMiddleware({ type: 'request' }).server(async ({ next }) => {
+  const { withCspScope } = await import('./lib/cspNonce.server')
+  return withCspScope(next)
+})
+
+export const startInstance = createStart(() => ({ requestMiddleware: [csp], functionMiddleware: [sameOrigin] }))
