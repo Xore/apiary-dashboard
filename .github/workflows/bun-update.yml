@@ -1,0 +1,64 @@
+name: Bun dependency update
+
+# Stands in for Dependabot's npm updates (#95): Dependabot's Bun reads
+# bun.lock format 1 only, and Bun 1.4 writes format 2. Weekly, updates the
+# packages within their package.json ranges (patch and minor for ^ ranges)
+# and opens or refreshes one pull request; the required checks decide.
+#
+# A pull request opened with the workflow's own token starts no CI. Set the
+# DEPS_PR_TOKEN secret (a fine-grained token for this repository with
+# Contents and Pull requests read/write) so the checks run; without it the
+# pull request still opens and says checks need a push to start.
+
+on:
+  schedule:
+    - cron: "15 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: bun-update
+
+env:
+  BUN_VERSION: "1.4.2"
+  BRANCH: deps/bun-update
+
+jobs:
+  update:
+    name: Update within ranges
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.DEPS_PR_TOKEN || github.token }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun update
+      - name: Open or refresh the pull request
+        env:
+          GH_TOKEN: ${{ secrets.DEPS_PR_TOKEN || github.token }}
+          HAS_TOKEN: ${{ secrets.DEPS_PR_TOKEN != '' }}
+        run: |
+          if git diff --quiet -- package.json bun.lock; then
+            echo "Everything is current within its range."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$BRANCH"
+          git commit -am "chore(deps): update packages within their ranges"
+          git push --force origin "$BRANCH"
+          body="Weekly \`bun update\`: every package to the newest version its package.json range allows (see #95; Dependabot cannot read bun.lock format 2)."
+          if [[ "$HAS_TOKEN" != "true" ]]; then
+            body+=$'\n\nOpened with the workflow token, so no checks started: push an empty commit to this branch, or set DEPS_PR_TOKEN.'
+          fi
+          if gh pr view "$BRANCH" --json state -q .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit "$BRANCH" --body "$body"
+          else
+            gh pr create --head "$BRANCH" --title "chore(deps): update packages within their ranges" --body "$body" --label dependencies
+          fi
