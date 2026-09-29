@@ -14,8 +14,9 @@ updates:
     labels: [dependencies]
 
   # No `bun` entry: Dependabot's Bun updater reads bun.lock format 1 only,
-  # and Bun 1.4 writes format 2 (see the tracking issue). Security
-  # advisories still arrive through the dependency graph.
+  # and Bun 1.4 writes format 2 (#95). workflows/bun-update.yml opens the
+  # weekly update PR instead; security advisories still arrive through the
+  # dependency graph.
 
   - package-ecosystem: docker
     directory: /

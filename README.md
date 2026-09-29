@@ -40,9 +40,10 @@ GitHub Actions, on GitHub-hosted runners:
 | `scorecard.yml` | main, weekly | OpenSSF Scorecard supply-chain checks, into the Security tab |
 | `code-review.yml` | pull requests | an automated review (Claude Code action) with inline comments; skips unless a `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` secret is set; advisory only |
 | `assistant.yml` | `@claude` in a comment | answers or makes the change on a branch; owner and collaborators only |
+| `bun-update.yml` | weekly (Monday) and on demand | `bun update` within package.json ranges; opens or refreshes one PR from `deps/bun-update`. With a `DEPS_PR_TOKEN` secret (fine-grained, this repository, Contents + Pull requests read/write) the PR runs the required checks; without it, checks need a push to the branch |
 | `dependabot-auto-merge.yml` | Dependabot PRs | patch and minor updates merge once every required check is green; majors and 0.x minors wait for a person |
 
-Dependabot proposes GitHub Actions and base-image updates weekly. It cannot read Bun 1.4's `bun.lock` yet, so npm packages are updated by hand for now; TanStack packages are pinned to exact versions and move together. A ruleset on `main` requires every check above except the automated review, and blocks force pushes and deletion.
+Dependabot proposes GitHub Actions and base-image updates weekly. It cannot read Bun 1.4's `bun.lock` yet, so npm packages come from `bun-update.yml` instead; TanStack packages are pinned to exact versions and move together. A ruleset on `main` requires every check above except the automated review, and blocks force pushes and deletion.
 
 To release: `git tag v0.1.0 && git push origin v0.1.0`.
 
