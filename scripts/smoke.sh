@@ -165,6 +165,14 @@ for check in "${ANON_CHECKS[@]}"; do
   if [[ "$got" == "$want" ]]; then printf '  ok   %s %s\n' "$got" "$path"; else printf '  FAIL %s %s (expected %s)\n' "$got" "$path" "$want"; failed=1; fi
 done
 
+step "Content-Security-Policy: a nonce per response, on every script tag"
+csp_page() { curl -s -D "$WORK/csp.h" -o "$WORK/csp.html" -b "$COOKIE" "http://localhost:$PORT/events"; tr -d '\r' <"$WORK/csp.h" | sed -n 's/^[Cc]ontent-[Ss]ecurity-[Pp]olicy: .*nonce-\([^'"'"']*\).*/\1/p'; }
+first="$(csp_page)"
+scripts="$(grep -o '<script[^>]*>' "$WORK/csp.html" | wc -l)"
+nonced="$(grep -o "<script[^>]*nonce=\"$first\"[^>]*>" "$WORK/csp.html" | wc -l)"
+second="$(csp_page)"
+if [[ -n "$first" && "$first" != "$second" && "$scripts" -gt 0 && "$scripts" -eq "$nonced" ]]; then printf '  ok   %s scripts carry the nonce, fresh per response\n' "$scripts"; else printf '  FAIL nonce "%s"/"%s", %s of %s scripts nonced\n' "$first" "$second" "$nonced" "$scripts"; failed=1; fi
+
 step "sign-out: same origin only, then the session is gone"
 OTHER="$(signin viewer)"
 check() { if [[ "$2" == "$3" ]]; then printf '  ok   %s %s\n' "$2" "$1"; else printf '  FAIL %s %s (expected %s)\n' "$2" "$1" "$3"; failed=1; fi; }
