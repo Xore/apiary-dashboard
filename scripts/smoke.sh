@@ -166,7 +166,9 @@ for check in "${ANON_CHECKS[@]}"; do
 done
 
 step "Content-Security-Policy: a nonce per response, on every script tag"
-csp_page() { curl -s -D "$WORK/csp.h" -o "$WORK/csp.html" -b "$COOKIE" "http://localhost:$PORT/events"; tr -d '\r' <"$WORK/csp.h" | sed -n 's/^[Cc]ontent-[Ss]ecurity-[Pp]olicy: .*nonce-\([^'"'"']*\).*/\1/p'; }
+# -L: a saved default time range answers /events with a redirect first; the
+# last response is the page.
+csp_page() { curl -sL -D "$WORK/csp.h" -o "$WORK/csp.html" -b "$COOKIE" "http://localhost:$PORT/events"; tr -d '\r' <"$WORK/csp.h" | sed -n 's/^[Cc]ontent-[Ss]ecurity-[Pp]olicy: .*nonce-\([^'"'"']*\).*/\1/p' | tail -1; }
 first="$(csp_page)"
 scripts="$(grep -o '<script[^>]*>' "$WORK/csp.html" | wc -l)"
 nonced="$(grep -o "<script[^>]*nonce=\"$first\"[^>]*>" "$WORK/csp.html" | wc -l)"

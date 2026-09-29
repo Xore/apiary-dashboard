@@ -78,7 +78,8 @@ for (const [label, options, visits] of [
   ['desktop', { viewport: { width: 1440, height: 900 } }, DESKTOP],
   ['phone', { ...devices['iPhone 13'], viewport: { width: 375, height: 812 } }, PHONE],
 ] as const) {
-  const context = await browser.newContext(options)
+  // axe is injected as an inline script, which the page's CSP refuses.
+  const context = await browser.newContext({ ...options, bypassCSP: true })
   await signInContext(context, base)
   const page = await context.newPage()
   for (const visit of visits) {
