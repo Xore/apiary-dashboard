@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -10,7 +11,7 @@ import { Panel } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/payloads/$hash')
 
-export const Route = createFileRoute('/_layout/payloads/$hash/indicators')({ component: PayloadIndicators, pendingComponent: PayloadIndicators })
+export const Route = createFileRoute('/_layout/payloads/$hash/indicators')({ ssr: pageSsr, component: PayloadIndicators, pendingComponent: PayloadIndicators })
 
 function PayloadIndicators() {
   const a = orPending(parent.useLoaderData())?.analysis

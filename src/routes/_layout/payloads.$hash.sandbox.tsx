@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
@@ -7,6 +8,7 @@ import { sectionOf } from '#/components/ViewTabs'
 import { getSandboxRun } from '#/data/queries'
 
 export const Route = createFileRoute('/_layout/payloads/$hash/sandbox')({
+  ssr: pageSsr,
   // ?section= picks verdict, behavior, network, file forensics (Windows
   // samples), diagnostics or raw; the top bar lists them under Sandbox.
   validateSearch: (search: Record<string, unknown>): { section?: SandboxSection } => ({

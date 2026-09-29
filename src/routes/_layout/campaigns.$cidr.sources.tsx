@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Panel } from '#/components/DashboardBlocks'
 import { SourcesTable } from '#/components/EntityBlocks'
@@ -6,6 +7,7 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 const parent = getRouteApi('/_layout/campaigns/$cidr')
 
 export const Route = createFileRoute('/_layout/campaigns/$cidr/sources')({
+  ssr: pageSsr,
   component: TabView,
   pendingComponent: TabView,
 })

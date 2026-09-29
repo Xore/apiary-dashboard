@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { Token } from '@astryxdesign/core/Token'
@@ -13,6 +14,7 @@ import { getIpProfile } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/sources/$ip')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Source IP views', basePath: (params) => `/sources/${encodeURIComponent(params.ip)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const profile = await getIpProfile(params.ip)

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { ActionLink } from '#/components/ActionLink'
 import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { Icon } from '@astryxdesign/core/Icon'
@@ -15,6 +16,7 @@ import { formatDateTime } from '#/lib/format'
 import { analysisTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/sandbox/vnc')({
+  ssr: pageSsr,
   staticData: { viewTabs: analysisTabs() },
   loader: () => getSandboxLiveStatus(),
   component: SandboxLivePage,

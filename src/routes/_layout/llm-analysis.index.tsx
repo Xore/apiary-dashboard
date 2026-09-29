@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { useState } from 'react'
@@ -22,6 +23,7 @@ import { EvidenceLink } from '#/components/details/LlmAnalysis'
 import { useShellConfig } from '#/lib/session'
 
 export const Route = createFileRoute('/_layout/llm-analysis/')({
+  ssr: pageSsr,
   loader: () => getLlmAnalyses(),
   component: LlmAnalysisPage,
   pendingComponent: LlmAnalysisPage,

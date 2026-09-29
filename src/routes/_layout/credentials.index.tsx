@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { useState } from 'react'
@@ -15,6 +16,7 @@ import { formatDateTime } from '#/lib/format'
 import { useIsAdmin } from '#/lib/session'
 
 export const Route = createFileRoute('/_layout/credentials/')({
+  ssr: pageSsr,
   loader: () => getCredentials(),
   component: CredentialsPage,
   pendingComponent: CredentialsPage,

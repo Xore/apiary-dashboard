@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { reportPdfHref } from '#/lib/reportPdf'
@@ -20,6 +21,7 @@ import { reportTabs } from '#/lib/navFamilies'
 import { useIsAdmin } from '#/lib/session'
 
 export const Route = createFileRoute('/_layout/reports/history')({
+  ssr: pageSsr,
   staticData: { viewTabs: reportTabs },
   validateSearch: (search: Record<string, unknown>): { origin?: string; template?: string } => ({
     origin: toParam(listParam(search.origin).filter((o) => o === 'manual' || o === 'schedule')),

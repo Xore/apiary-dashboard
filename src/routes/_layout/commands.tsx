@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Button } from '@astryxdesign/core/Button'
@@ -20,6 +21,7 @@ import { indicatorTabs } from '#/lib/navFamilies'
 import { pageParam, pageRequest } from '#/lib/paging'
 
 export const Route = createFileRoute('/_layout/commands')({
+  ssr: pageSsr,
   staticData: { viewTabs: indicatorTabs },
   validateSearch: (search: Record<string, unknown>): { page?: number } => ({ page: pageParam(search.page) }),
   loaderDeps: ({ search }) => ({ page: search.page }),

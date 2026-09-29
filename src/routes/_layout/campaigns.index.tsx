@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Button } from '@astryxdesign/core/Button'
@@ -19,6 +20,7 @@ import { apiHref } from '#/lib/apiHref'
 import { formatNumber, formatTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/campaigns/')({
+  ssr: pageSsr,
   loader: () => getNetworkCampaigns(),
   component: CampaignsPage,
   pendingComponent: CampaignsPage,

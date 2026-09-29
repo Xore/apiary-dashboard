@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -6,6 +7,7 @@ import { ValueList } from '#/components/EntityBlocks'
 const parent = getRouteApi('/_layout/identities/$id')
 
 export const Route = createFileRoute('/_layout/identities/$id/indicators')({
+  ssr: pageSsr,
   component: TabView,
   pendingComponent: TabView,
 })

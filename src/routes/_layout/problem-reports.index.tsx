@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Text } from '@astryxdesign/core/Text'
@@ -12,6 +13,7 @@ import { formatDateTime } from '#/lib/format'
 import { healthTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/problem-reports/')({
+  ssr: pageSsr,
   staticData: { viewTabs: healthTabs },
   loader: () => getProblemReports(),
   component: ProblemReportsPage,

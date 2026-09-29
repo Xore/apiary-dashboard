@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { useState } from 'react'
@@ -37,6 +38,7 @@ const STATUSES: AnomalyStatus[] = ['open', 'acknowledged', ...DISPOSITIONS]
 type Search = { view?: 'models'; severity?: string; eventType?: string; status?: string }
 
 export const Route = createFileRoute('/_layout/ml-anomalies/')({
+  ssr: pageSsr,
   staticData: {
     viewTabs: searchTabs({
       label: 'ML anomaly views',

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonPanels } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
@@ -9,6 +10,7 @@ import { Panel } from '#/components/DashboardBlocks'
 const parent = getRouteApi('/_layout/ml-anomalies/$id')
 
 export const Route = createFileRoute('/_layout/ml-anomalies/$id/scores')({
+  ssr: pageSsr,
   component: AnomalyScores,
   pendingComponent: AnomalyScores,
 })

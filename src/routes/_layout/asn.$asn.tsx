@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
@@ -9,6 +10,7 @@ import { getAsn } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/asn/$asn')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Autonomous system views', basePath: (params) => `/asn/${encodeURIComponent(params.asn)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const asn = await getAsn(params.asn)

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -13,6 +14,7 @@ import { entityHref } from '#/lib/entities'
 import { formatNumber, formatTime } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/attackers')({
+  ssr: pageSsr,
   loader: () => getAttackers(),
   component: AttackersPage,
   pendingComponent: AttackersPage,

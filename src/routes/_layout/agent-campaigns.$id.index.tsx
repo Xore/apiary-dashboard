@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonPanels } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -6,6 +7,7 @@ import { AgentCampaignFacts } from '#/components/details/AgentCampaign'
 const parent = getRouteApi('/_layout/agent-campaigns/$id')
 
 export const Route = createFileRoute('/_layout/agent-campaigns/$id/')({
+  ssr: pageSsr,
   component: TabView,
   pendingComponent: TabView,
 })

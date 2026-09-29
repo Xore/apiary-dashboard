@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { textParam } from '#/lib/searchParams'
@@ -21,6 +22,7 @@ import { formatDateTime, formatNumber } from '#/lib/format'
 import { pageParam, pageRequest } from '#/lib/paging'
 
 export const Route = createFileRoute('/_layout/history')({
+  ssr: pageSsr,
   validateSearch: (search: Record<string, unknown>): { q?: string; page?: number } => ({
     q: textParam(search.q),
     page: pageParam(search.page),

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -13,6 +14,7 @@ import { GroupOverview } from '#/components/EntityBlocks'
 const parent = getRouteApi('/_layout/campaigns/$cidr')
 
 export const Route = createFileRoute('/_layout/campaigns/$cidr/')({
+  ssr: pageSsr,
   loader: ({ params }) => getRelated('campaign', params.cidr),
   component: CampaignOverview,
   pendingComponent: CampaignOverview,

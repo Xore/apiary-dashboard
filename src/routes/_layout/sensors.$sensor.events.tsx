@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonTable } from '#/components/SkeletonTable'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
@@ -18,7 +19,7 @@ import { ZoneHeader } from '#/components/ZoneHeader'
 
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
-export const Route = createFileRoute('/_layout/sensors/$sensor/events')({ component: SensorEvents, pendingComponent: SensorEvents })
+export const Route = createFileRoute('/_layout/sensors/$sensor/events')({ ssr: pageSsr, component: SensorEvents, pendingComponent: SensorEvents })
 
 const BADGE_COLOR = { danger: 'red', warning: 'orange', success: 'green', muted: 'gray', info: 'blue' } as const
 

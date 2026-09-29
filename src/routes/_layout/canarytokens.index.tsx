@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
@@ -19,6 +20,7 @@ import { EntityLink } from '#/components/EntityLink'
 type View = 'deployed' | 'fired'
 
 export const Route = createFileRoute('/_layout/canarytokens/')({
+  ssr: pageSsr,
   staticData: { viewTabs: searchTabs({ label: 'Canarytoken views', param: 'view', tabs: (loaded) => { const d = loaded as { tokens: unknown[]; triggers: unknown[] } | undefined; return [{ id: 'deployed', label: 'Deployed', count: d?.tokens.length }, { id: 'fired', label: 'Fired', count: d?.triggers.length }] } }) },
   validateSearch: (search: Record<string, unknown>): { view?: View } => ({
     view: search.view === 'fired' ? 'fired' : undefined,

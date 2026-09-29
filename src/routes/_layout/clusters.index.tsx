@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Button } from '@astryxdesign/core/Button'
@@ -17,6 +18,7 @@ import { apiHref } from '#/lib/apiHref'
 import { formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/clusters/')({
+  ssr: pageSsr,
   loader: () => getInfraClusters(),
   component: ClustersPage,
   pendingComponent: ClustersPage,

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -29,6 +30,7 @@ const KINDS = IOC_KINDS.map((k) => ({ ...k, lede: LEDES[k.id] }))
 const isKind = (value: unknown): value is IocHubKind => KINDS.some((k) => k.id === value)
 
 export const Route = createFileRoute('/_layout/iocs')({
+  ssr: pageSsr,
   staticData: { viewTabs: searchTabs({ label: 'Indicator kinds', param: 'kind', tabs: (loaded) => IOC_KINDS.map((k) => iocKindTab(k, (loaded as { catalog?: Record<string, unknown[]> } | undefined)?.catalog?.[k.id].length)) }) },
   validateSearch: (search: Record<string, unknown>): { kind?: IocHubKind } => ({
     kind: isKind(search.kind) && search.kind !== 'hash' ? search.kind : undefined,

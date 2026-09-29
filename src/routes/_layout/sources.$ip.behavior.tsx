@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
@@ -7,6 +8,7 @@ import { TechniquesPanel } from '#/components/DetailBlocks'
 const parent = getRouteApi('/_layout/sources/$ip')
 
 export const Route = createFileRoute('/_layout/sources/$ip/behavior')({
+  ssr: pageSsr,
   component: TabView,
   pendingComponent: TabView,
 })

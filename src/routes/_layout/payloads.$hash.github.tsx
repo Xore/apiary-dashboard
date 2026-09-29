@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -6,6 +7,7 @@ import { GithubResult } from '#/components/analyzers/GithubResult'
 const parent = getRouteApi('/_layout/payloads/$hash')
 
 export const Route = createFileRoute('/_layout/payloads/$hash/github')({
+  ssr: pageSsr,
   component: TabView,
   pendingComponent: TabView,
 })

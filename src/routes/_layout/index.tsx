@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { virusTotalLink } from '#/lib/toolLinks'
@@ -54,6 +55,7 @@ const VIEWS = [
 type View = (typeof VIEWS)[number]['id']
 
 export const Route = createFileRoute('/_layout/')({
+  ssr: pageSsr,
   staticData: { viewTabs: searchTabs({ label: 'Dashboard views', param: 'view', tabs: () => [...VIEWS] }) },
   validateSearch: (search: Record<string, unknown>): { view?: View; section?: string } => ({
     view: VIEWS.some((v) => v.id === search.view) && search.view !== 'live' ? (search.view as View) : undefined,

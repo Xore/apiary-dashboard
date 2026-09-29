@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -9,6 +10,7 @@ import { EntityLink } from '#/components/EntityLink'
 const parent = getRouteApi('/_layout/recordings/$shasum')
 
 export const Route = createFileRoute('/_layout/recordings/$shasum/attacker')({
+  ssr: pageSsr,
   component: RecordingAttacker,
   pendingComponent: RecordingAttacker,
 })

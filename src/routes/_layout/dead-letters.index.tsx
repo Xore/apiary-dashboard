@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { textParam } from '#/lib/searchParams'
 import { useState } from 'react'
@@ -20,6 +21,7 @@ import { formatDateTime } from '#/lib/format'
 import { healthTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/dead-letters/')({
+  ssr: pageSsr,
   staticData: { viewTabs: healthTabs },
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
     q: textParam(search.q),

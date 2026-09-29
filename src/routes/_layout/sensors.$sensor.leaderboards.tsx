@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
 import { VStack } from '@astryxdesign/core/Stack'
@@ -7,7 +8,7 @@ import { CountTable, Panel } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
-export const Route = createFileRoute('/_layout/sensors/$sensor/leaderboards')({ component: SensorLeaderboards, pendingComponent: SensorLeaderboards })
+export const Route = createFileRoute('/_layout/sensors/$sensor/leaderboards')({ ssr: pageSsr, component: SensorLeaderboards, pendingComponent: SensorLeaderboards })
 
 /** This sensor's own leaderboards: the fields that mean something for its protocols. */
 function SensorLeaderboards() {

@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { useState } from 'react'
 import { ConfirmDialog } from '#/components/AppDialog'
 import { Button } from '@astryxdesign/core/Button'
@@ -21,6 +22,7 @@ import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 type View = 'new' | 'acknowledged'
 
 export const Route = createFileRoute('/_layout/alerts/')({
+  ssr: pageSsr,
   staticData: { viewTabs: searchTabs({ label: 'Alert views', param: 'view', tabs: (loaded) => { const groups = loaded as Array<{ acknowledged: boolean }> | undefined; return [{ id: 'new', label: 'New', count: groups?.filter((g) => !g.acknowledged).length }, { id: 'acknowledged', label: 'Acknowledged', count: groups?.filter((g) => g.acknowledged).length }] } }) },
   validateSearch: (search: Record<string, unknown>): { view?: View } => ({
     view: search.view === 'acknowledged' ? 'acknowledged' : undefined,

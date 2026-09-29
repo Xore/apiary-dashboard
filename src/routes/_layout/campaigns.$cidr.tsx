@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
@@ -10,6 +11,7 @@ import { getCampaign } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/campaigns/$cidr')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Campaign views', basePath: (params) => `/campaigns/${encodeURIComponent(params.cidr)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const campaign = await getCampaign(params.cidr)

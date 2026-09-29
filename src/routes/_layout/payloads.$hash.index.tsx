@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { MetaItem } from '#/components/MetaItem'
 import { orPending } from '#/lib/pending'
@@ -15,6 +16,7 @@ import { formatDateTime } from '#/lib/format'
 const parent = getRouteApi('/_layout/payloads/$hash')
 
 export const Route = createFileRoute('/_layout/payloads/$hash/')({
+  ssr: pageSsr,
   loader: ({ params }) => getRelated('payload', params.hash),
   component: PayloadOverview,
   pendingComponent: PayloadOverview,

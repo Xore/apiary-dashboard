@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute } from '@tanstack/react-router'
@@ -7,6 +8,7 @@ import { sectionOf } from '#/components/ViewTabs'
 import { getGhidraAnalysis } from '#/data/queries'
 
 export const Route = createFileRoute('/_layout/payloads/$hash/ghidra')({
+  ssr: pageSsr,
   // ?section= picks overview, code, data, deep dive or raw (the top bar
   // lists them under Ghidra); ?fn= is the function open in Code.
   validateSearch: (search: Record<string, unknown>): { fn?: string; section?: GhidraSection } => ({

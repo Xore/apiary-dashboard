@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Link } from '@astryxdesign/core/Link'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -13,6 +14,7 @@ import { analysisTabs } from '#/lib/navFamilies'
 
 // Index leaf so github-analysis/$sha is not swallowed by a parent component.
 export const Route = createFileRoute('/_layout/github-analysis/')({
+  ssr: pageSsr,
   staticData: { viewTabs: analysisTabs() },
   loader: () => getGithubAnalyses(),
   component: GithubIndexPage,

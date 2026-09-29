@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { textParam } from '#/lib/searchParams'
@@ -51,6 +52,7 @@ const FILTERS: Array<{ key: 'ip' | 'sensor' | 'persona' | 'provider' | 'country'
 ]
 
 export const Route = createFileRoute('/_layout/events/')({
+  ssr: pageSsr,
   // Deep links from other pages arrive here pre-scoped, e.g.
   // /events?ip=…, ?kind=login, ?country=CN, ?since=24h.
   validateSearch: (search: Record<string, unknown>): EventFilters & { page?: number } => {

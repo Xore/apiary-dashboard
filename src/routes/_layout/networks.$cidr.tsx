@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Pending } from '#/components/Pending'
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
@@ -12,6 +13,7 @@ import { formatDateTime, formatNumber } from '#/lib/format'
 
 // {cidr} carries a literal "/", so every link percent-encodes it.
 export const Route = createFileRoute('/_layout/networks/$cidr')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Network views', basePath: (params) => `/networks/${encodeURIComponent(params.cidr)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const network = await getNetwork(params.cidr)

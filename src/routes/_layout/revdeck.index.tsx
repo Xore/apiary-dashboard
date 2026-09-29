@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Link } from '@astryxdesign/core/Link'
 import { pixel, proportional } from '@astryxdesign/core/Table'
@@ -14,6 +15,7 @@ import { analysisTabs } from '#/lib/navFamilies'
 // An index leaf, not revdeck.tsx: a parent route with a component would
 // swallow revdeck/$sha.
 export const Route = createFileRoute('/_layout/revdeck/')({
+  ssr: pageSsr,
   staticData: { viewTabs: analysisTabs() },
   loader: () => getRevDeckRuns(),
   component: RevDeckIndexPage,

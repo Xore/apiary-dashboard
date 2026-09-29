@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { GroupOverview } from '#/components/EntityBlocks'
 import { VStack } from '@astryxdesign/core/Stack'
@@ -8,6 +9,7 @@ import { getRelated } from '#/data/queries'
 const parent = getRouteApi('/_layout/networks/$cidr')
 
 export const Route = createFileRoute('/_layout/networks/$cidr/')({
+  ssr: pageSsr,
   loader: ({ params }) => getRelated('network', params.cidr),
   component: TabView,
   pendingComponent: TabView,

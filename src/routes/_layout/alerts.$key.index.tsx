@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { SkeletonPanels } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -6,6 +7,7 @@ import { AlertOverview } from '#/components/details/Alert'
 const parent = getRouteApi('/_layout/alerts/$key')
 
 export const Route = createFileRoute('/_layout/alerts/$key/')({
+  ssr: pageSsr,
   component: TabView,
   pendingComponent: TabView,
 })

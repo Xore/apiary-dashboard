@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
@@ -9,6 +10,7 @@ import { getIoc } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/ioc/$kind/$value')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Indicator views', basePath: (params) => `/ioc/${params.kind}/${encodeURIComponent(params.value)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const ioc = await getIoc(params.kind, params.value)

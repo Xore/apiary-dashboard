@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Token } from '@astryxdesign/core/Token'
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router'
@@ -10,6 +11,7 @@ import { getSessionDetail } from '#/data/queries'
 import { formatDateTime, formatNumber } from '#/lib/format'
 
 export const Route = createFileRoute('/_layout/sessions/$id')({
+  ssr: pageSsr,
   staticData: { viewTabs: entityTabs({ label: 'Session views', basePath: (params) => `/sessions/${encodeURIComponent(params.id)}`, tabs: tabsFor }) },
   loader: async ({ params }) => {
     const detail = await getSessionDetail(params.id)

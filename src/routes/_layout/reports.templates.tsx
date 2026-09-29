@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Button } from '@astryxdesign/core/Button'
 import { HStack } from '@astryxdesign/core/Stack'
@@ -12,6 +13,7 @@ import type { ReportTemplate } from '#/data/types'
 import { reportTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/reports/templates')({
+  ssr: pageSsr,
   staticData: { viewTabs: reportTabs },
   loader: () => getReports(),
   component: TemplatesPage,

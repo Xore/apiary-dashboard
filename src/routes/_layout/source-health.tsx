@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Grid } from '@astryxdesign/core/Grid'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -25,6 +26,7 @@ import { usePreferences } from '#/lib/prefs'
 import { healthTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/source-health')({
+  ssr: pageSsr,
   staticData: { viewTabs: healthTabs },
   loader: () => getSourceHealth(),
   component: SourceHealthPage,

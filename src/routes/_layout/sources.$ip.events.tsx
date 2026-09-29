@@ -1,3 +1,4 @@
+import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { ActionLink } from '#/components/ActionLink'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -7,6 +8,7 @@ import { getSourceEvents } from '#/data/queries'
 const parent = getRouteApi('/_layout/sources/$ip')
 
 export const Route = createFileRoute('/_layout/sources/$ip/events')({
+  ssr: pageSsr,
   loaderDeps: ({ search }) => ({ range: search.range }),
   loader: ({ params, deps }) => getSourceEvents(params.ip, deps.range),
   component: SourceEvents,
