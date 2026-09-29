@@ -300,7 +300,7 @@ const payloadColumns: TableColumn<CapturedPayload>[] = [
   { key: 'sources', header: 'Source', width: pixel(120), renderCell: (row) => row.sources.join(' ') },
   { key: 'copies', header: 'Copies', width: pixel(72), align: 'end' },
   { key: 'verdict', header: 'Verdict', width: pixel(112), renderCell: (row) => (row.verdict ? <Token size="sm" label={row.verdict.family ?? row.verdict.label} color={row.verdict.label === 'malicious' ? 'red' : row.verdict.label === 'suspicious' ? 'orange' : 'green'} /> : '—') },
-  { key: 'lookup', header: '', width: pixel(64), align: 'end', renderCell: (row) => <OpenInMenu compact links={[virusTotalLink(row.hash)]} /> },
+  { key: 'lookup', header: '', width: pixel(88), align: 'end', renderCell: (row) => <OpenInMenu compact links={[virusTotalLink(row.hash)]} /> },
 ]
 
 const campaignColumns: TableColumn<NetworkCampaign>[] = [
