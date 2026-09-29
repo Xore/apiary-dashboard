@@ -16,6 +16,9 @@ import { saveListContext } from '#/lib/listContext'
 import { useRowActivation } from './useRowActivation'
 import { tableDensity, usePreferences } from '#/lib/prefs'
 
+/** Loading rows: a screenful, not the whole page size (the page-weight gate). */
+const SKELETON_ROWS = 15
+
 type RecordListProps<T extends Record<string, unknown>> = {
   title: string
   description?: string
@@ -78,7 +81,7 @@ export function RecordList<T extends Record<string, unknown>>({
     }
   }
 
-  if (!rows) return <ListFrame title={title} description={description} actions={actions} summary={summary} toolbar={toolbar} body={<SkeletonTable columns={columns} rows={pageSize} density={tableDensity(prefs)} withCount />} />
+  if (!rows) return <ListFrame title={title} description={description} actions={actions} summary={summary} toolbar={toolbar} body={<SkeletonTable columns={columns} rows={Math.min(pageSize, SKELETON_ROWS)} density={tableDensity(prefs)} withCount />} />
   const total = paging ? paging.total : rows.length
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   const currentPage = paging ? Math.floor(paging.offset / pageSize) + 1 : Math.min(page, pageCount)
