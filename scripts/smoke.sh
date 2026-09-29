@@ -168,12 +168,13 @@ done
 step "Content-Security-Policy: a nonce per response, on every script tag"
 # -L: a saved default time range answers /events with a redirect first; the
 # last response is the page.
-csp_page() { curl -sL -D "$WORK/csp.h" -o "$WORK/csp.html" -b "$COOKIE" "http://localhost:$PORT/events"; tr -d '\r' <"$WORK/csp.h" | sed -n 's/^[Cc]ontent-[Ss]ecurity-[Pp]olicy: .*nonce-\([^'"'"']*\).*/\1/p' | tail -1; }
+CSP_COOKIE="$(signin admin)"
+csp_page() { curl -sL -D "$WORK/csp.h" -o "$WORK/csp.html" -w '%{url_effective}' -b "$CSP_COOKIE" "http://localhost:$PORT/events" >"$WORK/csp.url"; tr -d '\r' <"$WORK/csp.h" | sed -n 's/^[Cc]ontent-[Ss]ecurity-[Pp]olicy: .*nonce-\([^'"'"']*\).*/\1/p' | tail -1; }
 first="$(csp_page)"
 scripts="$(grep -o '<script[^>]*>' "$WORK/csp.html" | wc -l)"
 nonced="$(grep -o "<script[^>]*nonce=\"$first\"[^>]*>" "$WORK/csp.html" | wc -l)"
 second="$(csp_page)"
-if [[ -n "$first" && "$first" != "$second" && "$scripts" -gt 0 && "$scripts" -eq "$nonced" ]]; then printf '  ok   %s scripts carry the nonce, fresh per response\n' "$scripts"; else printf '  FAIL nonce "%s"/"%s", %s of %s scripts nonced\n' "$first" "$second" "$nonced" "$scripts"; failed=1; fi
+if [[ -n "$first" && "$first" != "$second" && "$scripts" -gt 0 && "$scripts" -eq "$nonced" ]]; then printf '  ok   %s scripts carry the nonce, fresh per response\n' "$scripts"; else printf '  FAIL nonce "%s"/"%s", %s of %s scripts nonced (at %s)\n' "$first" "$second" "$nonced" "$scripts" "$(cat "$WORK/csp.url")"; failed=1; fi
 
 step "sign-out: same origin only, then the session is gone"
 OTHER="$(signin viewer)"
