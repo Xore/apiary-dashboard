@@ -1,11 +1,11 @@
 import { paletteSyntax } from './neutral/neutralVariants'
 import { describe, expect, it } from 'vitest'
 import { resolveThemeTokens } from '@astryxdesign/core/theme/tokens'
-import { appTheme } from './appTheme'
+import { ASTRYX_THEMES, appTheme } from './appTheme'
 import { APIARY_PALETTES } from './neutral/apiaryPalettes.generated'
-import type { Palette } from '#/data/types'
+import type { ApiaryPalette } from './neutral/apiaryPalettes.generated'
 
-const PALETTES = Object.keys(APIARY_PALETTES) as Palette[]
+const PALETTES = Object.keys(APIARY_PALETTES) as ApiaryPalette[]
 
 describe('appTheme', () => {
   it('defaults to Claude, as APIARY does', () => {
@@ -107,5 +107,15 @@ describe('palette syntax themes', () => {
         }
       }
     }
+  })
+})
+
+describe('Astryx themes', () => {
+  it('are selectable as themes of their own, without a high-contrast twin', () => {
+    for (const name of Object.keys(ASTRYX_THEMES) as Array<keyof typeof ASTRYX_THEMES>) {
+      expect(appTheme(name)).toBe(ASTRYX_THEMES[name])
+      expect(appTheme(name, true)).toBe(ASTRYX_THEMES[name])
+    }
+    expect(appTheme('gothic').name).toBe('gothic')
   })
 })

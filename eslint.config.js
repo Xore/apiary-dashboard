@@ -20,6 +20,8 @@ export default [
       'prettier.config.js',
       'src/themes/neutral/neutral-family.js',
       'src/themes/neutral/*.d.ts',
+      'src/themes/astryx/*/*.js',
+      'src/themes/astryx/*/*.d.ts',
       '.tanstack/**',
     ],
   },

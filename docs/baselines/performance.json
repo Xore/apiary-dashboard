@@ -3,84 +3,84 @@
   "growthAllowed": 1.25,
   "pages": {
     "/": {
-      "htmlKb": 508.6,
-      "jsKb": 575.2,
-      "cssKb": 34.7,
-      "requests": 101,
-      "domContentLoadedMs": 292,
-      "loadMs": 420
+      "htmlKb": 526.3,
+      "jsKb": 624,
+      "cssKb": 52.2,
+      "requests": 94,
+      "domContentLoadedMs": 144,
+      "loadMs": 499
     },
     "/events": {
-      "htmlKb": 373.9,
-      "jsKb": 530.3,
-      "cssKb": 34.7,
-      "requests": 104,
-      "domContentLoadedMs": 137,
-      "loadMs": 417
+      "htmlKb": 393.3,
+      "jsKb": 576.7,
+      "cssKb": 52.2,
+      "requests": 95,
+      "domContentLoadedMs": 422,
+      "loadMs": 654
     },
     "/sources/198.51.100.13": {
-      "htmlKb": 424.8,
-      "jsKb": 529,
-      "cssKb": 34.7,
+      "htmlKb": 443.2,
+      "jsKb": 578.2,
+      "cssKb": 52.2,
       "requests": 105,
-      "domContentLoadedMs": 249,
-      "loadMs": 356
+      "domContentLoadedMs": 319,
+      "loadMs": 468
     },
     "/payloads/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37": {
-      "htmlKb": 130.9,
-      "jsKb": 546,
-      "cssKb": 34.7,
-      "requests": 117,
-      "domContentLoadedMs": 77,
-      "loadMs": 342
+      "htmlKb": 148.1,
+      "jsKb": 594,
+      "cssKb": 52.2,
+      "requests": 116,
+      "domContentLoadedMs": 286,
+      "loadMs": 430
     },
     "/payloads/320cbb5e902f6bc9d8ea8edd7974b7829b1e4f08f477b7e3aadb240c18e9cc37/ghidra?section=code": {
-      "htmlKb": 145.1,
-      "jsKb": 543.8,
-      "cssKb": 34.7,
-      "requests": 116,
-      "domContentLoadedMs": 234,
-      "loadMs": 362
+      "htmlKb": 180.9,
+      "jsKb": 591.7,
+      "cssKb": 52.2,
+      "requests": 115,
+      "domContentLoadedMs": 276,
+      "loadMs": 469
     },
     "/kill-chain": {
-      "htmlKb": 77.7,
-      "jsKb": 523,
-      "cssKb": 34.7,
-      "requests": 97,
-      "domContentLoadedMs": 162,
-      "loadMs": 267
+      "htmlKb": 94.5,
+      "jsKb": 579.5,
+      "cssKb": 52.2,
+      "requests": 109,
+      "domContentLoadedMs": 207,
+      "loadMs": 358
     },
     "/alerts": {
-      "htmlKb": 112.1,
-      "jsKb": 529.4,
-      "cssKb": 34.7,
-      "requests": 100,
-      "domContentLoadedMs": 167,
-      "loadMs": 282
+      "htmlKb": 129.5,
+      "jsKb": 581.5,
+      "cssKb": 52.2,
+      "requests": 107,
+      "domContentLoadedMs": 83,
+      "loadMs": 383
     },
     "/reports/generate": {
-      "htmlKb": 99.4,
-      "jsKb": 538.7,
-      "cssKb": 34.7,
-      "requests": 102,
-      "domContentLoadedMs": 170,
-      "loadMs": 289
+      "htmlKb": 116.3,
+      "jsKb": 587.6,
+      "cssKb": 52.2,
+      "requests": 100,
+      "domContentLoadedMs": 222,
+      "loadMs": 355
     },
     "/source-health": {
-      "htmlKb": 136.3,
-      "jsKb": 524.2,
-      "cssKb": 34.7,
-      "requests": 97,
-      "domContentLoadedMs": 194,
-      "loadMs": 330
+      "htmlKb": 153.7,
+      "jsKb": 579.6,
+      "cssKb": 52.2,
+      "requests": 108,
+      "domContentLoadedMs": 295,
+      "loadMs": 507
     },
     "/auth/login": {
-      "htmlKb": 12,
-      "jsKb": 496.4,
-      "cssKb": 34.7,
-      "requests": 87,
-      "domContentLoadedMs": 112,
-      "loadMs": 237
+      "htmlKb": 12.1,
+      "jsKb": 538.3,
+      "cssKb": 52.2,
+      "requests": 83,
+      "domContentLoadedMs": 47,
+      "loadMs": 230
     }
   }
 }

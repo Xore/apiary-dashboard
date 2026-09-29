@@ -24,10 +24,29 @@ import {
   neutralSageTheme,
   neutralSlateHcTheme,
   neutralSlateTheme,
+  neutralTheme,
 } from './neutral/neutral-family'
-import type { Palette } from '#/data/types'
+import type { AstryxTheme, Palette } from '#/data/types'
+import { butterTheme } from './astryx/butter/butter'
+import { chocolateTheme } from './astryx/chocolate/chocolate'
+import { gothicTheme } from './astryx/gothic/gothic'
+import { matchaTheme } from './astryx/matcha/matcha'
+import { stoneTheme } from './astryx/stone/stone'
+import { y2kTheme } from './astryx/y2k/y2k'
 
-const THEMES: Record<Palette, { standard: DefinedTheme; high: DefinedTheme }> = {
+/** Astryx's own themes, as `astryx theme add` scaffolds them: their own
+ * typography, shape and icons, and no high-contrast twin. */
+export const ASTRYX_THEMES: Record<AstryxTheme, DefinedTheme> = {
+  neutral: neutralTheme,
+  butter: butterTheme,
+  chocolate: chocolateTheme,
+  gothic: gothicTheme,
+  matcha: matchaTheme,
+  stone: stoneTheme,
+  y2k: y2kTheme,
+}
+
+const THEMES: Record<Exclude<Palette, AstryxTheme>, { standard: DefinedTheme; high: DefinedTheme }> = {
   // Claude is the default, as in APIARY: warm charcoal and ivory, copper.
   claude: { standard: neutralClaudeTheme, high: neutralClaudeHcTheme },
   slate: { standard: neutralSlateTheme, high: neutralSlateHcTheme },
@@ -43,6 +62,7 @@ const THEMES: Record<Palette, { standard: DefinedTheme; high: DefinedTheme }> = 
 /** The theme for a palette and contrast preference; no palette is the
  * default. */
 export function appTheme(palette: Palette | undefined, highContrast = false): DefinedTheme {
-  const pair = THEMES[palette ?? 'claude']
+  if (palette && palette in ASTRYX_THEMES) return ASTRYX_THEMES[palette as AstryxTheme]
+  const pair = THEMES[(palette ?? 'claude') as Exclude<Palette, AstryxTheme>]
   return highContrast ? pair.high : pair.standard
 }

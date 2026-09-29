@@ -1044,8 +1044,11 @@ export interface Preferences {
   defaultWindow: string
 }
 
-/** One of APIARY's nine palette themes. */
-export type Palette = 'claude' | 'slate' | 'sage' | 'lavender' | 'lime' | 'amber' | 'ocean' | 'rose' | 'neon'
+/** One of APIARY's nine palette themes, or one of Astryx's own themes. */
+export type Palette = 'claude' | 'slate' | 'sage' | 'lavender' | 'lime' | 'amber' | 'ocean' | 'rose' | 'neon' | AstryxTheme
+
+/** The themes Astryx ships (`astryx theme list`), whole designs of their own. */
+export type AstryxTheme = 'neutral' | 'butter' | 'chocolate' | 'gothic' | 'matcha' | 'stone' | 'y2k'
 
 /** Dashboard configuration, by section, as the config store keeps it.
  * Every write is validated first and recorded as a revision. */

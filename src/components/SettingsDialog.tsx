@@ -36,10 +36,13 @@ import { CONTROL_WIDTH, PanelColumn, PinnedClose, SettingsCard, SettingsPanelHea
 import { isAdminPanel, panelOf } from './settings/registry'
 import type { PaneId } from './settings/registry'
 import { getSettings, rollbackConfig, runServiceAction, saveConfigSection, savePreferences, validateConfig } from '#/data/queries'
-import type { AuditEntry, ConfigProblems, ConfigRevision, ConfigSection, DashboardConfig, EsStorage, Palette, Preferences, ServiceStatus, SettingsData } from '#/data/types'
+import type { AuditEntry, ConfigProblems, ConfigRevision, ConfigSection, DashboardConfig, EsStorage, Palette, Preferences, ServiceStatus, SettingsData, AstryxTheme } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { NAV_SECTIONS } from '#/lib/nav'
 import { APIARY_PALETTES } from '#/themes/neutral/apiaryPalettes.generated'
+import type { ApiaryPalette } from '#/themes/neutral/apiaryPalettes.generated'
+import { ASTRYX_THEMES } from '#/themes/appTheme'
+import { resolveThemeTokens } from '@astryxdesign/core/theme/tokens'
 import { prefetchEnabled, setPrefetchEnabled } from '#/lib/prefetch'
 import { FieldStatus } from '@astryxdesign/core/FieldStatus'
 import { DEFAULT_TITLE_FORMAT, formatTitle } from '#/lib/title'
@@ -162,14 +165,17 @@ function AccountPanel() {
   )
 }
 
-/** The palettes in APIARY's order; each is a whole theme, so the swatch
- * shows its ground with its accent on it. */
-const PALETTES = (Object.keys(APIARY_PALETTES) as Palette[]).map((value) => ({
-  value,
-  label: value[0].toUpperCase() + value.slice(1),
-  ground: APIARY_PALETTES[value].light['bg-000'],
-  accent: APIARY_PALETTES[value].light.accent,
-}))
+const capitalize = (name: string) => (name === 'y2k' ? 'Y2K' : name[0].toUpperCase() + name.slice(1))
+
+/** APIARY's palettes in its order, then Astryx's own themes; each is a whole
+ * theme, so the swatch shows its ground with its accent on it. */
+const PALETTES = [
+  ...(Object.keys(APIARY_PALETTES) as ApiaryPalette[]).map((value) => ({ value: value, label: capitalize(value), ground: APIARY_PALETTES[value].light['bg-000'], accent: APIARY_PALETTES[value].light.accent })),
+  ...(Object.keys(ASTRYX_THEMES) as AstryxTheme[]).map((value) => {
+    const tokens = resolveThemeTokens(ASTRYX_THEMES[value], { mode: 'light' })
+    return { value: value, label: `Astryx ${capitalize(value)}`, ground: tokens['--color-background-surface'], accent: tokens['--color-accent'] }
+  }),
+]
 
 const swatch = (ground: string, accent: string) => (
   <span aria-hidden style={{ display: 'inline-grid', placeItems: 'center', width: 14, height: 14, borderRadius: 999, backgroundColor: ground, boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.15)' }}>
