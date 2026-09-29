@@ -10,8 +10,26 @@ import { useMediaQuery } from '@astryxdesign/core/hooks'
 import { Layout, LayoutContent, LayoutFooter } from '@astryxdesign/core/Layout'
 import { HStack, StackItem } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useLayoutEffect, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
+
+/** The control that last took focus outside a dialog, standing in for a
+ * dropdown menu item by that menu's trigger button: an item is gone by the
+ * time a dialog it opened closes (and a dialog opened through the URL, like
+ * settings, mounts after the menu has already closed). */
+let lastOpener: HTMLElement | null = null
+if (typeof document !== 'undefined') {
+  document.addEventListener(
+    'focusin',
+    (event) => {
+      const el = event.target instanceof HTMLElement ? event.target : null
+      if (!el || el.closest('dialog')) return
+      const menu = el.closest('[role="menu"]')
+      lastOpener = (menu?.id && document.querySelector<HTMLElement>(`[aria-controls="${CSS.escape(menu.id)}"]`)) || el
+    },
+    true,
+  )
+}
 
 /** The open dialog's guarded close: what its own close button calls, so the
  * button, the scrim and Escape all ask before discarding. */
@@ -42,6 +60,16 @@ type AppDialogProps = {
 export function AppDialog({ isOpen, onClose, kind = 'form', width, isDirty = false, children, ...rest }: AppDialogProps) {
   const phone = useMediaQuery('(max-width: 640px)')
   const [asking, setAsking] = useState(false)
+  // Focus goes back to what opened the dialog (see lastOpener).
+  useLayoutEffect(() => {
+    if (!isOpen) return
+    // By now the dialog may already hold focus (it opens itself first).
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const opener = active && active !== document.body && !active.closest('dialog') ? active : lastOpener
+    return () => {
+      if (opener?.isConnected) requestAnimationFrame(() => opener.focus())
+    }
+  }, [isOpen])
   const requestClose = () => (isDirty ? setAsking(true) : onClose())
   return (
     <>

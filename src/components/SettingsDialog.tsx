@@ -13,7 +13,6 @@ import { createContext, useCallback, useContext, useEffect, useId, useRef, useSt
 import { Banner } from '@astryxdesign/core/Banner'
 import { CheckboxList, CheckboxListItem } from '@astryxdesign/core/CheckboxList'
 import { Button } from '@astryxdesign/core/Button'
-import { Dialog } from '@astryxdesign/core/Dialog'
 import { Divider } from '@astryxdesign/core/Divider'
 import { Layout, LayoutContent } from '@astryxdesign/core/Layout'
 import { NumberInput } from '@astryxdesign/core/NumberInput'
@@ -39,6 +38,7 @@ import { getSettings, rollbackConfig, runServiceAction, saveConfigSection, saveP
 import type { AuditEntry, ConfigProblems, ConfigRevision, ConfigSection, DashboardConfig, EsStorage, Palette, Preferences, ServiceStatus, SettingsData, AstryxTheme } from '#/data/types'
 import { formatDateTime, formatNumber } from '#/lib/format'
 import { NAV_SECTIONS } from '#/lib/nav'
+import { AppDialog, ConfirmDialog } from './AppDialog'
 import { APIARY_PALETTES } from '#/themes/neutral/apiaryPalettes.generated'
 import type { ApiaryPalette } from '#/themes/neutral/apiaryPalettes.generated'
 import { ASTRYX_THEMES } from '#/themes/appTheme'
@@ -913,26 +913,23 @@ export function SettingsDialog({ pane: asked, onPane, onClose }: { pane: PaneId;
         {saveState === 'saving' ? 'Saving…' : saveState === 'failed' ? 'Not saved: the backend did not answer' : 'Saved'}
       </Text>
     )
-  const discardBanner = pending && (
-    <Banner
-      status="warning"
-      title={`Unsaved changes in ${[...dirtyPanels].map((p) => panelOf(p).label).join(', ')}`}
-      description="They are staged, not saved. Discard them, or go back and save."
-      endContent={
-        <HStack gap={2}>
-          <Button label="Keep editing" size="sm" variant="ghost" onClick={() => setPending(null)} />
-          <Button
-            label={`Discard and ${pending.label.toLowerCase()}`}
-            size="sm"
-            onClick={() => {
-              const { run } = pending
-              setPending(null)
-              setDirtyPanels(new Set())
-              run()
-            }}
-          />
-        </HStack>
-      }
+  // The same question every dialog asks before discarding input (AppDialog).
+  const discardDialog = (
+    <ConfirmDialog
+      isOpen={pending !== null}
+      onOpenChange={(open) => !open && setPending(null)}
+      title="Discard changes?"
+      description={`Unsaved changes in ${[...dirtyPanels].map((p) => panelOf(p).label).join(', ')} are staged, not saved.`}
+      cancelLabel="Keep editing"
+      actionLabel={pending ? `Discard and ${pending.label.toLowerCase()}` : 'Discard'}
+      actionVariant="destructive"
+      onAction={() => {
+        if (!pending) return
+        const { run } = pending
+        setPending(null)
+        setDirtyPanels(new Set())
+        run()
+      }}
     />
   )
   const body = data && prefs && (
@@ -945,7 +942,6 @@ export function SettingsDialog({ pane: asked, onPane, onClose }: { pane: PaneId;
           {/* Holds the column the pinned close floats over. */}
           <div aria-hidden style={{ width: 32 }} />
         </HStack>
-        {discardBanner}
         <VStack gap={4}>
           <PanelBody key={pane} panel={pane} />
         </VStack>
@@ -954,7 +950,8 @@ export function SettingsDialog({ pane: asked, onPane, onClose }: { pane: PaneId;
   )
 
   return (
-    <Dialog isOpen onOpenChange={(open) => !open && requestClose()} purpose="info" width={1120} maxHeight={SHELL_HEIGHT} padding={0} aria-labelledby={titleId}>
+    <>
+    <AppDialog isOpen onClose={requestClose} kind="large" width={1120} maxHeight={SHELL_HEIGHT} padding={0} aria-labelledby={titleId}>
       <VStack style={{ height: SHELL_HEIGHT }}>
         {isNarrow ? (
           <VStack gap={0} height="100%">
@@ -998,7 +995,9 @@ export function SettingsDialog({ pane: asked, onPane, onClose }: { pane: PaneId;
           />
         )}
       </VStack>
-    </Dialog>
+    </AppDialog>
+    {discardDialog}
+    </>
   )
 }
 

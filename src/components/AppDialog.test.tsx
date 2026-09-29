@@ -4,7 +4,7 @@
 // cancel paths never run its action.
 import { useState } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Layout, LayoutContent } from '@astryxdesign/core/Layout'
 import { Theme } from '@astryxdesign/core/theme'
@@ -105,5 +105,47 @@ describe('ConfirmDialog', () => {
     render(<Confirm />)
     await userEvent.setup().click(screen.getByRole('button', { name: 'Delete' }))
     expect(acted).toBe(1)
+  })
+})
+
+function Opened({ fromMenu = false }: { fromMenu?: boolean }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <Theme theme={neutralTheme}>
+      {fromMenu ? (
+        <>
+          <button type="button" aria-controls="menu-1">Account</button>
+          {!open && (
+            <div role="menu" id="menu-1" tabIndex={-1}>
+              <div role="menuitem" tabIndex={-1} onClick={() => setOpen(true)}>Settings</div>
+            </div>
+          )}
+        </>
+      ) : (
+        <button type="button" onClick={() => setOpen(true)}>Open</button>
+      )}
+      <AppDialog isOpen={open} onClose={() => setOpen(false)}>
+        <Layout header={<AppDialogHeader title="Edit" />} content={<LayoutContent>body</LayoutContent>} />
+      </AppDialog>
+    </Theme>
+  )
+}
+
+describe('focus', () => {
+  it('returns to the button that opened the dialog', async () => {
+    const user = userEvent.setup()
+    render(<Opened />)
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+    pressEscape(dialogOf('Edit'))
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open' })))
+  })
+
+  it("returns to a menu's trigger when a menu item, now gone, opened it", async () => {
+    const user = userEvent.setup()
+    render(<Opened fromMenu />)
+    await user.click(screen.getByRole('menuitem', { name: 'Settings' }))
+    expect(screen.queryByRole('menu')).toBeNull()
+    pressEscape(dialogOf('Edit'))
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Account' })))
   })
 })
