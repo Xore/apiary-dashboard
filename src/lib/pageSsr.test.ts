@@ -32,6 +32,14 @@ describe('page routes', () => {
     expect(missing).toEqual([])
   })
 
+  it('read their data through orPending, so "Loading forever" holds them on their skeleton', () => {
+    const direct = routes.filter((file) => {
+      const source = readFileSync(join(dir, file), 'utf8')
+      return source.includes('ssr: pageSsr') && !source.includes('orPending(')
+    })
+    expect(direct).toEqual([])
+  })
+
   it('have their own skeleton to show while loading, not the generic one', () => {
     const without = routes.filter((file) => {
       const source = readFileSync(join(dir, file), 'utf8')

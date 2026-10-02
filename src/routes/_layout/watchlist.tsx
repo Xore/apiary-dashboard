@@ -1,4 +1,5 @@
 import { pageSsr } from '#/lib/pageSsr'
+import { orPending } from '#/lib/pending'
 import { useSyncExternalStore } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Link } from '@astryxdesign/core/Link'
@@ -26,7 +27,7 @@ const columns: TableColumn<Row>[] = [
 
 /** Entities pinned from their pages, newest first. Kept in this browser. */
 function WatchlistPage() {
-  return <WatchlistList pins={useSyncExternalStore(subscribe, getPins, getServerPins)} />
+  return <WatchlistList pins={orPending(useSyncExternalStore(subscribe, getPins, getServerPins))} />
 }
 
 function WatchlistList({ pins }: { pins: Row[] | undefined }) {

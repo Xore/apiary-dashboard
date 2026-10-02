@@ -81,18 +81,10 @@ export function RecordList<T extends Record<string, unknown>>({
     }
   }
 
-  if (!rows) return <ListFrame title={title} description={description} actions={actions} summary={summary} toolbar={toolbar} body={<SkeletonTable columns={columns} rows={Math.min(pageSize, SKELETON_ROWS)} density={tableDensity(prefs)} withCount />} />
-  const total = paging ? paging.total : rows.length
+  const total = paging ? paging.total : (rows?.length ?? 0)
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
-  const currentPage = paging ? Math.floor(paging.offset / pageSize) + 1 : Math.min(page, pageCount)
-  const visible = paging ? rows : rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  const goToPage = (next: number) => {
-    if (!paging) return setPage(next)
-    // Any list route may be paged, so the typed routes do not all know ?page=.
-    void navigate({ to: '.', search: ((prev: Record<string, unknown>) => ({ ...prev, page: next > 1 ? next : undefined })) as never })
-  }
   // A page past the end (the filters now match fewer rows): go to the last.
-  const pastTheEnd = paging !== undefined && rows.length === 0 && total > 0
+  const pastTheEnd = rows !== undefined && paging !== undefined && rows.length === 0 && total > 0
   useEffect(() => {
     if (pastTheEnd) void navigate({ to: '.', search: ((prev: Record<string, unknown>) => ({ ...prev, page: pageCount > 1 ? pageCount : undefined })) as never, replace: true })
   }, [pastTheEnd, pageCount, navigate])
@@ -108,10 +100,21 @@ export function RecordList<T extends Record<string, unknown>>({
       return
     }
     // Prev/next steps through the rows at hand: the whole list, or this page.
-    saveListContext({ listHref, listTitle: title, hrefs: rows.map(getHref) })
+    saveListContext({ listHref, listTitle: title, hrefs: (rows ?? []).map(getHref) })
     void navigate({ href })
   }
   const activation = useRowActivation<T>({ onActivate: openRow })
+
+  // Every hook runs before this: the same list goes from skeleton to rows
+  // (after hydration, or leaving the "Loading forever" mock scenario).
+  if (!rows) return <ListFrame title={title} description={description} actions={actions} summary={summary} toolbar={toolbar} body={<SkeletonTable columns={columns} rows={Math.min(pageSize, SKELETON_ROWS)} density={tableDensity(prefs)} withCount />} />
+  const currentPage = paging ? Math.floor(paging.offset / pageSize) + 1 : Math.min(page, pageCount)
+  const visible = paging ? rows : rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const goToPage = (next: number) => {
+    if (!paging) return setPage(next)
+    // Any list route may be paged, so the typed routes do not all know ?page=.
+    void navigate({ to: '.', search: ((prev: Record<string, unknown>) => ({ ...prev, page: next > 1 ? next : undefined })) as never })
+  }
 
   return (
     <ListFrame
