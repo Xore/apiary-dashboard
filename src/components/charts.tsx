@@ -20,6 +20,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import type { ReactElement } from 'react'
 import type { CountRow, HeatmapRow, KillChainData, SeriesPoint, TimeBucket } from '#/data/types'
 import { formatDateTime, formatDay, formatNumber, formatTime } from '#/lib/format'
 import { useMeasuredWidth } from '#/lib/useMeasuredWidth'
@@ -34,6 +35,24 @@ import { useMeasuredWidth } from '#/lib/useMeasuredWidth'
 // protocols instead, in the same palette order. Such a chart shows one
 // sensor, so filtering it never repaints a series either.
 type Series = { key: string; label: string; color: string }
+
+/** Recharts' ResponsiveContainer takes its first size from
+ * getBoundingClientRect, which includes the large-screen `zoom` in
+ * styles.css: the chart drew 1.25x too wide and corrected itself only after
+ * it was visible. clientWidth is the unzoomed width and is read before the
+ * first paint, so the chart is drawn once, at its real size. */
+function ChartBox({ height, children }: { height: number; children: ReactElement }) {
+  const [ref, width] = useMeasuredWidth<HTMLDivElement>()
+  return (
+    <div ref={ref} style={{ height }}>
+      {width ? (
+        <ResponsiveContainer width={width} height={height}>
+          {children}
+        </ResponsiveContainer>
+      ) : null}
+    </div>
+  )
+}
 
 const PALETTE = ['blue', 'orange', 'teal', 'purple', 'pink'].map((c) => `var(--color-data-categorical-${c})`)
 const OTHER: Series = { key: 'other', label: 'Other', color: 'var(--color-text-secondary)' }
@@ -129,7 +148,7 @@ export function ProtocolTimeline({ buckets }: { buckets: TimeBucket[] }) {
   const rows = toRows(buckets, series)
   return (
     <VStack gap={3}>
-      <ResponsiveContainer width="100%" height={260}>
+      <ChartBox height={260}>
         <BarChart data={rows} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barCategoryGap={2}>
           <CartesianGrid vertical={false} stroke={GRID_STROKE} />
           <XAxis
@@ -156,7 +175,7 @@ export function ProtocolTimeline({ buckets }: { buckets: TimeBucket[] }) {
             />
           ))}
         </BarChart>
-      </ResponsiveContainer>
+      </ChartBox>
       <HStack gap={4} wrap="wrap">
         {series.map((s) => (
           <HStack key={s.key} gap={1.5} vAlign="center">
@@ -173,7 +192,7 @@ export function Sparkline({ data }: { data: number[] }) {
   if (data.length === 0) return <div style={{ height: 36 }} />
   const rows = data.map((value, index) => ({ index, value }))
   return (
-    <ResponsiveContainer width="100%" height={36}>
+    <ChartBox height={36}>
       <LineChart data={rows} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
         <Line
           type="monotone"
@@ -184,7 +203,7 @@ export function Sparkline({ data }: { data: number[] }) {
           isAnimationActive={false}
         />
       </LineChart>
-    </ResponsiveContainer>
+    </ChartBox>
   )
 }
 
@@ -237,7 +256,7 @@ export function TimeLines<T extends { time: string }>({
   if (data.length === 0) return <ChartEmpty height={220} />
   return (
     <VStack gap={3}>
-      <ResponsiveContainer width="100%" height={220}>
+      <ChartBox height={220}>
         <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke={GRID_STROKE} />
           <XAxis
@@ -264,7 +283,7 @@ export function TimeLines<T extends { time: string }>({
             />
           ))}
         </LineChart>
-      </ResponsiveContainer>
+      </ChartBox>
       <HStack gap={4} wrap="wrap">
         {series.map((s, index) => (
           <HStack key={s.key} gap={1.5} vAlign="center">
@@ -295,7 +314,7 @@ function ValueTooltip({ active, payload }: { active?: boolean; payload?: Array<{
 export function FlowSankey({ flow, height = 420 }: { flow: KillChainData['flow']; height?: number }) {
   if (flow.links.length === 0) return <ChartEmpty height={height} label="No flow to show in this window." />
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ChartBox height={height}>
       <Sankey
         data={flow}
         nodePadding={28}
@@ -323,7 +342,7 @@ export function FlowSankey({ flow, height = 420 }: { flow: KillChainData['flow']
       >
         <Tooltip content={<ValueTooltip />} />
       </Sankey>
-    </ResponsiveContainer>
+    </ChartBox>
   )
 }
 
@@ -334,7 +353,7 @@ export function CampaignTimeline({ rows }: { rows: KillChainData['timeline'] }) 
   const min = Math.min(...data.map((d) => d.span[0]))
   const max = Math.max(...data.map((d) => d.span[1]))
   return (
-    <ResponsiveContainer width="100%" height={Math.max(160, rows.length * 26 + 40)}>
+    <ChartBox height={Math.max(160, rows.length * 26 + 40)}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 0 }} barCategoryGap={4}>
         <CartesianGrid horizontal={false} stroke={GRID_STROKE} />
         <XAxis
@@ -365,7 +384,7 @@ export function CampaignTimeline({ rows }: { rows: KillChainData['timeline'] }) 
         />
         <Bar dataKey="span" fill="var(--color-data-categorical-blue)" radius={4} isAnimationActive={false} />
       </BarChart>
-    </ResponsiveContainer>
+    </ChartBox>
   )
 }
 
@@ -503,7 +522,7 @@ export function RankBars({ rows, height }: { rows: CountRow[]; height?: number }
   if (rows.length === 0) return <ChartEmpty height={height ?? 140} />
   const h = height ?? Math.max(140, rows.length * 30 + 20)
   return (
-    <ResponsiveContainer width="100%" height={h}>
+    <ChartBox height={h}>
       <BarChart data={rows} layout="vertical" margin={{ top: 0, right: 48, left: 0, bottom: 0 }} barCategoryGap={6}>
         <XAxis type="number" hide />
         <YAxis type="category" dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} width={230} />
@@ -517,7 +536,7 @@ export function RankBars({ rows, height }: { rows: CountRow[]; height?: number }
           label={{ position: 'right', fontSize: 11, fill: 'var(--color-text-secondary)', formatter: (v: unknown) => formatNumber(Number(v)) }}
         />
       </BarChart>
-    </ResponsiveContainer>
+    </ChartBox>
   )
 }
 
@@ -536,7 +555,7 @@ export function SeriesLines({
   if (data.length === 0) return <ChartEmpty height={240} />
   return (
     <VStack gap={3}>
-      <ResponsiveContainer width="100%" height={240}>
+      <ChartBox height={240}>
         <LineChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke={GRID_STROKE} />
           <XAxis
@@ -573,7 +592,7 @@ export function SeriesLines({
             <Line key={s.key} type="monotone" dataKey={s.key} name={s.label} stroke={LINE_COLORS[index]} strokeWidth={2} dot={false} isAnimationActive={false} />
           ))}
         </LineChart>
-      </ResponsiveContainer>
+      </ChartBox>
       {series.length > 1 && (
         <HStack gap={4} wrap="wrap">
           {series.map((s, index) => (
@@ -592,7 +611,7 @@ export function SeriesLines({
 export function Histogram({ rows }: { rows: CountRow[] }) {
   if (rows.length === 0) return <ChartEmpty height={240} />
   return (
-    <ResponsiveContainer width="100%" height={240}>
+    <ChartBox height={240}>
       <BarChart data={rows} margin={{ top: 16, right: 8, left: 0, bottom: 0 }} barCategoryGap={8}>
         <CartesianGrid vertical={false} stroke={GRID_STROKE} />
         <XAxis dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} />
@@ -600,7 +619,7 @@ export function Histogram({ rows }: { rows: CountRow[] }) {
         <Tooltip cursor={{ fill: 'var(--color-background-muted)' }} content={<ValueTooltip />} />
         <Bar dataKey="count" name="Connections" fill="var(--color-data-categorical-blue)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
       </BarChart>
-    </ResponsiveContainer>
+    </ChartBox>
   )
 }
 
@@ -610,7 +629,7 @@ export function FusionRadar({ categories, values }: { categories: string[]; valu
   if (values.every((v) => v === 0)) return <ChartEmpty height={280} label="No values are shared: this identity has a single member address." />
   const data = categories.map((category, i) => ({ category, shared: values[i] }))
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ChartBox height={300}>
       <RadarChart data={data} outerRadius="72%">
         <PolarGrid stroke={GRID_STROKE} />
         <PolarAngleAxis dataKey="category" tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} />
@@ -618,6 +637,6 @@ export function FusionRadar({ categories, values }: { categories: string[]; valu
         <Radar dataKey="shared" name="Shared values" stroke="var(--color-data-categorical-blue)" fill="var(--color-data-categorical-blue)" fillOpacity={0.25} isAnimationActive={false} />
         <Tooltip formatter={(value) => [`${String(value)} shared`, 'Values']} />
       </RadarChart>
-    </ResponsiveContainer>
+    </ChartBox>
   )
 }
