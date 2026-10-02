@@ -30,14 +30,16 @@ import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { NumberInput } from '@astryxdesign/core/NumberInput'
 import { RadioList, RadioListItem } from '@astryxdesign/core/RadioList'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Selector } from '@astryxdesign/core/Selector'
 import { Spinner } from '@astryxdesign/core/Spinner'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Step, Stepper } from '@astryxdesign/core/Stepper'
 import { Switch } from '@astryxdesign/core/Switch'
-import { Text } from '@astryxdesign/core/Text'
+import { Heading, Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { VisuallyHidden } from '@astryxdesign/core/VisuallyHidden'
+import { useMediaQuery } from '@astryxdesign/core/hooks'
 import { CalendarDaysIcon, DocumentTextIcon, FunnelIcon, PaintBrushIcon, Squares2X2Icon } from '@heroicons/react/24/outline'
 import { useRouter } from '@tanstack/react-router'
 import { generateReportFrom, previewReport } from '#/data/queries'
@@ -102,6 +104,12 @@ export function emptyDraft(data: ReportsData, templateId?: string): ReportDefini
 
 const plural = (n: number, word: string) => `${formatNumber(n)} ${word}${n === 1 ? '' : 's'}`
 
+/** From this width the preview sits beside the steps and follows every
+ * change, rather than waiting for the last step. */
+export const REPORT_WIDE = '(min-width: 1600px)'
+/** The steps' column beside the preview: a form's width. */
+const STEPS_WIDTH = 720
+
 export function ReportWizard({ data, facets, initial, onRestart }: { data: ReportsData; facets: Facets; initial: ReportDefinition; onRestart: () => void }) {
   const router = useRouter()
   // Generating (and keeping the definition) is an admin's; a viewer can
@@ -115,6 +123,11 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
   const [generating, setGenerating] = useState(false)
   const { error, guard } = useGuardedAction()
   const [result, setResult] = useState<{ report: GeneratedReport; definition?: ReportDefinition } | null>(null)
+  // The wizard mounts in the browser, so this is the real width from the
+  // first paint: the preview never jumps in beside the steps.
+  const wide = useMediaQuery(REPORT_WIDE)
+  // Beside the steps, the preview follows the draft as it changes.
+  const [livePreview, setLivePreview] = useState<ReportPreview | null>(null)
 
   const update = (patch: Partial<ReportDefinition>) => setDraft((d) => ({ ...d, ...patch }))
   const setScope = (patch: Partial<ReportDefinition['scope']>) => update({ scope: { ...draft.scope, ...patch } })
@@ -132,6 +145,23 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
       live = false
     }
   }, [active, draft, preview])
+
+  useEffect(() => {
+    if (!wide) return
+    let current = true
+    const timer = setTimeout(() => {
+      previewReport(draft).then(
+        (p) => current && setLivePreview(p),
+        () => {
+          /* the last preview stays until one answers */
+        },
+      )
+    }, 300)
+    return () => {
+      current = false
+      clearTimeout(timer)
+    }
+  }, [wide, draft])
 
   // What each automatic step does, as the checks its body ticks through.
   const checksFor = useMemo<Record<number, Array<{ id: string; label: string }>>>(() => {
@@ -259,6 +289,29 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
 
   const fieldStatus = (key: string) => (currentErrors[key] ? { type: 'error' as const, message: currentErrors[key] } : undefined)
 
+  /** What the report is, as the preview counts it. */
+  const draftSummary = (counted: ReportPreview) => (
+      <Card variant="muted" padding={4}>
+        <MetadataList orientation="vertical">
+          <MetadataListItem label="Report" icon={<Icon icon={DocumentTextIcon} size="sm" />}>
+            {[draft.name.trim(), template.name].filter(Boolean).join(' · ')}
+          </MetadataListItem>
+          <MetadataListItem label="Content" icon={<Icon icon={Squares2X2Icon} size="sm" />}>
+            {`${counted.sections.map((s) => s.label).join(', ')} · ${plural(counted.pages, 'page')}`}
+          </MetadataListItem>
+          <MetadataListItem label="Scope" icon={<Icon icon={FunnelIcon} size="sm" />}>
+            {`${plural(counted.events, 'event')}, ${plural(counted.sources, 'source')}, ${plural(counted.sessions, 'session')}`}
+          </MetadataListItem>
+          <MetadataListItem label="Branding" icon={<Icon icon={PaintBrushIcon} size="sm" />}>
+            {`“${draft.branding.title}” · ${draft.branding.classification} · ${draft.theme}`}
+          </MetadataListItem>
+          <MetadataListItem label="Delivery" icon={<Icon icon={CalendarDaysIcon} size="sm" />}>
+            {describeSchedule(draft.schedule)}
+          </MetadataListItem>
+        </MetadataList>
+      </Card>
+  )
+
   /** The confirm row every expanded human step ends with. */
   const stepActions = (label: string, index: number) => {
     const count = Object.keys(currentErrors).length
@@ -321,7 +374,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
     )
   }
 
-  return (
+  const steps = (
     <VStack gap={6}>
       <VisuallyHidden as="div" aria-live="polite">
         {isDone ? 'Report generated.' : STEP_META[active].kind === 'auto' ? `${STEP_META[active].label}: ${phaseOf(active) === 'failed' ? 'failed' : 'running'}` : ''}
@@ -463,26 +516,8 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
 
                   {index === 7 && preview && (
                     <FormLayout defaultOptionality="optional">
-                      <ReportPreviewPages draft={draft} preview={preview} templateName={template.name} />
-                      <Card variant="muted" padding={4}>
-                        <MetadataList orientation="vertical">
-                          <MetadataListItem label="Report" icon={<Icon icon={DocumentTextIcon} size="sm" />}>
-                            {`${draft.name} · ${template.name}`}
-                          </MetadataListItem>
-                          <MetadataListItem label="Content" icon={<Icon icon={Squares2X2Icon} size="sm" />}>
-                            {`${preview.sections.map((s) => s.label).join(', ')} · ${plural(preview.pages, 'page')}`}
-                          </MetadataListItem>
-                          <MetadataListItem label="Scope" icon={<Icon icon={FunnelIcon} size="sm" />}>
-                            {`${plural(preview.events, 'event')}, ${plural(preview.sources, 'source')}, ${plural(preview.sessions, 'session')}`}
-                          </MetadataListItem>
-                          <MetadataListItem label="Branding" icon={<Icon icon={PaintBrushIcon} size="sm" />}>
-                            {`“${draft.branding.title}” · ${draft.branding.classification} · ${draft.theme}`}
-                          </MetadataListItem>
-                          <MetadataListItem label="Delivery" icon={<Icon icon={CalendarDaysIcon} size="sm" />}>
-                            {describeSchedule(draft.schedule)}
-                          </MetadataListItem>
-                        </MetadataList>
-                      </Card>
+                      {!wide && <ReportPreviewPages draft={draft} preview={preview} templateName={template.name} />}
+                      {!wide && draftSummary(preview)}
                       <Switch
                         label={editing ? 'Save these changes to the Library definition' : 'Keep as a reusable definition in the Library'}
                         description={draft.schedule ? 'Needed for the schedule to run.' : 'Off makes this a one-off report.'}
@@ -521,5 +556,28 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
         />
       )}
     </VStack>
+  )
+
+  if (!wide) return steps
+  return (
+    <HStack gap={10} vAlign="start">
+      <VStack width={STEPS_WIDTH}>{steps}</VStack>
+      <StackItem size="fill">
+        <VStack gap={4} as="section" aria-label="Preview">
+          <VStack gap={1}>
+            <Heading level={2}>Preview</Heading>
+            <Text color="secondary">The cover and the first page of each section, with the rows this scope matches. It follows every change.</Text>
+          </VStack>
+          {livePreview ? (
+            <>
+              <ReportPreviewPages draft={draft} preview={livePreview} templateName={template.name} />
+              {draftSummary(livePreview)}
+            </>
+          ) : (
+            <Skeleton height={448} />
+          )}
+        </VStack>
+      </StackItem>
+    </HStack>
   )
 }
