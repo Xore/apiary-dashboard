@@ -202,7 +202,7 @@ export const CONFIG: DashboardConfig = {
   presentation: {
     appName: 'APIARY',
     titleFormat: '{page} — {app}',
-    productLabel: 'Honeypot dashboard',
+    productLabel: 'Automated Payload Intelligence & Attacker Response',
     dashboardTitle: 'Overview',
     dashboardSubtitle: 'What reached the decoys in the selected window',
     orgName: 'Example Security Operations',

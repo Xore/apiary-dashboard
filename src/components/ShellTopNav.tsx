@@ -5,11 +5,10 @@ import { MockScenarioMenu } from './MockScenarioMenu'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Kbd } from '@astryxdesign/core/Kbd'
-import { NavIcon } from '@astryxdesign/core/NavIcon'
 import { HStack, StackItem } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav'
-import { MagnifyingGlassIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
 import { TOP_NAV_END_ID, ViewTabsBar, ViewTabsMenu, useViewTabs } from './ViewTabs'
 import { useAppShellMobile } from '@astryxdesign/core/AppShell'
@@ -18,6 +17,7 @@ import { useLocation, useNavigate, useSearch } from '@tanstack/react-router'
 import { DEFAULT_RANGE, RANGES, isRange } from '#/lib/range'
 import type { RangeId } from '#/lib/range'
 import type { ShellConfig } from '#/data/types'
+import { usePreferences } from '#/lib/prefs'
 
 // Phones get a second row for the page's views and the time range. Which
 // row shows them is decided in CSS (styles.css, 640 px), so the server's
@@ -33,13 +33,31 @@ export function RangePicker({ compact = false }: { compact?: boolean }) {
     <Selector
       label="Time range"
       isLabelHidden
-      size="sm"
+      size={compact ? 'lg' : 'sm'}
       value={range}
       onChange={(value) =>
         void navigate({ to: '.', search: (prev: Record<string, unknown>) => ({ ...prev, range: value === DEFAULT_RANGE || !isRange(value) ? undefined : value }) })
       }
       options={RANGES.map((r) => ({ value: r.id, label: compact ? r.id : r.label }))}
     />
+  )
+}
+
+/** The APIARY emblem, from the brand's own assets (APIARY branding/assets/
+ * logo): the compact mark, as the brand asks below 64 px, in its light or
+ * dark artwork. A chosen theme picks it on the server; the system theme lets
+ * the browser pick before it paints. The heading beside it names the link. */
+const MARK = { light: '/brand/apiary-compact-mark-for-light.png', dark: '/brand/apiary-compact-mark-for-dark.png' }
+
+function BrandMark() {
+  const theme = usePreferences()?.theme
+  const mark = (src: string) => <img src={src} alt="" width={32} height={32} />
+  if (theme === 'light' || theme === 'dark') return mark(MARK[theme])
+  return (
+    <picture>
+      <source srcSet={MARK.dark} media="(prefers-color-scheme: dark)" />
+      {mark(MARK.light)}
+    </picture>
   )
 }
 
@@ -71,7 +89,7 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
       label="Page header"
       heading={
         <TopNavHeading
-          logo={<NavIcon icon={<Icon icon={ShieldCheckIcon} size="sm" />} />}
+          logo={<BrandMark />}
           heading={config.presentation.appName}
           subheading={isMobile ? undefined : config.presentation.productLabel}
           headingHref="/"
@@ -80,13 +98,17 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
       startContent={
         isMobile ? undefined : (
         <HStack gap={4} vAlign="center" className="apiary-desktop-start">
-          {!hasTabs && <ShellBreadcrumbs />}
-          {/* TopNav sizes its start slot to content, so the tabs get a fixed
-              budget: what the heading, breadcrumbs, and end controls leave.
-              Tabs past it go into a More menu. */}
-          <StackItem size="fill" style={{ width: hasTabs ? 'max(240px, calc(100vw - 730px))' : 'max(240px, calc(100vw - 860px))' }}>
-            <ViewTabsBar />
-          </StackItem>
+          {hasTabs ? (
+            // TopNav sizes its start slot to content, so the tabs get a fixed
+            // budget: what the heading and end controls leave (the strip stops
+            // at the end controls; tabs past them go into a More menu). Viewport
+            // units are zoomed on large screens, so the zoom is divided out.
+            <StackItem size="fill" style={{ width: 'max(240px, calc(100vw / var(--ui-zoom, 1) - 730px))' }}>
+              <ViewTabsBar />
+            </StackItem>
+          ) : (
+            <ShellBreadcrumbs />
+          )}
         </HStack>
         )
       }
@@ -102,17 +124,17 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
             <RangePicker compact={isMobile} />
           </span>
           {isMobile ? (
-            <Button label="Search" variant="secondary" size="sm" isIconOnly tooltip="Search (⌘K)" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette} />
+            <Button label="Search" variant="secondary" size="lg" isIconOnly tooltip="Search" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette} />
           ) : (
             <Button label="Search" variant="secondary" size="sm" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette}>
               <HStack gap={2} vAlign="center">
                 <Text>Search</Text>
-                <Kbd keys="⌘K" />
+                <Kbd keys="mod+k" />
               </HStack>
             </Button>
           )}
           <MockScenarioMenu compact={isMobile} />
-          <AlertBell />
+          <AlertBell compact={isMobile} />
           <LiveBadge compact={isMobile} />
         </HStack>
       }
@@ -124,7 +146,7 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
  * top bar where there is room for them. */
 export function PhoneViewBar() {
   return (
-    <HStack gap={2} vAlign="center" hAlign="between" className="apiary-phone-only" style={{ padding: '8px 16px', borderBottom: '1px solid var(--color-border-default, transparent)' }}>
+    <HStack gap={2} vAlign="center" hAlign="between" className="apiary-phone-only" style={{ padding: '8px 16px', borderBottom: '1px solid var(--color-border)' }}>
       <ViewTabsMenu />
       <StackItem size="fill" />
       <RangePicker compact />

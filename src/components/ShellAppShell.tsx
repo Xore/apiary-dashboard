@@ -16,7 +16,7 @@ import { LiveToasts } from './LiveToasts'
 import { ProblemReportButton } from './ProblemReportButton'
 import { SettingsDialog } from './SettingsDialog'
 import type { PaneId } from './SettingsDialog'
-import { ShellBanners, ShellFloatingActions } from './ShellNotices'
+import { ShellBanners, ShellStandingActions } from './ShellNotices'
 import { ShellSideNav } from './ShellSideNav'
 import { PhoneViewBar, ShellTopNav } from './ShellTopNav'
 import { rememberViewportWidth } from '#/lib/viewport'
@@ -88,15 +88,22 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
   const timeKey = prefs ? `${prefs.timezone}|${prefs.clock}|${prefs.timestamps}` : undefined
 
   return (
-    // Toasts top right, under the top bar: the bottom corners belong to the
-    // account menu and the report-a-problem button.
+    // Toasts top right, under the top bar: the bottom left belongs to the
+    // account menu and the standing actions.
     <ToastViewport position="topEnd" inset={{ top: 64, end: 16 }} maxVisible={4}>
       <AppShell
         contentPadding={0}
         // Tablets get the drawer too: a 260 px sidebar leaves them too little.
         mobileNav={{ breakpoint: 'lg', defaultIsMobile: narrow }}
         topNav={<ShellTopNav config={config} onOpenPalette={() => setIsPaletteOpen(true)} />}
-        sideNav={<ShellSideNav user={user} config={config} onOpenSettings={() => onSettingsPane('account')} />}
+        sideNav={
+          <ShellSideNav
+            user={user}
+            config={config}
+            onOpenSettings={() => onSettingsPane('account')}
+            actions={<ShellStandingActions config={config} problemReport={<ProblemReportButton enabled={config.behavior.showProblemReportButton} />} />}
+          />
+        }
       >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
           <PhoneViewBar />
@@ -129,7 +136,6 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
           else void navigate({ to })
         }}
       />
-      <ShellFloatingActions config={config} problemReport={(compact) => <ProblemReportButton enabled={config.behavior.showProblemReportButton} compact={compact} />} />
       <LiveToasts />
       <EventNotifications />
       {settingsPane && <SettingsDialog pane={settingsPane} onPane={onSettingsPane} onClose={() => onSettingsPane(undefined)} />}
