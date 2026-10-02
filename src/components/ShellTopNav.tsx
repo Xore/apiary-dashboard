@@ -1,19 +1,18 @@
-import { BreadcrumbItem, Breadcrumbs } from '@astryxdesign/core/Breadcrumbs'
 import { AlertBell } from './AlertBell'
 import { LiveBadge } from './LiveBadge'
 import { MockScenarioMenu } from './MockScenarioMenu'
 import { Button } from '@astryxdesign/core/Button'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Kbd } from '@astryxdesign/core/Kbd'
-import { HStack, StackItem } from '@astryxdesign/core/Stack'
+import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
+import { Divider } from '@astryxdesign/core/Divider'
 import { Text } from '@astryxdesign/core/Text'
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
-import { navItemFor, pageFor, sectionFor } from '#/lib/nav'
 import { TOP_NAV_END_ID, ViewTabsBar, ViewTabsMenu, useViewTabs } from './ViewTabs'
 import { useAppShellMobile } from '@astryxdesign/core/AppShell'
 import { Selector } from '@astryxdesign/core/Selector'
-import { useLocation, useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { DEFAULT_RANGE, RANGES, isRange } from '#/lib/range'
 import type { RangeId } from '#/lib/range'
 import type { ShellConfig } from '#/data/types'
@@ -61,22 +60,6 @@ function BrandMark() {
   )
 }
 
-function ShellBreadcrumbs() {
-  const pathname = useLocation({ select: (location) => location.pathname })
-  const section = sectionFor(pathname)
-  const parent = navItemFor(pathname)
-  const page = pageFor(pathname)
-  const isDrillDown = parent !== undefined && parent.to !== pathname
-
-  return (
-    <Breadcrumbs variant="supporting" label="Current page">
-      {section && <BreadcrumbItem isCurrent={false}>{section}</BreadcrumbItem>}
-      {isDrillDown && <BreadcrumbItem href={parent.to}>{parent.label}</BreadcrumbItem>}
-      <BreadcrumbItem isCurrent>{page}</BreadcrumbItem>
-    </Breadcrumbs>
-  )
-}
-
 export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; onOpenPalette: () => void }) {
   // A page with tabs gives the bar to them: the sidebar already says where
   // you are, and the tabs say which view.
@@ -98,16 +81,15 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
       startContent={
         isMobile ? undefined : (
         <HStack gap={4} vAlign="center" className="apiary-desktop-start">
-          {hasTabs ? (
+          {hasTabs && (
             // TopNav sizes its start slot to content, so the tabs get a fixed
             // budget: what the heading and end controls leave (the strip stops
             // at the end controls; tabs past them go into a More menu). Viewport
             // units are zoomed on large screens, so the zoom is divided out.
+            // Where a page sits is its own header's trail (PageFrame).
             <StackItem size="fill" style={{ width: 'max(240px, calc(100vw / var(--ui-zoom, 1) - 730px))' }}>
               <ViewTabsBar />
             </StackItem>
-          ) : (
-            <ShellBreadcrumbs />
           )}
         </HStack>
         )
@@ -120,7 +102,9 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
               <ViewTabsMenu />
             </span>
           )}
-          <span className="apiary-not-phone">
+          {/* On a phone the range moves to the views row, when the page has
+              views; without them it stays here and there is no extra row. */}
+          <span className={hasTabs ? 'apiary-not-phone' : undefined}>
             <RangePicker compact={isMobile} />
           </span>
           {isMobile ? (
@@ -143,13 +127,17 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
 }
 
 /** A phone's second row: the page's views and the time range, under the
- * top bar where there is room for them. */
+ * top bar where there is room for them. A page without views has no row. */
 export function PhoneViewBar() {
+  if (useViewTabs() === null) return null
   return (
-    <HStack gap={2} vAlign="center" hAlign="between" className="apiary-phone-only" style={{ padding: '8px 16px', borderBottom: '1px solid var(--color-border)' }}>
-      <ViewTabsMenu />
-      <StackItem size="fill" />
-      <RangePicker compact />
-    </HStack>
+    <VStack gap={0} className="apiary-phone-only">
+      <HStack gap={2} vAlign="center" hAlign="between" paddingInline={4} paddingBlock={2}>
+        <ViewTabsMenu />
+        <StackItem size="fill" />
+        <RangePicker compact />
+      </HStack>
+      <Divider />
+    </VStack>
   )
 }

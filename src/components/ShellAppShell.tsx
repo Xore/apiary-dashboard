@@ -4,6 +4,8 @@ import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { AppShell } from '@astryxdesign/core/AppShell'
 import { CommandPalette } from '@astryxdesign/core/CommandPalette'
 import { ToastViewport } from '@astryxdesign/core/Toast'
+import { useMediaQuery } from '@astryxdesign/core/hooks'
+import { useViewTabs } from './ViewTabs'
 import type { SessionUser, ShellConfig } from '#/data/types'
 import { NAV_SECTIONS } from '#/lib/nav'
 import { paletteSource } from '#/lib/paletteSource'
@@ -85,16 +87,20 @@ export function ShellAppShell({ user, config, narrow = false, settingsPane, onSe
   usePredictivePrefetch()
 
   const prefs = usePreferences()
+  // Toasts only ever show in the browser, so the width is known by then.
+  const phone = useMediaQuery('(max-width: 639px)')
+  const hasViews = useViewTabs() !== null
   const timeKey = prefs ? `${prefs.timezone}|${prefs.clock}|${prefs.timestamps}` : undefined
 
   return (
-    // Toasts top right, under the top bar: the bottom left belongs to the
-    // account menu and the standing actions.
-    <ToastViewport position="topEnd" inset={{ top: 64, end: 16 }} maxVisible={4}>
+    // Toasts top right, under the top bar (and a phone's views row): the
+    // bottom left belongs to the account menu and the standing actions.
+    <ToastViewport position="topEnd" inset={{ top: phone && hasViews ? 116 : 64, end: 16 }} maxVisible={4}>
       <AppShell
         contentPadding={0}
-        // Tablets get the drawer too: a 260 px sidebar leaves them too little.
-        mobileNav={{ breakpoint: 'lg', defaultIsMobile: narrow }}
+        // Tablets and small laptops get the drawer too: a 260 px sidebar
+        // leaves them too little (lib/viewport predicts it for the server).
+        mobileNav={{ breakpoint: 'xl', defaultIsMobile: narrow }}
         topNav={<ShellTopNav config={config} onOpenPalette={() => setIsPaletteOpen(true)} />}
         sideNav={
           <ShellSideNav

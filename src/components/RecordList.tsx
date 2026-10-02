@@ -2,18 +2,18 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { Icon } from '@astryxdesign/core/Icon'
-import { Layout, LayoutContent, LayoutHeader } from '@astryxdesign/core/Layout'
 import { Pagination } from '@astryxdesign/core/Pagination'
 import { SkeletonTable } from './SkeletonTable'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
-import { Heading, Text } from '@astryxdesign/core/Text'
+import { Text } from '@astryxdesign/core/Text'
 import { InboxIcon } from '@heroicons/react/24/outline'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { formatNumber } from '#/lib/format'
 import { saveListContext } from '#/lib/listContext'
 import { useRowActivation } from './useRowActivation'
+import { PageFrame } from './PageFrame'
 import { tableDensity, usePreferences } from '#/lib/prefs'
 
 /** Loading rows: a screenful, not the whole page size (the page-weight gate). */
@@ -163,36 +163,15 @@ export function RecordList<T extends Record<string, unknown>>({
   )
 }
 
-/** The page around the table: header, summary band and filter row. */
+/** The page around the table: the one page frame, filters pinned in it,
+ * then the summary band and the table. */
 function ListFrame({ title, description, actions, summary, toolbar, body }: { title: string; description?: string; actions?: ReactNode; summary?: ReactNode; toolbar?: ReactNode; body: ReactNode }) {
   return (
-    <Layout
-      height="fill"
-      padding={6}
-      header={
-        <LayoutHeader>
-          <HStack hAlign="between" vAlign="center" gap={4} wrap="wrap">
-            <VStack gap={1}>
-              <Heading level={1}>{title}</Heading>
-              {description && <Text color="secondary">{description}</Text>}
-            </VStack>
-            {actions && (
-              <HStack gap={2} vAlign="center" wrap="wrap">
-                {actions}
-              </HStack>
-            )}
-          </HStack>
-        </LayoutHeader>
-      }
-      content={
-        <LayoutContent>
-          <VStack gap={5}>
-            {summary}
-            {toolbar}
-            {body}
-          </VStack>
-        </LayoutContent>
-      }
-    />
+    <PageFrame title={title} description={description} actions={actions} toolbar={toolbar}>
+      <VStack gap={5}>
+        {summary}
+        {body}
+      </VStack>
+    </PageFrame>
   )
 }

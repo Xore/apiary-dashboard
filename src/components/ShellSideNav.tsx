@@ -18,6 +18,7 @@ import { useLocation } from '@tanstack/react-router'
 import type { SessionUser, ShellConfig } from '#/data/types'
 import { NAV_SECTIONS, navHrefFor } from '#/lib/nav'
 import { usePreferences } from '#/lib/prefs'
+import { savePreferences } from '#/data/queries'
 import { hrefForRecent, labelForRecent, useRecentInvestigations } from '#/lib/recent'
 
 function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettings: () => void }) {
@@ -53,7 +54,9 @@ export function ShellSideNav({ user, config, onOpenSettings, actions }: { user: 
 
   return (
     <SideNav
-      collapsible={{ defaultIsCollapsed: prefs?.collapsedSidebar ?? false }}
+      // Collapsing is remembered: it is the same preference as Settings'
+      // "Start with the sidebar collapsed".
+      collapsible={{ defaultIsCollapsed: prefs?.collapsedSidebar ?? false, onCollapsedChange: (collapsedSidebar) => prefs && void savePreferences({ ...prefs, collapsedSidebar }) }}
       resizable={{ defaultWidth: 260, minWidth: 220, maxWidth: 360 }}
       footer={
         <SideNavSection title="Account" isHeaderHidden>

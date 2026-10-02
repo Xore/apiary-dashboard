@@ -283,6 +283,13 @@ export const neutralTheme = defineTheme({
   },
 
   components: {
+    // Astryx draws an input's focus as a 2 px inset in --color-accent-muted,
+    // which APIARY's palettes keep as the faint "you are here" tint (12 %):
+    // a focused field or selector was all but invisible. Full accent, as
+    // every other control's focus ring (WCAG 2.4.7).
+    ...Object.fromEntries(
+      ['selector', 'text-input', 'number-input', 'text-area', 'typeahead'].map((component) => [component, { base: { ':focus-within': { boxShadow: 'inset 0 0 0 2px var(--color-accent)' } } }]),
+    ),
     button: {
       'variant:destructive': {
         backgroundColor: 'var(--color-error-muted)',

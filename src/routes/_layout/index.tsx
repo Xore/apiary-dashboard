@@ -125,7 +125,7 @@ function LiveView({ views, recent, timeline, start }: { views: OverviewViews; re
       <Panel title="Activity, last 24h" action={<ActionLink href="/events">Event explorer</ActionLink>}>
         <SensorHeatmap rows={views.heatmap} startIso={start} />
       </Panel>
-      <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
+      <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
         <Panel title="Events by protocol">
           <ProtocolTimeline buckets={timeline} />
         </Panel>
@@ -149,7 +149,7 @@ function LiveSkeleton() {
       <Panel title="Activity, last 24h" action={<ActionLink href="/events">Event explorer</ActionLink>}>
         <SkeletonBlock height={560} />
       </Panel>
-      <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
+      <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
         <Panel title="Events by protocol">
           <SkeletonBlock height={260} />
         </Panel>
@@ -180,7 +180,7 @@ function HealthView({ views }: { views: OverviewViews }) {
   const showMl = useShellConfig().behavior.showMlPanels
   return (
     <VStack gap={4}>
-      <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
+      <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
         <Panel title="Sensor feeds" action={<ActionLink href="/source-health">Source & pipeline health</ActionLink>}>
           <Table data={views.feeds} columns={feedColumns} idKey="sensor" density="compact" />
         </Panel>
@@ -343,7 +343,8 @@ function OverviewPage() {
         {/* The headline numbers belong to the at-a-glance view; the other
             views are deep dives and start with their own content. */}
         {view === 'live' && (
-          <Grid columns={{ minWidth: 200, repeat: 'fit' }} gap={4}>
+          // Two to a row on a phone, so the numbers do not fill its first screen.
+          <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
             {overview ? overview.kpis.map((kpi) => <StatTile key={kpi.id} {...kpi} caption="Last 24h vs. previous 24h" />) : <SkeletonTiles count={5} />}
           </Grid>
         )}
