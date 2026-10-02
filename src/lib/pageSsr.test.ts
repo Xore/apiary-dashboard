@@ -5,6 +5,19 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { navigatesAsBrowser } from './pageSsr'
+
+describe('navigatesAsBrowser', () => {
+  const from = (headers: Record<string, string>) => navigatesAsBrowser((name) => headers[name])
+  it('knows a browser over HTTPS or localhost, and over plain HTTP', () => {
+    expect(from({ 'sec-fetch-dest': 'document', 'upgrade-insecure-requests': '1' })).toBe(true)
+    expect(from({ 'upgrade-insecure-requests': '1' })).toBe(true)
+  })
+  it('renders the whole page for fetch() and non-browser clients', () => {
+    expect(from({ 'sec-fetch-dest': 'empty' })).toBe(false)
+    expect(from({})).toBe(false)
+  })
+})
 
 const dir = join(import.meta.dirname, '../routes/_layout')
 const routes = readdirSync(dir).filter((f) => f.endsWith('.tsx') && !f.includes('.test.'))

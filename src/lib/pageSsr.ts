@@ -5,13 +5,20 @@
 // previews, the smoke crawl) gets the complete page from the server, with
 // its real status: a 404 for a missing entity, the outage state, redirects.
 //
-// A browser navigation is the one request that carries
-// `Sec-Fetch-Dest: document`; fetch() and non-browser clients never send it.
+// A browser navigation carries `Sec-Fetch-Dest: document`, but browsers send
+// that only to secure origins: over plain HTTP (the dev server opened from
+// another machine) it is missing, and the page was rendered complete on the
+// server, its charts drawn before the screen's width was known. Browsers
+// also send `Upgrade-Insecure-Requests: 1` on every navigation, plain HTTP
+// included; fetch() and non-browser clients send neither.
 import { createIsomorphicFn } from '@tanstack/react-start'
 import { getRequestHeader } from '@tanstack/react-start/server'
 
+export const navigatesAsBrowser = (header: (name: string) => string | undefined): boolean =>
+  header('sec-fetch-dest') === 'document' || header('upgrade-insecure-requests') === '1'
+
 const isBrowserNavigation = createIsomorphicFn()
-  .server(() => getRequestHeader('sec-fetch-dest') === 'document')
+  .server(() => navigatesAsBrowser(getRequestHeader))
   .client(() => true)
 
 /** Every page route's `ssr`: skeleton first for browsers, the whole page
