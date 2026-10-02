@@ -11,6 +11,7 @@ import { setRunChild } from '#/data/queries'
 import type { RunState, WorkbenchRun, WorkbenchRunChild } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 import { useGuardedAction } from '#/lib/useGuardedAction'
+import { useIsAdmin } from '#/lib/session'
 import { ActionLink } from '../ActionLink'
 import { EntityLink } from '../EntityLink'
 
@@ -52,9 +53,21 @@ function ChildRow({ run, child }: { run: WorkbenchRun; child: WorkbenchRunChild 
       }
       endContent={
         <HStack gap={1}>
-          {child.resultHref && <ActionLink href={child.resultHref}>Result</ActionLink>}
-          {child.retryable && <Button label="Retry" size="sm" variant="secondary" isLoading={busy} onClick={() => void act('retry')} />}
-          {child.cancelable && <Button label="Cancel" size="sm" variant="secondary" isLoading={busy} onClick={() => void act('cancel')} />}
+          {child.resultHref && (
+            <ActionLink href={child.resultHref} label={`${child.label} result for ${run.hash.slice(0, 12)}`}>
+              Result
+            </ActionLink>
+          )}
+          {child.retryable && (
+            <Button label={`Retry ${child.label} on ${run.hash.slice(0, 12)}`} size="sm" variant="secondary" isLoading={busy} onClick={() => void act('retry')}>
+              Retry
+            </Button>
+          )}
+          {child.cancelable && (
+            <Button label={`Cancel ${child.label} on ${run.hash.slice(0, 12)}`} size="sm" variant="secondary" isLoading={busy} onClick={() => void act('cancel')}>
+              Cancel
+            </Button>
+          )}
         </HStack>
       }
     />
@@ -64,6 +77,7 @@ function ChildRow({ run, child }: { run: WorkbenchRun; child: WorkbenchRunChild 
 /** The operator's own runs, each with its analyzers' progress: results to
  * open, failures to retry, work still queued to cancel. */
 export function WorkbenchRuns({ runs }: { runs: WorkbenchRun[] | undefined }) {
+  const isAdmin = useIsAdmin()
   if (!runs)
     return (
       <VStack gap={3} aria-busy>
@@ -75,10 +89,10 @@ export function WorkbenchRuns({ runs }: { runs: WorkbenchRun[] | undefined }) {
         ))}
       </VStack>
     )
-  if (!runs.length) return <Text type="supporting">No runs yet. Start one with New analysis run.</Text>
+  if (!runs.length) return <Text type="supporting">{isAdmin ? 'No runs yet. Start one with New analysis run.' : 'No runs of yours yet. An operator starts analysis runs; their results appear in the analyzer tabs.'}</Text>
   return (
     <VStack gap={4}>
-      {runs.slice(0, 5).map((run) => (
+      {runs.map((run) => (
         <VStack key={run.id} gap={1.5}>
           <HStack gap={2} wrap="wrap" vAlign="center">
             <Token size="sm" color={RUN_STATE_COLOR[run.state]} label={run.state} />

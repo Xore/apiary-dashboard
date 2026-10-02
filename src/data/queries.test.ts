@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import { fieldText, readField } from '#/lib/sensorFields'
 import { backend } from './backend'
+import { inRange } from './shared'
 
 // The mock backend itself: tests and scripts call it directly.
 const q = backend()
@@ -33,12 +34,22 @@ describe('cross-page consistency', () => {
     }
   })
 
-  it('payload page and sandbox page agree on the sandbox verdict', async () => {
-    const { results } = await q.getAnalysisResults()
+  it('analysis results, payload page and sandbox page agree on the sandbox verdict', async () => {
+    const { results } = await q.getAnalysisResults('all')
     for (const r of results.filter((x) => x.analyzer === 'sandbox')) {
       const [analysis, run] = await Promise.all([q.getPayloadAnalysis(r.hash), q.getSandboxRun(r.hash)])
       expect(analysis?.sandbox?.verdict).toBe(run?.verdict)
+      expect(r.verdict, r.hash).toBe(run?.verdict)
     }
+  })
+
+  it('analysis results follow the app-wide range; every analyzer result has a verdict', async () => {
+    const day = (await q.getAnalysisResults('24h')).results.filter((r) => r.analyzer !== 'workbench')
+    const all = (await q.getAnalysisResults('all')).results.filter((r) => r.analyzer !== 'workbench')
+    expect(day.length).toBeGreaterThan(0)
+    expect(day.length).toBeLessThan(all.length)
+    for (const r of day) expect(inRange(r.at, '24h'), r.id).toBe(true)
+    for (const r of all) expect(r.verdict, r.id).toBeDefined()
   })
 })
 

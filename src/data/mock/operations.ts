@@ -3,6 +3,7 @@
 import type {
   AlertRecord,
   AnalysisResult,
+  SandboxRun,
   BaitCredential,
   CanaryToken,
   CanaryTokenType,
@@ -392,24 +393,31 @@ export function inapplicableReason(a: AnalyzerInfo, p: CapturedPayload): string 
   return undefined
 }
 
+/** One verdict scale for sandbox risk, shared by every page that shows it:
+ * the results list, the payload page and the sandbox run. */
+export function sandboxVerdict(risk: number): SandboxRun['verdict'] {
+  return risk > 70 ? 'malicious' : risk > 40 ? 'suspicious' : 'benign'
+}
+
 export const ANALYSIS_RESULTS: AnalysisResult[] = (() => {
   const rng = createRng(0x9e5b)
   const results: AnalysisResult[] = []
   PAYLOADS.slice(0, 24).forEach((payload, i) => {
+    const payloadVerdict = payload.verdict?.label
     const file = `${payload.hash.slice(0, 12)}.${payload.kind === 'shell script' ? 'sh' : payload.kind === 'PE32' ? 'exe' : 'bin'}`
     const at = isoMinutesAgo(i * 70 + int(rng, 0, 50))
-    results.push({ id: `static-${i}`, analyzer: 'static', hash: payload.hash, file, at, summary: `${payload.kind}, ${payload.platform}, entropy ${(5 + rng() * 2.9).toFixed(2)}`, detail: { imports: ['socket', 'connect', 'fork', 'execve'].slice(0, int(rng, 1, 4)), strings: int(rng, 40, 900) } })
+    results.push({ id: `static-${i}`, analyzer: 'static', hash: payload.hash, file, at, verdict: payloadVerdict ?? 'clean', payloadVerdict, summary: `${payload.kind}, ${payload.platform}, entropy ${(5 + rng() * 2.9).toFixed(2)}`, detail: { imports: ['socket', 'connect', 'fork', 'execve'].slice(0, int(rng, 1, 4)), strings: int(rng, 40, 900) } })
     if (payload.verdict?.label === 'malicious' || rng() < 0.3) {
       const rules = [`${payload.verdict?.family ?? 'Generic'}_Bot`, ...(rng() < 0.4 ? ['UPX_Packed'] : [])]
-      results.push({ id: `yara-${i}`, analyzer: 'yara', hash: payload.hash, file, at, summary: `${rules.length} rule${rules.length > 1 ? 's' : ''} matched`, matches: rules, detail: { rules } })
+      results.push({ id: `yara-${i}`, analyzer: 'yara', hash: payload.hash, file, at, verdict: payloadVerdict === 'malicious' ? 'malicious' : 'suspicious', payloadVerdict, summary: `${rules.length} rule${rules.length > 1 ? 's' : ''} matched`, matches: rules, detail: { rules } })
     }
     if (payload.dynamic && i % 2 === 0) {
       const risk = int(rng, 10, 98)
-      results.push({ id: `sandbox-${i}`, analyzer: 'sandbox', hash: payload.hash, file, at, risk, platform: payload.platform, summary: risk > 70 ? 'Contacts C2, spawns shell, modifies crontab' : 'Network scan, no persistence', detail: { exitStatus: 0, dns: ['cnc.example.test'], processes: int(rng, 2, 14) } })
+      results.push({ id: `sandbox-${i}`, analyzer: 'sandbox', hash: payload.hash, file, at, risk, verdict: sandboxVerdict(risk), payloadVerdict, platform: payload.platform, summary: risk > 70 ? 'Contacts C2, spawns shell, modifies crontab' : 'Network scan, no persistence', detail: { exitStatus: 0, dns: ['cnc.example.test'], processes: int(rng, 2, 14) } })
     }
     // Ghidra only decompiles binaries; scripts stop at static analysis.
     if (i % 3 === 0 && payload.kind !== 'shell script') {
-      results.push({ id: `ghidra-${i}`, analyzer: 'ghidra', hash: payload.hash, file, at, summary: 'Main loop connects to a hardcoded host, receives commands, and launches flood attacks.', detail: { functions: int(rng, 80, 900), model: 'qwen2.5-coder:14b' } })
+      results.push({ id: `ghidra-${i}`, analyzer: 'ghidra', hash: payload.hash, file, at, verdict: payloadVerdict ?? 'suspicious', payloadVerdict, summary: 'Main loop connects to a hardcoded host, receives commands, and launches flood attacks.', detail: { functions: int(rng, 80, 900), model: 'qwen2.5-coder:14b' } })
     }
     if (i % 4 === 0) {
       results.push({ id: `wb-${i}`, analyzer: 'workbench', hash: payload.hash, file, at, owner: 'operator', recipe: pick(rng, ['full', 'static+yara', 'sandbox-only']), state: pick(rng, ['succeeded', 'succeeded', 'running', 'failed'] as const), summary: 'Workbench run', detail: { children: 3 } })
@@ -431,7 +439,7 @@ export const WORKBENCH_RECIPES: WorkbenchRecipe[] = [
   { id: 'rcp-windows', revision: 1, name: 'Windows dropper', description: 'Static, YARA and CAPE with human interaction.', owner: 'Analyst', scope: 'personal', createdAt: isoMinutesAgo(60 * 24 * 6), analyzers: [{ analyzerId: 'static', options: {} }, { analyzerId: 'yara', options: {} }, { analyzerId: 'cape', options: { humanInteraction: true } }] },
 ]
 
-const RESULT_TAB: Record<AnalyzerId, string> = { static: 'static', yara: 'static', sandbox: 'sandbox', cape: 'cape', ghidra: 'ghidra', revdeck: 'revdeck', github: 'github' }
+const RESULT_TAB: Record<AnalyzerId, string> = { static: 'static', yara: 'indicators', sandbox: 'sandbox', cape: 'cape', ghidra: 'ghidra', revdeck: 'revdeck', github: 'github' }
 export const resultHrefFor = (hash: string, analyzer: AnalyzerId) => `/payloads/${hash}/${RESULT_TAB[analyzer]}`
 
 /** The overall state of a run from its children's. */

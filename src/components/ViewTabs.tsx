@@ -132,7 +132,9 @@ export function useViewTabs(): ViewTabsModel | null {
     params,
     search: location.search,
     pathname: location.pathname,
-    data: hydrated && match?.status === 'success' ? match.loaderData : undefined,
+    // Under the "Loading forever" mock scenario the page stays on its
+    // skeleton (lib/pending), so its counts wait too.
+    data: hydrated && match?.status === 'success' && (location.search as Record<string, unknown>).mock !== 'loading' ? match.loaderData : undefined,
   })
   return model.tabs.length < 2 ? null : model
 }

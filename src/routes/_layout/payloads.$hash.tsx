@@ -74,7 +74,7 @@ function PayloadLayout() {
         { label: 'First captured', value: p && formatDateTime(p.capturedAt) },
         { label: 'Copies', value: p && formatNumber(p.copies) },
         { label: 'Static risk', value: a && `${a.staticRisk} / 100` },
-        { label: 'Delivered by', value: delivery && `${formatNumber(delivery.sources.length)} addresses` },
+        { label: 'Delivered by', value: delivery && `${formatNumber(delivery.sources.length)} ${delivery.sources.length === 1 ? 'address' : 'addresses'}` },
       ]}
     >
       <Outlet />
