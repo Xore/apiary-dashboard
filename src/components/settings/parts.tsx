@@ -9,7 +9,7 @@ import { AspectRatio } from '@astryxdesign/core/AspectRatio'
 import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
 import { Divider } from '@astryxdesign/core/Divider'
-import { Grid } from '@astryxdesign/core/Grid'
+import { Grid, GridSpan } from '@astryxdesign/core/Grid'
 import { Icon } from '@astryxdesign/core/Icon'
 import { IconButton } from '@astryxdesign/core/IconButton'
 import { ListItem } from '@astryxdesign/core/List'
@@ -54,6 +54,28 @@ export function PanelColumn({ children }: { children: ReactNode }) {
       </StackedContext.Provider>
     </div>
   )
+}
+
+// ---- Groups side by side: the administration page on a wide screen -----------
+
+const GridContext = createContext(false)
+
+/** A panel's groups side by side, each kept to a form's width so every label
+ * stays next to its control; as many columns as fit, one on a narrow screen. */
+export function SettingsGrid({ children }: { children: ReactNode }) {
+  return (
+    <GridContext.Provider value>
+      <Grid columns={{ minWidth: 520, max: 3 }} gap={6} align="start">
+        {children}
+      </Grid>
+    </GridContext.Provider>
+  )
+}
+
+/** A panel's own line (its save bar, a note): the full width, under the
+ * groups when they sit side by side. */
+export function PanelRow({ children }: { children: ReactNode }) {
+  return useContext(GridContext) ? <GridSpan columns="full">{children}</GridSpan> : children
 }
 
 /** One subject: a supporting heading over a muted card of rows. */

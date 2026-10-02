@@ -31,7 +31,7 @@ import { Icon } from '@astryxdesign/core/Icon'
 import { useMediaQuery } from '@astryxdesign/core/hooks'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { ContainerStateLabel } from './FeedState'
-import { CONTROL_WIDTH, PanelColumn, PinnedClose, SettingsCard, SettingsPanelHeading, SettingsPanelTabs, SettingsRow, SettingsSearchInput, SettingsSearchResults, SettingsSideNav, ThemeChoiceCards, useSettingsSearch } from './settings/parts'
+import { CONTROL_WIDTH, PanelColumn, PanelRow, PinnedClose, SettingsCard, SettingsPanelHeading, SettingsPanelTabs, SettingsRow, SettingsSearchInput, SettingsGrid, SettingsSearchResults, SettingsSideNav, ThemeChoiceCards, useSettingsSearch } from './settings/parts'
 import { isAdminPanel, panelOf } from './settings/registry'
 import type { PaneId } from './settings/registry'
 import { getSettings, rollbackConfig, runServiceAction, saveConfigSection, savePreferences, validateConfig } from '#/data/queries'
@@ -103,34 +103,36 @@ function useStagedForm<TSection extends ConfigSection>(panel: PaneId, section: T
   /** The field's validation message, as an input status. */
   const statusOf = (field: string) => (problems[field] ? { type: 'error' as const, message: problems[field] } : undefined)
   const actions = (
-    <HStack gap={2} hAlign="end" vAlign="center">
-      {error ? (
-        <FieldStatus type="error" variant="detached" message={error} />
-      ) : count > 0 ? (
-        <FieldStatus type="error" variant="detached" message={count === 1 ? 'One field needs fixing before saving.' : `${count} fields need fixing before saving.`} />
-      ) : (
-        dirty && <Text type="supporting">Unsaved changes</Text>
-      )}
-      <Button label="Revert" variant="secondary" isDisabled={!dirty || !isAdmin} onClick={() => setForm(saved)} />
-      <Button
-        label="Save"
-        isDisabled={!dirty || count > 0 || !isAdmin}
-        isLoading={busy}
-        onClick={async () => {
-          setBusy(true)
-          try {
-            await guard(async () => {
-              const result = await saveConfigSection(section, form)
-              // The shell renders with this config too: refresh it at once.
-              if (result.ok) await Promise.all([reload(), router.invalidate()])
-              else setProblems(result.problems)
-            })
-          } finally {
-            setBusy(false)
-          }
-        }}
-      />
-    </HStack>
+    <PanelRow>
+      <HStack gap={2} hAlign="end" vAlign="center">
+        {error ? (
+          <FieldStatus type="error" variant="detached" message={error} />
+        ) : count > 0 ? (
+          <FieldStatus type="error" variant="detached" message={count === 1 ? 'One field needs fixing before saving.' : `${count} fields need fixing before saving.`} />
+        ) : (
+          dirty && <Text type="supporting">Unsaved changes</Text>
+        )}
+        <Button label="Revert" variant="secondary" isDisabled={!dirty || !isAdmin} onClick={() => setForm(saved)} />
+        <Button
+          label="Save"
+          isDisabled={!dirty || count > 0 || !isAdmin}
+          isLoading={busy}
+          onClick={async () => {
+            setBusy(true)
+            try {
+              await guard(async () => {
+                const result = await saveConfigSection(section, form)
+                // The shell renders with this config too: refresh it at once.
+                if (result.ok) await Promise.all([reload(), router.invalidate()])
+                else setProblems(result.problems)
+              })
+            } finally {
+              setBusy(false)
+            }
+          }}
+        />
+      </HStack>
+    </PanelRow>
   )
   return { form, set, statusOf, actions }
 }
@@ -540,7 +542,9 @@ function HoneypotPanel() {
         />
         {number('payloadDedupeIntervalSeconds', 'payloadDedupeIntervalSeconds', 'Payload dedupe interval', { min: 60, max: 86_400, step: 60, units: 's' })}
       </SettingsCard>
-      <Text type="supporting">Saved values are staged. They apply on the next operator-run restart of the affected service.</Text>
+      <PanelRow>
+        <Text type="supporting">Saved values are staged. They apply on the next operator-run restart of the affected service.</Text>
+      </PanelRow>
       {actions}
     </>
   )
@@ -806,6 +810,10 @@ function PanelBody({ panel }: { panel: PaneId }) {
 
 /** One administration panel as a page (/admin?pane=…): the same panels the
  * settings dialog used to hold, with the data they read and write. */
+/** The administration panels made of setting groups: on the page, their
+ * groups sit side by side. Tables and lists keep the full width. */
+const GRID_PANELS: ReadonlySet<PaneId> = new Set(['branding', 'behavior', 'honeypot'])
+
 export function AdminPanelView({ pane, initial }: { pane: PaneId; initial: SettingsData }) {
   const navigate = useNavigate()
   // The route loaded it; saving reloads it here.
@@ -819,9 +827,15 @@ export function AdminPanelView({ pane, initial }: { pane: PaneId; initial: Setti
   const noop = useCallback(() => {}, [])
   return (
     <SettingsContext.Provider value={{ data, reload, prefs: data.preferences, setPref: noop, setDirty: noop, openPage: (href) => void navigate({ href }) }}>
-      <VStack gap={4}>
-        <PanelBody key={pane} panel={pane} />
-      </VStack>
+      {GRID_PANELS.has(pane) ? (
+        <SettingsGrid>
+          <PanelBody key={pane} panel={pane} />
+        </SettingsGrid>
+      ) : (
+        <VStack gap={4}>
+          <PanelBody key={pane} panel={pane} />
+        </VStack>
+      )}
     </SettingsContext.Provider>
   )
 }

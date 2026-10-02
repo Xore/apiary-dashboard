@@ -4,7 +4,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { PageFrame } from '#/components/PageFrame'
 import { SkeletonPanels } from '#/components/EntityBlocks'
 import { orPending } from '#/lib/pending'
-import { ReportWizard, emptyDraft } from '#/components/reports/ReportWizard'
+import { REPORT_WIDE, ReportWizard, emptyDraft } from '#/components/reports/ReportWizard'
+import { useMediaQuery } from '@astryxdesign/core/hooks'
 import { getFacets, getReports } from '#/data/queries'
 import { reportTabs } from '#/lib/navFamilies'
 
@@ -29,13 +30,15 @@ function GeneratePage() {
   const { template, from } = Route.useSearch()
   // Bumping the key starts a fresh wizard after a report was generated.
   const [run, setRun] = useState(0)
+  // Wide: the steps and a live preview fill the page side by side.
+  const wide = useMediaQuery(REPORT_WIDE)
   const source = from ? data?.definitions.find((d) => d.id === from) : undefined
 
   return (
     <PageFrame
       title={source && run === 0 ? `Generate: ${source.name}` : 'Generate a report'}
       description="Decide what the report covers and how it looks; the data is checked and each section rendered before the PDF is made."
-      contentWidth={800}
+      contentWidth={wide ? undefined : 800}
     >
       {data && facets ? (
         <ReportWizard key={`${from ?? template ?? ''}-${run}`} data={data} facets={facets} initial={source && run === 0 ? structuredClone(source) : emptyDraft(data, template)} onRestart={() => setRun((n) => n + 1)} />
