@@ -41,7 +41,7 @@ export const Route = createFileRoute('/api/live')({
             let sent = 0
             const unlisten = listen({
               event: (event) => {
-                if (scenario === 'empty') return
+                if (scenario === 'empty' || scenario === 'loading') return
                 // A slow backend: one event in five.
                 if (scenario === 'slow' && sent++ % 5 !== 0) return
                 send(`data: ${JSON.stringify(event)}\n\n`)

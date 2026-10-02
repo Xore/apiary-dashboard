@@ -1,4 +1,5 @@
 import { pageSsr } from '#/lib/pageSsr'
+import { orPending } from '#/lib/pending'
 import { useState } from 'react'
 import { ConfirmDialog } from '#/components/AppDialog'
 import { Button } from '@astryxdesign/core/Button'
@@ -55,7 +56,7 @@ const columns: TableColumn<AlertGroup>[] = [
 function AlertsPage() {
   // Undefined while the route is pending (this component is its own
   // pending state).
-  const groups: AlertGroup[] | undefined = Route.useLoaderData()
+  const groups: AlertGroup[] | undefined = orPending(Route.useLoaderData())
   const { view = 'new' } = Route.useSearch()
   const router = useRouter()
   const [filter, setFilter] = useState('')
