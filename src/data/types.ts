@@ -729,8 +729,15 @@ export interface AnalysisResult extends Record<string, unknown> {
   platform?: string
   owner?: string
   recipe?: string
+  /** What this analyzer concluded about the payload (not the workbench). */
+  verdict?: ResultVerdict
+  /** The payload's overall verdict, so a disagreeing analyzer shows. */
+  payloadVerdict?: ResultVerdict
   detail: Record<string, unknown>
 }
+
+/** A payload is clean; a sandbox detonation is benign (its own scale). */
+export type ResultVerdict = 'malicious' | 'suspicious' | 'benign' | 'clean'
 
 export interface GpuJob extends Record<string, unknown> {
   jobId: string
@@ -855,8 +862,6 @@ export interface AnalysisRunConfig {
 export interface AnalysisResultsData {
   results: AnalysisResult[]
   gpuQueue: GpuJob[]
-  /** Latest retrain outcome per approved local model. */
-  modelHealth: ModelHealth[]
   analyzers: AnalyzerInfo[]
   /** The signed-in operator's own runs, newest first. */
   runs: WorkbenchRun[]
