@@ -102,9 +102,9 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
               <ViewTabsMenu />
             </span>
           )}
-          {/* On a phone the range moves to the views row, when the page has
-              views; without them it stays here and there is no extra row. */}
-          <span className={hasTabs ? 'apiary-not-phone' : undefined}>
+          {/* On a phone the range moves to a row of its own: the top bar has
+              no room for it beside the controls. */}
+          <span className="apiary-not-phone">
             <RangePicker compact={isMobile} />
           </span>
           {isMobile ? (
@@ -126,10 +126,9 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
   )
 }
 
-/** A phone's second row: the page's views and the time range, under the
- * top bar where there is room for them. A page without views has no row. */
+/** A phone's second row: the page's views (when it has any) and the time
+ * range, under the top bar where there is room for them. */
 export function PhoneViewBar() {
-  if (useViewTabs() === null) return null
   return (
     <VStack gap={0} className="apiary-phone-only">
       <HStack gap={2} vAlign="center" hAlign="between" paddingInline={4} paddingBlock={2}>
