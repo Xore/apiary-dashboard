@@ -33,7 +33,7 @@ export function RangePicker({ compact = false }: { compact?: boolean }) {
     <Selector
       label="Time range"
       isLabelHidden
-      size={compact ? 'lg' : 'sm'}
+      size={compact ? 'md' : 'sm'}
       value={range}
       onChange={(value) =>
         void navigate({ to: '.', search: (prev: Record<string, unknown>) => ({ ...prev, range: value === DEFAULT_RANGE || !isRange(value) ? undefined : value }) })
@@ -124,7 +124,7 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
             <RangePicker compact={isMobile} />
           </span>
           {isMobile ? (
-            <Button label="Search" variant="secondary" size="lg" isIconOnly tooltip="Search" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette} />
+            <Button label="Search" variant="secondary" size="md" isIconOnly tooltip="Search" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette} />
           ) : (
             <Button label="Search" variant="secondary" size="sm" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette}>
               <HStack gap={2} vAlign="center">
