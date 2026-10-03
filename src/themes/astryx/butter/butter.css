@@ -235,7 +235,7 @@
     --color-overlay-pressed: light-dark(#1d1c111A, #f3f2e21A);
     --color-background-muted: light-dark(#f3f2e2, #3A2A1F);
     --color-text-primary: light-dark(#1d1c11, #f3f2e2);
-    --color-text-secondary: light-dark(#605f52, #adac9e);
+    --color-text-secondary: light-dark(#605f52, #bdbcae);
     --color-text-disabled: light-dark(#adac9e, #605f52);
     --color-text-accent: light-dark(#225BFF, #FDEE8C);
     --color-on-dark: #ffffff;
@@ -460,8 +460,8 @@
     background-color: transparent;
     border-width: 1.5px;
     border-style: solid;
-    border-color: light-dark(#225BFF, #FDEE8C);
-    color: light-dark(#225BFF, #FDEE8C);
+    border-color: var(--color-text-accent);
+    color: var(--color-text-accent);
   }
 
   .astryx-button[data-variant="secondary"]:hover:where(:not(:disabled,[aria-disabled="true"])) {
@@ -469,7 +469,7 @@
   }
 
   .astryx-button[data-variant="ghost"] {
-    color: light-dark(#225BFF, #FDEE8C);
+    color: var(--color-text-accent);
   }
 
   .astryx-button[data-variant="destructive"] {
@@ -484,7 +484,7 @@
   }
 
   .astryx-badge[data-variant="info"] {
-    background-color: #4883fd;
+    background-color: #2f6ae8;
     color: #ffffff;
   }
 
@@ -504,15 +504,16 @@
   }
 
   .astryx-badge[data-variant="error"] {
-    background-color: #fc473b;
+    background-color: #d42a1f;
     color: #ffffff;
   }
 
   .astryx-banner[data-status="info"] {
-    --color-accent-muted: #4883fd;
+    --color-accent-muted: #2f6ae8;
     --color-text-primary: #ffffff;
     --color-text-secondary: #ffffff;
     --color-accent: #ffffff;
+    --color-text-accent: #ffffff;
   }
 
   .astryx-banner[data-status="success"] {
@@ -520,6 +521,7 @@
     --color-text-primary: #1d1c11;
     --color-text-secondary: #1d1c11;
     --color-success: #1d1c11;
+    --color-text-accent: #1d1c11;
   }
 
   .astryx-banner[data-status="warning"] {
@@ -527,13 +529,15 @@
     --color-text-primary: #1d1c11;
     --color-text-secondary: #1d1c11;
     --color-warning: #1d1c11;
+    --color-text-accent: #1d1c11;
   }
 
   .astryx-banner[data-status="error"] {
-    --color-error-muted: #fc473b;
+    --color-error-muted: #d42a1f;
     --color-text-primary: #ffffff;
     --color-text-secondary: #ffffff;
     --color-error: #ffffff;
+    --color-text-accent: #ffffff;
   }
 
   .astryx-card {
@@ -634,7 +638,7 @@
   }
 
   .astryx-progress-bar-fill[data-variant="error"] {
-    background-color: #fc473b;
+    background-color: #d42a1f;
   }
 
   .astryx-field-status[data-type="success"] {
@@ -648,7 +652,7 @@
   }
 
   .astryx-field-status[data-type="error"] {
-    background-color: #fc473b;
+    background-color: #d42a1f;
     color: #ffffff;
   }
 
@@ -667,7 +671,7 @@
   }
 
   .astryx-text-input[data-status="error"] {
-    --color-error: #fc473b;
+    --color-error: #d42a1f;
   }
 
   .astryx-text-area {
@@ -685,7 +689,7 @@
   }
 
   .astryx-text-area[data-status="error"] {
-    --color-error: #fc473b;
+    --color-error: #d42a1f;
   }
 
   .astryx-number-input {
@@ -704,7 +708,7 @@
   }
 
   .astryx-number-input[data-status="error"] {
-    --color-error: #fc473b;
+    --color-error: #d42a1f;
   }
 
   .astryx-date-input {
@@ -722,7 +726,7 @@
   }
 
   .astryx-date-input[data-status="error"] {
-    --color-error: #fc473b;
+    --color-error: #d42a1f;
   }
 
   .astryx-time-input {
@@ -740,7 +744,7 @@
   }
 
   .astryx-time-input[data-status="error"] {
-    --color-error: #fc473b;
+    --color-error: #d42a1f;
   }
 
   .astryx-selector {
@@ -758,7 +762,7 @@
   }
 
   .astryx-selector[data-status="error"] {
-    --color-error: #fc473b;
+    --color-error: #d42a1f;
   }
 
   .astryx-multi-selector {
@@ -776,7 +780,7 @@
   }
 
   .astryx-multi-selector[data-status="error"] {
-    --color-error: #fc473b;
+    --color-error: #d42a1f;
   }
 
   .astryx-typeahead {
@@ -794,7 +798,7 @@
   }
 
   .astryx-typeahead[data-status="error"] {
-    --color-error: #fc473b;
+    --color-error: #d42a1f;
   }
 
   .astryx-tokenizer {
@@ -812,7 +816,7 @@
   }
 
   .astryx-tokenizer[data-status="error"] {
-    --color-error: #fc473b;
+    --color-error: #d42a1f;
   }
 
   .astryx-text[data-color="primary"] { color: var(--color-text-primary); }

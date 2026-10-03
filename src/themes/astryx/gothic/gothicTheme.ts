@@ -243,7 +243,7 @@ export const gothicTheme = defineTheme({
       // (matches the red badge).
       'variant:destructive': {
         backgroundColor: 'var(--color-error)',
-        color: 'var(--color-text-red)',
+        color: 'var(--color-on-error)',
       },
     },
 

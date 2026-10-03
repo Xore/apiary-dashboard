@@ -76,14 +76,14 @@ export const chocolateTheme = defineTheme({
 
     // Text
     '--color-text-primary': ['#4a3520', '#EDE4D4'],
-    '--color-text-secondary': ['#7a5a36', '#c4a882'],
+    '--color-text-secondary': ['#6b4e2e', '#c4a882'],
     '--color-text-disabled': ['#C4AC95', '#6b5540'],
     '--color-text-accent': ['#8C5927', '#d4a06a'],
     '--color-on-dark': '#FFFCF7',
     '--color-on-light': '#4a3520',
-    '--color-on-accent': ['#FFFFFF', '#4a3520'],
+    '--color-on-accent': ['#FFFFFF', '#2a1d10'],
     '--color-on-success': ['#FFFFFF', '#4a3520'],
-    '--color-on-error': ['#FFFFFF', '#4a3520'],
+    '--color-on-error': ['#FFFFFF', '#2a1d10'],
     '--color-on-warning': ['#4a3520', '#4a3520'],
 
     // Icon
@@ -160,7 +160,7 @@ export const chocolateTheme = defineTheme({
     '--color-background-red': ['#FD000033', '#ff5c5c33'],
     '--color-border-red': ['#FD0000', '#ff5c5c'],
     '--color-icon-red': ['#FD0000', '#ff5c5c'],
-    '--color-text-red': ['#a80000', '#ff7a7a'],
+    '--color-text-red': ['#9a0000', '#ff7a7a'],
 
     // Categorical — Teal
     '--color-background-teal': ['#2e6b5a33', '#5ab89833'],

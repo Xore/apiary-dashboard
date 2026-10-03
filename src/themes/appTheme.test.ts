@@ -94,6 +94,17 @@ describe('palette contrast', () => {
       }
     }
   })
+
+  it('keeps a primary button\'s label at 4.5:1, in standard and high contrast', () => {
+    for (const p of PALETTES) {
+      for (const highContrast of [false, true]) {
+        for (const mode of ['light', 'dark'] as const) {
+          const tokens = resolveThemeTokens(appTheme(p, highContrast), { mode })
+          expect(contrast(rgba(tokens['--color-on-accent']), rgba(tokens['--color-accent'])), `${p}${highContrast ? '-hc' : ''} ${mode}`).toBeGreaterThanOrEqual(4.5)
+        }
+      }
+    }
+  })
 })
 
 describe('palette syntax themes', () => {

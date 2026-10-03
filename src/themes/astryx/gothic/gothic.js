@@ -300,7 +300,7 @@ export const gothicTheme = {
       },
       "variant:destructive": {
         "backgroundColor": "var(--color-error)",
-        "color": "var(--color-text-red)"
+        "color": "var(--color-on-error)"
       }
     },
     "badge": {

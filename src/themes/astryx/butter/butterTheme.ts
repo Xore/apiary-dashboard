@@ -83,7 +83,7 @@ export const butterTheme = defineTheme({
 
     // Text — warm neutral
     '--color-text-primary': ['#1d1c11', '#f3f2e2'],
-    '--color-text-secondary': ['#605f52', '#adac9e'],
+    '--color-text-secondary': ['#605f52', '#bdbcae'],
     '--color-text-disabled': ['#adac9e', '#605f52'],
     '--color-text-accent': ['#225BFF', '#FDEE8C'],
     '--color-on-dark': '#ffffff',
@@ -267,15 +267,16 @@ export const butterTheme = defineTheme({
         backgroundColor: 'transparent',
         borderWidth: '1.5px',
         borderStyle: 'solid',
-        borderColor: 'light-dark(#225BFF, #FDEE8C)',
-        color: 'light-dark(#225BFF, #FDEE8C)',
+        // The accent text token, so a banner can re-ink a button inside it.
+        borderColor: 'var(--color-text-accent)',
+        color: 'var(--color-text-accent)',
         ':hover': {
           backgroundColor: 'light-dark(#225BFF14, #FDEE8C14)',
         },
       },
       // Ghost: same accent color as secondary, no background.
       'variant:ghost': {
-        color: 'light-dark(#225BFF, #FDEE8C)',
+        color: 'var(--color-text-accent)',
       },
       'variant:destructive': {
         backgroundColor: 'light-dark(#ffdad3, #f4b8ae)',
@@ -295,7 +296,7 @@ export const butterTheme = defineTheme({
       // Vivid semantic badges — pinned to the brand colors from the spec.
       // Info uses the Blue palette source (NOT the brand accent #225BFF).
       'variant:info': {
-        backgroundColor: '#4883fd',
+        backgroundColor: '#2f6ae8',
         color: '#ffffff',
       },
       'variant:neutral': {
@@ -311,7 +312,7 @@ export const butterTheme = defineTheme({
         color: '#1d1c11',
       },
       'variant:error': {
-        backgroundColor: '#fc473b',
+        backgroundColor: '#d42a1f',
         color: '#ffffff',
       },
     },
@@ -322,28 +323,32 @@ export const butterTheme = defineTheme({
     // matching the badge palette. Scoped to the banner root, doesn't leak.
     banner: {
       'status:info': {
-        '--color-accent-muted': '#4883fd',
+        '--color-accent-muted': '#2f6ae8',
         '--color-text-primary': '#ffffff',
         '--color-text-secondary': '#ffffff',
         '--color-accent': '#ffffff',
+        '--color-text-accent': '#ffffff',
       },
       'status:success': {
         '--color-success-muted': '#91D143',
         '--color-text-primary': '#1d1c11',
         '--color-text-secondary': '#1d1c11',
         '--color-success': '#1d1c11',
+        '--color-text-accent': '#1d1c11',
       },
       'status:warning': {
         '--color-warning-muted': '#ffc502',
         '--color-text-primary': '#1d1c11',
         '--color-text-secondary': '#1d1c11',
         '--color-warning': '#1d1c11',
+        '--color-text-accent': '#1d1c11',
       },
       'status:error': {
-        '--color-error-muted': '#fc473b',
+        '--color-error-muted': '#d42a1f',
         '--color-text-primary': '#ffffff',
         '--color-text-secondary': '#ffffff',
         '--color-error': '#ffffff',
+        '--color-text-accent': '#ffffff',
       },
     },
 
@@ -435,7 +440,7 @@ export const butterTheme = defineTheme({
         backgroundColor: '#ffc502',
       },
       'variant:error': {
-        backgroundColor: '#fc473b',
+        backgroundColor: '#d42a1f',
       },
     },
 
@@ -452,7 +457,7 @@ export const butterTheme = defineTheme({
         color: '#1d1c11',
       },
       'type:error': {
-        backgroundColor: '#fc473b',
+        backgroundColor: '#d42a1f',
         color: '#ffffff',
       },
     },
@@ -469,7 +474,7 @@ export const butterTheme = defineTheme({
       },
       'status:success': {'--color-success': '#91D143'},
       'status:warning': {'--color-warning': '#ffc502'},
-      'status:error': {'--color-error': '#fc473b'},
+      'status:error': {'--color-error': '#d42a1f'},
     },
     'text-area': {
       base: {
@@ -479,7 +484,7 @@ export const butterTheme = defineTheme({
       },
       'status:success': {'--color-success': '#91D143'},
       'status:warning': {'--color-warning': '#ffc502'},
-      'status:error': {'--color-error': '#fc473b'},
+      'status:error': {'--color-error': '#d42a1f'},
     },
     'number-input': {
       base: {
@@ -489,7 +494,7 @@ export const butterTheme = defineTheme({
       },
       'status:success': {'--color-success': '#91D143'},
       'status:warning': {'--color-warning': '#ffc502'},
-      'status:error': {'--color-error': '#fc473b'},
+      'status:error': {'--color-error': '#d42a1f'},
     },
     'date-input': {
       base: {
@@ -499,7 +504,7 @@ export const butterTheme = defineTheme({
       },
       'status:success': {'--color-success': '#91D143'},
       'status:warning': {'--color-warning': '#ffc502'},
-      'status:error': {'--color-error': '#fc473b'},
+      'status:error': {'--color-error': '#d42a1f'},
     },
     'time-input': {
       base: {
@@ -509,7 +514,7 @@ export const butterTheme = defineTheme({
       },
       'status:success': {'--color-success': '#91D143'},
       'status:warning': {'--color-warning': '#ffc502'},
-      'status:error': {'--color-error': '#fc473b'},
+      'status:error': {'--color-error': '#d42a1f'},
     },
     selector: {
       base: {
@@ -519,7 +524,7 @@ export const butterTheme = defineTheme({
       },
       'status:success': {'--color-success': '#91D143'},
       'status:warning': {'--color-warning': '#ffc502'},
-      'status:error': {'--color-error': '#fc473b'},
+      'status:error': {'--color-error': '#d42a1f'},
     },
     'multi-selector': {
       base: {
@@ -529,7 +534,7 @@ export const butterTheme = defineTheme({
       },
       'status:success': {'--color-success': '#91D143'},
       'status:warning': {'--color-warning': '#ffc502'},
-      'status:error': {'--color-error': '#fc473b'},
+      'status:error': {'--color-error': '#d42a1f'},
     },
     typeahead: {
       base: {
@@ -539,7 +544,7 @@ export const butterTheme = defineTheme({
       },
       'status:success': {'--color-success': '#91D143'},
       'status:warning': {'--color-warning': '#ffc502'},
-      'status:error': {'--color-error': '#fc473b'},
+      'status:error': {'--color-error': '#d42a1f'},
     },
     tokenizer: {
       base: {
@@ -549,7 +554,7 @@ export const butterTheme = defineTheme({
       },
       'status:success': {'--color-success': '#91D143'},
       'status:warning': {'--color-warning': '#ffc502'},
-      'status:error': {'--color-error': '#fc473b'},
+      'status:error': {'--color-error': '#d42a1f'},
     },
 
     // Display sizes use Sarina — the signature buttery display

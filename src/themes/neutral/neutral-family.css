@@ -1977,19 +1977,25 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
   }
 }
 
-@scope (:where([data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
+@scope (:where([data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
   :scope {
     --color-on-accent: light-dark(#ffffff, #1c1613);
   }
 }
 
-@scope (:where([data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"])) to ([data-astryx-theme]) {
+@scope (:where([data-astryx-theme="neutral-claude"])) to ([data-astryx-theme]) {
   :scope {
     --color-on-accent: light-dark(#fffaf5, #211a17);
   }
 }
 
-@scope (:where([data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"])) to ([data-astryx-theme]) {
+@scope (:where([data-astryx-theme="neutral-claude-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-on-accent: light-dark(#ffffff, #211a17);
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-neon"])) to ([data-astryx-theme]) {
   :scope {
     --color-on-accent: light-dark(#040303, #1c1613);
   }
@@ -2019,15 +2025,9 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
   }
 }
 
-@scope (:where([data-astryx-theme="neutral"])) to ([data-astryx-theme]) {
+@scope (:where([data-astryx-theme="neutral"], [data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
   :scope {
     --color-on-warning: #111111;
-  }
-}
-
-@scope (:where([data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
-  :scope {
-    --color-on-warning: light-dark(#ffffff, #1c1613);
   }
 }
 
@@ -2385,57 +2385,9 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
   }
 }
 
-@scope (:where([data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"])) to ([data-astryx-theme]) {
+@scope (:where([data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
   :scope {
-    --color-success: light-dark(color-mix(in oklab, #3f8764 88%, #2f2c27), #79c99e);
-  }
-}
-
-@scope (:where([data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"])) to ([data-astryx-theme]) {
-  :scope {
-    --color-success: light-dark(color-mix(in oklab, #3f8764 88%, #2f2b27), #79c99e);
-  }
-}
-
-@scope (:where([data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"])) to ([data-astryx-theme]) {
-  :scope {
-    --color-success: light-dark(color-mix(in oklab, #3f8764 88%, #29272f), #79c99e);
-  }
-}
-
-@scope (:where([data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"])) to ([data-astryx-theme]) {
-  :scope {
-    --color-success: light-dark(color-mix(in oklab, #3f8764 88%, #2d2f27), #79c99e);
-  }
-}
-
-@scope (:where([data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"])) to ([data-astryx-theme]) {
-  :scope {
-    --color-success: light-dark(color-mix(in oklab, #3f8764 88%, #272f2e), #79c99e);
-  }
-}
-
-@scope (:where([data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"])) to ([data-astryx-theme]) {
-  :scope {
-    --color-success: light-dark(color-mix(in oklab, #3f8764 88%, #272c2f), #79c99e);
-  }
-}
-
-@scope (:where([data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"])) to ([data-astryx-theme]) {
-  :scope {
-    --color-success: light-dark(color-mix(in oklab, #3f8764 88%, #2f2729), #79c99e);
-  }
-}
-
-@scope (:where([data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"])) to ([data-astryx-theme]) {
-  :scope {
-    --color-success: light-dark(color-mix(in oklab, #3f8764 88%, #272f27), #79c99e);
-  }
-}
-
-@scope (:where([data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
-  :scope {
-    --color-success: light-dark(color-mix(in oklab, #3f8764 88%, #272b2f), #79c99e);
+    --color-success: light-dark(#3f8764, #79c99e);
   }
 }
 
@@ -2445,9 +2397,27 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
   }
 }
 
-@scope (:where([data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
+@scope (:where([data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"])) to ([data-astryx-theme]) {
   :scope {
-    --color-error: light-dark(#b34f4c, #dc7774);
+    --color-error: light-dark(#8b3b3a, #e9aba8);
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-error: light-dark(#8b3b3a, #e8a7a4);
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-error: light-dark(#873938, #e7a3a0);
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"])) to ([data-astryx-theme]) {
+  :scope {
+    --color-error: light-dark(#8b3b3a, #e59b98);
   }
 }
 

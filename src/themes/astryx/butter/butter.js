@@ -108,7 +108,7 @@ export const butterTheme = {
     "--color-overlay-pressed": "light-dark(#1d1c111A, #f3f2e21A)",
     "--color-background-muted": "light-dark(#f3f2e2, #3A2A1F)",
     "--color-text-primary": "light-dark(#1d1c11, #f3f2e2)",
-    "--color-text-secondary": "light-dark(#605f52, #adac9e)",
+    "--color-text-secondary": "light-dark(#605f52, #bdbcae)",
     "--color-text-disabled": "light-dark(#adac9e, #605f52)",
     "--color-text-accent": "light-dark(#225BFF, #FDEE8C)",
     "--color-on-dark": "#ffffff",
@@ -319,14 +319,14 @@ export const butterTheme = {
         "backgroundColor": "transparent",
         "borderWidth": "1.5px",
         "borderStyle": "solid",
-        "borderColor": "light-dark(#225BFF, #FDEE8C)",
-        "color": "light-dark(#225BFF, #FDEE8C)",
+        "borderColor": "var(--color-text-accent)",
+        "color": "var(--color-text-accent)",
         ":hover": {
           "backgroundColor": "light-dark(#225BFF14, #FDEE8C14)"
         }
       },
       "variant:ghost": {
-        "color": "light-dark(#225BFF, #FDEE8C)"
+        "color": "var(--color-text-accent)"
       },
       "variant:destructive": {
         "backgroundColor": "light-dark(#ffdad3, #f4b8ae)",
@@ -340,7 +340,7 @@ export const butterTheme = {
         "paddingInline": "var(--spacing-3)"
       },
       "variant:info": {
-        "backgroundColor": "#4883fd",
+        "backgroundColor": "#2f6ae8",
         "color": "#ffffff"
       },
       "variant:neutral": {
@@ -356,34 +356,38 @@ export const butterTheme = {
         "color": "#1d1c11"
       },
       "variant:error": {
-        "backgroundColor": "#fc473b",
+        "backgroundColor": "#d42a1f",
         "color": "#ffffff"
       }
     },
     "banner": {
       "status:info": {
-        "--color-accent-muted": "#4883fd",
+        "--color-accent-muted": "#2f6ae8",
         "--color-text-primary": "#ffffff",
         "--color-text-secondary": "#ffffff",
-        "--color-accent": "#ffffff"
+        "--color-accent": "#ffffff",
+        "--color-text-accent": "#ffffff"
       },
       "status:success": {
         "--color-success-muted": "#91D143",
         "--color-text-primary": "#1d1c11",
         "--color-text-secondary": "#1d1c11",
-        "--color-success": "#1d1c11"
+        "--color-success": "#1d1c11",
+        "--color-text-accent": "#1d1c11"
       },
       "status:warning": {
         "--color-warning-muted": "#ffc502",
         "--color-text-primary": "#1d1c11",
         "--color-text-secondary": "#1d1c11",
-        "--color-warning": "#1d1c11"
+        "--color-warning": "#1d1c11",
+        "--color-text-accent": "#1d1c11"
       },
       "status:error": {
-        "--color-error-muted": "#fc473b",
+        "--color-error-muted": "#d42a1f",
         "--color-text-primary": "#ffffff",
         "--color-text-secondary": "#ffffff",
-        "--color-error": "#ffffff"
+        "--color-error": "#ffffff",
+        "--color-text-accent": "#ffffff"
       }
     },
     "card": {
@@ -470,7 +474,7 @@ export const butterTheme = {
         "backgroundColor": "#ffc502"
       },
       "variant:error": {
-        "backgroundColor": "#fc473b"
+        "backgroundColor": "#d42a1f"
       }
     },
     "field-status": {
@@ -483,7 +487,7 @@ export const butterTheme = {
         "color": "#1d1c11"
       },
       "type:error": {
-        "backgroundColor": "#fc473b",
+        "backgroundColor": "#d42a1f",
         "color": "#ffffff"
       }
     },
@@ -500,7 +504,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "text-area": {
@@ -516,7 +520,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "number-input": {
@@ -532,7 +536,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "date-input": {
@@ -548,7 +552,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "time-input": {
@@ -564,7 +568,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "selector": {
@@ -580,7 +584,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "multi-selector": {
@@ -596,7 +600,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "typeahead": {
@@ -612,7 +616,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "tokenizer": {
@@ -628,7 +632,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     }
   },
