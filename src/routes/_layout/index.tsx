@@ -54,6 +54,15 @@ const VIEWS = [
 ] as const
 type View = (typeof VIEWS)[number]['id']
 
+
+/** Each headline number opens the list behind it. */
+const KPI_HREF: Record<string, string> = {
+  events: '/events',
+  sources: '/ips',
+  sessions: '/recordings',
+  logins: '/events?kind=login-success',
+  payloads: '/payloads',
+}
 export const Route = createFileRoute('/_layout/')({
   ssr: pageSsr,
   staticData: { viewTabs: searchTabs({ label: 'Dashboard views', param: 'view', tabs: () => [...VIEWS] }) },
@@ -346,7 +355,7 @@ function OverviewPage() {
         {view === 'live' && (
           // Two to a row on a phone, so the numbers do not fill its first screen.
           <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
-            {overview ? overview.kpis.map((kpi) => <StatTile key={kpi.id} {...kpi} caption="Last 24h vs. previous 24h" />) : <SkeletonTiles count={5} />}
+            {overview ? overview.kpis.map((kpi) => <StatTile key={kpi.id} {...kpi} href={KPI_HREF[kpi.id]} caption="Last 24h vs. previous 24h" />) : <SkeletonTiles count={5} />}
           </Grid>
         )}
         {!overview || !views ? (

@@ -32,7 +32,7 @@ import { useShellConfig } from '#/lib/session'
 import { eventToolLinks } from '#/lib/toolLinks'
 import { pageParam, pageRequest } from '#/lib/paging'
 
-const KINDS: EventKind[] = ['connection', 'login', 'command', 'download', 'http', 'protocol', 'alert']
+const KINDS: EventKind[] = ['connection', 'login', 'login-success', 'command', 'download', 'http', 'protocol', 'alert']
 const SINCE = ['1h', '6h', '24h']
 const FILTER_KEYS = ['ip', 'sensor', 'persona', 'provider', 'country', 'proto', 'port', 'kind', 'since', 'site', 'asset', 'fingerprint', 'org', 'city'] as const
 
