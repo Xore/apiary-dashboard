@@ -126,7 +126,7 @@ export function AgentCampaignRules({ campaign }: { campaign: AgentCampaign }) {
                   key={`${step.transform}-${i}`}
                   label={`${i + 1}. ${step.transform}`}
                   description={
-                    <Text type="code">{`sha256:${step.outputSha256}`}</Text>
+                    <Text type="code" maxLines={2} wordBreak="break-all">{`sha256:${step.outputSha256}`}</Text>
                   }
                 />
               ))}

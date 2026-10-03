@@ -312,8 +312,9 @@ function TabStrip({ model, hrefOf, go }: { model: ViewTabsModel; hrefOf: (id: st
             style={restActive ? ACTIVE_STYLE : ITEM_STYLE}
             items={rest.flatMap((tab) =>
               tab.sections?.length
-                ? // A dropdown tab keeps its layering: its sections, each naming the tab they sit under.
-                  tab.sections.map((section) => item(section.label, hrefOf(tab.id, section.id), section.icon ?? ArrowRightIcon, tab.id === model.value && section.id === model.section ? `${tab.label} · showing now` : tab.label))
+                ? // A dropdown tab keeps its layering: its sections, each naming the tab it sits under in
+                  // its title (TopNavMenu keys items by title, and Sandbox and Ghidra both have "Raw").
+                  tab.sections.map((section) => item(`${tab.label} · ${section.label}`, hrefOf(tab.id, section.id), section.icon ?? ArrowRightIcon, tab.id === model.value && section.id === model.section ? 'Showing now' : undefined))
                 : [item(labelOf(tab), hrefOf(tab.id), ArrowRightIcon, tab.id === model.value ? 'Showing now' : undefined)],
             )}
           />
