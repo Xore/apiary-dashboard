@@ -16,6 +16,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "studio": "bun design-studio/build.tsx",
     "theme:build": "JITI_TRY_NATIVE=0 bunx --bun astryx theme build --family src/themes/neutral/neutralTheme.ts src/themes/neutral/variants/*.ts --family-key neutral-family --icons-specifier ./icons.tsx && JITI_TRY_NATIVE=0 bunx --bun astryx theme build src/themes/astryx/*/*Theme.ts --icons-specifier ./icons.tsx",
     "theme:check": "JITI_TRY_NATIVE=0 bunx --bun astryx theme build --family src/themes/neutral/neutralTheme.ts src/themes/neutral/variants/*.ts --family-key neutral-family --icons-specifier ./icons.tsx --check && JITI_TRY_NATIVE=0 bunx --bun astryx theme build src/themes/astryx/*/*Theme.ts --icons-specifier ./icons.tsx --check",
     "smoke": "scripts/smoke.sh",
