@@ -108,7 +108,7 @@ export const butterTheme = {
     "--color-overlay-pressed": "light-dark(#1d1c111A, #f3f2e21A)",
     "--color-background-muted": "light-dark(#f3f2e2, #3A2A1F)",
     "--color-text-primary": "light-dark(#1d1c11, #f3f2e2)",
-    "--color-text-secondary": "light-dark(#605f52, #adac9e)",
+    "--color-text-secondary": "light-dark(#605f52, #bdbcae)",
     "--color-text-disabled": "light-dark(#adac9e, #605f52)",
     "--color-text-accent": "light-dark(#225BFF, #FDEE8C)",
     "--color-on-dark": "#ffffff",
@@ -138,46 +138,46 @@ export const butterTheme = {
     "--size-element-sm": "32px",
     "--size-element-md": "40px",
     "--size-element-lg": "48px",
-    "--color-background-blue": "light-dark(#dbe1ff, #dbe1ff)",
+    "--color-background-blue": "light-dark(#dbe1ff, #dbe1ff33)",
     "--color-border-blue": "light-dark(#bdc5eb, #bdc5eb)",
-    "--color-icon-blue": "light-dark(#203a6c, #203a6c)",
-    "--color-text-blue": "light-dark(#203a6c, #203a6c)",
-    "--color-background-cyan": "light-dark(#a9eff0, #a9eff0)",
+    "--color-icon-blue": "light-dark(#203a6c, #dbe1ff)",
+    "--color-text-blue": "light-dark(#203a6c, #dbe1ff)",
+    "--color-background-cyan": "light-dark(#a9eff0, #a9eff033)",
     "--color-border-cyan": "light-dark(#8dd2d3, #8dd2d3)",
-    "--color-icon-cyan": "light-dark(#004649, #004649)",
-    "--color-text-cyan": "light-dark(#004649, #004649)",
-    "--color-background-gray": "light-dark(#f0edd4, #f0edd4)",
+    "--color-icon-cyan": "light-dark(#004649, #a9eff0)",
+    "--color-text-cyan": "light-dark(#004649, #a9eff0)",
+    "--color-background-gray": "light-dark(#f0edd4, #f0edd433)",
     "--color-border-gray": "light-dark(#d6d3b8, #d6d3b8)",
-    "--color-icon-gray": "light-dark(#4a4732, #4a4732)",
-    "--color-text-gray": "light-dark(#4a4732, #4a4732)",
-    "--color-background-green": "light-dark(#c1efb8, #c1efb8)",
+    "--color-icon-gray": "light-dark(#4a4732, #f0edd4)",
+    "--color-text-gray": "light-dark(#4a4732, #f0edd4)",
+    "--color-background-green": "light-dark(#c1efb8, #c1efb833)",
     "--color-border-green": "light-dark(#a5d29d, #a5d29d)",
-    "--color-icon-green": "light-dark(#004800, #004800)",
-    "--color-text-green": "light-dark(#004800, #004800)",
-    "--color-background-orange": "light-dark(#ffdcb6, #ffdcb6)",
+    "--color-icon-green": "light-dark(#004800, #c1efb8)",
+    "--color-text-green": "light-dark(#004800, #c1efb8)",
+    "--color-background-orange": "light-dark(#ffdcb6, #ffdcb633)",
     "--color-border-orange": "light-dark(#f2bd81, #f2bd81)",
-    "--color-icon-orange": "light-dark(#622e00, #622e00)",
-    "--color-text-orange": "light-dark(#622e00, #622e00)",
-    "--color-background-pink": "light-dark(#ffd5fb, #ffd5fb)",
+    "--color-icon-orange": "light-dark(#622e00, #ffdcb6)",
+    "--color-text-orange": "light-dark(#622e00, #ffdcb6)",
+    "--color-background-pink": "light-dark(#ffd5fb, #ffd5fb33)",
     "--color-border-pink": "light-dark(#f0b3e8, #f0b3e8)",
-    "--color-icon-pink": "light-dark(#6c0a68, #6c0a68)",
-    "--color-text-pink": "light-dark(#6c0a68, #6c0a68)",
-    "--color-background-purple": "light-dark(#f2daff, #f2daff)",
+    "--color-icon-pink": "light-dark(#6c0a68, #ffd5fb)",
+    "--color-text-pink": "light-dark(#6c0a68, #ffd5fb)",
+    "--color-background-purple": "light-dark(#f2daff, #f2daff33)",
     "--color-border-purple": "light-dark(#ddb9f6, #ddb9f6)",
-    "--color-icon-purple": "light-dark(#52237b, #52237b)",
-    "--color-text-purple": "light-dark(#52237b, #52237b)",
-    "--color-background-red": "light-dark(#ffdad3, #ffdad3)",
+    "--color-icon-purple": "light-dark(#52237b, #f2daff)",
+    "--color-text-purple": "light-dark(#52237b, #f2daff)",
+    "--color-background-red": "light-dark(#ffdad3, #ffdad333)",
     "--color-border-red": "light-dark(#f4b8ae, #f4b8ae)",
-    "--color-icon-red": "light-dark(#6d211c, #6d211c)",
-    "--color-text-red": "light-dark(#6d211c, #6d211c)",
-    "--color-background-teal": "light-dark(#b0f0d7, #b0f0d7)",
+    "--color-icon-red": "light-dark(#6d211c, #ffdad3)",
+    "--color-text-red": "light-dark(#6d211c, #ffdad3)",
+    "--color-background-teal": "light-dark(#b0f0d7, #b0f0d733)",
     "--color-border-teal": "light-dark(#94d3bb, #94d3bb)",
-    "--color-icon-teal": "light-dark(#00482d, #00482d)",
-    "--color-text-teal": "light-dark(#00482d, #00482d)",
-    "--color-background-yellow": "light-dark(#feee7b, #feee7b)",
+    "--color-icon-teal": "light-dark(#00482d, #b0f0d7)",
+    "--color-text-teal": "light-dark(#00482d, #b0f0d7)",
+    "--color-background-yellow": "light-dark(#feee7b, #feee7b33)",
     "--color-border-yellow": "light-dark(#d6c957, #d6c957)",
-    "--color-icon-yellow": "light-dark(#413e00, #413e00)",
-    "--color-text-yellow": "light-dark(#413e00, #413e00)",
+    "--color-icon-yellow": "light-dark(#413e00, #feee7b)",
+    "--color-text-yellow": "light-dark(#413e00, #feee7b)",
     "--radius-none": "0px",
     "--radius-inner": "0.375rem",
     "--radius-element": "0.5rem",
@@ -319,14 +319,14 @@ export const butterTheme = {
         "backgroundColor": "transparent",
         "borderWidth": "1.5px",
         "borderStyle": "solid",
-        "borderColor": "light-dark(#225BFF, #FDEE8C)",
-        "color": "light-dark(#225BFF, #FDEE8C)",
+        "borderColor": "var(--color-text-accent)",
+        "color": "var(--color-text-accent)",
         ":hover": {
           "backgroundColor": "light-dark(#225BFF14, #FDEE8C14)"
         }
       },
       "variant:ghost": {
-        "color": "light-dark(#225BFF, #FDEE8C)"
+        "color": "var(--color-text-accent)"
       },
       "variant:destructive": {
         "backgroundColor": "light-dark(#ffdad3, #f4b8ae)",
@@ -340,7 +340,7 @@ export const butterTheme = {
         "paddingInline": "var(--spacing-3)"
       },
       "variant:info": {
-        "backgroundColor": "#4883fd",
+        "backgroundColor": "#2f6ae8",
         "color": "#ffffff"
       },
       "variant:neutral": {
@@ -356,34 +356,38 @@ export const butterTheme = {
         "color": "#1d1c11"
       },
       "variant:error": {
-        "backgroundColor": "#fc473b",
+        "backgroundColor": "#d42a1f",
         "color": "#ffffff"
       }
     },
     "banner": {
       "status:info": {
-        "--color-accent-muted": "#4883fd",
+        "--color-accent-muted": "#2f6ae8",
         "--color-text-primary": "#ffffff",
         "--color-text-secondary": "#ffffff",
-        "--color-accent": "#ffffff"
+        "--color-accent": "#ffffff",
+        "--color-text-accent": "#ffffff"
       },
       "status:success": {
         "--color-success-muted": "#91D143",
         "--color-text-primary": "#1d1c11",
         "--color-text-secondary": "#1d1c11",
-        "--color-success": "#1d1c11"
+        "--color-success": "#1d1c11",
+        "--color-text-accent": "#1d1c11"
       },
       "status:warning": {
         "--color-warning-muted": "#ffc502",
         "--color-text-primary": "#1d1c11",
         "--color-text-secondary": "#1d1c11",
-        "--color-warning": "#1d1c11"
+        "--color-warning": "#1d1c11",
+        "--color-text-accent": "#1d1c11"
       },
       "status:error": {
-        "--color-error-muted": "#fc473b",
+        "--color-error-muted": "#d42a1f",
         "--color-text-primary": "#ffffff",
         "--color-text-secondary": "#ffffff",
-        "--color-error": "#ffffff"
+        "--color-error": "#ffffff",
+        "--color-text-accent": "#ffffff"
       }
     },
     "card": {
@@ -470,7 +474,7 @@ export const butterTheme = {
         "backgroundColor": "#ffc502"
       },
       "variant:error": {
-        "backgroundColor": "#fc473b"
+        "backgroundColor": "#d42a1f"
       }
     },
     "field-status": {
@@ -483,7 +487,7 @@ export const butterTheme = {
         "color": "#1d1c11"
       },
       "type:error": {
-        "backgroundColor": "#fc473b",
+        "backgroundColor": "#d42a1f",
         "color": "#ffffff"
       }
     },
@@ -500,7 +504,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "text-area": {
@@ -516,7 +520,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "number-input": {
@@ -532,7 +536,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "date-input": {
@@ -548,7 +552,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "time-input": {
@@ -564,7 +568,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "selector": {
@@ -580,7 +584,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "multi-selector": {
@@ -596,7 +600,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "typeahead": {
@@ -612,7 +616,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     },
     "tokenizer": {
@@ -628,7 +632,7 @@ export const butterTheme = {
         "--color-warning": "#ffc502"
       },
       "status:error": {
-        "--color-error": "#fc473b"
+        "--color-error": "#d42a1f"
       }
     }
   },

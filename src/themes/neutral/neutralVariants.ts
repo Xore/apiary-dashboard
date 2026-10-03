@@ -65,9 +65,14 @@ function paletteTokens(p: ApiaryPalette): Tokens {
     '--color-text-accent': role(p, 'accent-text-on-soft'),
     '--color-icon-accent': role(p, 'accent'),
     '--color-on-accent': role(p, 'text-on-accent'),
+    // Single-series chart ink: the palette's accent, so a chart drawn in one
+    // hue belongs to its theme. Themes without it fall back to categorical blue.
+    '--color-data-ink': role(p, 'accent'),
 
     '--color-success': role(p, 'success'),
-    '--color-error': role(p, 'danger'),
+    // Danger as text (the destructive button's label on its soft fill) needs
+    // APIARY's on-soft step; the solid fills use statusFill, not this token.
+    '--color-error': role(p, 'danger-text-on-soft'),
     '--color-warning': role(p, 'warning'),
     '--color-success-muted': role(p, 'success-soft'),
     '--color-error-muted': role(p, 'danger-soft'),
@@ -93,6 +98,10 @@ function highContrastTokens(p: ApiaryPalette): Tokens {
     '--color-border-emphasized': role(p, 'text-100'),
     '--color-accent': [light['accent-pressed'], dark['accent-hover']],
     '--color-icon-accent': [light['accent-pressed'], dark['accent-hover']],
+    // The deeper light accent always carries white, even where the palette's
+    // own label is dark ink (neon: 3.2:1 on accent-pressed).
+    '--color-on-accent': [light['text-on-status'], dark['text-on-accent']],
+    '--color-data-ink': [light['accent-pressed'], dark['accent-hover']],
     '--color-text-accent': role(p, 'text-link-hover'),
   };
 }
