@@ -108,7 +108,10 @@ export function PageFrame({ title, description, label, tokens, actions, facts, t
         </LayoutHeader>
       }
       content={
-        <LayoutContent>
+        // The work scrolls on its own, and while it is still loading
+        // (skeletons) nothing in it takes focus: a named, focusable region
+        // lets the keyboard scroll it (WCAG 2.1.1).
+        <LayoutContent tabIndex={0} role="region" label={typeof title === 'string' ? title : 'Page content'}>
           <VStack gap={5}>
             {toolbar && <div className="apiary-phone-only">{toolbar}</div>}
             {contentWidth ? <VStack maxWidth={contentWidth}>{children}</VStack> : children}
