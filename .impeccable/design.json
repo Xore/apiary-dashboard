@@ -1,0 +1,524 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-03T16:31:25.246952+00:00",
+  "title": "Design System: APIARY Dashboard",
+  "extensions": {
+    "colorMeta": {
+      "hive-copper": {
+        "role": "primary",
+        "displayName": "Hive Copper",
+        "tonalRamp": [
+          "#341a12",
+          "#572c1f",
+          "#7a3e2c",
+          "#af593f",
+          "#c78a78",
+          "#dbb5aa",
+          "#ebd7d0",
+          "#f7eeeb"
+        ]
+      },
+      "hive-copper-night": {
+        "role": "primary",
+        "displayName": "Hive Copper Night",
+        "tonalRamp": [
+          "#41231a",
+          "#6c3b2b",
+          "#97533c",
+          "#d97757",
+          "#e49f89",
+          "#eec3b5",
+          "#f5ded6",
+          "#fbf1ee"
+        ]
+      },
+      "copper-text-on-soft": {
+        "role": "primary",
+        "displayName": "Copper on Soft",
+        "tonalRamp": [
+          "#30150c",
+          "#512315",
+          "#71311e",
+          "#a2472b",
+          "#bd7e6a",
+          "#d6aea1",
+          "#e8d2cc",
+          "#f5ece9"
+        ]
+      },
+      "copper-soft": {
+        "role": "primary",
+        "displayName": "Copper Soft"
+      },
+      "text-on-copper": {
+        "role": "neutral",
+        "displayName": "Text on Copper",
+        "tonalRamp": [
+          "#4c4b49",
+          "#7f7d7a",
+          "#b2afab",
+          "#fffaf5",
+          "#fffbf8",
+          "#fffcfa",
+          "#fffdfc",
+          "#fffefe"
+        ]
+      },
+      "ivory-ground": {
+        "role": "neutral",
+        "displayName": "Ivory Ground",
+        "tonalRamp": [
+          "#4a4948",
+          "#7b7b79",
+          "#acaca9",
+          "#f7f6f2",
+          "#f9f8f5",
+          "#fbfbf9",
+          "#fdfcfb",
+          "#fefefd"
+        ]
+      },
+      "ivory-chrome": {
+        "role": "neutral",
+        "displayName": "Ivory Chrome",
+        "tonalRamp": [
+          "#484746",
+          "#787775",
+          "#a8a7a4",
+          "#f0efeb",
+          "#f4f3f1",
+          "#f8f7f6",
+          "#fbfbfa",
+          "#fdfdfd"
+        ]
+      },
+      "ivory-card": {
+        "role": "neutral",
+        "displayName": "Ivory Card",
+        "tonalRamp": [
+          "#4b4b4a",
+          "#7d7d7b",
+          "#afafac",
+          "#fbfaf7",
+          "#fcfbf9",
+          "#fdfcfb",
+          "#fefdfd",
+          "#fefefe"
+        ]
+      },
+      "ivory-raised": {
+        "role": "neutral",
+        "displayName": "Ivory Raised",
+        "tonalRamp": [
+          "#4c4c4b",
+          "#7f7f7d",
+          "#b2b1af",
+          "#fffefa",
+          "#fffefb",
+          "#fffefc",
+          "#fffefd",
+          "#fffefe"
+        ]
+      },
+      "ivory-muted": {
+        "role": "neutral",
+        "displayName": "Ivory Muted",
+        "tonalRamp": [
+          "#494847",
+          "#7a7976",
+          "#aaa9a5",
+          "#f4f2ed",
+          "#f7f5f2",
+          "#faf9f7",
+          "#fcfbfa",
+          "#fdfdfd"
+        ]
+      },
+      "charcoal-ground": {
+        "role": "neutral",
+        "displayName": "Charcoal Ground",
+        "tonalRamp": [
+          "#090909",
+          "#10100f",
+          "#161615",
+          "#20201f",
+          "#626262",
+          "#9c9c9c",
+          "#c9c9c9",
+          "#e8e8e8"
+        ]
+      },
+      "charcoal-chrome": {
+        "role": "neutral",
+        "displayName": "Charcoal Chrome",
+        "tonalRamp": [
+          "#090908",
+          "#0f0f0e",
+          "#151513",
+          "#1e1e1c",
+          "#616160",
+          "#9c9c9b",
+          "#c9c9c8",
+          "#e8e8e8"
+        ]
+      },
+      "charcoal-card": {
+        "role": "neutral",
+        "displayName": "Charcoal Card",
+        "tonalRamp": [
+          "#0a0a0a",
+          "#121211",
+          "#191917",
+          "#242422",
+          "#656564",
+          "#9e9e9d",
+          "#cacac9",
+          "#e9e9e8"
+        ]
+      },
+      "charcoal-raised": {
+        "role": "neutral",
+        "displayName": "Charcoal Raised",
+        "tonalRamp": [
+          "#10100f",
+          "#1c1c1a",
+          "#272725",
+          "#383835",
+          "#737371",
+          "#a7a7a6",
+          "#cfcfce",
+          "#ebebea"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "#0e0c0b",
+          "#171513",
+          "#201e1b",
+          "#2f2b27",
+          "#6d6a67",
+          "#a3a19f",
+          "#cdcccb",
+          "#eae9e9"
+        ]
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "Ink Secondary",
+        "tonalRamp": [
+          "#1f1d1b",
+          "#34302d",
+          "#48433e",
+          "#68615a",
+          "#95908b",
+          "#bcb9b6",
+          "#dad9d7",
+          "#efefee"
+        ]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Ink Faint",
+        "tonalRamp": [
+          "#33312f",
+          "#55524e",
+          "#76726d",
+          "#aaa49d",
+          "#c3bfba",
+          "#d9d6d3",
+          "#eae9e7",
+          "#f6f5f5"
+        ]
+      },
+      "bone": {
+        "role": "neutral",
+        "displayName": "Bone",
+        "tonalRamp": [
+          "#454542",
+          "#74736f",
+          "#a3a19c",
+          "#e9e6df",
+          "#efede8",
+          "#f5f4f0",
+          "#f9f9f7",
+          "#fcfcfb"
+        ]
+      },
+      "bone-secondary": {
+        "role": "neutral",
+        "displayName": "Bone Secondary",
+        "tonalRamp": [
+          "#32312e",
+          "#54524e",
+          "#75726d",
+          "#a8a49c",
+          "#c2bfb9",
+          "#d8d6d3",
+          "#eae9e7",
+          "#f6f5f5"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline"
+      },
+      "moss-success": {
+        "role": "tertiary",
+        "displayName": "Moss",
+        "tonalRamp": [
+          "#12281e",
+          "#1f4332",
+          "#2c5e46",
+          "#3f8764",
+          "#78ab92",
+          "#aacaba",
+          "#d0e2d9",
+          "#ebf3ef"
+        ]
+      },
+      "ochre-warning": {
+        "role": "tertiary",
+        "displayName": "Ochre",
+        "tonalRamp": [
+          "#2e200b",
+          "#4d3512",
+          "#6c4a19",
+          "#9b6b25",
+          "#b99766",
+          "#d3bd9f",
+          "#e7dbca",
+          "#f5f0e9"
+        ]
+      },
+      "brick-danger": {
+        "role": "tertiary",
+        "displayName": "Brick",
+        "tonalRamp": [
+          "#351716",
+          "#592726",
+          "#7d3735",
+          "#b34f4c",
+          "#c98381",
+          "#ddb1b0",
+          "#ecd4d4",
+          "#f7eded"
+        ]
+      },
+      "slate-info": {
+        "role": "tertiary",
+        "displayName": "Slate",
+        "tonalRamp": [
+          "#152533",
+          "#243f55",
+          "#325876",
+          "#487eaa",
+          "#7ea4c3",
+          "#aec6d9",
+          "#d3e0ea",
+          "#ecf2f6"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Panel and section titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Table cells, descriptions, form text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Tokens, chips, captions."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Everything captured from an attacker or produced by a machine."
+      }
+    },
+    "shadows": [
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "Default: cards in a grid, inline banners, buttons, tables."
+      },
+      {
+        "name": "low",
+        "value": "var(--shadow-low)",
+        "purpose": "In-flow surfaces that need emphasis; sparingly."
+      },
+      {
+        "name": "med",
+        "value": "var(--shadow-med)",
+        "purpose": "Over nearby content: floating action buttons, popovers, menus."
+      },
+      {
+        "name": "high",
+        "value": "var(--shadow-high)",
+        "purpose": "Over the whole UI: dialogs, the command palette."
+      }
+    ],
+    "motion": [
+      {
+        "name": "--duration-fast",
+        "value": "125ms",
+        "purpose": "Hover and press feedback."
+      },
+      {
+        "name": "--duration-medium",
+        "value": "300ms",
+        "purpose": "Panels, menus and dialogs opening."
+      },
+      {
+        "name": "--duration-slow",
+        "value": "700ms",
+        "purpose": "Large layout transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "640px"
+      },
+      {
+        "name": "drawer",
+        "value": "1024px"
+      },
+      {
+        "name": "4k-step-1",
+        "value": "2560px"
+      },
+      {
+        "name": "4k-step-2",
+        "value": "3200px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one committing action on a view, in Hive Copper.",
+      "html": "<button class=\"ds-btn-primary\">Generate report</button>",
+      "css": ".ds-btn-primary { font-family: Figtree, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; display: inline-flex; align-items: center; gap: 6px; background: var(--color-accent, #af593f); color: #2f2b27; border: none; border-radius: 10px; padding: 8px 12px; height: 32px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 125ms; color: var(--color-on-accent, #fffaf5); } .ds-btn-primary:hover { background: #a34d35; } .ds-btn-primary:focus-visible { outline: 2px solid #af593f; outline-offset: 2px; } .ds-btn-primary:active { background: #93422d; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Default page action: a soft ink tint, no outline.",
+      "html": "<button class=\"ds-btn-secondary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3\"/></svg>CSV</button>",
+      "css": ".ds-btn-secondary { font-family: Figtree, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; display: inline-flex; align-items: center; gap: 6px; background: var(--color-neutral, rgba(47,43,39,0.04)); color: #2f2b27; border: none; border-radius: 10px; padding: 8px 12px; height: 32px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 125ms; } .ds-btn-secondary:hover { background: rgba(47,43,39,0.08); } .ds-btn-secondary:focus-visible { outline: 2px solid #af593f; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Toolbar and row actions; no fill until hover.",
+      "html": "<button class=\"ds-btn-ghost\">Unpin</button>",
+      "css": ".ds-btn-ghost { font-family: Figtree, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; display: inline-flex; align-items: center; gap: 6px; background: transparent; color: #2f2b27; border: none; border-radius: 10px; padding: 4px 12px; height: 28px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 125ms; } .ds-btn-ghost:hover { background: rgba(47,43,39,0.06); } .ds-btn-ghost:focus-visible { outline: 2px solid #af593f; outline-offset: 2px; }"
+    },
+    {
+      "name": "Filter Select",
+      "kind": "input",
+      "refersTo": "button-secondary",
+      "description": "Toolbar filter: hairline border, same radius as buttons.",
+      "html": "<button class=\"ds-select\">Sensor <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"m19.5 8.25-7.5 7.5-7.5-7.5\"/></svg></button>",
+      "css": ".ds-select { font-family: Figtree, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; display: inline-flex; align-items: center; justify-content: space-between; gap: 24px; min-width: 160px; background: var(--color-background-card, #fbfaf7); color: var(--color-text-secondary, #68615a); border: 1px solid var(--color-border, rgba(34,31,28,0.14)); border-radius: var(--radius-element, 10px); padding: 6px 12px; height: 32px; font-size: 14px; cursor: pointer; } .ds-select:hover { border-color: rgba(34,31,28,0.28); } .ds-select:focus-visible { outline: 2px solid #af593f; outline-offset: 2px; }"
+    },
+    {
+      "name": "Sidebar Item",
+      "kind": "nav",
+      "refersTo": "nav-item-selected",
+      "description": "Sidebar navigation; the current page takes Copper Soft.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item\" href=\"#\">Overview</a><a class=\"ds-nav-item is-current\" href=\"#\" aria-current=\"page\">Event explorer</a><a class=\"ds-nav-item\" href=\"#\">Attack sources</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 2px; width: 220px; background: var(--color-background-body, #f0efeb); padding: 8px; border-radius: var(--radius-container, 12px); } .ds-nav-item { font-family: Figtree, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; display: flex; align-items: center; height: 32px; padding: 0 8px; border-radius: var(--radius-element, 10px); color: var(--color-text-primary, #2f2b27); font-size: 14px; font-weight: 500; text-decoration: none; } .ds-nav-item:hover { background: rgba(47,43,39,0.06); } .ds-nav-item.is-current { background: var(--color-accent-muted, rgba(199,101,72,0.12)); color: var(--color-text-accent, #a2472b); } .ds-nav-item:focus-visible { outline: 2px solid var(--color-accent, #af593f); outline-offset: -2px; }"
+    },
+    {
+      "name": "Severity Tokens",
+      "kind": "chip",
+      "refersTo": "token",
+      "description": "Status tints carry severity only.",
+      "html": "<span class=\"ds-token ds-info\">info</span> <span class=\"ds-token ds-low\">low</span> <span class=\"ds-token ds-medium\">medium</span> <span class=\"ds-token ds-high\">high</span>",
+      "css": ".ds-token { font-family: Figtree, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--radius-inner, 6px); font-size: 12px; font-weight: 500; } .ds-info { background: rgba(47,43,39,0.08); color: #4a453f; } .ds-low { background: rgba(72,126,170,0.18); color: #335a7a; } .ds-medium { background: rgba(155,107,37,0.19); color: #734d1b; } .ds-high { background: rgba(179,79,76,0.2); color: #8b3b3a; }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Card widget (KPI tile, chart): flat, hairline border, elevation none.",
+      "html": "<section class=\"ds-card\"><h3>Activity, last 24h</h3><p>Events per sensor and hour.</p></section>",
+      "css": ".ds-card { font-family: Figtree, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; background: var(--color-background-card, #fbfaf7); color: var(--color-text-primary, #2f2b27); border: 1px solid var(--color-border, rgba(34,31,28,0.14)); border-radius: var(--radius-container, 12px); padding: 12px; max-width: 360px; } .ds-card h3 { margin: 0 0 8px; font-size: 20px; font-weight: 600; line-height: 1.4; } .ds-card p { margin: 0; font-size: 14px; color: var(--color-text-secondary, #68615a); }"
+    },
+    {
+      "name": "Evidence Row",
+      "kind": "custom",
+      "refersTo": "table-cell",
+      "description": "Table row: product text in Figtree, captured evidence in monospace.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Time</th><th>Source</th><th>Detail</th></tr></thead><tbody><tr><td>14:02</td><td><a href=\"#\">198.51.100.13</a></td><td class=\"ds-mono\">Failed login root/123456</td></tr></tbody></table>",
+      "css": ".ds-table { font-family: Figtree, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; border-collapse: collapse; font-size: 14px; color: var(--color-text-primary, #2f2b27); background: var(--color-background-surface, #f7f6f2); } .ds-table th { text-align: left; font-weight: 600; color: var(--color-text-secondary, #68615a); padding: 8px 12px; border-bottom: 1px solid var(--color-border, rgba(34,31,28,0.14)); } .ds-table td { padding: 8px 12px; border-bottom: 1px solid rgba(34,31,28,0.07); } .ds-table tr:hover td { background: rgba(47,43,39,0.03); } .ds-table a { color: var(--color-text-accent, #a2472b); text-decoration: none; } .ds-table a:hover { text-decoration: underline; } .ds-mono { font-family: ui-monospace, \"SF Mono\", Consolas, monospace; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Apiary",
+    "overview": "A hive is calm on the outside and busy within. The dashboard is the same: warm ivory and charcoal surroundings, hairline structure, and one copper voice, so that the thing that matters (an attacker's session, a payload, a failing sensor) is what draws the eye. Analysts sit in it for whole shifts; the frame stays low-fatigue so their attention goes to the evidence.\n\nIt is warm and crafted rather than clinical, and all of that warmth lives in the theme, not in the pages: APIARY's palettes (imported from `Xore/theme` into the neutral Astryx theme family), Figtree, and Astryx's own component anatomy. Pages stay theme-agnostic, so every palette, dark mode and high contrast work everywhere at once. Density is high where the work is (tables, timelines, raw records) and the chrome around it stays out of the way.\n\nIt is never hacker-movie neon, never a generic blue admin template, and never a wall of alarm: severity color appears only where it means something.",
+    "keyCharacteristics": [
+      "Warm ivory (light) and charcoal (dark) grounds; the chrome sits one step darker than the page.",
+      "One accent, Hive Copper (`--color-accent`), for action and \"you are here\"; status tokens only for status.",
+      "Flat by default, as Astryx prescribes: elevation encodes stacking, not decoration.",
+      "Astryx components for everything they cover; tokens for every value; no hand-rolled CSS.",
+      "Every palette in Settings is a whole theme; the values above are the default (Claude) palette."
+    ],
+    "rules": [
+      {
+        "name": "The One Voice Rule",
+        "body": "Copper (`--color-accent`) is the only accent. It marks action and location; it is never decoration, never a chart series, never a severity.",
+        "section": "colors"
+      },
+      {
+        "name": "The Earned Red Rule",
+        "body": "Error color appears only on a severity, a failed state or a destructive action. A page full of red means the page is wrong, not the fleet.",
+        "section": "colors"
+      },
+      {
+        "name": "The Theme Owns Color Rule",
+        "body": "A palette is a whole theme member in `src/themes/`, changing every role at once. Pages and components never name a color; no hex, no `:root` override, no re-tinting only the accent.",
+        "section": "colors"
+      },
+      {
+        "name": "The Evidence Is Mono Rule",
+        "body": "Anything captured from an attacker or produced by a machine (commands, credentials, hashes, JSON, decompiled code) is set as code (`Text type=\"code\"` or `CodeBlock`, wrapped); product copy never is.",
+        "section": "typography"
+      },
+      {
+        "name": "The Stacking Not Decoration Rule",
+        "body": "If a surface does not overlap anything it is `none` (or `low` for emphasis), never `med` or `high`; one level per surface, and borders come from `--color-border`, not shadows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** read `bunx astryx docs layout` and the component docs before building a page; start from `bunx astryx build \"<idea>\"`.",
+      "**Do** reach every value through a component prop, a semantic token or a token-backed utility.",
+      "**Do** keep copper to action and location; let status tokens speak for status.",
+      "**Do** render collections as Table or List rows, and use Section before Card.",
+      "**Do** set every attacker- or machine-produced value as code.",
+      "**Do** add a palette as a theme member and check its text on its own tints stays at 4.5:1."
+    ],
+    "donts": [
+      "**Don't** write hex colors, raw px spacing, hand-written shadows, `style={{…}}` or raw `<div>` layout in app code.",
+      "**Don't** override `--color-*` in `:root` or tint components locally; color belongs to the theme.",
+      "**Don't** wrap rows or page sections in Cards, or nest Cards.",
+      "**Don't** elevate a surface that does not sit above other content.",
+      "**Don't** use Badge for status, or the disabled text color for content.",
+      "**Don't** use hacker-movie neon, a generic blue admin-template look, or a wall of red."
+    ]
+  }
+}

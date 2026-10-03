@@ -11,3 +11,6 @@ dist-ssr
 .vinxi
 __unconfig*
 todos.json
+
+# Design studio build output (bun run studio)
+design-studio/index.html

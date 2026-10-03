@@ -25,6 +25,10 @@ SERVICE_TOKEN=… bun run start   # Bun production server (server.ts)
 bun run smoke        # clean clone → install → every gate → start → HTTP and browser checks
 ```
 
+### Design studio
+
+`bun run studio` builds `design-studio/index.html`: every Astryx component the dashboard uses, rendered with the real themes (palette, light/dark and contrast switch in its toolbar), in one self-contained file that opens from disk. Each component lists variants: **A** is the current decision recorded in `DESIGN.md`; add **B**, **C**… in `design-studio/specimens.tsx` to compare alternatives side by side. `PRODUCT.md` and `DESIGN.md` hold the product and visual decisions; Astryx's own guidelines (`AGENTS.md`, `bunx astryx docs`) come first.
+
 ### CI and the container image
 
 GitHub Actions, on GitHub-hosted runners:
