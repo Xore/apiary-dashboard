@@ -352,6 +352,7 @@ export async function getAuthEvents(): Promise<AuthEventsData> {
 const KIND_TYPES: Record<EventKind, EventType[]> = {
   connection: ['connection'],
   login: ['login.failed', 'login.success'],
+  'login-success': ['login.success'],
   command: ['command.input'],
   download: ['file.download'],
   http: ['http.request'],
@@ -685,7 +686,7 @@ export async function getFacets(): Promise<Facets> {
     protocols: facet(EVENTS.map((e) => e.protocol)),
     ports: facet(EVENTS.map((e) => String(e.dstPort))),
     signatures: facet(EVENTS.filter((e) => e.type === 'ids.alert').map((e) => e.summary)),
-    kinds: (Object.keys(KIND_TYPES) as EventKind[]).map((kind) => ({ value: kind, count: EVENTS.filter((e) => KIND_TYPES[kind].includes(e.type)).length })),
+    kinds: (Object.keys(KIND_TYPES) as EventKind[]).map((kind) => ({ value: kind, ...(kind === 'login-success' ? { label: 'login (successful)' } : {}), count: EVENTS.filter((e) => KIND_TYPES[kind].includes(e.type)).length })),
     personas: facet(EVENTS.flatMap((e) => (e.persona ? [e.persona] : []))),
     providers: facet(EVENTS.map((e) => e.provider)),
     cities: facet(EVENTS.flatMap((e) => (e.city ? [e.city] : []))),

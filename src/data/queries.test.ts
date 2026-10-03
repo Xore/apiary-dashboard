@@ -236,6 +236,10 @@ describe('filters and search', () => {
   it('filters events by kind, port, and time window', async () => {
     const logins = await q.getEvents({ kind: 'login' })
     expect(logins.rows.every((e) => e.type === 'login.failed' || e.type === 'login.success')).toBe(true)
+    // The Overview's "Successful logins" tile opens exactly its number.
+    const [overview, accepted] = await Promise.all([q.getOverview(), q.getEvents({ kind: 'login-success' })])
+    expect(accepted.rows.every((e) => e.type === 'login.success')).toBe(true)
+    expect(accepted.total).toBe(overview.kpis.find((k) => k.id === 'logins')?.value)
     const ssh = await q.getEvents({ port: '22' })
     expect(ssh.rows.every((e) => e.dstPort === 22)).toBe(true)
     const all = await q.getEvents({})

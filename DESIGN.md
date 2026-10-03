@@ -205,7 +205,9 @@ Refined and restrained, through `Button` / `IconButton` variants only.
 - **Secondary:** the soft neutral fill; the default for page actions (CSV, JSON, Payload report, Operator actions).
 - **Ghost:** no fill until hover; toolbar and row actions, icon-only in table rows.
 - **Destructive:** in confirm dialogs only (Discard, Delete).
-- **Links that are actions** use `ActionLink` (looks like a button); links that are data stay `Link` (see `AGENTS.md`).
+- **Buttons act, links go** (Astryx: "don't use a button for navigation"). A Button changes something (Unblock, Acknowledge, Save) or starts a task (New definition, Generate a report). A link that only opens another page is `ActionLink`, an Astryx standalone `Link` in accent; links that are data stay inline `Link` (see `AGENTS.md`).
+- **Clickable tiles are raised.** A `StatTile` with `href` is a `ClickableCard` at `elevation="low"`, Astryx's cue that the whole card opens something; a tile that opens nothing stays flat.
+- **Code inside a link takes the link's color** (`color="inherit"` on the code text), so a hash or session ID that opens a page reads as a link.
 
 ### Status: Tokens and StatusDots
 - **Token** for severities, verdicts and labels, colored by the categorical palette; **StatusDot** for live state (feeds, services). **Badge** only for counts (the alert bell, tab counts).

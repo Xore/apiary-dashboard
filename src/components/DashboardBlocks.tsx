@@ -105,7 +105,8 @@ export function StatTile({ label, value, previous, caption, trend, href }: StatT
       {trend && <Sparkline data={trend} />}
     </VStack>
   )
-  return href ? <ClickableCard href={href} label={`${label}: ${formatNumber(value)}`}>{body}</ClickableCard> : <Card>{body}</Card>
+  // Raised: Astryx's cue that the whole card opens something; plain tiles stay flat.
+  return href ? <ClickableCard href={href} label={`${label}: ${formatNumber(value)}`} elevation="low">{body}</ClickableCard> : <Card>{body}</Card>
 }
 
 /** Two-column "value, count" table for top-N breakdowns. */

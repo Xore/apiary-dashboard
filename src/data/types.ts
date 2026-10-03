@@ -302,7 +302,7 @@ export interface AuthEventsData {
 
 // ---- Investigate -----------------------------------------------------------
 
-export type EventKind = 'connection' | 'login' | 'command' | 'download' | 'http' | 'protocol' | 'alert'
+export type EventKind = 'connection' | 'login' | 'login-success' | 'command' | 'download' | 'http' | 'protocol' | 'alert'
 
 /** Each filter is a comma list (?sensor=a,b) and matches any of its values. */
 export interface EventFilters {

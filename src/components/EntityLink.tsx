@@ -25,7 +25,7 @@ export function EntityLink({ kind, id, children }: EntityLinkProps) {
   // A hash or fingerprint breaks anywhere instead of pushing the page wider
   // (a phone has no room for 64 hex digits); past three lines it truncates,
   // whole on hover, and the menu copies it.
-  const label = children ?? (def.isCode ? <Text type="code" maxLines={3} wordBreak="break-all">{id}</Text> : id)
+  const label = children ?? (def.isCode ? <Text type="code" color="inherit" maxLines={3} wordBreak="break-all">{id}</Text> : id)
 
   const items = [
     ...(href ? [{ label: `Open ${def.noun}`, onClick: () => void navigate({ href }) }] : []),
