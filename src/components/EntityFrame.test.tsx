@@ -117,6 +117,9 @@ describe('EntityFrame', () => {
     expect(await screen.findByText('2 of 3')).toBeTruthy()
     // The way back is the trail's parent crumb: the list, with its filters.
     expect(screen.getByRole('link', { name: 'Things' }).getAttribute('href')).toBe('/things')
+    // The steppers are links to the neighbours, so they open in a new tab too.
+    expect(screen.getByRole('link', { name: 'Previous (K)' }).getAttribute('href')).toBe('/things/a/detail')
+    expect(screen.getByRole('link', { name: 'Next (J)' }).getAttribute('href')).toBe('/things/c/detail')
     await act(async () => {
       await userEvent.keyboard('j')
     })

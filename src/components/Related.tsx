@@ -80,7 +80,8 @@ function RelationGraph({ center, groups }: { center: string; groups: RelatedGrou
               <a
                 href={href}
                 onClick={(event) => {
-                  if (!href) return
+                  // Modified clicks open a tab the browser's way.
+                  if (!href || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
                   event.preventDefault()
                   void navigate({ href })
                 }}

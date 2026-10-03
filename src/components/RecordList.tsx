@@ -8,6 +8,7 @@ import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { Table } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
+import { Link } from '@astryxdesign/core/Link'
 import { InboxIcon } from '@heroicons/react/24/outline'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { formatNumber } from '#/lib/format'
@@ -35,6 +36,9 @@ type RecordListProps<T extends Record<string, unknown>> = {
   getId: (row: T) => string
   /** The row's entity page: a row opens it (epic #25). */
   getHref: (row: T) => string
+  /** The column whose cell is the row's link (the first by default); false
+   * where that cell already holds links of its own. */
+  linkColumn?: string | false
   emptyState: { title: string; description: string }
   pageSize?: number
   /** Server-paged: `rows` is one page of `total` matches, starting at
@@ -55,6 +59,7 @@ export function RecordList<T extends Record<string, unknown>>({
   columns,
   getId,
   getHref,
+  linkColumn,
   emptyState,
   pageSize: pageSizeProp,
   paging,
@@ -88,22 +93,50 @@ export function RecordList<T extends Record<string, unknown>>({
   useEffect(() => {
     if (pastTheEnd) void navigate({ to: '.', search: ((prev: Record<string, unknown>) => ({ ...prev, page: pageCount > 1 ? pageCount : undefined })) as never, replace: true })
   }, [pastTheEnd, pageCount, navigate])
+  // A new tab (or a copied link) starts without router state, so a row's
+  // address carries the app-wide range.
+  const range = new URLSearchParams(location.searchStr).get('range')
+  const addressOf = (row: T) => {
+    const href = getHref(row)
+    return range ? `${href}${href.includes('?') ? '&' : '?'}range=${range}` : href
+  }
   const openRow = (row: T, { newTab: modified }: { newTab: boolean }) => {
     const href = getHref(row)
     // With "open detail pages in a new tab", a plain click opens one and a
     // modified click stays here: the modifier always means "the other way".
     const newTab = prefs?.openDetailsInNewTab ? !modified : modified
     if (newTab) {
-      // A new tab starts without router state, so carry the app-wide range.
-      const range = new URLSearchParams(location.searchStr).get('range')
-      window.open(range ? `${href}${href.includes('?') ? '&' : '?'}range=${range}` : href, '_blank', 'noopener')
+      window.open(addressOf(row), '_blank', 'noopener')
       return
     }
     // Prev/next steps through the rows at hand: the whole list, or this page.
     saveListContext({ listHref, listTitle: title, hrefs: (rows ?? []).map(getHref) })
     void navigate({ href })
   }
-  const activation = useRowActivation<T>({ onActivate: openRow })
+  // The link cell is the row's real link: the keyboard, a screen reader,
+  // middle-click and "copy link" all reach the entity through it. A plain
+  // click on it, or anywhere on the row, still opens the row the app's way.
+  const linkKey = linkColumn === false ? undefined : (linkColumn ?? columns[0]?.key)
+  const linkedColumns = columns.map((column) =>
+    column.key !== linkKey
+      ? column
+      : {
+          ...column,
+          renderCell: (row: T) => (
+            <Link
+              href={addressOf(row)}
+              onClick={(event) => {
+                if (event.button !== 0 || event.shiftKey || event.altKey) return
+                event.preventDefault()
+                openRow(row, { newTab: event.metaKey || event.ctrlKey })
+              }}
+            >
+              {column.renderCell ? column.renderCell(row) : String(row[column.key] ?? '')}
+            </Link>
+          ),
+        },
+  )
+  const activation = useRowActivation<T>({ onActivate: openRow, focusable: linkKey === undefined })
 
   // Every hook runs before this: the same list goes from skeleton to rows
   // (after hydration, or leaving the "Loading forever" mock scenario).
@@ -137,7 +170,7 @@ export function RecordList<T extends Record<string, unknown>>({
                 </Text>
                 <Table
                   data={visible}
-                  columns={columns}
+                  columns={linkedColumns}
                   idKey={getId}
                   density={tableDensity(prefs)}
                   textOverflow={prefs?.wrapLongValues ? 'wrap' : 'truncate'}

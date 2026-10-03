@@ -39,6 +39,23 @@ function classify(raw: string): Shape {
   return { kind: 'provider', value }
 }
 
+/** A value's page when its shape alone decides it; a hash needs a lookup. */
+function hrefOf(shape: Shape): string | undefined {
+  switch (shape.kind) {
+    case 'ip':
+      return `/sources/${encodeURIComponent(shape.value)}`
+    case 'cidr':
+      return `/networks/${encodeURIComponent(shape.value)}`
+    case 'asn':
+    case 'provider':
+      return clusterHref(shape.kind, shape.value)
+    case 'hash':
+      return undefined
+    default:
+      return `/ioc/${shape.kind}/${encodeURIComponent(shape.value)}`
+  }
+}
+
 /** Paste any value and jump to its page: IPs, networks, ASNs, providers,
  * payload hashes, fingerprints, CVEs, URLs, domains and credential pairs,
  * recognised by shape. */
@@ -54,19 +71,9 @@ export function IocLookup({ examples }: { examples: string[] }) {
     if (!raw.trim() || status === 'busy') return
     const shape = classify(raw)
     setStatus('busy')
+    const href = hrefOf(shape)
+    if (href) return go(href)
     switch (shape.kind) {
-      case 'ip':
-        return go(`/sources/${encodeURIComponent(shape.value)}`)
-      case 'cidr':
-        return go(`/networks/${encodeURIComponent(shape.value)}`)
-      case 'asn':
-      case 'provider':
-        return go(clusterHref(shape.kind, shape.value))
-      case 'cve':
-      case 'url':
-      case 'domain':
-      case 'credential':
-        return go(`/ioc/${shape.kind}/${encodeURIComponent(shape.value)}`)
       case 'hash': {
         const target = await resolveHash(shape.value)
         if (target.kind === 'payload') return go(`/payloads/${target.value}`)
@@ -105,10 +112,17 @@ export function IocLookup({ examples }: { examples: string[] }) {
                 key={example}
                 size="sm"
                 label={example.length > 28 ? `${example.slice(0, 27)}…` : example}
-                onClick={() => {
-                  setValue(example)
-                  void submit(example)
-                }}
+                // An example whose page is known is a link to it; a hash
+                // still runs the lookup.
+                href={hrefOf(classify(example))}
+                onClick={
+                  hrefOf(classify(example))
+                    ? undefined
+                    : () => {
+                        setValue(example)
+                        void submit(example)
+                      }
+                }
               />
             ))}
           </HStack>

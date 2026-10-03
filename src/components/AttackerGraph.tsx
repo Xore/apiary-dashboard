@@ -50,24 +50,27 @@ export function AttackerGraph({ id, ips, membersHref }: { id: string; ips: strin
           const { x, y, lx, ly, anchor } = position(i)
           const active = hover === spoke.key
           return (
-            <g
+            // A real link: middle-click, ⌘-click and "copy link" work; a plain
+            // click stays in the app.
+            <a
               key={spoke.key}
-              role="link"
-              tabIndex={0}
+              href={spoke.href}
               aria-label={spoke.overflow ? `${spoke.label} members` : `Source ${spoke.label}`}
-              style={{ cursor: 'pointer' }}
               onMouseEnter={() => setHover(spoke.key)}
               onMouseLeave={() => setHover(undefined)}
               onFocus={() => setHover(spoke.key)}
               onBlur={() => setHover(undefined)}
-              onClick={() => void navigate({ href: spoke.href })}
-              onKeyDown={(e) => e.key === 'Enter' && void navigate({ href: spoke.href })}
+              onClick={(event) => {
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+                event.preventDefault()
+                void navigate({ href: spoke.href })
+              }}
             >
               <circle cx={x} cy={y} r={spoke.overflow ? 16 : 9} fill={spoke.overflow ? 'var(--color-background-muted)' : 'var(--color-data-categorical-blue)'} stroke={active ? 'var(--color-text-primary)' : 'var(--color-background-card)'} strokeWidth={2} />
               <text x={lx} y={ly} textAnchor={anchor} fontSize={active ? 12 : 10} fontWeight={active ? 600 : 400} fill={active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'} style={{ fontFamily: 'var(--font-family-code, monospace)' }}>
                 {spoke.label}
               </text>
-            </g>
+            </a>
           )
         })}
         <circle cx={CX} cy={CY} r={30} fill="var(--color-text-primary)" />

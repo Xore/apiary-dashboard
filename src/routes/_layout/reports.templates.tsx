@@ -6,7 +6,7 @@ import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { getReports } from '#/data/queries'
 import type { ReportTemplate } from '#/data/types'
@@ -25,7 +25,6 @@ type Row = ReportTemplate & Record<string, unknown>
 /** The starting points: what each template includes, and a way to use it. */
 function TemplatesPage() {
   const data = orPending(Route.useLoaderData())
-  const navigate = useNavigate()
   const label = (id: string) => data?.elements.find((e) => e.id === id)?.label ?? id
   const inUse = (id: string) => data?.definitions.filter((d) => d.template === id).length ?? 0
   const use = (id: string) => `/reports/generate?template=${id}`
@@ -46,7 +45,7 @@ function TemplatesPage() {
       ),
     },
     { key: 'id', header: 'Definitions', width: pixel(104), align: 'end', renderCell: (row) => inUse(row.id) },
-    { key: 'use', header: '', width: pixel(128), renderCell: (row) => <Button label="Use template" size="sm" variant="secondary" onClick={() => void navigate({ href: use(row.id) })} /> },
+    { key: 'use', header: '', width: pixel(128), renderCell: (row) => <Button label="Use template" size="sm" variant="secondary" href={use(row.id)} /> },
   ]
 
   return (
