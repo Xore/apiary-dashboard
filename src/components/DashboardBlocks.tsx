@@ -54,6 +54,22 @@ type StatTileProps = {
   href?: string
 }
 
+/** A loading tile's lines at the loaded tile's line heights (label 20,
+ * number 29, caption 20, sparkline 36 px), so nothing moves when the data
+ * arrives. */
+function TileSkeletonLines({ caption, trend }: { caption: boolean; trend: boolean }) {
+  return (
+    <>
+      <Skeleton width={72} height={29} />
+      {caption && <Skeleton width="60%" height={20} />}
+      {trend && <Skeleton width="100%" height={36} />}
+    </>
+  )
+}
+
+/** No change, or one too small to show at one decimal (+0.0 %). */
+const isFlat = (value: number, previous: number) => (previous === 0 ? value === 0 : Math.abs((value - previous) / previous) < 0.0005)
+
 /** Headline number tile. */
 export function StatTile({ label, value, previous, caption, trend, href }: StatTileProps) {
   if (value === undefined)
@@ -63,8 +79,7 @@ export function StatTile({ label, value, previous, caption, trend, href }: StatT
           <Text type="label" color="secondary">
             {label}
           </Text>
-          <Skeleton width={72} height={28} />
-          {caption !== undefined && <Skeleton width="60%" height={12} />}
+          <TileSkeletonLines caption={caption !== undefined} trend={trend !== undefined} />
         </VStack>
       </Card>
     )
@@ -75,12 +90,16 @@ export function StatTile({ label, value, previous, caption, trend, href }: StatT
       </Text>
       <HStack gap={2} vAlign="center">
         <Text size="xl" weight="semibold">{formatCompact(value)}</Text>
-        {previous !== undefined && (
-          <HStack gap={1} vAlign="center">
-            <Icon icon={value >= previous ? ArrowUpIcon : ArrowDownIcon} size="xsm" color="secondary" />
-            <Text type="supporting">{formatChange(value, previous)}</Text>
-          </HStack>
-        )}
+        {previous !== undefined &&
+          (isFlat(value, previous) ? (
+            // An arrow on no change reads as a rise.
+            <Text type="supporting">no change</Text>
+          ) : (
+            <HStack gap={1} vAlign="center">
+              <Icon icon={value > previous ? ArrowUpIcon : ArrowDownIcon} size="xsm" color="secondary" />
+              <Text type="supporting">{formatChange(value, previous)}</Text>
+            </HStack>
+          ))}
       </HStack>
       {caption && <Text type="supporting">{caption}</Text>}
       {trend && <Sparkline data={trend} />}
@@ -148,8 +167,8 @@ export function SkeletonTiles({ count }: { count: number }) {
       {Array.from({ length: count }, (_, i) => (
         <Card key={i} aria-busy>
           <VStack gap={2}>
-            <Skeleton width="50%" height={14} />
-            <Skeleton width={72} height={28} />
+            <Skeleton width="50%" height={20} />
+            <TileSkeletonLines caption trend />
           </VStack>
         </Card>
       ))}

@@ -77,9 +77,10 @@ const ipLink = (ip: string) => `/sources/${ip}`
 const eventColumns: TableColumn<HoneypotEvent>[] = [
   { key: 'timestamp', header: <ZoneHeader label="Time" />, width: pixel(128), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
   { key: 'severity', header: 'Severity', width: pixel(96), renderCell: (row) => <SeverityToken severity={row.severity} /> },
-  { key: 'sensor', header: 'Sensor', width: pixel(140) },
-  { key: 'srcIp', header: 'Source', width: pixel(150), renderCell: (row) => <HStack gap={1.5} vAlign="center"><Link href={ipLink(row.srcIp)}>{row.srcIp}</Link><Text type="supporting">{row.country}</Text></HStack> },
-  { key: 'dstPort', header: 'Port', width: pixel(96), renderCell: (row) => `${row.dstPort}/${row.protocol}` },
+  { key: 'sensor', header: 'Sensor', width: pixel(170) },
+  { key: 'srcIp', header: 'Source', width: pixel(152), renderCell: (row) => <HStack gap={1.5} vAlign="center"><Link href={ipLink(row.srcIp)}>{row.srcIp}</Link><Text type="supporting">{row.country}</Text></HStack> },
+  // The Event explorer's widths, so the same rows read the same.
+  { key: 'dstPort', header: 'Port', width: pixel(120), renderCell: (row) => `${row.dstPort}/${row.protocol}` },
   { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <EntityLink kind="event" id={row.id}><Text type="code">{row.summary}</Text></EntityLink> },
 ]
 
@@ -212,7 +213,7 @@ function ThreatsView({ views, section }: { views: OverviewViews; section?: strin
       )}
       {current === 'traffic' && (
         <VStack gap={4}>
-          <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
+          <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
             <Panel title="Traffic volume, bytes/hour, last 7 days">
               <SeriesLines data={views.netflowBytes} series={[{ key: 'bytes', label: 'Bytes' }]} format={formatBytes} dayTicks />
             </Panel>
@@ -253,7 +254,7 @@ const DECOY_BARS: Array<[string, keyof OverviewViews]> = [
 
 function Bars({ views, bars }: { views: OverviewViews; bars: Array<[string, keyof OverviewViews]> }) {
   return (
-    <Grid columns={{ minWidth: 520, repeat: 'fit' }} gap={4}>
+    <Grid columns={{ minWidth: 320, max: 2, repeat: 'fit' }} gap={4}>
       {bars.map(([title, key]) => (
         <Panel key={key} title={title}>
           <RankBars rows={views[key] as OverviewViews['cves']} />
@@ -268,7 +269,7 @@ function BehaviorView({ views, section }: { views: OverviewViews; section?: stri
   return (
     <VStack gap={4}>
       {current === 'input' && (
-        <Grid columns={{ minWidth: 340, repeat: 'fit' }} gap={4}>
+        <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
           <MiniTable title="Top credentials (user / pass)" header="Pair" rows={views.credentials} isCode />
           <MiniTable title="Top commands" header="Command" rows={views.commands} isCode />
           <MiniTable title="Top HTTP paths" header="Path" rows={views.paths} isCode />
@@ -316,7 +317,7 @@ const campaignColumns: TableColumn<NetworkCampaign>[] = [
 function EvidenceView({ views }: { views: OverviewViews }) {
   return (
     <VStack gap={4}>
-      <Grid columns={{ minWidth: 420, repeat: 'fit' }} gap={4}>
+      <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
         <MiniTable title="Suricata alerts" header="Signature" rows={views.alerts} linkTo={(sig) => `/history?q=${encodeURIComponent(sig)}`} />
         <MiniTable title="Alert categories" header="Category" rows={views.alertCategories} />
       </Grid>
