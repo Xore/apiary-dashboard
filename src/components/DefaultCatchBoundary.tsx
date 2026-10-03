@@ -11,6 +11,7 @@ import type { ComponentType, SVGProps } from 'react'
 import { asApiError } from '#/data/errors'
 import type { ApiErrorKind } from '#/data/errors'
 import { PageFrame } from './PageFrame'
+import { pageFor } from '#/lib/nav'
 
 type Reading = { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string; description: string }
 
@@ -36,8 +37,10 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
   // Through sign-in and back to this page.
   const href = useLocation({ select: (l) => l.href })
   const signIn = () => void navigate({ to: '/auth/login', search: { return_to: href } })
+  // The page keeps its name; what went wrong is the content.
+  const pathname = useLocation({ select: (l) => l.pathname })
   return (
-    <PageFrame title={reading.title}>
+    <PageFrame title={pageFor(pathname)}>
       <VStack gap={4}>
         <EmptyState
           icon={<Icon icon={reading.icon} size="lg" />}

@@ -315,6 +315,41 @@ export const neutralTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
     "button": {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
@@ -866,6 +901,41 @@ export const neutralAmberTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      }
+    },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
       }
     },
     "button": {
@@ -1434,6 +1504,41 @@ export const neutralAmberHcTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
     "button": {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
@@ -1998,6 +2103,41 @@ export const neutralClaudeTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      }
+    },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
       }
     },
     "button": {
@@ -2566,6 +2706,41 @@ export const neutralClaudeHcTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
     "button": {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
@@ -3130,6 +3305,41 @@ export const neutralLavenderTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      }
+    },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
       }
     },
     "button": {
@@ -3698,6 +3908,41 @@ export const neutralLavenderHcTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
     "button": {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
@@ -4262,6 +4507,41 @@ export const neutralLimeTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      }
+    },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
       }
     },
     "button": {
@@ -4830,6 +5110,41 @@ export const neutralLimeHcTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
     "button": {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
@@ -5394,6 +5709,41 @@ export const neutralNeonTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      }
+    },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
       }
     },
     "button": {
@@ -5962,6 +6312,41 @@ export const neutralNeonHcTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
     "button": {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
@@ -6526,6 +6911,41 @@ export const neutralOceanTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      }
+    },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
       }
     },
     "button": {
@@ -7094,6 +7514,41 @@ export const neutralOceanHcTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
     "button": {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
@@ -7658,6 +8113,41 @@ export const neutralRoseTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      }
+    },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
       }
     },
     "button": {
@@ -8226,6 +8716,41 @@ export const neutralRoseHcTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
     "button": {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
@@ -8790,6 +9315,41 @@ export const neutralSageTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      }
+    },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
       }
     },
     "button": {
@@ -9358,6 +9918,41 @@ export const neutralSageHcTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
     "button": {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
@@ -9924,6 +10519,41 @@ export const neutralSlateTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
     "button": {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
@@ -10488,6 +11118,41 @@ export const neutralSlateHcTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      }
+    },
+    "selector": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "text-area": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
+      }
+    },
+    "typeahead": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "inset 0 0 0 2px var(--color-accent)"
+        }
       }
     },
     "button": {

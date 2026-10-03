@@ -3006,6 +3006,36 @@ html[data-theme="dark"]:where(:not([data-astryx-theme])):has(:where([data-astryx
 }
 
 @scope (:where([data-astryx-theme="neutral"], [data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
+  .astryx-selector:focus-within {
+    box-shadow: inset 0 0 0 2px var(--color-accent);
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral"], [data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
+  .astryx-text-input:focus-within {
+    box-shadow: inset 0 0 0 2px var(--color-accent);
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral"], [data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
+  .astryx-number-input:focus-within {
+    box-shadow: inset 0 0 0 2px var(--color-accent);
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral"], [data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
+  .astryx-text-area:focus-within {
+    box-shadow: inset 0 0 0 2px var(--color-accent);
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral"], [data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
+  .astryx-typeahead:focus-within {
+    box-shadow: inset 0 0 0 2px var(--color-accent);
+  }
+}
+
+@scope (:where([data-astryx-theme="neutral"], [data-astryx-theme="neutral-amber"], [data-astryx-theme="neutral-amber-hc"], [data-astryx-theme="neutral-claude"], [data-astryx-theme="neutral-claude-hc"], [data-astryx-theme="neutral-lavender"], [data-astryx-theme="neutral-lavender-hc"], [data-astryx-theme="neutral-lime"], [data-astryx-theme="neutral-lime-hc"], [data-astryx-theme="neutral-neon"], [data-astryx-theme="neutral-neon-hc"], [data-astryx-theme="neutral-ocean"], [data-astryx-theme="neutral-ocean-hc"], [data-astryx-theme="neutral-rose"], [data-astryx-theme="neutral-rose-hc"], [data-astryx-theme="neutral-sage"], [data-astryx-theme="neutral-sage-hc"], [data-astryx-theme="neutral-slate"], [data-astryx-theme="neutral-slate-hc"])) to ([data-astryx-theme]) {
   .astryx-button[data-variant="destructive"] {
     background-color: var(--color-error-muted);
     color: var(--color-error);

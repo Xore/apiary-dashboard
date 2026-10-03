@@ -96,16 +96,15 @@ describe('ShellAppShell', () => {
     }
   })
 
-  it('marks the parent nav item and breadcrumbs for a drill-down route', async () => {
+  it('marks the parent nav item for a drill-down route', async () => {
     renderShell('/events/evt-123')
     await screen.findByText('event detail content')
     const sidebar = screen.getByRole('navigation', { name: 'Side navigation' })
     const active = within(sidebar).getByRole('link', { name: 'Event explorer' })
     expect(active.getAttribute('aria-current')).toBe('page')
-    const crumbs = screen.getByRole('navigation', { name: 'Current page' })
-    expect(crumbs.textContent).toContain('Activity')
-    expect(crumbs.textContent).toContain('Event explorer')
-    expect(crumbs.textContent).toMatch(/Event explorer.*Event$/)
+    // Where the page sits is its own header's trail now (PageFrame), not
+    // the top bar's.
+    expect(screen.queryByRole('navigation', { name: 'Current page' })).toBeNull()
   })
 
   it('shows the signed-in user in the account menu', async () => {

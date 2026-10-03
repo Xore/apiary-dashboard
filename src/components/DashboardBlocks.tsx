@@ -1,5 +1,6 @@
 import { SkeletonTable } from './SkeletonTable'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { useContext } from 'react'
 import type { ReactNode } from 'react'
 import { Card } from '@astryxdesign/core/Card'
 import { ClickableCard } from '@astryxdesign/core/ClickableCard'
@@ -16,20 +17,29 @@ import type { EntityKind } from '#/lib/entities'
 import { Sparkline } from './charts'
 import { EntityLink } from './EntityLink'
 import { tableDensity, usePreferences } from '#/lib/prefs'
+import { DetailContext } from './PageFrame'
 
-/** A titled widget card with an optional trailing action (usually a Link). */
+/** A titled block with an optional trailing action (usually a Link): a
+ * widget card on a dashboard; on a detail page, where the blocks are parts
+ * of one record, just its heading and content, grouped by spacing (the
+ * weakest container that reads as a group, DESIGN.md). Either way it is
+ * the page's second heading level. */
 export function Panel({ title, action, children }: { title: ReactNode; action?: ReactNode; children: ReactNode }) {
-  return (
-    <Card>
-      <VStack gap={4}>
-        <HStack hAlign="between" vAlign="center">
-          <Heading level={3}>{title}</Heading>
-          {action}
-        </HStack>
-        {children}
-      </VStack>
-    </Card>
+  const inRecord = useContext(DetailContext)
+  const body = (
+    <VStack gap={4}>
+      <HStack hAlign="between" vAlign="center">
+        <Heading level={3} accessibilityLevel={2}>
+          {title}
+        </Heading>
+        {action}
+      </HStack>
+      {children}
+    </VStack>
   )
+  // Tight within a block, generous between them: without a card's padding
+  // the space after each block is what separates it from the next.
+  return inRecord ? <VStack paddingBlockEnd={6}>{body}</VStack> : <Card>{body}</Card>
 }
 
 type StatTileProps = {
@@ -64,7 +74,7 @@ export function StatTile({ label, value, previous, caption, trend, href }: StatT
         {label}
       </Text>
       <HStack gap={2} vAlign="center">
-        <Heading level={2}>{formatCompact(value)}</Heading>
+        <Text size="xl" weight="semibold">{formatCompact(value)}</Text>
         {previous !== undefined && (
           <HStack gap={1} vAlign="center">
             <Icon icon={value >= previous ? ArrowUpIcon : ArrowDownIcon} size="xsm" color="secondary" />

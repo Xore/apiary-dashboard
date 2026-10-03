@@ -30,7 +30,7 @@ export function ShellBanners({ config }: { config: ShellConfig }) {
   const showBanner = p.bannerText !== '' && !expired && dismissed !== p.bannerText
   if (!showBanner && !b.maintenanceMode && !b.readOnly) return null
   return (
-    <VStack gap={2} style={{ padding: '12px 24px 0' }}>
+    <VStack gap={2} paddingInline={6} paddingBlockStart={3}>
       {b.maintenanceMode && <Banner status="warning" title="Maintenance in progress" description="The platform is being worked on. Data can be late or incomplete until this notice is gone." />}
       {b.readOnly && <Banner status="info" title="Read-only" description="An admin has frozen changes for everyone. Everything can be read; nothing can be changed until it is lifted." />}
       {showBanner && (

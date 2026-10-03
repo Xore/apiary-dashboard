@@ -115,7 +115,8 @@ describe('EntityFrame', () => {
     const router = renderAt('/things/b/detail')
     await screen.findByText('detail body')
     expect(await screen.findByText('2 of 3')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Back to Things' })).toBeTruthy()
+    // The way back is the trail's parent crumb: the list, with its filters.
+    expect(screen.getByRole('link', { name: 'Things' }).getAttribute('href')).toBe('/things')
     await act(async () => {
       await userEvent.keyboard('j')
     })

@@ -5,8 +5,8 @@
 import { createIsomorphicFn } from '@tanstack/react-start'
 import { getCookie, getRequestHeader } from '@tanstack/react-start/server'
 
-/** Below this width the side navigation becomes a drawer (Astryx `lg`). */
-export const NARROW_BELOW = 1024
+/** Below this width the side navigation becomes a drawer (Astryx `xl`). */
+export const NARROW_BELOW = 1280
 
 const WIDTH_COOKIE = 'apiary.vw'
 const MOBILE_UA = /Mobi|Android|iPhone|iPad|iPod/i
