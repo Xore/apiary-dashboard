@@ -76,14 +76,14 @@ export const matchaTheme = defineTheme({
 
     // Text
     '--color-text-primary': ['#3E481D', '#C0CBA9'],
-    '--color-text-secondary': ['#707E46', '#94a468'],
+    '--color-text-secondary': ['#56622f', '#b4c288'],
     '--color-text-disabled': ['#C0CBA9', '#5a6440'],
     '--color-text-accent': ['#3E481D', '#C0CBA9'],
     '--color-on-dark': '#FFFFFF',
     '--color-on-light': '#3E481D',
     '--color-on-accent': ['#FFFFFF', '#3E481D'],
-    '--color-on-success': ['#FFFFFF', '#3E481D'],
-    '--color-on-error': ['#FFFFFF', '#3E481D'],
+    '--color-on-success': ['#FFFFFF', '#1e2410'],
+    '--color-on-error': ['#FFFFFF', '#1e2410'],
     '--color-on-warning': ['#3E481D', '#3E481D'],
 
     // Icon
@@ -98,9 +98,9 @@ export const matchaTheme = defineTheme({
     '--color-background-inverted': ['#3E481D', '#C0CBA9'],
 
     // Status / Sentiment
-    '--color-success': ['#4D9900', '#6dbf2a'],
+    '--color-success': ['#3d7a00', '#6dbf2a'],
     '--color-success-muted': ['#4D990020', '#6dbf2a20'],
-    '--color-error': ['#FD0000', '#ff5c5c'],
+    '--color-error': ['#d40000', '#ff7a7a'],
     '--color-error-muted': ['#FD000020', '#ff5c5c20'],
     '--color-warning': ['#FFB600', '#ffc940'],
     '--color-warning-muted': ['#FFB60020', '#ffc94020'],
@@ -137,13 +137,13 @@ export const matchaTheme = defineTheme({
     '--color-background-green': ['#4D990033', '#6dbf2a33'],
     '--color-border-green': ['#4D9900', '#6dbf2a'],
     '--color-icon-green': ['#4D9900', '#6dbf2a'],
-    '--color-text-green': ['#3d7a00', '#80d43a'],
+    '--color-text-green': ['#2f6000', '#80d43a'],
 
     // Categorical — Orange
     '--color-background-orange': ['#c4762033', '#d4903a33'],
     '--color-border-orange': ['#c47620', '#d4903a'],
     '--color-icon-orange': ['#c47620', '#d4903a'],
-    '--color-text-orange': ['#a06018', '#e0a04a'],
+    '--color-text-orange': ['#8a4f10', '#e0a04a'],
 
     // Categorical — Pink
     '--color-background-pink': ['#c44a7033', '#e07a9a33'],
@@ -161,7 +161,7 @@ export const matchaTheme = defineTheme({
     '--color-background-red': ['#FD000033', '#ff5c5c33'],
     '--color-border-red': ['#FD0000', '#ff5c5c'],
     '--color-icon-red': ['#FD0000', '#ff5c5c'],
-    '--color-text-red': ['#cc0000', '#ff7a7a'],
+    '--color-text-red': ['#a80000', '#ff7a7a'],
 
     // Categorical — Teal
     '--color-background-teal': ['#2e6b5a33', '#5ab89833'],
@@ -173,7 +173,7 @@ export const matchaTheme = defineTheme({
     '--color-background-yellow': ['#FFB60033', '#ffc94033'],
     '--color-border-yellow': ['#FFB600', '#ffc940'],
     '--color-icon-yellow': ['#FFB600', '#ffc940'],
-    '--color-text-yellow': ['#cc9200', '#ffd960'],
+    '--color-text-yellow': ['#7a5600', '#ffd960'],
 
     // =========================================================================
     // Spacing

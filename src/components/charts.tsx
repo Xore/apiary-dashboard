@@ -54,6 +54,10 @@ function ChartBox({ height, children }: { height: number; children: ReactElement
   )
 }
 
+// One-hue charts draw in the theme's data ink (a palette's accent); themes
+// that don't set it keep the first categorical slot.
+export const DATA_INK = 'var(--color-data-ink, var(--color-data-categorical-blue))'
+
 const PALETTE = ['blue', 'orange', 'teal', 'purple', 'pink'].map((c) => `var(--color-data-categorical-${c})`)
 const OTHER: Series = { key: 'other', label: 'Other', color: 'var(--color-text-secondary)' }
 
@@ -197,7 +201,7 @@ export function Sparkline({ data }: { data: number[] }) {
         <Line
           type="monotone"
           dataKey="value"
-          stroke="var(--color-data-categorical-blue)"
+          stroke={DATA_INK}
           strokeWidth={2}
           dot={false}
           isAnimationActive={false}
@@ -320,10 +324,10 @@ export function FlowSankey({ flow, height = 420 }: { flow: KillChainData['flow']
         nodePadding={28}
         nodeWidth={12}
         margin={{ top: 24, right: 8, bottom: 8, left: 8 }}
-        link={{ stroke: 'var(--color-data-categorical-blue)', strokeOpacity: 0.25 }}
+        link={{ stroke: DATA_INK, strokeOpacity: 0.25 }}
         node={({ x, y, width, height: nodeHeight, payload }: { x: number; y: number; width: number; height: number; payload: { name: string; value: number; targetLinks?: unknown[] } }) => (
           <g>
-            <rect x={x} y={y} width={width} height={nodeHeight} rx={2} fill="var(--color-data-categorical-blue)" />
+            <rect x={x} y={y} width={width} height={nodeHeight} rx={2} fill={DATA_INK} />
             {/* Terminal nodes sit on the right edge, so their label reads leftwards,
                 under the bar, clear of the previous column's label.
                 Recharts names a node's outgoing links `targetLinks`. */}
@@ -382,7 +386,7 @@ export function CampaignTimeline({ rows }: { rows: KillChainData['timeline'] }) 
             )
           }}
         />
-        <Bar dataKey="span" fill="var(--color-data-categorical-blue)" radius={4} isAnimationActive={false} />
+        <Bar dataKey="span" fill={DATA_INK} radius={4} isAnimationActive={false} />
       </BarChart>
     </ChartBox>
   )
@@ -427,7 +431,7 @@ export function CoverageHeatmap({ tactics, cells }: { tactics: string[]; cells: 
                     width={cellW}
                     height={cellH}
                     rx={4}
-                    fill={`color-mix(in srgb, var(--color-data-categorical-blue) ${pct}%, var(--color-background-card))`}
+                    fill={`color-mix(in srgb, ${DATA_INK} ${pct}%, var(--color-background-card))`}
                   >
                     <title>{`${cell.technique} ${cell.name}: ${formatNumber(cell.events)} events`}</title>
                   </rect>
@@ -448,7 +452,7 @@ export function CoverageHeatmap({ tactics, cells }: { tactics: string[]; cells: 
         <Text type="supporting">Fewer events</Text>
         <svg width={HEAT_STEPS.length * 22} height={12} aria-hidden="true">
           {HEAT_STEPS.map((pct, i) => (
-            <rect key={pct} x={i * 22} width={20} height={12} rx={2} fill={`color-mix(in srgb, var(--color-data-categorical-blue) ${pct}%, var(--color-background-card))`} />
+            <rect key={pct} x={i * 22} width={20} height={12} rx={2} fill={`color-mix(in srgb, ${DATA_INK} ${pct}%, var(--color-background-card))`} />
           ))}
         </svg>
         <Text type="supporting">More events</Text>
@@ -497,7 +501,7 @@ export function SensorHeatmap({ rows, startIso }: { rows: HeatmapRow[]; startIso
                   width={cellW}
                   height={cellH}
                   rx={3}
-                  fill={pct ? `color-mix(in srgb, var(--color-data-categorical-blue) ${pct}%, var(--color-background-card))` : 'var(--color-background-muted)'}
+                  fill={pct ? `color-mix(in srgb, ${DATA_INK} ${pct}%, var(--color-background-card))` : 'var(--color-background-muted)'}
                 >
                   <title>{`${row.sensor} · ${formatTime(hour)} · ${formatNumber(count)} events`}</title>
                 </rect>
@@ -530,7 +534,7 @@ export function RankBars({ rows, height }: { rows: CountRow[]; height?: number }
         <Bar
           dataKey="count"
           name="Events"
-          fill="var(--color-data-categorical-blue)"
+          fill={DATA_INK}
           radius={[0, 4, 4, 0]}
           isAnimationActive={false}
           label={{ position: 'right', fontSize: 11, fill: 'var(--color-text-secondary)', formatter: (v: unknown) => formatNumber(Number(v)) }}
@@ -617,7 +621,7 @@ export function Histogram({ rows }: { rows: CountRow[] }) {
         <XAxis dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} />
         <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={40} />
         <Tooltip cursor={{ fill: 'var(--color-background-muted)' }} content={<ValueTooltip />} />
-        <Bar dataKey="count" name="Connections" fill="var(--color-data-categorical-blue)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+        <Bar dataKey="count" name="Connections" fill={DATA_INK} radius={[4, 4, 0, 0]} isAnimationActive={false} />
       </BarChart>
     </ChartBox>
   )
@@ -634,7 +638,7 @@ export function FusionRadar({ categories, values }: { categories: string[]; valu
         <PolarGrid stroke={GRID_STROKE} />
         <PolarAngleAxis dataKey="category" tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} />
         <PolarRadiusAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'var(--color-text-secondary)' }} axisLine={false} angle={90} />
-        <Radar dataKey="shared" name="Shared values" stroke="var(--color-data-categorical-blue)" fill="var(--color-data-categorical-blue)" fillOpacity={0.25} isAnimationActive={false} />
+        <Radar dataKey="shared" name="Shared values" stroke={DATA_INK} fill={DATA_INK} fillOpacity={0.25} isAnimationActive={false} />
         <Tooltip formatter={(value) => [`${String(value)} shared`, 'Values']} />
       </RadarChart>
     </ChartBox>

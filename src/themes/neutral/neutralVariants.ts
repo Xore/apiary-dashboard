@@ -65,8 +65,13 @@ function paletteTokens(p: ApiaryPalette): Tokens {
     '--color-text-accent': role(p, 'accent-text-on-soft'),
     '--color-icon-accent': role(p, 'accent'),
     '--color-on-accent': role(p, 'text-on-accent'),
+    // Single-series chart ink: the palette's accent, so a chart drawn in one
+    // hue belongs to its theme. Themes without it fall back to categorical blue.
+    '--color-data-ink': role(p, 'accent'),
 
-    '--color-success': role(p, 'success'),
+    // APIARY's light success green carries white text at 4.3:1; a touch of
+    // the palette's ink lifts it past 4.5:1 without changing its hue.
+    '--color-success': [`color-mix(in oklab, ${APIARY_PALETTES[p].light.success} 88%, ${APIARY_PALETTES[p].light['text-000']})`, APIARY_PALETTES[p].dark.success],
     '--color-error': role(p, 'danger'),
     '--color-warning': role(p, 'warning'),
     '--color-success-muted': role(p, 'success-soft'),
@@ -74,6 +79,7 @@ function paletteTokens(p: ApiaryPalette): Tokens {
     '--color-warning-muted': role(p, 'warning-soft'),
     '--color-on-success': role(p, 'text-on-status'),
     '--color-on-error': role(p, 'text-on-status'),
+    '--color-on-warning': role(p, 'text-on-status'),
 
     '--color-overlay': role(p, 'overlay-bg'),
     '--color-shadow': role(p, 'shadow-raised-far'),
@@ -93,6 +99,7 @@ function highContrastTokens(p: ApiaryPalette): Tokens {
     '--color-border-emphasized': role(p, 'text-100'),
     '--color-accent': [light['accent-pressed'], dark['accent-hover']],
     '--color-icon-accent': [light['accent-pressed'], dark['accent-hover']],
+    '--color-data-ink': [light['accent-pressed'], dark['accent-hover']],
     '--color-text-accent': role(p, 'text-link-hover'),
   };
 }

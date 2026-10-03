@@ -138,16 +138,16 @@ export const gothicTheme = defineTheme({
     // =========================================================================
 
     // Blue (periwinkle midnight)
-    '--color-background-blue': '#a3b5d6',
+    '--color-background-blue': '#a3b5d633',
     '--color-border-blue': '#8696b8',
-    '--color-icon-blue': '#2a3b6e',
-    '--color-text-blue': '#1f2c54',
+    '--color-icon-blue': '#a3b5d6',
+    '--color-text-blue': '#a3b5d6',
 
     // Cyan (cathedral mist)
-    '--color-background-cyan': '#a3c2cf',
+    '--color-background-cyan': '#a3c2cf33',
     '--color-border-cyan': '#86a4b1',
-    '--color-icon-cyan': '#2a5e75',
-    '--color-text-cyan': '#204858',
+    '--color-icon-cyan': '#a3c2cf',
+    '--color-text-cyan': '#a3c2cf',
 
     // Gray (dark slate — special: dark bg + light text)
     '--color-background-gray': '#3d4248',
@@ -156,46 +156,46 @@ export const gothicTheme = defineTheme({
     '--color-text-gray': '#E8F1F6',
 
     // Green (sage moss)
-    '--color-background-green': '#b3c79a',
+    '--color-background-green': '#b3c79a33',
     '--color-border-green': '#96a880',
-    '--color-icon-green': '#3a5e2c',
-    '--color-text-green': '#244023',
+    '--color-icon-green': '#b3c79a',
+    '--color-text-green': '#b3c79a',
 
     // Orange (warm tan)
-    '--color-background-orange': '#d3b89a',
+    '--color-background-orange': '#d3b89a33',
     '--color-border-orange': '#b6987d',
-    '--color-icon-orange': '#8a4818',
-    '--color-text-orange': '#6e3812',
+    '--color-icon-orange': '#d3b89a',
+    '--color-text-orange': '#d3b89a',
 
     // Pink (dusty rose)
-    '--color-background-pink': '#c89aab',
+    '--color-background-pink': '#c89aab33',
     '--color-border-pink': '#aa7d8e',
-    '--color-icon-pink': '#8d2d4c',
-    '--color-text-pink': '#71223c',
+    '--color-icon-pink': '#c89aab',
+    '--color-text-pink': '#c89aab',
 
     // Purple (muted plum)
-    '--color-background-purple': '#b29bc4',
+    '--color-background-purple': '#b29bc433',
     '--color-border-purple': '#947da6',
-    '--color-icon-purple': '#5a2370',
-    '--color-text-purple': '#481b58',
+    '--color-icon-purple': '#b29bc4',
+    '--color-text-purple': '#b29bc4',
 
     // Red (dusty rose)
-    '--color-background-red': '#c6a6a2',
+    '--color-background-red': '#c6a6a233',
     '--color-border-red': '#a48581',
-    '--color-icon-red': '#5e3a35',
-    '--color-text-red': '#4a2520',
+    '--color-icon-red': '#c6a6a2',
+    '--color-text-red': '#c6a6a2',
 
     // Teal (sage verdigris)
-    '--color-background-teal': '#a3c2b6',
+    '--color-background-teal': '#a3c2b633',
     '--color-border-teal': '#86a499',
-    '--color-icon-teal': '#1f5e52',
-    '--color-text-teal': '#174a40',
+    '--color-icon-teal': '#a3c2b6',
+    '--color-text-teal': '#a3c2b6',
 
     // Yellow (aged gold)
-    '--color-background-yellow': '#d3c490',
+    '--color-background-yellow': '#d3c49033',
     '--color-border-yellow': '#b6a775',
-    '--color-icon-yellow': '#876515',
-    '--color-text-yellow': '#6c5010',
+    '--color-icon-yellow': '#d3c490',
+    '--color-text-yellow': '#d3c490',
 
     // =========================================================================
     // Radius — subtle rounding (original gothic)

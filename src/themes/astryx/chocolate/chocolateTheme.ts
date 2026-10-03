@@ -76,7 +76,7 @@ export const chocolateTheme = defineTheme({
 
     // Text
     '--color-text-primary': ['#4a3520', '#EDE4D4'],
-    '--color-text-secondary': ['#B88859', '#c4a882'],
+    '--color-text-secondary': ['#7a5a36', '#c4a882'],
     '--color-text-disabled': ['#C4AC95', '#6b5540'],
     '--color-text-accent': ['#8C5927', '#d4a06a'],
     '--color-on-dark': '#FFFCF7',
@@ -98,9 +98,9 @@ export const chocolateTheme = defineTheme({
     '--color-background-inverted': ['#4a3520', '#EDE4D4'],
 
     // Status / Sentiment
-    '--color-success': ['#709900', '#96bf2a'],
+    '--color-success': ['#527000', '#96bf2a'],
     '--color-success-muted': ['#70990020', '#96bf2a20'],
-    '--color-error': ['#FD0000', '#ff5c5c'],
+    '--color-error': ['#d40000', '#ff7a7a'],
     '--color-error-muted': ['#FD000020', '#ff5c5c20'],
     '--color-warning': ['#FFB600', '#ffc940'],
     '--color-warning-muted': ['#FFB60020', '#ffc94020'],
@@ -136,13 +136,13 @@ export const chocolateTheme = defineTheme({
     '--color-background-green': ['#70990033', '#96bf2a33'],
     '--color-border-green': ['#709900', '#96bf2a'],
     '--color-icon-green': ['#709900', '#96bf2a'],
-    '--color-text-green': ['#5a7a00', '#a8d43a'],
+    '--color-text-green': ['#405800', '#a8d43a'],
 
     // Categorical — Orange
     '--color-background-orange': ['#c4762033', '#d4903a33'],
     '--color-border-orange': ['#c47620', '#d4903a'],
     '--color-icon-orange': ['#c47620', '#d4903a'],
-    '--color-text-orange': ['#a06018', '#e0a04a'],
+    '--color-text-orange': ['#7a4508', '#e0a04a'],
 
     // Categorical — Pink
     '--color-background-pink': ['#c44a7033', '#e07a9a33'],
@@ -160,7 +160,7 @@ export const chocolateTheme = defineTheme({
     '--color-background-red': ['#FD000033', '#ff5c5c33'],
     '--color-border-red': ['#FD0000', '#ff5c5c'],
     '--color-icon-red': ['#FD0000', '#ff5c5c'],
-    '--color-text-red': ['#cc0000', '#ff7a7a'],
+    '--color-text-red': ['#a80000', '#ff7a7a'],
 
     // Categorical — Teal
     '--color-background-teal': ['#2e6b5a33', '#5ab89833'],
@@ -172,7 +172,7 @@ export const chocolateTheme = defineTheme({
     '--color-background-yellow': ['#FFB60033', '#ffc94033'],
     '--color-border-yellow': ['#FFB600', '#ffc940'],
     '--color-icon-yellow': ['#FFB600', '#ffc940'],
-    '--color-text-yellow': ['#cc9200', '#ffd960'],
+    '--color-text-yellow': ['#7a5600', '#ffd960'],
 
     // =========================================================================
     // Radius — soft and rounded

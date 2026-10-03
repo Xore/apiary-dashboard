@@ -8,6 +8,7 @@ import { useNavigate } from '@tanstack/react-router'
 import type { MapPoint } from '#/data/types'
 import { formatNumber } from '#/lib/format'
 import { usePreferences } from '#/lib/prefs'
+import { DATA_INK } from './charts'
 
 const WIDTH = 960
 const HEIGHT = 470
@@ -88,12 +89,12 @@ export function WorldMap({ points }: { points: MapPoint[] }) {
           }}
         >
           {animate && busiest.has(m.key) && (
-            <circle cx={m.x} cy={m.y} r={m.r} fill="none" stroke="var(--color-data-categorical-blue)" strokeWidth={2}>
+            <circle cx={m.x} cy={m.y} r={m.r} fill="none" stroke={DATA_INK} strokeWidth={2}>
               <animate attributeName="r" from={m.r} to={m.r + 14} dur="2.4s" repeatCount="indefinite" />
               <animate attributeName="opacity" from="0.6" to="0" dur="2.4s" repeatCount="indefinite" />
             </circle>
           )}
-          <circle cx={m.x} cy={m.y} r={m.r} fill="var(--color-data-categorical-blue)" fillOpacity={0.55} stroke="var(--color-background-card)" strokeWidth={2}>
+          <circle cx={m.x} cy={m.y} r={m.r} fill={DATA_INK} fillOpacity={0.55} stroke="var(--color-background-card)" strokeWidth={2}>
             <title>{m.countries.length > 1 ? `${m.countries.join(', ')}: ${formatNumber(m.events)} events` : `${m.countries[0]}: ${formatNumber(m.events)} events`}</title>
           </circle>
           {m.countries.length > 1 && (

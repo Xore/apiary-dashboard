@@ -96,7 +96,7 @@ export const y2kTheme = defineTheme({
 
     // Text — neutral H=75 (cream)
     '--color-text-primary': ['#2d241b', '#EDEFFC'],
-    '--color-text-secondary': ['#675d52', '#a6acd6'],
+    '--color-text-secondary': ['#574e44', '#a6acd6'],
     '--color-text-disabled': ['#d1c5b8', '#4a4f6b'],
     '--color-text-accent': ['#2d241b', '#EDEFFC'],
     '--color-on-dark': '#FFFFFF',
@@ -139,56 +139,56 @@ export const y2kTheme = defineTheme({
     '--text-supporting-size': '12px',
 
     // Categorical — hand-tuned for equal optical brightness, same light/dark
-    '--color-background-green': ['#C5E17A', '#C5E17A'],
+    '--color-background-green': ['#C5E17A', '#C5E17A33'],
     '--color-border-green': ['#B5D16A', '#B5D16A'],
-    '--color-icon-green': ['#3a5500', '#1e3200'],
-    '--color-text-green': ['#3a5500', '#1e3200'],
+    '--color-icon-green': ['#3a5500', '#C5E17A'],
+    '--color-text-green': ['#3a5500', '#C5E17A'],
 
-    '--color-background-red': ['#FFC5C3', '#FFC5C3'],
+    '--color-background-red': ['#FFC5C3', '#FFC5C333'],
     '--color-border-red': ['#FF9E9A', '#FF9E9A'],
-    '--color-icon-red': ['#8b1d24', '#5c0008'],
-    '--color-text-red': ['#8b1d24', '#5c0008'],
+    '--color-icon-red': ['#8b1d24', '#FFC5C3'],
+    '--color-text-red': ['#8b1d24', '#FFC5C3'],
 
-    '--color-background-yellow': ['#FFE08A', '#FFE08A'],
+    '--color-background-yellow': ['#FFE08A', '#FFE08A33'],
     '--color-border-yellow': ['#FFCC55', '#FFCC55'],
-    '--color-icon-yellow': ['#614400', '#3f2600'],
-    '--color-text-yellow': ['#614400', '#3f2600'],
+    '--color-icon-yellow': ['#614400', '#FFE08A'],
+    '--color-text-yellow': ['#614400', '#FFE08A'],
 
-    '--color-background-blue': ['#B8E0FF', '#B8E0FF'],
+    '--color-background-blue': ['#B8E0FF', '#B8E0FF33'],
     '--color-border-blue': ['#8ECFFF', '#8ECFFF'],
-    '--color-icon-blue': ['#004e74', '#002c4d'],
-    '--color-text-blue': ['#004e74', '#002c4d'],
+    '--color-icon-blue': ['#004e74', '#B8E0FF'],
+    '--color-text-blue': ['#004e74', '#B8E0FF'],
 
-    '--color-background-pink': ['#FFC8E0', '#FFC8E0'],
+    '--color-background-pink': ['#FFC8E0', '#FFC8E033'],
     '--color-border-pink': ['#FFA0C8', '#FFA0C8'],
-    '--color-icon-pink': ['#822050', '#580030'],
-    '--color-text-pink': ['#822050', '#580030'],
+    '--color-icon-pink': ['#822050', '#FFC8E0'],
+    '--color-text-pink': ['#822050', '#FFC8E0'],
 
-    '--color-background-purple': ['#DDD0FF', '#DDD0FF'],
+    '--color-background-purple': ['#DDD0FF', '#DDD0FF33'],
     '--color-border-purple': ['#C0AAFF', '#C0AAFF'],
-    '--color-icon-purple': ['#453080', '#201058'],
-    '--color-text-purple': ['#453080', '#201058'],
+    '--color-icon-purple': ['#453080', '#DDD0FF'],
+    '--color-text-purple': ['#453080', '#DDD0FF'],
 
-    '--color-background-cyan': ['#A8F0E2', '#A8F0E2'],
+    '--color-background-cyan': ['#A8F0E2', '#A8F0E233'],
     '--color-border-cyan': ['#70E8D0', '#70E8D0'],
-    '--color-icon-cyan': ['#005548', '#003028'],
-    '--color-text-cyan': ['#005548', '#003028'],
+    '--color-icon-cyan': ['#005548', '#A8F0E2'],
+    '--color-text-cyan': ['#005548', '#A8F0E2'],
 
-    '--color-background-orange': ['#FFCCA0', '#FFCCA0'],
+    '--color-background-orange': ['#FFCCA0', '#FFCCA033'],
     '--color-border-orange': ['#FFAA66', '#FFAA66'],
-    '--color-icon-orange': ['#703500', '#4a1800'],
-    '--color-text-orange': ['#703500', '#4a1800'],
+    '--color-icon-orange': ['#703500', '#FFCCA0'],
+    '--color-text-orange': ['#703500', '#FFCCA0'],
 
-    '--color-background-teal': ['#A8EED0', '#A8EED0'],
+    '--color-background-teal': ['#A8EED0', '#A8EED033'],
     '--color-border-teal': ['#78E0B0', '#78E0B0'],
-    '--color-icon-teal': ['#005530', '#003018'],
-    '--color-text-teal': ['#005530', '#003018'],
+    '--color-icon-teal': ['#005530', '#A8EED0'],
+    '--color-text-teal': ['#005530', '#A8EED0'],
 
     // Gray (cream neutral H=75 C=8)
-    '--color-background-gray': ['#ede0d4', '#ede0d4'],
+    '--color-background-gray': ['#ede0d4', '#ede0d433'],
     '--color-border-gray': ['#dfd2c6', '#dfd2c6'],
-    '--color-icon-gray': ['#4f453b', '#2d241b'],
-    '--color-text-gray': ['#4f453b', '#2d241b'],
+    '--color-icon-gray': ['#4f453b', '#ede0d4'],
+    '--color-text-gray': ['#4f453b', '#ede0d4'],
 
     // =========================================================================
     // Radius — sharp / brutalist (multiplier: 0 via radius config + explicit)

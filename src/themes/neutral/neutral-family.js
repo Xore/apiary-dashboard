@@ -711,12 +711,12 @@ export const neutralAmberTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#96690e, #d9a842)",
     "--color-icon-primary": "light-dark(#2f2c27, #e9e4df)",
     "--color-icon-secondary": "light-dark(#635f59, #aeadab)",
     "--color-icon-disabled": "light-dark(#aaa59d, #68645e)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #2f2c27), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -780,7 +780,8 @@ export const neutralAmberTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#96690e, #d9a842)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -1312,12 +1313,12 @@ export const neutralAmberHcTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#714f0b, #ddb257)",
     "--color-icon-primary": "light-dark(#2f2c27, #e9e4df)",
     "--color-icon-secondary": "light-dark(color-mix(in oklab, #2f2c27 70%, #635f59), color-mix(in oklab, #e9e4df 70%, #aeadab))",
     "--color-icon-disabled": "light-dark(#aaa59d, #68645e)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #2f2c27), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -1381,7 +1382,8 @@ export const neutralAmberHcTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#714f0b, #ddb257)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -1913,12 +1915,12 @@ export const neutralClaudeTheme = {
     "--color-on-accent": "light-dark(#fffaf5, #211a17)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#af593f, #d97757)",
     "--color-icon-primary": "light-dark(#2f2b27, #e9e6df)",
     "--color-icon-secondary": "light-dark(#66615b, #a5a9a6)",
     "--color-icon-disabled": "light-dark(#aaa49d, #68635e)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #2f2b27), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -1982,7 +1984,8 @@ export const neutralClaudeTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#af593f, #d97757)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -2514,12 +2517,12 @@ export const neutralClaudeHcTheme = {
     "--color-on-accent": "light-dark(#fffaf5, #211a17)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#93422d, #e18768)",
     "--color-icon-primary": "light-dark(#2f2b27, #e9e6df)",
     "--color-icon-secondary": "light-dark(color-mix(in oklab, #2f2b27 70%, #66615b), color-mix(in oklab, #e9e6df 70%, #a5a9a6))",
     "--color-icon-disabled": "light-dark(#aaa49d, #68635e)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #2f2b27), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -2583,7 +2586,8 @@ export const neutralClaudeHcTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#93422d, #e18768)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -3115,12 +3119,12 @@ export const neutralLavenderTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#6d4fc4, #ab93e3)",
     "--color-icon-primary": "light-dark(#29272f, #e3dfe9)",
     "--color-icon-secondary": "light-dark(#5e5b66, #a6a5a9)",
     "--color-icon-disabled": "light-dark(#a19daa, #625e68)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #29272f), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -3184,7 +3188,8 @@ export const neutralLavenderTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#6d4fc4, #ab93e3)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -3716,12 +3721,12 @@ export const neutralLavenderHcTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#593baf, #bba7e8)",
     "--color-icon-primary": "light-dark(#29272f, #e3dfe9)",
     "--color-icon-secondary": "light-dark(color-mix(in oklab, #29272f 70%, #5e5b66), color-mix(in oklab, #e3dfe9 70%, #a6a5a9))",
     "--color-icon-disabled": "light-dark(#a19daa, #625e68)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #29272f), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -3785,7 +3790,8 @@ export const neutralLavenderHcTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#593baf, #bba7e8)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -4317,12 +4323,12 @@ export const neutralLimeTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#5f7d1f, #b3cf5a)",
     "--color-icon-primary": "light-dark(#2d2f27, #e6e9df)",
     "--color-icon-secondary": "light-dark(#616359, #b1b1ae)",
     "--color-icon-disabled": "light-dark(#a7aa9d, #65685e)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #2d2f27), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -4386,7 +4392,8 @@ export const neutralLimeTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#5f7d1f, #b3cf5a)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -4918,12 +4925,12 @@ export const neutralLimeHcTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#465c17, #bcd56e)",
     "--color-icon-primary": "light-dark(#2d2f27, #e6e9df)",
     "--color-icon-secondary": "light-dark(color-mix(in oklab, #2d2f27 70%, #616359), color-mix(in oklab, #e6e9df 70%, #b1b1ae))",
     "--color-icon-disabled": "light-dark(#a7aa9d, #65685e)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #2d2f27), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -4987,7 +4994,8 @@ export const neutralLimeHcTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#465c17, #bcd56e)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -5519,12 +5527,12 @@ export const neutralNeonTheme = {
     "--color-on-accent": "light-dark(#040303, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#0f8f7a, #3ee6c8)",
     "--color-icon-primary": "light-dark(#272f2e, #d1e0de)",
     "--color-icon-secondary": "light-dark(#57605f, #9fa2a2)",
     "--color-icon-disabled": "light-dark(#9daaa8, #535c5b)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #272f2e), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -5588,7 +5596,8 @@ export const neutralNeonTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#0f8f7a, #3ee6c8)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -6120,12 +6129,12 @@ export const neutralNeonHcTheme = {
     "--color-on-accent": "light-dark(#040303, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#0b6a5a, #55e9ce)",
     "--color-icon-primary": "light-dark(#272f2e, #d1e0de)",
     "--color-icon-secondary": "light-dark(color-mix(in oklab, #272f2e 70%, #57605f), color-mix(in oklab, #d1e0de 70%, #9fa2a2))",
     "--color-icon-disabled": "light-dark(#9daaa8, #535c5b)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #272f2e), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -6189,7 +6198,8 @@ export const neutralNeonHcTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#0b6a5a, #55e9ce)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -6721,12 +6731,12 @@ export const neutralOceanTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#1f6fa8, #55a7d8)",
     "--color-icon-primary": "light-dark(#272c2f, #dfe6e9)",
     "--color-icon-secondary": "light-dark(#595f63, #a8abab)",
     "--color-icon-disabled": "light-dark(#9da5aa, #5e6568)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #272c2f), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -6790,7 +6800,8 @@ export const neutralOceanTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#1f6fa8, #55a7d8)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -7322,12 +7333,12 @@ export const neutralOceanHcTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#195886, #6ab2dd)",
     "--color-icon-primary": "light-dark(#272c2f, #dfe6e9)",
     "--color-icon-secondary": "light-dark(color-mix(in oklab, #272c2f 70%, #595f63), color-mix(in oklab, #dfe6e9 70%, #a8abab))",
     "--color-icon-disabled": "light-dark(#9da5aa, #5e6568)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #272c2f), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -7391,7 +7402,8 @@ export const neutralOceanHcTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#195886, #6ab2dd)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -7923,12 +7935,12 @@ export const neutralRoseTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#b04a66, #d98298)",
     "--color-icon-primary": "light-dark(#2f2729, #e9dfe2)",
     "--color-icon-secondary": "light-dark(#665b5e, #a9a5a6)",
     "--color-icon-disabled": "light-dark(#aa9da0, #685e61)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #2f2729), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -7992,7 +8004,8 @@ export const neutralRoseTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#b04a66, #d98298)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -8524,12 +8537,12 @@ export const neutralRoseHcTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#933e55, #df96a8)",
     "--color-icon-primary": "light-dark(#2f2729, #e9dfe2)",
     "--color-icon-secondary": "light-dark(color-mix(in oklab, #2f2729 70%, #665b5e), color-mix(in oklab, #e9dfe2 70%, #a9a5a6))",
     "--color-icon-disabled": "light-dark(#aa9da0, #685e61)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #2f2729), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -8593,7 +8606,8 @@ export const neutralRoseHcTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#933e55, #df96a8)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -9125,12 +9139,12 @@ export const neutralSageTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#4d7a42, #8fb27b)",
     "--color-icon-primary": "light-dark(#272f27, #dfe9e0)",
     "--color-icon-secondary": "light-dark(#596359, #aeb1ae)",
     "--color-icon-disabled": "light-dark(#9daa9d, #5e685f)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #272f27), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -9194,7 +9208,8 @@ export const neutralSageTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#4d7a42, #8fb27b)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -9726,12 +9741,12 @@ export const neutralSageHcTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#3c6034, #9dbb8b)",
     "--color-icon-primary": "light-dark(#272f27, #dfe9e0)",
     "--color-icon-secondary": "light-dark(color-mix(in oklab, #272f27 70%, #596359), color-mix(in oklab, #dfe9e0 70%, #aeb1ae))",
     "--color-icon-disabled": "light-dark(#9daa9d, #5e685f)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #272f27), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -9795,7 +9810,8 @@ export const neutralSageHcTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#3c6034, #9dbb8b)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -10327,12 +10343,12 @@ export const neutralSlateTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#44618a, #8aa2c0)",
     "--color-icon-primary": "light-dark(#272b2f, #dfe3e9)",
     "--color-icon-secondary": "light-dark(#5b6066, #a5a7a9)",
     "--color-icon-disabled": "light-dark(#9da3aa, #5e6268)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #272b2f), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -10396,7 +10412,8 @@ export const neutralSlateTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#44618a, #8aa2c0)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",
@@ -10928,12 +10945,12 @@ export const neutralSlateHcTheme = {
     "--color-on-accent": "light-dark(#ffffff, #1c1613)",
     "--color-on-success": "light-dark(#ffffff, #1c1613)",
     "--color-on-error": "light-dark(#ffffff, #1c1613)",
-    "--color-on-warning": "#111111",
+    "--color-on-warning": "light-dark(#ffffff, #1c1613)",
     "--color-icon-accent": "light-dark(#374e6f, #9bafc9)",
     "--color-icon-primary": "light-dark(#272b2f, #dfe3e9)",
     "--color-icon-secondary": "light-dark(color-mix(in oklab, #272b2f 70%, #5b6066), color-mix(in oklab, #dfe3e9 70%, #a5a7a9))",
     "--color-icon-disabled": "light-dark(#9da3aa, #5e6268)",
-    "--color-success": "light-dark(#3f8764, #79c99e)",
+    "--color-success": "light-dark(color-mix(in oklab, #3f8764 88%, #272b2f), #79c99e)",
     "--color-error": "light-dark(#b34f4c, #dc7774)",
     "--color-warning": "light-dark(#9b6b25, #deb36a)",
     "--color-success-muted": "light-dark(rgba(63, 135, 100, 0.18), rgba(121, 201, 158, 0.2))",
@@ -10997,7 +11014,8 @@ export const neutralSlateHcTheme = {
     "--shadow-inset-selected": "inset 0px 0px 0px 2px #0074e280",
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
-    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D"
+    "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
+    "--color-data-ink": "light-dark(#374e6f, #9bafc9)"
   },
   localTokens: {
     "--astryx-theme-neutral-color-status-fill-accent": "light-dark(#0074e2, #6d9cfe)",

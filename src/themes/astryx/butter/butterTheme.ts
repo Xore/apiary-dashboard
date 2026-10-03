@@ -137,64 +137,64 @@ export const butterTheme = defineTheme({
     // =========================================================================
 
     // Blue
-    '--color-background-blue': ['#dbe1ff', '#dbe1ff'],
+    '--color-background-blue': ['#dbe1ff', '#dbe1ff33'],
     '--color-border-blue': ['#bdc5eb', '#bdc5eb'],
-    '--color-icon-blue': ['#203a6c', '#203a6c'],
-    '--color-text-blue': ['#203a6c', '#203a6c'],
+    '--color-icon-blue': ['#203a6c', '#dbe1ff'],
+    '--color-text-blue': ['#203a6c', '#dbe1ff'],
 
     // Cyan
-    '--color-background-cyan': ['#a9eff0', '#a9eff0'],
+    '--color-background-cyan': ['#a9eff0', '#a9eff033'],
     '--color-border-cyan': ['#8dd2d3', '#8dd2d3'],
-    '--color-icon-cyan': ['#004649', '#004649'],
-    '--color-text-cyan': ['#004649', '#004649'],
+    '--color-icon-cyan': ['#004649', '#a9eff0'],
+    '--color-text-cyan': ['#004649', '#a9eff0'],
 
     // Gray (uses the neutral palette)
-    '--color-background-gray': ['#f0edd4', '#f0edd4'],
+    '--color-background-gray': ['#f0edd4', '#f0edd433'],
     '--color-border-gray': ['#d6d3b8', '#d6d3b8'],
-    '--color-icon-gray': ['#4a4732', '#4a4732'],
-    '--color-text-gray': ['#4a4732', '#4a4732'],
+    '--color-icon-gray': ['#4a4732', '#f0edd4'],
+    '--color-text-gray': ['#4a4732', '#f0edd4'],
 
     // Green
-    '--color-background-green': ['#c1efb8', '#c1efb8'],
+    '--color-background-green': ['#c1efb8', '#c1efb833'],
     '--color-border-green': ['#a5d29d', '#a5d29d'],
-    '--color-icon-green': ['#004800', '#004800'],
-    '--color-text-green': ['#004800', '#004800'],
+    '--color-icon-green': ['#004800', '#c1efb8'],
+    '--color-text-green': ['#004800', '#c1efb8'],
 
     // Orange
-    '--color-background-orange': ['#ffdcb6', '#ffdcb6'],
+    '--color-background-orange': ['#ffdcb6', '#ffdcb633'],
     '--color-border-orange': ['#f2bd81', '#f2bd81'],
-    '--color-icon-orange': ['#622e00', '#622e00'],
-    '--color-text-orange': ['#622e00', '#622e00'],
+    '--color-icon-orange': ['#622e00', '#ffdcb6'],
+    '--color-text-orange': ['#622e00', '#ffdcb6'],
 
     // Pink
-    '--color-background-pink': ['#ffd5fb', '#ffd5fb'],
+    '--color-background-pink': ['#ffd5fb', '#ffd5fb33'],
     '--color-border-pink': ['#f0b3e8', '#f0b3e8'],
-    '--color-icon-pink': ['#6c0a68', '#6c0a68'],
-    '--color-text-pink': ['#6c0a68', '#6c0a68'],
+    '--color-icon-pink': ['#6c0a68', '#ffd5fb'],
+    '--color-text-pink': ['#6c0a68', '#ffd5fb'],
 
     // Purple
-    '--color-background-purple': ['#f2daff', '#f2daff'],
+    '--color-background-purple': ['#f2daff', '#f2daff33'],
     '--color-border-purple': ['#ddb9f6', '#ddb9f6'],
-    '--color-icon-purple': ['#52237b', '#52237b'],
-    '--color-text-purple': ['#52237b', '#52237b'],
+    '--color-icon-purple': ['#52237b', '#f2daff'],
+    '--color-text-purple': ['#52237b', '#f2daff'],
 
     // Red
-    '--color-background-red': ['#ffdad3', '#ffdad3'],
+    '--color-background-red': ['#ffdad3', '#ffdad333'],
     '--color-border-red': ['#f4b8ae', '#f4b8ae'],
-    '--color-icon-red': ['#6d211c', '#6d211c'],
-    '--color-text-red': ['#6d211c', '#6d211c'],
+    '--color-icon-red': ['#6d211c', '#ffdad3'],
+    '--color-text-red': ['#6d211c', '#ffdad3'],
 
     // Teal
-    '--color-background-teal': ['#b0f0d7', '#b0f0d7'],
+    '--color-background-teal': ['#b0f0d7', '#b0f0d733'],
     '--color-border-teal': ['#94d3bb', '#94d3bb'],
-    '--color-icon-teal': ['#00482d', '#00482d'],
-    '--color-text-teal': ['#00482d', '#00482d'],
+    '--color-icon-teal': ['#00482d', '#b0f0d7'],
+    '--color-text-teal': ['#00482d', '#b0f0d7'],
 
     // Yellow
-    '--color-background-yellow': ['#feee7b', '#feee7b'],
+    '--color-background-yellow': ['#feee7b', '#feee7b33'],
     '--color-border-yellow': ['#d6c957', '#d6c957'],
-    '--color-icon-yellow': ['#413e00', '#413e00'],
-    '--color-text-yellow': ['#413e00', '#413e00'],
+    '--color-icon-yellow': ['#413e00', '#feee7b'],
+    '--color-text-yellow': ['#413e00', '#feee7b'],
 
     // =========================================================================
     // Radius
