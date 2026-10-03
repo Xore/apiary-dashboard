@@ -115,6 +115,20 @@ describe('link integrity', () => {
     }
   })
 
+  it('every indicator a page links to has an indicator page', async () => {
+    const { sources } = await q.getSourceProfiles()
+    const { campaigns } = await q.getNetworkCampaigns()
+    const { rows: events } = await q.getEvents({})
+    const links: Array<[string, string]> = []
+    for (const s of sources) for (const r of (await q.getIpProfile(s.ip))?.paths ?? []) links.push(['url', r.label])
+    for (const c of campaigns) for (const r of (await q.getCampaign(c.cidr))?.group.credentials ?? []) links.push(['credential', r.label])
+    for (const e of events) if (e.fingerprint) links.push(['fingerprint', e.fingerprint])
+    // A URL indicator is the request target alone, never 'POST /path'.
+    expect(links.filter(([k, v]) => k === 'url' && /^[A-Z]+ /.test(v))).toEqual([])
+    for (const kind of ['url', 'credential', 'fingerprint']) expect(links.some(([k]) => k === kind), kind).toBe(true)
+    for (const [kind, value] of links) expect(await q.getIoc(kind, value), `${kind}:${value}`).not.toBeNull()
+  })
+
   it('related entities and timeline links resolve', async () => {
     const { sources } = await q.getSourceProfiles()
     for (const s of sources.slice(0, 5)) {

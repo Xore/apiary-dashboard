@@ -1046,7 +1046,8 @@ export async function getIpProfile(ip: string): Promise<IpProfile | null> {
     sensors: countBy(events.map((e) => e.sensor), 10),
     credentials: countBy(events.map(credentialOf), 10),
     commands: countBy(events.map((e) => e.command), 10),
-    paths: countBy(events.filter((e) => e.type === 'http.request').map((e) => e.summary.replace(/^GET /, '')), 10),
+    // The request path alone, whatever the method: it is the URL indicator's value.
+    paths: countBy(events.filter((e) => e.type === 'http.request').map((e) => e.summary.split(' ')[1]), 10),
     ports: countBy(events.map((e) => String(e.dstPort)), 10),
     protocols: countBy(events.map((e) => e.protocol), 10),
     sessions: countBy(events.map((e) => e.sessionId), 10),
@@ -1806,7 +1807,8 @@ function iocEvents(kind: string, value: string): HoneypotEvent[] {
   }
   if (kind === 'fingerprint') {
     const ips = new Set(sharedBy('fingerprint', value, 0))
-    return EVENTS.filter((e) => ips.has(e.srcIp))
+    // An event links its own fingerprint even when no identity shares it.
+    return EVENTS.filter((e) => ips.has(e.srcIp) || e.fingerprint === value)
   }
   return iocIndex.get(iocKey(kind, value)) ?? []
 }
