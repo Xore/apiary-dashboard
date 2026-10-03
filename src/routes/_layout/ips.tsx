@@ -63,7 +63,7 @@ function SourcesPage() {
         />
       }
       summary={
-        <Grid columns={{ minWidth: 460, repeat: 'fit' }} gap={4}>
+        <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
           <Panel title="Attack origins" action={<Text type="supporting">Click a country to see its events</Text>}>
             <WorldMap points={mapPoints ?? []} />
           </Panel>

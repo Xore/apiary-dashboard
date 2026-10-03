@@ -32,7 +32,7 @@ function AlertEvidence() {
         {hashes?.length ? (
           <VStack gap={1}>
             {hashes.map((h) => (
-              <Text key={h} type="code">
+              <Text key={h} type="code" maxLines={3} wordBreak="break-all">
                 {h}
               </Text>
             ))}

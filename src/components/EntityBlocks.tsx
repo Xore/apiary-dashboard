@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Link } from '@astryxdesign/core/Link'
 import { List, ListItem } from '@astryxdesign/core/List'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
-import { HStack, VStack } from '@astryxdesign/core/Stack'
+import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Table, pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
@@ -64,12 +64,15 @@ export function Timeline({ items: loaded, empty = 'Nothing happened in this time
   return (
     <VStack gap={4}>
       {kinds.length > 1 && (
-        <SegmentedControl label="Timeline kinds" size="sm" value={kind} onChange={(value) => setKind(value as 'all' | TimelineKind)}>
-          <SegmentedControlItem value="all" label={`All (${items.length})`} />
-          {kinds.map((k) => (
-            <SegmentedControlItem key={k} value={k} label={`${KIND_LABEL[k]} (${items.filter((i) => i.kind === k).length})`} />
-          ))}
-        </SegmentedControl>
+        // Many kinds do not fit a phone: the control scrolls in its own row.
+        <StackItem isScrollable>
+          <SegmentedControl label="Timeline kinds" size="sm" value={kind} onChange={(value) => setKind(value as 'all' | TimelineKind)}>
+            <SegmentedControlItem value="all" label={`All (${items.length})`} />
+            {kinds.map((k) => (
+              <SegmentedControlItem key={k} value={k} label={`${KIND_LABEL[k]} (${items.filter((i) => i.kind === k).length})`} />
+            ))}
+          </SegmentedControl>
+        </StackItem>
       )}
       {[...groups].map(([hour, list]) => (
         <VStack key={hour} gap={1}>
@@ -80,7 +83,12 @@ export function Timeline({ items: loaded, empty = 'Nothing happened in this time
             {list.map((item) => (
               <ListItem
                 key={`${item.kind}-${item.id}`}
-                label={item.href ? <Link href={item.href}>{item.title}</Link> : item.title}
+                // Titles carry attacker strings (long paths without spaces): they break anywhere.
+                label={
+                  <Text color="inherit" maxLines={2} wordBreak="break-all">
+                    {item.href ? <Link href={item.href}>{item.title}</Link> : item.title}
+                  </Text>
+                }
                 description={item.detail}
                 startContent={<Text type="supporting">{formatClock(item.at)}</Text>}
                 endContent={
