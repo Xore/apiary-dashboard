@@ -889,12 +889,13 @@ export async function getPayloads(): Promise<{ payloads: CapturedPayload[]; sour
   return { payloads: PAYLOADS, sources: countBy(PAYLOADS.flatMap((p) => p.sources), 10) }
 }
 
-export async function getAnalysisResults(): Promise<AnalysisResultsData> {
+export async function getAnalysisResults(range?: string): Promise<AnalysisResultsData> {
   await mockDelay()
   return {
-    results: [...ANALYSIS_RESULTS],
+    // The analyzers' results in the app-wide range; runs, the queue and the
+    // catalogs are not results and are always shown whole.
+    results: ANALYSIS_RESULTS.filter((r) => r.analyzer === 'workbench' || inRange(r.at, range)),
     gpuQueue: GPU_QUEUE.map((j) => ({ ...j })),
-    modelHealth: MODEL_HEALTH,
     analyzers: ANALYZERS,
     runs: WORKBENCH_RUNS.filter((r) => r.owner === MOCK_USER.name).map((r) => structuredClone(r)),
     recipes: WORKBENCH_RECIPES,

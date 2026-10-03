@@ -13,7 +13,7 @@ import type {
   SandboxRun,
 } from '../types'
 import { LOADER_HOSTS } from './fleet'
-import { ANALYSIS_RESULTS, PAYLOADS } from './operations'
+import { ANALYSIS_RESULTS, PAYLOADS, sandboxVerdict } from './operations'
 import { createRng, hex, int, isoMinutesAgo, pick } from './random'
 import type { Rng } from './random'
 
@@ -79,11 +79,6 @@ export function buildPayloadAnalysis(payload: CapturedPayload): PayloadAnalysis 
     ghidra: hasResult('ghidra', payload.hash),
     github: github ? { status: github.status, detections: github.detections, engines: github.engines } : undefined,
   }
-}
-
-/** One verdict scale for sandbox risk, shared by every page that shows it. */
-function sandboxVerdict(risk: number): SandboxRun['verdict'] {
-  return risk > 70 ? 'malicious' : risk > 40 ? 'suspicious' : 'benign'
 }
 
 /** The Windows guest's golden image: built 34 days before the mock's now,
