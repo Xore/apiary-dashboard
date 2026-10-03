@@ -78,7 +78,7 @@ function HistoryPage() {
         actions={
           <HStack gap={2} vAlign="center">
             {error && <FieldStatus type="error" variant="detached" message={error} />}
-            <Button label="Generate a report" size="sm" onClick={() => void router.navigate({ href: '/reports/generate' })} />
+            <Button label="Generate a report" size="sm" href="/reports/generate" />
           </HStack>
         }
         toolbar={

@@ -9,7 +9,7 @@ import { HStack, VStack } from '@astryxdesign/core/Stack'
 import { pixel, proportional } from '@astryxdesign/core/Table'
 import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
-import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { describeSchedule } from '#/components/details/Report'
 import { RecordList } from '#/components/RecordList'
 import { deleteReportDefinition, generateReport, getReports } from '#/data/queries'
@@ -32,7 +32,6 @@ export const Route = createFileRoute('/_layout/reports/library')({
 function LibraryPage() {
   const data = orPending(Route.useLoaderData())
   const router = useRouter()
-  const navigate = useNavigate()
   const [busy, setBusy] = useState<string | null>(null)
   const { error, guard } = useGuardedAction()
   const [confirm, setConfirm] = useState<ReportDefinition | null>(null)
@@ -74,7 +73,7 @@ function LibraryPage() {
       renderCell: (row) => (
         <HStack gap={1}>
           {isAdmin && <Button label="Generate now" size="sm" isLoading={busy === row.id} onClick={() => void act(row.id, async () => setGenerated(await generateReport(row.id)))} />}
-          <Button label="Edit" size="sm" variant="secondary" onClick={() => void navigate({ href: `/reports/generate?from=${row.id}` })} />
+          <Button label="Edit" size="sm" variant="secondary" href={`/reports/generate?from=${row.id}`} />
           {isAdmin && <Button label="Delete" size="sm" variant="ghost" onClick={() => setConfirm(row)} />}
         </HStack>
       ),
@@ -89,7 +88,7 @@ function LibraryPage() {
         actions={
           <HStack gap={2} vAlign="center">
             {error && <FieldStatus type="error" variant="detached" message={error} />}
-            <Button label="New definition" size="sm" onClick={() => void navigate({ href: '/reports/generate' })} />
+            <Button label="New definition" size="sm" href="/reports/generate" />
           </HStack>
         }
         summary={

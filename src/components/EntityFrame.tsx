@@ -73,11 +73,11 @@ function ListStepper({ position }: { position: NonNullable<ReturnType<typeof use
   }, [next, prev, navigate])
   return (
     <HStack gap={1} vAlign="center">
-      <Button label="Previous (K)" isIconOnly size="sm" variant="ghost" icon={<Icon icon={ChevronLeftIcon} size="sm" />} isDisabled={!prev} onClick={() => prev && void navigate({ href: prev })} />
+      <Button label="Previous (K)" isIconOnly size="sm" variant="ghost" icon={<Icon icon={ChevronLeftIcon} size="sm" />} isDisabled={!prev} href={prev ?? undefined} />
       <Text type="supporting">
         {formatNumber(index + 1)} of {formatNumber(context.hrefs.length)}
       </Text>
-      <Button label="Next (J)" isIconOnly size="sm" variant="ghost" icon={<Icon icon={ChevronRightIcon} size="sm" />} isDisabled={!next} onClick={() => next && void navigate({ href: next })} />
+      <Button label="Next (J)" isIconOnly size="sm" variant="ghost" icon={<Icon icon={ChevronRightIcon} size="sm" />} isDisabled={!next} href={next ?? undefined} />
     </HStack>
   )
 }

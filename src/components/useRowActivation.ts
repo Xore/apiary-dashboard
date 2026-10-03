@@ -4,6 +4,9 @@ import type { TablePlugin } from '@astryxdesign/core/Table'
 type Config<T> = {
   /** `newTab` is true for ⌘/Ctrl-click and middle-click. */
   onActivate: (item: T, options: { newTab: boolean }) => void
+  /** False when a link in the row carries the keyboard: the row is then not
+   * a second tab stop. */
+  focusable?: boolean
 }
 
 /** Table plugin: clicking (or Enter/Space on) a body row activates it.
@@ -11,6 +14,7 @@ type Config<T> = {
  * inside a row keep their own behavior. */
 export function useRowActivation<T extends Record<string, unknown>>({
   onActivate,
+  focusable = true,
 }: Config<T>): TablePlugin<T> {
   return {
     transformBodyRow: (props, item) => {
@@ -24,7 +28,7 @@ export function useRowActivation<T extends Record<string, unknown>>({
         ...props,
         htmlProps: {
           ...props.htmlProps,
-          tabIndex: 0,
+          tabIndex: focusable ? 0 : undefined,
           style: {
             ...props.htmlProps.style,
             cursor: 'pointer',
@@ -39,7 +43,7 @@ export function useRowActivation<T extends Record<string, unknown>>({
           },
           onKeyDown: (event: KeyboardEvent<HTMLTableRowElement>) => {
             props.htmlProps.onKeyDown?.(event)
-            if ((event.key === 'Enter' || event.key === ' ') && event.target === event.currentTarget) {
+            if (focusable && (event.key === 'Enter' || event.key === ' ') && event.target === event.currentTarget) {
               event.preventDefault()
               onActivate(item, { newTab: false })
             }

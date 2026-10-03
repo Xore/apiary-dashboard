@@ -19,7 +19,10 @@ const ips = (n: number) => Array.from({ length: n }, (_, i) => `198.51.100.${i +
 describe('AttackerGraph', () => {
   it('draws every member of a small identity, and no overflow', async () => {
     renderGraph(ips(5))
-    expect(await screen.findAllByRole('link', { name: /^Source / })).toHaveLength(5)
+    const links = await screen.findAllByRole('link', { name: /^Source / })
+    expect(links).toHaveLength(5)
+    // Real links: middle-click and "copy link" reach the source page.
+    expect(links[0].getAttribute('href')).toBe('/sources/198.51.100.1')
     expect(screen.queryByRole('link', { name: /more members/ })).toBeNull()
   })
 
