@@ -13,6 +13,7 @@ import {
   Cog6ToothIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline'
+import type { ReactNode } from 'react'
 import { useLocation } from '@tanstack/react-router'
 import type { SessionUser, ShellConfig } from '#/data/types'
 import { NAV_SECTIONS, navHrefFor } from '#/lib/nav'
@@ -43,7 +44,7 @@ function AccountMenu({ user, onOpenSettings }: { user: SessionUser; onOpenSettin
   )
 }
 
-export function ShellSideNav({ user, config, onOpenSettings }: { user: SessionUser; config: ShellConfig; onOpenSettings: () => void }) {
+export function ShellSideNav({ user, config, onOpenSettings, actions }: { user: SessionUser; config: ShellConfig; onOpenSettings: () => void; actions?: ReactNode }) {
   const prefs = usePreferences()
   const pathname = useLocation({ select: (location) => location.pathname })
   const activeHref = navHrefFor(pathname)
@@ -56,9 +57,12 @@ export function ShellSideNav({ user, config, onOpenSettings }: { user: SessionUs
       resizable={{ defaultWidth: 260, minWidth: 220, maxWidth: 360 }}
       footer={
         <SideNavSection title="Account" isHeaderHidden>
+          {/* What affects everyone: admins only, beside the account. */}
+          {isAdmin && <SideNavItem label="Administration" icon={AdjustmentsHorizontalIcon} href="/admin" isSelected={pathname === '/admin'} />}
           <AccountMenu user={user} onOpenSettings={onOpenSettings} />
         </SideNavSection>
       }
+      footerIcons={actions}
     >
       {NAV_SECTIONS.map((section) => (
         <SideNavSection key={section.label} title={section.label}>
@@ -74,12 +78,6 @@ export function ShellSideNav({ user, config, onOpenSettings }: { user: SessionUs
           ))}
         </SideNavSection>
       ))}
-      {/* What affects everyone: admins only. */}
-      {isAdmin && (
-        <SideNavSection title="Administration">
-          <SideNavItem label="Administration" icon={AdjustmentsHorizontalIcon} href="/admin" isSelected={pathname === '/admin'} />
-        </SideNavSection>
-      )}
       {recent.length > 0 && (
         <SideNavSection title="Recent">
           {recent.map((entry) => (

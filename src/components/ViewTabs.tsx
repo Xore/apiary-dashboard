@@ -245,7 +245,9 @@ function TabStrip({ model, hrefOf, go }: { model: ViewTabsModel; hrefOf: (id: st
       // strip's own box.
       const end = document.getElementById(TOP_NAV_END_ID)?.getBoundingClientRect()
       const start = strip.getBoundingClientRect()
-      const available = end && end.left > start.left ? Math.min(strip.clientWidth, end.left - start.left - END_GAP) : strip.clientWidth
+      // All in rendered px (the large-screen zoom applies to every rect
+      // alike; clientWidth would not have it).
+      const available = end && end.left > start.left ? Math.min(start.width, end.left - start.left - END_GAP) : start.width
       // No layout (tests, before first paint): show everything.
       if (available === 0 || widths.reduce((a, b) => a + b, 0) <= available) return setVisible(null)
       // The current tab always stays in the bar, so where you are is never

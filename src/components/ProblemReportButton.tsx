@@ -88,7 +88,7 @@ function useCapture(enabled: boolean) {
 }
 
 /** In the footer, when the admin switch (Dashboard defaults) allows it. */
-export function ProblemReportButton({ enabled, compact = false }: { enabled: boolean; compact?: boolean }) {
+export function ProblemReportButton({ enabled }: { enabled: boolean }) {
   const capture = useCapture(enabled)
   const [open, setOpen] = useState(false)
   const [expected, setExpected] = useState('')
@@ -149,10 +149,9 @@ export function ProblemReportButton({ enabled, compact = false }: { enabled: boo
     <>
       <Button
         label="Report a problem"
-        variant="secondary"
-        elevation="med"
-        size="sm"
-        isIconOnly={compact}
+        variant="ghost"
+        isIconOnly
+        tooltip="Report a problem"
         icon={<Icon icon={ChatBubbleLeftEllipsisIcon} size="sm" />}
         onClick={() => {
           reset()

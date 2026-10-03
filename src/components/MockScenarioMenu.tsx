@@ -33,7 +33,7 @@ export function MockScenarioMenu({ compact = false }: { compact?: boolean }) {
       button={{
         label: current === 'normal' ? 'Mock data' : `Mock: ${active.label}`,
         icon: <Icon icon={BeakerIcon} size="sm" />,
-        size: 'sm',
+        size: compact ? 'md' : 'sm',
         variant: current === 'normal' ? 'secondary' : 'primary',
         // Narrow screens: the icon, with the scenario in its tooltip.
         ...(compact ? { isIconOnly: true, tooltip: current === 'normal' ? 'Mock data' : `Mock: ${active.label}` } : {}),

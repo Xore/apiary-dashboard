@@ -21,12 +21,13 @@ function useOpenAlertCount(pathname: string): number | null {
 }
 
 /** The top bar's bell: the open-alert count, and the way to Alerts. */
-export function AlertBell() {
+/** Compact: the drawer layout, sized for touch. */
+export function AlertBell({ compact = false }: { compact?: boolean }) {
   const pathname = useLocation({ select: (location) => location.pathname })
   const open = useOpenAlertCount(pathname)
   const label = open ? `Alerts, ${open} open` : 'Alerts'
   return (
-    <Button label={label} tooltip={label} variant="secondary" size="sm" href="/alerts" isIconOnly={!open} icon={open ? undefined : <Icon icon={BellIcon} size="sm" />}>
+    <Button label={label} tooltip={label} variant="secondary" size={compact ? 'md' : 'sm'} href="/alerts" isIconOnly={!open} icon={open ? undefined : <Icon icon={BellIcon} size="sm" />}>
       {open ? (
         <HStack gap={1.5} vAlign="center">
           <Icon icon={BellIcon} size="sm" />

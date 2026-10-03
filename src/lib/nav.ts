@@ -1,26 +1,27 @@
-// Sidebar information architecture. Sections, order, labels, and routes match
-// the canonical frontend-next src/lib/nav.ts @62ee45d, except where epic #25
-// reshaped them: Indicators replaces Hash / IOC lookup and Executed commands,
-// Watchlist is new, Credentials reads Bait credentials, and Reports studio
-// became Generate, History, Templates and Library. Icons are
-// heroicons equivalents of its inline feather paths.
+// Sidebar information architecture: the destinations of the canonical
+// frontend-next src/lib/nav.ts @62ee45d (with epic #25's changes: Indicators,
+// Watchlist, Bait credentials, Reports studio), grouped by the analyst's
+// work rather than by data source, four to six to a group: watch the fleet,
+// what the detectors raised, what happened, who did it, and what was kept
+// or made of it. Every icon means one thing.
 import {
-  BellAlertIcon,
+  ArchiveBoxIcon,
   BellIcon,
   BookmarkIcon,
   ChartBarSquareIcon,
   ChatBubbleLeftRightIcon,
-  ClockIcon,
+  CommandLineIcon,
   CpuChipIcon,
   DocumentIcon,
   DocumentPlusIcon,
   FingerPrintIcon,
+  FlagIcon,
   GlobeAltIcon,
+  HashtagIcon,
   HomeIcon,
   KeyIcon,
   ListBulletIcon,
   LockClosedIcon,
-  MagnifyingGlassIcon,
   PlayCircleIcon,
   PresentationChartLineIcon,
   ServerStackIcon,
@@ -28,7 +29,6 @@ import {
   SignalIcon,
   Square3Stack3DIcon,
   Squares2X2Icon,
-  StarIcon,
 } from '@heroicons/react/24/outline'
 import type { IconType } from '@astryxdesign/core/Icon'
 
@@ -48,55 +48,50 @@ export const NAV_SECTIONS: NavSection[] = [
     label: 'Monitor',
     items: [
       { label: 'Overview', to: '/', icon: HomeIcon },
+      { label: 'Alerts', to: '/alerts', icon: BellIcon },
+      { label: 'Source & pipeline health', to: '/source-health', icon: SignalIcon },
+      { label: 'Fleet topology', to: '/topology', icon: Square3Stack3DIcon },
+      { label: 'Sensor detail', to: '/sensors', icon: ServerStackIcon },
+    ],
+  },
+  {
+    label: 'Detections',
+    items: [
       { label: 'ML anomalies', to: '/ml-anomalies', icon: CpuChipIcon },
       { label: 'LLM analysis', to: '/llm-analysis', icon: ChatBubbleLeftRightIcon },
-      { label: 'Agent campaigns', to: '/agent-campaigns', icon: BellAlertIcon },
+      { label: 'Agent campaigns', to: '/agent-campaigns', icon: CommandLineIcon },
       { label: 'Auth-failure events', to: '/auth-events', icon: LockClosedIcon },
     ],
   },
   {
-    label: 'Investigate',
+    label: 'Activity',
     items: [
       { label: 'Event explorer', to: '/events', icon: ListBulletIcon },
+      { label: 'Event history', to: '/history', icon: ArchiveBoxIcon },
+      { label: 'Session recordings', to: '/recordings', icon: PlayCircleIcon },
+      { label: 'Kill-chain analytics', to: '/kill-chain', icon: PresentationChartLineIcon },
+    ],
+  },
+  {
+    label: 'Attackers',
+    items: [
       { label: 'Attack sources', to: '/ips', icon: GlobeAltIcon },
+      { label: 'Attacker identities', to: '/attackers', icon: FingerPrintIcon },
       { label: 'Campaigns', to: '/campaigns', icon: ShareIcon },
       { label: 'Infrastructure clusters', to: '/clusters', icon: Squares2X2Icon },
-      { label: 'Attacker identities', to: '/attackers', icon: FingerPrintIcon },
-      { label: 'Kill-chain analytics', to: '/kill-chain', icon: PresentationChartLineIcon },
-      { label: 'Sensor detail', to: '/sensors', icon: ServerStackIcon },
-      { label: 'Session recordings', to: '/recordings', icon: PlayCircleIcon },
-      { label: 'Indicators', to: '/iocs', icon: MagnifyingGlassIcon },
+      { label: 'Indicators', to: '/iocs', icon: HashtagIcon },
       { label: 'Watchlist', to: '/watchlist', icon: BookmarkIcon },
     ],
   },
   {
-    label: 'Operations',
-    items: [
-      { label: 'Alerts', to: '/alerts', icon: BellIcon },
-      { label: 'Source & pipeline health', to: '/source-health', icon: SignalIcon },
-      { label: 'Fleet topology', to: '/topology', icon: Square3Stack3DIcon },
-      { label: 'Event history', to: '/history', icon: ClockIcon },
-    ],
-  },
-  {
-    label: 'Reports',
-    items: [
-      // Generate, History, Templates and Library are its top-bar tabs.
-      { label: 'Reports studio', to: '/reports/generate', icon: DocumentPlusIcon },
-    ],
-  },
-  {
-    label: 'Tools',
-    items: [
-      { label: 'Canarytokens', to: '/canarytokens', icon: StarIcon },
-      { label: 'Bait credentials', to: '/credentials', icon: KeyIcon },
-    ],
-  },
-  {
-    label: 'Evidence',
+    label: 'Evidence & output',
     items: [
       { label: 'Captured payloads', to: '/payloads', icon: DocumentIcon },
       { label: 'Analysis results', to: '/payload-workbench/results', icon: ChartBarSquareIcon },
+      // Generate, History, Templates and Library are its top-bar tabs.
+      { label: 'Reports studio', to: '/reports/generate', icon: DocumentPlusIcon },
+      { label: 'Canarytokens', to: '/canarytokens', icon: FlagIcon },
+      { label: 'Bait credentials', to: '/credentials', icon: KeyIcon },
     ],
   },
 ]

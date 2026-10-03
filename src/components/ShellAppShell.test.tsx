@@ -87,7 +87,7 @@ describe('ShellAppShell', () => {
   it('renders the full sidebar from navigation metadata', async () => {
     renderShell('/')
     await screen.findByText('overview content')
-    for (const section of ['Monitor', 'Investigate', 'Operations', 'Reports', 'Tools', 'Evidence']) {
+    for (const section of NAV_SECTIONS.map((s) => s.label)) {
       expect(screen.getAllByText(section).length).toBeGreaterThan(0)
     }
     const sidebar = screen.getByRole('navigation', { name: 'Side navigation' })
@@ -103,7 +103,7 @@ describe('ShellAppShell', () => {
     const active = within(sidebar).getByRole('link', { name: 'Event explorer' })
     expect(active.getAttribute('aria-current')).toBe('page')
     const crumbs = screen.getByRole('navigation', { name: 'Current page' })
-    expect(crumbs.textContent).toContain('Investigate')
+    expect(crumbs.textContent).toContain('Activity')
     expect(crumbs.textContent).toContain('Event explorer')
     expect(crumbs.textContent).toMatch(/Event explorer.*Event$/)
   })

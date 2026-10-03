@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { NAV_SECTIONS, navHrefFor, navItemFor, pageFor, sectionFor } from './nav'
 
 describe('navigation metadata', () => {
-  it('matches the canonical information architecture', () => {
-    expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Monitor', 'Investigate', 'Operations', 'Reports', 'Tools', 'Evidence'])
+  it('groups the canonical destinations by the analyst\'s work, four to six to a group', () => {
+    expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Monitor', 'Detections', 'Activity', 'Attackers', 'Evidence & output'])
+    for (const section of NAV_SECTIONS) expect(section.items.length, section.label).toBeGreaterThanOrEqual(4)
+    for (const section of NAV_SECTIONS) expect(section.items.length, section.label).toBeLessThanOrEqual(6)
     expect(NAV_SECTIONS.flatMap((s) => s.items)).toHaveLength(24)
   })
 
-  it('has one entry per route', () => {
-    const routes = NAV_SECTIONS.flatMap((s) => s.items.map((i) => i.to))
-    expect(new Set(routes).size).toBe(routes.length)
+  it('has one entry per route, and one icon per meaning', () => {
+    const items = NAV_SECTIONS.flatMap((s) => s.items)
+    expect(new Set(items.map((i) => i.to)).size).toBe(items.length)
+    expect(new Set(items.map((i) => i.icon)).size).toBe(items.length)
   })
 })
 
@@ -71,16 +74,16 @@ describe('navHrefFor', () => {
 describe('breadcrumb labels', () => {
   it('names nav pages by their label and section', () => {
     expect(pageFor('/alerts')).toBe('Alerts')
-    expect(sectionFor('/alerts')).toBe('Operations')
+    expect(sectionFor('/alerts')).toBe('Monitor')
   })
 
   it('names drill-downs by their prefix and parent section', () => {
     expect(pageFor('/events/evt-1')).toBe('Event')
-    expect(sectionFor('/events/evt-1')).toBe('Investigate')
+    expect(sectionFor('/events/evt-1')).toBe('Activity')
     expect(pageFor('/sources/192.0.2.1/timeline')).toBe('Source IP')
     expect(pageFor('/payloads/abc/sandbox')).toBe('Payload')
     expect(pageFor('/event/evt-1')).toBe('Event')
-    expect(sectionFor('/event/evt-1')).toBe('Investigate')
+    expect(sectionFor('/event/evt-1')).toBe('Activity')
     expect(navItemFor('/event/evt-1')?.label).toBe('Event explorer')
     expect(pageFor('/revdeck/abc')).toBe('RevDeck result')
     expect(pageFor('/revdeck')).toBe('RevDeck')

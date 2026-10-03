@@ -21,9 +21,11 @@ export function LiveBadge({ compact = false }: { compact?: boolean }) {
       ? (['success', 'Live', 'New events arrive as they happen. Click to pause.'] as const)
       : (['error', 'Stalled', 'The live stream is not connected. Pages still load; nothing new arrives.'] as const)
   return (
-    <Button label={label} variant="ghost" size="sm" tooltip={tooltip} onClick={toggleLive}>
+    <Button label={label} variant="ghost" size={compact ? 'md' : 'sm'} tooltip={tooltip} onClick={toggleLive}>
       <HStack gap={1.5} vAlign="center">
         <StatusDot variant={variant} label={label} isPulsing={variant === 'success'} />
+        {/* A phone's top bar has no room for the word; the dot, its tooltip and
+            its name still say it. */}
         {!compact && <Text type="supporting">{label}</Text>}
       </HStack>
     </Button>
