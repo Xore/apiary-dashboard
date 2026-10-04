@@ -288,19 +288,28 @@ export interface UsersWire {
 // ---- services --------------------------------------------------------------
 
 /** One row of the services adapter's inventory, as
- * `GET /api/v1/services` forwards it (services_control.rs
- * `load_services_status`). TBD: `stack`, `uptime` and `image` are produced
- * by services-adapter/services-adapter.py, not by this crate, and the crate
- * only checks that `name` is non-empty and `state` is one of the nine below.
- * The handler rejects the whole response if either check fails. */
+ * `GET /api/v1/services` forwards it. The shape comes from
+ * `services-adapter/services-adapter.py` `container_status`, which is its
+ * only writer: `services_control.rs` `load_services_status` forwards the
+ * adapter's rows verbatim after checking that `name` is non-empty and
+ * `state` is one of the nine below, rejecting the whole response otherwise.
+ * The handler adds, renames and defaults nothing. */
 export interface ServiceWire {
   name: string
   /** running | exited | restarting | paused | created | removing | dead |
    * not_found | unknown */
   state: string
-  stack?: string
-  uptime?: string
-  image?: string
+  /** Docker's `State.ExitCode`. Null while the container is running. */
+  exit_code: number | null
+  /** Docker's `State.StartedAt`. */
+  started_at: string | null
+  /** The container's `RestartCount` (a top-level inspect field), not
+   * `State`'s. */
+  restart_count: number | null
+  /** Docker's `State.Health.Status`. Absent unless the image declares a
+   * HEALTHCHECK — services-adapter.py adds the key only when `Health` is a
+   * dict carrying a truthy `Status`. */
+  health?: string
 }
 
 /** GET /api/v1/services. Always a 200-with-`available:true` or a 503 with
