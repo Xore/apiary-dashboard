@@ -1,10 +1,9 @@
 import { pageSsr } from '#/lib/pageSsr'
 import { orPending } from '#/lib/pending'
 import { Grid } from '@astryxdesign/core/Grid'
-import { VStack } from '@astryxdesign/core/Stack'
 import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
-import { CountTable, Panel } from '#/components/DashboardBlocks'
+import { MiniTable } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/sensors/$sensor')
 
@@ -15,20 +14,12 @@ function SensorLeaderboards() {
   const loaded = orPending(parent.useLoaderData())
   const detail = loaded?.detail
   if (detail?.topLists.length === 0) return <Text type="supporting">This sensor type has no leaderboards of its own.</Text>
+  // One block per list, each its own titled table (the breakdown pages' block).
   return (
-    <Panel title="What they asked it for">
-      <Grid columns={{ minWidth: 280, repeat: 'fit' }} gap={4}>
-        {detail?.topLists.map((list) =>
-          list.rows.length ? (
-            <CountTable key={list.label} header={list.label} rows={list.rows} countHeader="Count" isCode />
-          ) : (
-            <VStack key={list.label} gap={1}>
-              <Text weight="semibold">{list.label}</Text>
-              <Text type="supporting">Nothing recorded yet.</Text>
-            </VStack>
-          ),
-        )}
-      </Grid>
-    </Panel>
+    <Grid columns={{ minWidth: 280, repeat: 'fit' }} gap={4}>
+      {detail?.topLists.map((list) => (
+        <MiniTable key={list.label} title={list.label.charAt(0).toUpperCase() + list.label.slice(1)} rows={list.rows} isCode />
+      ))}
+    </Grid>
   )
 }

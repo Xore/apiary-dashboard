@@ -3,6 +3,7 @@ import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
 import { virusTotalLink } from '#/lib/toolLinks'
 import { OpenInMenu } from '#/components/OpenInMenu'
+import { Card } from '@astryxdesign/core/Card'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Link } from '@astryxdesign/core/Link'
 import { HStack, VStack } from '@astryxdesign/core/Stack'
@@ -115,14 +116,19 @@ function AttackVectorsPanel({ views }: { views: OverviewViews }) {
     >
       {vectors && (
         <Grid columns={{ minWidth: 240, repeat: 'fit' }} gap={4}>
-          <VStack gap={2}>
-            <Text type="supporting">Targeted ports, {sensor}, last 24h</Text>
-            <CountTable header="Port" rows={vectors.ports} linkTo={(port) => `/events?sensor=${sensor}&port=${port}`} />
-          </VStack>
-          <VStack gap={2}>
-            <Text type="supporting">Protocols, {sensor}, last 24h</Text>
-            <CountTable header="Protocol" rows={vectors.protocols} linkTo={(proto) => `/events?sensor=${sensor}&proto=${proto}`} />
-          </VStack>
+          {/* Each table its own container, or both bleed to the card's edges and overlap. */}
+          <Card variant="transparent" padding={0}>
+            <VStack gap={2}>
+              <Text type="supporting">Targeted ports, {sensor}, last 24h</Text>
+              <CountTable header="Port" label={`Targeted ports, ${sensor}`} rows={vectors.ports} linkTo={(port) => `/events?sensor=${sensor}&port=${port}`} />
+            </VStack>
+          </Card>
+          <Card variant="transparent" padding={0}>
+            <VStack gap={2}>
+              <Text type="supporting">Protocols, {sensor}, last 24h</Text>
+              <CountTable header="Protocol" label={`Protocols, ${sensor}`} rows={vectors.protocols} linkTo={(proto) => `/events?sensor=${sensor}&proto=${proto}`} />
+            </VStack>
+          </Card>
         </Grid>
       )}
     </Panel>
