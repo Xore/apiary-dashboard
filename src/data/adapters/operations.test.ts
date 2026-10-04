@@ -7,10 +7,10 @@ import type {
   ProblemReportPageWire,
   SensorEventsWire,
   SensorOverviewWire,
-  ServicesWire,
   SourceHealthWire,
   TopologyWire,
 } from '../contracts/operations'
+import type { ServicesWire } from '../contracts/settings'
 import type { Sensor } from '../types'
 import {
   alertAckBody,
@@ -108,7 +108,7 @@ const services: ServicesWire = {
   available: true,
   services: [
     { name: 'hp-cowrie', state: 'running', exit_code: 0, started_at: '2026-10-04T02:00:00Z', restart_count: 0, health: 'healthy' },
-    { name: 'hp-unlisted', state: 'not_found' },
+    { name: 'hp-unlisted', state: 'not_found', exit_code: null, started_at: null, restart_count: null },
   ],
 }
 
@@ -278,7 +278,7 @@ describe('operations adapters', () => {
     })
 
     it('carries the exit code of an exited container only', () => {
-      const page = topology(topologyWire, [], { available: true, services: [{ name: 'hp-cowrie', state: 'exited', exit_code: 137 }] })
+      const page = topology(topologyWire, [], { available: true, services: [{ name: 'hp-cowrie', state: 'exited', exit_code: 137, started_at: null, restart_count: null }] })
       expect(page.stacks[0].containers[0]).toEqual({ name: 'hp-cowrie', state: 'exited', exitCode: 137 })
       expect(page.stacks[0].containers[0]).not.toHaveProperty('exitCode', null)
     })
