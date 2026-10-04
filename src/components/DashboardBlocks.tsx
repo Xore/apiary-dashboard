@@ -13,6 +13,7 @@ import { Heading, Text } from '@astryxdesign/core/Text'
 import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/react/24/outline'
 import type { CountRow } from '#/data/types'
 import { formatChange, formatCompact, formatNumber } from '#/lib/format'
+import { ENTITIES } from '#/lib/entities'
 import type { EntityKind } from '#/lib/entities'
 import { Sparkline } from './charts'
 import { EntityLink } from './EntityLink'
@@ -38,8 +39,18 @@ export function Panel({ title, action, children }: { title: ReactNode; action?: 
     </VStack>
   )
   // Tight within a block, generous between them: without a card's padding
-  // the space after each block is what separates it from the next.
-  return inRecord ? <VStack paddingBlockEnd={6}>{body}</VStack> : <Card>{body}</Card>
+  // the space after each block is what separates it from the next. Either
+  // container is the block's own: an Astryx table bleeds to the edges of the
+  // nearest one, so blocks side by side would otherwise spill into each other
+  // (a transparent padding-0 Card bleeds by nothing and draws nothing; a
+  // Section would, as it bleeds out of its own parent).
+  return inRecord ? (
+    <VStack paddingBlockEnd={6}>
+      <Card variant="transparent" padding={0}>{body}</Card>
+    </VStack>
+  ) : (
+    <Card>{body}</Card>
+  )
 }
 
 type StatTileProps = {
@@ -109,9 +120,12 @@ export function StatTile({ label, value, previous, caption, trend, href }: StatT
   return href ? <ClickableCard href={href} label={`${label}: ${formatNumber(value)}`} elevation="low">{body}</ClickableCard> : <Card>{body}</Card>
 }
 
-/** Two-column "value, count" table for top-N breakdowns. */
-export function CountTable({ header, rows, countHeader = 'Count', isCode = false, linkTo, entity }: {
+/** Two-column "value, count" table for top-N breakdowns. One line per row,
+ * so tables side by side end level; a cut value is whole in its tooltip. */
+export function CountTable({ header, label = header, rows, countHeader = 'Count', isCode = false, linkTo, entity }: {
   header: string
+  /** What screen readers call the table; defaults to the value header. */
+  label?: string
   /** Undefined while loading: the columns, and skeleton rows. */
   rows: CountRow[] | undefined
   countHeader?: string
@@ -128,15 +142,20 @@ export function CountTable({ header, rows, countHeader = 'Count', isCode = false
       header,
       width: proportional(1),
       renderCell: (row) => {
-        if (entity) return <EntityLink kind={entity} id={row.label} />
-        const text = isCode ? <Text type="code">{row.label}</Text> : row.label
+        const text =
+          isCode || (entity && ENTITIES[entity].isCode) ? (
+            <Text type="code" color="inherit" maxLines={1}>{row.label}</Text>
+          ) : (
+            <Text color="inherit" maxLines={1}>{row.label}</Text>
+          )
+        if (entity) return <EntityLink kind={entity} id={row.label}>{text}</EntityLink>
         return linkTo ? <Link href={linkTo(row.label)}>{text}</Link> : text
       },
     },
     { key: 'count', header: countHeader, width: pixel(88), align: 'end', renderCell: (row) => formatNumber(row.count) },
   ]
-  if (!rows) return <SkeletonTable columns={columns} rows={8} density={tableDensity(prefs)} />
-  return <Table data={rows} columns={columns} idKey="id" density={tableDensity(prefs)} />
+  if (!rows) return <SkeletonTable columns={columns} rows={8} density={tableDensity(prefs)} label={label} />
+  return <Table data={rows} columns={columns} idKey="id" density={tableDensity(prefs)} textOverflow="truncate" aria-label={label} />
 }
 
 /** A titled top-N breakdown; renders a short note instead of an empty table. */
@@ -152,7 +171,7 @@ export function MiniTable({ title, header = 'Value', countHeader, rows, isCode, 
   return (
     <Panel title={title}>
       {!rows || rows.length ? (
-        <CountTable header={header} countHeader={countHeader} rows={rows} isCode={isCode} linkTo={linkTo} entity={entity} />
+        <CountTable header={header} label={title} countHeader={countHeader} rows={rows} isCode={isCode} linkTo={linkTo} entity={entity} />
       ) : (
         <Text type="supporting">Nothing recorded.</Text>
       )}
