@@ -67,7 +67,7 @@ Every page needs a session. Signing in goes through the mock identity provider a
 On the server:
 - every server function passes a **same-origin check** (a cross-site state-changing call gets 403);
 - every query is **authorized for the caller**: no session → 401; a viewer calling an admin-only write → 403; the canonical permissions are in `src/server/authorize.ts`;
-- direct handlers (`/api/*`) check the session themselves; `/healthz` and the firewall's blocklist export are deliberately public;
+- direct handlers (`/api/*`) check the session themselves; `/healthz` and the firewall's blocklist export are deliberately public; `/metrics` needs the service token in `x-service-token`;
 - `/auth/logout` needs a same-origin Origin or Referer, then destroys the session.
 
 The server refuses to boot in an environment that would open it:

@@ -2,6 +2,7 @@
 // the store, its id in the canonical cookie on the response.
 import { setResponseHeader } from '@tanstack/react-start/server'
 import { failIf, faulty } from './faults'
+import { recordNamedEvent } from './obs'
 import { sessionCookie, sessions } from './session'
 import type { Role, Session } from './session'
 
@@ -14,8 +15,15 @@ const ACCOUNTS: Record<Role, Omit<Session, 'createdAt'>> = {
 export const signInAvailable = () => !faulty('identity-provider') && !faulty('session-store')
 
 export async function signInMock(role: Role): Promise<void> {
-  // The token exchange, then the session write: either can fail.
-  failIf('identity-provider')
-  const sid = await sessions.create(ACCOUNTS[role])
-  setResponseHeader('set-cookie', sessionCookie(sid))
+  // The token exchange, then the session write: either can fail. Both
+  // outcomes are named events on /metrics and in the durable log.
+  try {
+    failIf('identity-provider')
+    const sid = await sessions.create(ACCOUNTS[role])
+    setResponseHeader('set-cookie', sessionCookie(sid))
+  } catch (error) {
+    recordNamedEvent('auth_callback_failed', { reason: error instanceof Error ? error.message : 'unknown' })
+    throw error
+  }
+  recordNamedEvent('auth_callback_completed', { role })
 }

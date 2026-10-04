@@ -12,10 +12,12 @@ const sameOrigin = createMiddleware({ type: 'function' }).server(async ({ next }
 })
 
 // Every HTTP request runs inside its Content-Security-Policy nonce's scope
-// (lib/cspNonce.server.ts), before anything renders.
+// (lib/cspNonce.server.ts), before anything renders, and is counted and
+// timed for /metrics.
 const csp = createMiddleware({ type: 'request' }).server(async ({ next }) => {
-  const { withCspScope } = await import('./lib/cspNonce.server')
-  return withCspScope(next)
+  const started = performance.now()
+  const [{ withCspScope }, { recordRequest }] = await Promise.all([import('./lib/cspNonce.server'), import('./server/obs')])
+  return withCspScope(next).finally(() => recordRequest(performance.now() - started))
 })
 
 export const startInstance = createStart(() => ({ requestMiddleware: [csp], functionMiddleware: [sameOrigin] }))
