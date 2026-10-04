@@ -11,6 +11,12 @@
 // endpoint serves sensors.rs `SensorEvent` (the sensor's own fields,
 // untouched), not events.rs `EventRow`. Reuse it where the endpoint really
 // does serve an `EventRow` (see ../adapters/events).
+//
+// GET /api/v1/services is NOT declared here either: one endpoint, one wire.
+// It lives in ./settings, next to the services adapter that serves it, and
+// ../adapters/operations imports it from there — the topology mapper consumes
+// the same wire (it reads `exit_code` off a container row) but is a separate
+// consumer, not a second author of the shape.
 
 // ---- Sensors ---------------------------------------------------------------
 
@@ -326,30 +332,6 @@ export interface TopologyWire {
   sensors: TopologySensorWire[]
   flow: TopologyFlowWire
   stacks: TopologyStackWire[]
-}
-
-/** One container row of GET /api/v1/services, as the services adapter
- * builds it (services-adapter.py container_status) and services_control
- * validates. `state` is a Docker status ("running", "exited",
- * "restarting", "paused", "created", "removing", "dead") or the adapter's
- * own "not_found" / "unknown". `exit_code` and `started_at` come from
- * Docker's State, `restart_count` from the container, and `health` is
- * present only when the image declares a HEALTHCHECK. `available: false`
- * (503) means the adapter is unconfigured or unreachable — never "zero
- * services". */
-export interface ServiceWire {
-  name: string
-  state: string
-  exit_code?: number | null
-  started_at?: string | null
-  restart_count?: number | null
-  health?: string
-}
-
-export interface ServicesWire {
-  available: boolean
-  reason?: string
-  services: ServiceWire[]
 }
 
 // ---- Dead letters ----------------------------------------------------------

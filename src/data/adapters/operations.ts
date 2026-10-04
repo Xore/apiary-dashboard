@@ -37,10 +37,10 @@ import type {
   SensorEventsWire,
   SensorMeasureWire,
   SensorOverviewWire,
-  ServicesWire,
   SourceHealthWire,
   TopologyWire,
 } from '../contracts/operations'
+import type { ServicesWire } from '../contracts/settings'
 
 const countRows = (rows: Array<{ key: string; count: number }>): CountRow[] => rows.map((r) => ({ id: r.key, label: r.key, count: r.count }))
 
