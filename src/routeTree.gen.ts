@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as HealthzRouteImport } from './routes/healthz'
+import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutAttackersRouteImport } from './routes/_layout/attackers'
@@ -204,6 +205,11 @@ const LayoutRoute = LayoutRouteImport.update({
 const HealthzRoute = HealthzRouteImport.update({
   id: '/healthz',
   path: '/healthz',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetricsRoute = MetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
@@ -1210,6 +1216,7 @@ const ApiArtifactKindKeyFilenameRoute =
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
   '/healthz': typeof HealthzRoute
+  '/metrics': typeof MetricsRoute
   '/admin': typeof LayoutAdminRoute
   '/attackers': typeof LayoutAttackersRoute
   '/commands': typeof LayoutCommandsRoute
@@ -1397,6 +1404,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/healthz': typeof HealthzRoute
+  '/metrics': typeof MetricsRoute
   '/admin': typeof LayoutAdminRoute
   '/attackers': typeof LayoutAttackersRoute
   '/commands': typeof LayoutCommandsRoute
@@ -1571,6 +1579,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
   '/healthz': typeof HealthzRoute
+  '/metrics': typeof MetricsRoute
   '/_layout/admin': typeof LayoutAdminRoute
   '/_layout/attackers': typeof LayoutAttackersRoute
   '/_layout/commands': typeof LayoutCommandsRoute
@@ -1762,6 +1771,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/healthz'
+    | '/metrics'
     | '/admin'
     | '/attackers'
     | '/commands'
@@ -1949,6 +1959,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/healthz'
+    | '/metrics'
     | '/admin'
     | '/attackers'
     | '/commands'
@@ -2122,6 +2133,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_layout'
     | '/healthz'
+    | '/metrics'
     | '/_layout/admin'
     | '/_layout/attackers'
     | '/_layout/commands'
@@ -2312,6 +2324,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
   HealthzRoute: typeof HealthzRoute
+  MetricsRoute: typeof MetricsRoute
   ApiLiveRoute: typeof ApiLiveRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
@@ -2342,6 +2355,13 @@ declare module '@tanstack/react-router' {
       path: '/healthz'
       fullPath: '/healthz'
       preLoaderRoute: typeof HealthzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metrics': {
+      id: '/metrics'
+      path: '/metrics'
+      fullPath: '/metrics'
+      preLoaderRoute: typeof MetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout/': {
@@ -4154,6 +4174,7 @@ const LayoutRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
   HealthzRoute: HealthzRoute,
+  MetricsRoute: MetricsRoute,
   ApiLiveRoute: ApiLiveRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,

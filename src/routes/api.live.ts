@@ -7,6 +7,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { listen } from '#/data/mock/liveFeed'
 import { isScenario } from '#/data/scenarios'
+import { admissionGate, envInt } from '#/server/admission'
 import { resolveUser } from '#/server/identity'
 
 const OUTAGE: Record<string, { status: number; headers?: Record<string, string> }> = {
@@ -14,6 +15,10 @@ const OUTAGE: Record<string, { status: number; headers?: Record<string, string> 
   overloaded: { status: 503, headers: { 'retry-after': '30' } },
   expired: { status: 401 },
 }
+
+// Concurrent streams this server holds open; past it a new one is shed
+// (503, Retry-After: 1) and EventSource reconnects. Canonical's default.
+const streams = admissionGate(envInt('LIVE_MAX_STREAMS', 500))
 
 export const Route = createFileRoute('/api/live')({
   server: {
@@ -25,6 +30,8 @@ export const Route = createFileRoute('/api/live')({
         const scenario = isScenario(mock) ? mock : 'normal'
         const outage = OUTAGE[scenario] as (typeof OUTAGE)[string] | undefined
         if (outage) return new Response(`live stream: ${scenario}`, { status: outage.status, headers: outage.headers })
+        const release = streams.admit()
+        if (release instanceof Response) return release
 
         const encoder = new TextEncoder()
         let stop = () => {}
@@ -52,6 +59,7 @@ export const Route = createFileRoute('/api/live')({
             stop = () => {
               clearInterval(ping)
               unlisten()
+              release()
             }
             request.signal.addEventListener('abort', () => {
               stop()
