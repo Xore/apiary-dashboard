@@ -412,20 +412,23 @@ export const dashboardOperators = (wire: UsersWire): DashboardOperator[] =>
 
 const CONTAINER_STATES = ['running', 'restarting', 'exited', 'unknown'] as const
 
-/** GET /api/v1/services. TBD: the adapter's `stack`, `uptime` and `image`
- * are not in this crate — services_control.rs only checks `name` and
- * `state` — so they are read as sent and read as "" when the adapter
- * omits them. A page `unknown` stands for every state the deployment's own
- * nine names that the page's four do not (paused, created, removing, dead,
- * not_found). */
+/** GET /api/v1/services. The adapter serves Docker's own state vocabulary
+ * and never `stack`, `uptime` or `image` — services-adapter.py's
+ * `container_status` writes only name/state/exit_code/started_at/
+ * restart_count and a conditional health, and services_control.rs forwards
+ * those rows verbatim. The page's three fields therefore always read "", and
+ * `health`/`restart_count`/`exit_code` have no page field to land in (a
+ * documented gap, not an invented one). A page `unknown` stands for every
+ * state the deployment's nine names that the page's four do not (paused,
+ * created, removing, dead, not_found). */
 export const services = (wire: ServicesWire): { available: boolean; services: ServiceStatus[]; reason?: string } => ({
   available: wire.available,
   services: wire.services.map((service) => ({
     name: service.name,
-    stack: service.stack ?? '',
+    stack: '',
     state: (CONTAINER_STATES as readonly string[]).includes(service.state) ? (service.state as ContainerState) : 'unknown',
-    uptime: service.uptime ?? '',
-    image: service.image ?? '',
+    uptime: '',
+    image: '',
   })),
   ...(wire.reason ? { reason: wire.reason } : {}),
 })

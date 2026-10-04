@@ -315,15 +315,15 @@ describe('services, reporter and storage', () => {
       services({
         available: true,
         services: [
-          { name: 'hp-tanner', state: 'running', stack: 'hp', uptime: '3d 4h', image: 'apiary/tanner:latest' },
-          { name: 'hp-cowrie', state: 'paused', stack: 'hp', uptime: '—', image: 'apiary/cowrie:latest' },
+          { name: 'hp-tanner', state: 'running', exit_code: null, started_at: '2026-10-04T08:00:00Z', restart_count: 0 },
+          { name: 'hp-cowrie', state: 'paused', exit_code: 137, started_at: '2026-10-03T08:00:00Z', restart_count: 4, health: 'unhealthy' },
         ],
       }),
     ).toEqual({
       available: true,
       services: [
-        { name: 'hp-tanner', stack: 'hp', state: 'running', uptime: '3d 4h', image: 'apiary/tanner:latest' },
-        { name: 'hp-cowrie', stack: 'hp', state: 'unknown', uptime: '—', image: 'apiary/cowrie:latest' },
+        { name: 'hp-tanner', stack: '', state: 'running', uptime: '', image: '' },
+        { name: 'hp-cowrie', stack: '', state: 'unknown', uptime: '', image: '' },
       ],
     })
   })
@@ -455,7 +455,7 @@ describe('attack vectors and the assembled settings page', () => {
       templates: [{ id: 'executive', name: 'Executive', description: 'One-page brief', elements: ['summary'] }],
       users: { users: [{ subject: 'oidc|1', username: 'operator', role: 'admin', first_seen_at: '2026-06-01T00:00:00Z', last_seen_at: '2026-10-04T08:00:00Z' }] },
       preferences: doc,
-      services: { available: true, services: [{ name: 'hp-tanner', state: 'running', stack: 'hp', uptime: '3d', image: 'apiary/tanner:latest' }] },
+      services: { available: true, services: [{ name: 'hp-tanner', state: 'running', exit_code: null, started_at: '2026-10-04T08:00:00Z', restart_count: 0 }] },
       history: { entries: [{ revision: 41, time: '2026-10-04T08:00:00Z', actor_subject: 'oidc|1', actor_username: 'operator', action: 'update', fields: ['behavior'] }] },
       audit: { events: [{ actor_subject: 'oidc|1', actor_username: 'operator', action: 'config.update', fields: ['behavior'], revision: 41, result: 'success', time: '2026-10-04T08:00:00Z' }] },
       reporter: { available: false, reason: 'no reporter metrics indexed yet' },
