@@ -1199,11 +1199,14 @@ export async function getDeadLetters(query: string): Promise<DeadLetter[]> {
   return q ? DEAD_LETTERS.filter((d) => JSON.stringify(d).toLowerCase().includes(q)) : [...DEAD_LETTERS]
 }
 
-/** Mock write: purges exactly the documents the current query shows. */
-export async function purgeDeadLetters(ids: string[]): Promise<number> {
+/** Mock write: purges exactly the documents the query box shows — the same
+ * `q` the list above it was loaded with, never a silently broader set. */
+export async function purgeDeadLetters(query: string): Promise<number> {
   await mockDelay()
+  const q = query.trim().toLowerCase()
+  const hit = (d: (typeof DEAD_LETTERS)[number]) => (q ? JSON.stringify(d).toLowerCase().includes(q) : true)
   const before = DEAD_LETTERS.length
-  for (let i = DEAD_LETTERS.length - 1; i >= 0; i--) if (ids.includes(DEAD_LETTERS[i].id)) DEAD_LETTERS.splice(i, 1)
+  for (let i = DEAD_LETTERS.length - 1; i >= 0; i--) if (hit(DEAD_LETTERS[i])) DEAD_LETTERS.splice(i, 1)
   return before - DEAD_LETTERS.length
 }
 

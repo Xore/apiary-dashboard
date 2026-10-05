@@ -85,7 +85,9 @@ function DeadLettersPage() {
           setBusy(true)
           setError(undefined)
           try {
-            await purgeDeadLetters((rows ?? []).map((r) => r.id))
+            // The query, not the rows: the backend purges the `q` scope its
+            // own list searched, which is what the dialog describes.
+            await purgeDeadLetters(q ?? '')
             await router.invalidate()
           } catch (e) {
             setError(describeError(e))
