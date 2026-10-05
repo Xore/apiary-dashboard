@@ -75,6 +75,7 @@ The server refuses to boot in an environment that would open it:
 | Variable | |
 |---|---|
 | `SERVICE_TOKEN` | Shared secret with the backend. Required, unless `APIARY_ALLOW_UNAUTH_DEV=1` says this is a local instance (`E-SERVICE-TOKEN`). |
+| `BACKEND_URL` | Base URL of the backend tier, the canonical BFF's own variable, so one deployment configures both. Unset — the default — leaves the events & sessions slice answering from the mock. |
 | `APIARY_ALLOW_UNAUTH_DEV` | Exactly `1`: a local development instance. `bun run dev` sets it. |
 | `OIDC_DISABLED` | `1` skips sign-in: everyone is a fixture admin. Only with `NODE_ENV=development` or `APIARY_ALLOW_UNAUTH_DEV=1` (`E-OIDC-DISABLED`). |
 | `APIARY_DEV_HTTP_COOKIE` | Exactly `1`: the session cookie works over plain HTTP (`apiary_bff_dev`, not Secure), so a dev server can be used from another machine by its LAN address. Only with `NODE_ENV=development` or `APIARY_ALLOW_UNAUTH_DEV=1` (`E-DEV-HTTP-COOKIE`). `bun run dev` sets it and listens on 0.0.0.0. |

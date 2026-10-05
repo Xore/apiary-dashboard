@@ -47,11 +47,18 @@ export function backend(scenario: MockScenario = 'normal', caller?: Caller): Bac
 }
 
 /** One call from a server function: by name, with its arguments, in the
- * page's scenario, for the request's signed-in user. */
+ * page's scenario, for the request's signed-in user.
+ *
+ * There is exactly one funnel, so this is where the real backend sits
+ * alongside the mock (src/data/api.ts). A `?mock=` scenario, an unconfigured
+ * BACKEND_URL, or a query this slice has not wired all fall through to the
+ * mock; anything else answers from the API. Both paths set the refusal as
+ * the response status and reach the pages in the same states. */
 export async function runForRequest(name: string, args: unknown[], scenario: unknown): Promise<unknown> {
   const [{ getRequest, setResponseStatus }, { resolveUser }] = await Promise.all([import('@tanstack/react-start/server'), import('#/server/identity')])
   const user = await resolveUser(getRequest())
-  const query = backend(isScenario(scenario) ? scenario : 'normal', user)[name as QueryName] as ((...a: unknown[]) => Promise<unknown>) | undefined
+  const live = isScenario(scenario) ? undefined : (await import('./api')).liveQuery(name, user)
+  const query = (live ?? backend(isScenario(scenario) ? scenario : 'normal', user)[name as QueryName]) as ((...a: unknown[]) => Promise<unknown>) | undefined
   if (!query) throw new Error(`unknown query ${name}`)
   try {
     return await query(...args)
