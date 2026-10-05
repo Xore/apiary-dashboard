@@ -15,4 +15,10 @@ todos.json
 # Design studio build output (bun run studio)
 design-studio/index.html
 .task.md
-.task.md
+
+# Agent tooling state: per-agent worktrees and the grit registry/socket.
+# Worktrees are full copies of this tree, so anything that walks the repo
+# (eslint, graphify, the secret scanner) must skip them.
+.claude/
+.grit/
+.impeccable/
