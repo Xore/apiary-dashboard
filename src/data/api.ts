@@ -88,6 +88,8 @@ import {
 import { DEFAULT_PREFERENCES_WIRE, capturedMail, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
+import { envInt } from '#/server/admission'
+import { recordShed } from '#/server/obs'
 import { isRead, READ_ONLY_EXEMPT } from './scenario'
 import {
   analyzerCatalog,
@@ -206,9 +208,36 @@ import type {
 import type { Backend, Caller } from './backend'
 import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Protocol, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig, TimeBucket } from './types'
 
-/** A dashboard that hangs forever is worse than one that errors. Same budget
- * as the canonical BFF's own backend calls (backend.server.ts). */
-const TIMEOUT_MS = 15_000
+/** A dashboard that hangs forever is worse than one that errors. */
+const TIMEOUT_MS = envInt('BACKEND_TIMEOUT_MS', 30_000)
+
+/** The bounded queue in front of the fan-out to the Rust tier (canonical
+ * `backendLimiter`, #1616): MAX_INFLIGHT calls at once, MAX_QUEUE more wait,
+ * anything past that is shed at once as `overloaded` instead of piling up
+ * sockets behind a growing queue. The live stream is not counted here — it
+ * holds its connection for minutes and has its own gate (api.live.ts). */
+const MAX_INFLIGHT = envInt('BACKEND_MAX_INFLIGHT', 25)
+const MAX_QUEUE = envInt('BACKEND_MAX_QUEUE', 50)
+let inflight = 0
+const waiting: Array<() => void> = []
+
+async function limited<T>(endpoint: string, call: () => Promise<T>): Promise<T> {
+  if (inflight >= MAX_INFLIGHT) {
+    if (waiting.length >= MAX_QUEUE) {
+      recordShed('queue-full')
+      throw new ApiError('overloaded', endpoint, { retryAfter: 1 })
+    }
+    // The releasing call hands its slot over: `inflight` stays counted.
+    await new Promise<void>((resolve) => waiting.push(resolve))
+  } else inflight++
+  try {
+    return await call()
+  } finally {
+    const next = waiting.shift()
+    if (next) next()
+    else inflight--
+  }
+}
 
 /** This process has a real backend to talk to. Its absence is the default. */
 export const isLiveBackend = (env: NodeJS.ProcessEnv = process.env): boolean => Boolean(env.BACKEND_URL?.trim())
@@ -258,7 +287,7 @@ const EMPTY_HEALTH: SourceHealthWire = {
  * backend will not talk to us", so it is `unavailable` — 502, retryable —
  * with the tier's own words in the detail. */
 const kindOf = (status: number): ApiErrorKind =>
-  status === 403 ? 'forbidden' : status === 503 ? 'overloaded' : status === 400 || status === 422 ? 'invalid' : 'unavailable'
+  status === 403 ? 'forbidden' : status === 423 ? 'locked' : status === 503 ? 'overloaded' : status === 400 || status === 422 ? 'invalid' : 'unavailable'
 
 /** GET against the Rust tier, or null for the 404 a detail endpoint answers
  * when nothing carries the id.
@@ -278,8 +307,9 @@ async function raw(path: string, opts: { mounted?: boolean; user?: Caller; searc
   const query = queryOf(opts.search)
   let response: Response
   try {
-    response = await fetch(`${baseURL(process.env, opts.mounted)}${path}${query.size ? `?${query}` : ''}`, { headers: { 'x-service-token': process.env.SERVICE_TOKEN ?? '', ...actorHeaders(opts.user) }, signal: AbortSignal.timeout(TIMEOUT_MS) })
-  } catch {
+    response = await limited(endpoint, () => fetch(`${baseURL(process.env, opts.mounted)}${path}${query.size ? `?${query}` : ''}`, { headers: { 'x-service-token': process.env.SERVICE_TOKEN ?? '', ...hopHeaders(opts.user) }, signal: AbortSignal.timeout(TIMEOUT_MS) }))
+  } catch (error) {
+    if (error instanceof ApiError) throw error
     throw new ApiError('unavailable', endpoint)
   }
   if (!response.ok && response.status !== 404) throw new ApiError(kindOf(response.status), endpoint, await detailOf(response))
@@ -333,6 +363,13 @@ export async function getRaw(endpoint: string, path: string, search: SearchParam
 const actorHeaders = (user: Caller): Record<string, string> =>
   user ? { 'x-actor-username': user.name, 'x-actor-role': user.roles[0] ?? '' } : {}
 
+/** The actor, plus the request's one id across the hop chain (canonical
+ * `x-request-id`), when the call runs inside a request's scope. */
+const hopHeaders = (user: Caller): Record<string, string> => {
+  const requestId = requestScope.getStore()?.requestId
+  return { ...actorHeaders(user), ...(requestId ? { 'x-request-id': requestId } : {}) }
+}
+
 /** One call to the Rust tier, GET or POST, mounted or not.
  *
  * 404 is the only status that becomes a null: it is what a detail endpoint
@@ -346,16 +383,18 @@ async function request<T>(endpoint: string, path: string, opts: { method: 'GET' 
   const url = `${baseURL(process.env, opts.mounted)}${path}${query.size ? `?${query}` : ''}`
   let response: Response
   try {
-    response = await fetch(url, {
+    response = await limited(endpoint, () => fetch(url, {
       method: opts.method,
       // Only a request that carries a body declares a content type: a
       // bodyless PUT/PATCH declares none, so the tier is not invited to
       // reject an empty body against a header that promised JSON.
-      headers: { ...(opts.body === undefined ? {} : { 'content-type': 'application/json' }), 'x-service-token': process.env.SERVICE_TOKEN ?? '', ...actorHeaders(opts.user) },
+      headers: { ...(opts.body === undefined ? {} : { 'content-type': 'application/json' }), 'x-service-token': process.env.SERVICE_TOKEN ?? '', ...hopHeaders(opts.user) },
       ...(opts.body === undefined ? {} : { body: JSON.stringify(opts.body) }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
-    })
-  } catch {
+    }))
+  } catch (error) {
+    // Shed by the limiter: already the right refusal.
+    if (error instanceof ApiError) throw error
     // Unreachable, refused, or past TIMEOUT_MS. The backend's own words are
     // not available and ours would carry nothing an operator can act on.
     throw new ApiError('unavailable', endpoint)
@@ -1632,11 +1671,11 @@ const searchAll: Backend['searchAll'] = async (query) => {
  * `guardReadOnly`'s config read has already suspended the request — long
  * enough for another request's assignment to land. A save/restore on exit
  * does not help; the interleave is inside the await, not at the boundary. */
-const callerScope = new AsyncLocalStorage<Caller>()
+const requestScope = new AsyncLocalStorage<{ user: Caller; requestId: string }>()
 
 /** The operator of the request being served — undefined for the trusted
  * internal caller, which is what `actorHeaders` omits headers for. */
-const callerOf = (): Caller => callerScope.getStore()
+const callerOf = (): Caller => requestScope.getStore()?.user
 
 /** POST /api/v1/workbench/runs. Mounted, and it forwards the session's
  * actor: workbench_api.rs's `require_actor` rejects a missing or blank
@@ -2300,7 +2339,7 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
  *
  * The authorization decision is the same one `backend()` applies, so a role
  * is refused identically whichever tier answers. */
-export function liveQuery(name: string, user: Caller): ((...args: unknown[]) => Promise<unknown>) | undefined {
+export function liveQuery(name: string, user: Caller, requestId: string = crypto.randomUUID()): ((...args: unknown[]) => Promise<unknown>) | undefined {
   if (!isLiveBackend()) return undefined
   const query = LIVE[name as keyof Backend] as ((...args: unknown[]) => Promise<unknown>) | undefined
   if (!query) return undefined
@@ -2313,8 +2352,8 @@ export function liveQuery(name: string, user: Caller): ((...args: unknown[]) => 
     // The mounted mutations read the actor off the request's scope rather
     // than taking it as a parameter: the mock's signatures are the contract
     // and none of them carry a caller. run(), not an assignment — see
-    // callerScope.
-    return callerScope.run(user, () => query(...args))
+    // requestScope.
+    return requestScope.run({ user, requestId }, () => query(...args))
   }
 }
 
