@@ -29,7 +29,20 @@ import {
 } from './adapters/explorer'
 import { toHoneypotEvent } from './adapters/events'
 import type { EventRowGap } from './adapters/events'
+import type { SensorEventGap } from './adapters/operations'
 import { reportTemplates } from './adapters/reports'
+import {
+  alertAckBody,
+  alertPage,
+  deadLetters,
+  purgedDeadLetters,
+  sensorCatalog,
+  sensorEvents,
+  sensorFeeds,
+  sensorOverview,
+  sourceHealth,
+  topology,
+} from './adapters/operations'
 import { DEFAULT_PREFERENCES_WIRE, capturedMail, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
@@ -62,6 +75,18 @@ import type { EventPageWire, EventsQueryWire, FilterValuesWire, RecordingsPageWi
 import type { EventRow, EventsPage as EventsPageWire } from './contracts/events'
 import type { ChartName, Charts, FlowGraph } from './contracts/charts'
 import type { ReportTemplatesWire } from './contracts/reports'
+import type {
+  AckAlertWire,
+  AlertPageWire,
+  DeadLetterWire,
+  PurgeDeadLettersWire,
+  SensorCatalogWire,
+  SensorEventsWire,
+  SensorOverviewWire,
+  SourceHealthWire,
+  TopologySensorWire,
+  TopologyWire,
+} from './contracts/operations'
 import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
 import type {
   AnalyzerCatalogWire,
@@ -89,7 +114,7 @@ import type {
   YaraRunPageWire,
 } from './contracts/evidence'
 import type { Backend, Caller } from './backend'
-import type { EventType, HoneypotEvent, Paged, SessionUser, ShellConfig } from './types'
+import type { EventType, HoneypotEvent, Paged, Sensor, SensorFields, SessionUser, ShellConfig } from './types'
 
 /** A dashboard that hangs forever is worse than one that errors. Same budget
  * as the canonical BFF's own backend calls (backend.server.ts). */
@@ -117,11 +142,20 @@ const baseURL = (env: NodeJS.ProcessEnv = process.env, mounted = false): string 
 const EMPTY_PAGE = { total: 0, offset: 0, rows: [] }
 const EMPTY_VALUES: FilterValuesWire = { sensors: [], countries: [], cities: [], protos: [], ports: [], kinds: [] }
 
-/** What GET /api/v1/topology answers. Only `flow` is read — the route serves
- * that one slice, as canonical's does — but the rest is declared so the
- * field being read is a checked one and not an `unknown`. backend-service
- * topology.rs:644 `TopologyResponse`. */
-type TopologyWire = { flow: FlowGraph }
+/** A source-health document with nothing in it: the degraded answer a 200
+ * with no body maps to. Every endpoint here answers 200 with its full
+ * envelope, so this is reachable only through a fixture or a proxy that
+ * swapped the body — never through a failed call, which throws. */
+const EMPTY_HEALTH: SourceHealthWire = {
+  cluster_status: 'unreachable', total_documents: 0, sensors: [],
+  yara: { enabled: false, last_scan: '', rules_sha256: '', samples: 0, matched: 0, errors: 0 },
+  runtime: { uptime_seconds: 0, rss_bytes: 0, vm_bytes: 0 },
+  ingest: { state: 'unknown', last_ingest: '', age_seconds: -1, recent_dead_letters: 0 },
+  dead_letters: 0,
+  pipeline: { state: 'unreachable', acked: 0, failed: 0, dropped: 0, active: 0, decode_failures: 0 },
+  webhook: { available: false, reason: '', state: 'unknown', target: '', messages: 0, consecutive_failures: 0, failure_threshold: 0, last_success: null, last_failure: null, updated_at: '' },
+  unattributed_24h: 0,
+}
 
 // ---- the call ---------------------------------------------------------------
 
@@ -703,6 +737,236 @@ export const liveRow = pageEvent
 
 // ---- the wire queries -------------------------------------------------------
 
+/** GET /api/v1/sensors/catalog. A terms aggregation over a 14-day window
+ * (sensors.rs `catalog`, L428): a name, an event count and a last-seen, and
+ * nothing about a sensor's identity. The page's `SensorSummary` is exactly
+ * that pair, so this is the whole answer — `last_seen` has no field to land
+ * in and is dropped rather than invented onto the summary. */
+const getSensorCatalog: Backend['getSensorCatalog'] = async () => sensorCatalog((await get<SensorCatalogWire>('getSensorCatalog', '/api/v1/sensors/catalog')) ?? { window: '', sensors: [] })
+
+/** GET /api/v1/sensors/{sensor}/overview (sensors.rs `overview`, L707) and
+ * GET /api/v1/sensors/{sensor}/events?limit=200 (`events`, L482).
+ *
+ * The `Sensor` the page's header renders is the one field the wire cannot
+ * supply and it is NOT guessed: the catalog is a bare aggregation, so a live
+ * sensor has no kind, ports, persona or location — it has a name, a count,
+ * its activity window and whatever liveness /api/v1/source-health judges.
+ * Every unknown is a visible blank ("no listener", no decoy), never a
+ * fabricated identity. `byType` and `reading` stay empty for the same
+ * reason — the overview bundle carries neither (see the slice's gaps). */
+const getSensorDetail: Backend['getSensorDetail'] = async (id) => {
+  const [overview, events, health, exposure] = await Promise.all([
+    get<SensorOverviewWire>('getSensorDetail', `/api/v1/sensors/${encodeURIComponent(id)}/overview`),
+    get<SensorEventsWire>('getSensorDetail', `/api/v1/sensors/${encodeURIComponent(id)}/events`, { limit: 200 }),
+    get<SourceHealthWire>('getSensorDetail', '/api/v1/source-health'),
+    get<TopologyWire>('getSensorDetail', '/api/v1/topology'),
+  ])
+  if (!overview) return null
+  const feed = health?.sensors.find((s) => s.sensor === id)
+  const row = exposure?.sensors.find((s) => s.sensor === id)
+  return sensorOverview(
+    overview,
+    sensorOf(id, overview.events, overview.first_seen, overview.last_seen, feed?.state, row),
+    sensorPageEvents(events ?? { sensor: id, total: 0, rows: [] }),
+  )
+}
+
+/** The eleven page fields `sensorEvents` deliberately omits
+ * (SensorEventGap), filled here because the seam's signature IS the page
+ * type. These rows are sensors.rs `SensorEvent`, not an events.rs `EventRow`:
+ * the sensor's own fields, no pivots and no enrichment, so every one of the
+ * eleven is genuinely absent upstream and none is inferred:
+ *
+ * - `type` / `eventName` / `summary` / `severity` — nothing upstream
+ *   classifies. `eventName` is the sensor's own event name verbatim and
+ *   `type` is read off it the same way `TYPE_OF_EVENT` does for a real row,
+ *   falling to the page's own `protocol.request` catch-all; `severity` is
+ *   `info` for the same reason as #75 ("nothing known", not "nothing
+ *   wrong").
+ * - `asn` / `org` / `city` / `country` — network enrichment, computed on the
+ *   events slice's pipeline and not part of this endpoint.
+ * - `techniques` — an ATT&CK mapping, also a pipeline result.
+ * - `provider` — the `source.as.type` class, same place.
+ * - `sessionId` — sessions are correlated by the events slice's endpoint.
+ *
+ * `srcIpClaimed`, `persona`, `site`, `asset`, `fingerprint` and friends stay
+ * absent rather than blank: `sensorEvents` already omits them and the page
+ * reads them as "this sensor never said". */
+const sensorPageEvents = (wire: SensorEventsWire): HoneypotEvent[] =>
+  sensorEvents(wire).map((row) => {
+    // The adapter's own return type cannot carry this: `HoneypotEvent`
+    // extends `Record<string, unknown>`, so `Omit<HoneypotEvent, …>` has
+    // `keyof` = `string | number` and omits nothing. The adapter's field
+    // selection is still what runs; the Pick is only the type it earned,
+    // and `sensorEvents` is the one place that lists which eight fields
+    // the endpoint really fills.
+    const filled = row as Pick<HoneypotEvent, 'id' | 'timestamp' | 'sensor' | 'protocol' | 'srcIp' | 'srcPort' | 'dstPort' | 'fields'>
+    const name = sensorEventName(filled.fields)
+    const gap: Pick<HoneypotEvent, SensorEventGap> = {
+      type: TYPE_OF_EVENT[name] ?? 'protocol.request',
+      severity: 'info',
+      eventName: name,
+      summary: '',
+      asn: '',
+      org: '',
+      techniques: [],
+      provider: 'network',
+      city: '',
+      country: '',
+      sessionId: '',
+    }
+    return { ...filled, ...gap }
+  })
+
+/** The sensor's own event name, which each sensor writes under its own key
+ * inside its `fields` object — the same two keys `eventNameOf` reads on a
+ * real event row, because it is the same fleet writing them. */
+const sensorEventName = (fields: SensorFields): string => {
+  const name = fields.eventid ?? fields.event
+  return typeof name === 'string' ? name : ''
+}
+
+/** The page's `Sensor`, from what four endpoints together can actually say.
+ *
+ * Deliberately empty where the wire is empty: `ports` are the topology's
+ * exposure (public → host), which IS the sensor's real listening surface, so
+ * the host leg is what the header lists; `status` is the health page's own
+ * verdict, not an inference. `name` falls back to the id because the wire
+ * carries only the id everywhere. */
+const sensorOf = (id: string, events: number, firstSeen: string, lastSeen: string, state: string | undefined, exposure: TopologySensorWire | undefined): Sensor => ({
+  id,
+  name: id,
+  kind: '',
+  what: '',
+  protocols: [...new Set(exposure?.ports.map((p) => p.proto) ?? [])],
+  ports: (exposure?.ports ?? []).map((p) => ({ proto: p.proto === 'udp' ? 'udp' : 'tcp', port: p.host })),
+  location: '',
+  status: state === 'ACTIVE' ? 'online' : state === 'QUIET' || state === 'STALE' ? 'degraded' : 'offline',
+  eventsLast24h: events,
+  lastSeen,
+  ...(firstSeen ? { firstSeen } : {}),
+})
+
+/** GET /api/v1/alerts?offset&size=100 (stores.rs `alerts`, L376). The store
+ * sorts `LastSeen` desc with a `_doc` tiebreak (L378), so one page is
+ * already the newest 100 — the board does not walk further, and says so by
+ * showing what the endpoint holds rather than pretending it is everything.
+ *
+ * One document per alert and one document per key, so the page's own
+ * client-side grouping has nothing left to fold (see the adapter). */
+const getAlerts: Backend['getAlerts'] = async () => alertPage((await get<AlertPageWire>('getAlerts', '/api/v1/alerts', { offset: 0, size: 100 })) ?? { total: 0, rows: [] })
+
+/** The shell bell's count (AlertBell, polled every minute). One request,
+ * and the rows are the ones the alerts page would read anyway, so the count
+ * is filtered here rather than by a second endpoint that does not exist. */
+const getOpenAlertCount: Backend['getOpenAlertCount'] = async () => ((await get<AlertPageWire>('getOpenAlertCount', '/api/v1/alerts', { offset: 0, size: 100 })) ?? { total: 0, rows: [] }).rows.filter((row) => !row.Acknowledged).length
+
+/** POST /api/v1/alerts/{key}/ack (stores.rs `acknowledge`, L461) — one key
+ * per call, so acknowledging N is N requests. The ack direction rides in the
+ * body (`{ack}`, required — no serde default), which is what makes reopen
+ * the same call with the flag flipped. There is no bulk endpoint and none is
+ * invented here (see the slice's gaps).
+ *
+ * `Acknowledged` is set without clearing `LastNotified`, and the document
+ * carries no acknowledger field at all, so the count returned is what
+ * changed — what the operator asked for — and the page re-reads the board
+ * for the rest. A key the store does not hold answers 200 regardless
+ * (the handler's `update_doc` does not read what it wrote), so a stale key
+ * counts as changed rather than as a failure. */
+const setAlertsAcknowledged: Backend['setAlertsAcknowledged'] = async (keys, acknowledged) => {
+  await guardReadOnly('setAlertsAcknowledged')
+  let changed = 0
+  for (const key of keys) {
+    await request<AckAlertWire>('setAlertsAcknowledged', `/api/v1/alerts/${encodeURIComponent(key)}/ack`, { method: 'POST', body: alertAckBody(acknowledged), user: caller })
+    changed += 1
+  }
+  return changed
+}
+
+/** "Acknowledge all": the alert page's loop, over every OPEN key, read from
+ * the same page endpoint the board reads (stores.rs `alerts`, L376) — there
+ * is no server-side scope=all to ask for. One POST per key, as above. */
+const acknowledgeAllAlerts: Backend['acknowledgeAllAlerts'] = async () => {
+  await guardReadOnly('acknowledgeAllAlerts')
+  const page = (await get<AlertPageWire>('acknowledgeAllAlerts', '/api/v1/alerts', { offset: 0, size: 100 })) ?? { total: 0, rows: [] }
+  return setAlertsAcknowledged(page.rows.filter((row) => !row.Acknowledged).map((row) => row.Key), true)
+}
+
+/** One alert group's page. The store has no "by key" read — only the paged
+ * list — so this finds the key in the same page the board reads and returns
+ * the single-member group `alertPage` builds for it. A key outside that page
+ * is a 404, which is the page's own not-found. */
+const getAlertDetail: Backend['getAlertDetail'] = async (key) => {
+  const page = await get<AlertPageWire>('getAlertDetail', '/api/v1/alerts', { offset: 0, size: 100 })
+  const row = page?.rows.find((r) => r.Key === key)
+  if (!row) return null
+  const text = `${row.Message} ${row.Link}`
+  return {
+    group: alertPage({ total: 1, rows: [row] })[0],
+    // The evidence pane's pivots, read off the same two strings the mock
+    // reads them from. A live alert carries no source list of its own, so
+    // an address that is not one the mock knows is still shown: the wire
+    // has no "known source" table to filter against, and dropping an
+    // address the alert actually names would be worse than showing it.
+    sources: [...new Set(text.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g) ?? [])],
+    hashes: [...new Set(text.match(/\b[0-9a-f]{64}\b/gi) ?? [])],
+  }
+}
+
+/** GET /api/v1/source-health (health.rs `source_health`, L340) — the whole
+ * document, including the webhook delivery health the page type has no field
+ * for (typed and tested in contracts/operations.ts, deliberately not added
+ * to types.ts — per scope). */
+const getSourceHealth: Backend['getSourceHealth'] = async () => sourceHealth((await get<SourceHealthWire>('getSourceHealth', '/api/v1/source-health')) ?? EMPTY_HEALTH)
+
+/** GET /api/v1/topology, joined with the two endpoints that carry liveness:
+ * /api/v1/source-health for each sensor's feed and /api/v1/services for each
+ * container's state. Three requests because the fleet's SHAPE and the fleet's
+ * LIVENESS are three documents — topology.rs says so at the handler
+ * ("static fleet shape; liveness joins live elsewhere", L707).
+ *
+ * A failure in any of the three throws rather than degrading the page to a
+ * stack of unknowns: a topology that renders every container as `unknown`
+ * reads as "nothing is running", which is the more dangerous of the two
+ * wrong answers. */
+const getTopology: Backend['getTopology'] = async () => {
+  const [shape, health, services] = await Promise.all([
+    get<TopologyWire>('getTopology', '/api/v1/topology'),
+    get<SourceHealthWire>('getTopology', '/api/v1/source-health'),
+    get<ServicesWire>('getTopology', '/api/v1/services'),
+  ])
+  if (!shape) throw new ApiError('unavailable', 'getTopology')
+  return topology(shape, sensorFeeds(health ?? EMPTY_HEALTH), services ?? { available: false, services: [] })
+}
+
+/** GET /api/v1/store/dead-letters — the generic, allowlisted store
+ * passthrough (stores.rs `generic`, L553) with the path parameter the handler
+ * expects. There is no literal `/api/v1/store/dead-letters` route: the route
+ * IS `/api/v1/store/{name}` and `name` is the allowlist key, which
+ * `store_config` (L540) spells `dead-letters`. The page's query box is the
+ * store's own `q`, a Lucene `query_string` with `default_operator: AND`
+ * (L122) — passed through verbatim, exactly as canonical's own page does.
+ *
+ * 404 is the store's "unknown store", so the fallback is a handler that
+ * exists rather than one that does not: an empty body still maps to an empty
+ * list, and anything else throws. */
+const getDeadLetters: Backend['getDeadLetters'] = async (query) => deadLetters((await get<{ total: number; rows: DeadLetterWire[] }>('getDeadLetters', '/api/v1/store/dead-letters', { offset: 0, size: 100, q: query.trim() || undefined })) ?? { total: 0, rows: [] })
+
+/** DELETE /api/v1/store/dead-letters?q= — `generic_delete` (stores.rs
+ * `generic_delete`, L601) on the SAME path-parameterised route, which the
+ * handler guards: a `name` other than `dead-letters` is a 405, not a purge.
+ *
+ * Scoped by the query, not by ids: `delete_by_query` takes the same Lucene
+ * `q` the GET searched, so this purges exactly the scope the operator was
+ * looking at — the page's contract, and the dialog's own wording.
+ * `purgeDeadLetters` is admin-only (authorize.ts:15), enforced before the
+ * fetch by `liveQuery`, the same decision the mock tier makes. */
+const purgeDeadLetters: Backend['purgeDeadLetters'] = async (query) => {
+  await guardReadOnly('purgeDeadLetters')
+  const wire = await request<PurgeDeadLettersWire>('purgeDeadLetters', '/api/v1/store/dead-letters', { method: 'DELETE', search: { q: query.trim() || undefined }, user: caller })
+  return purgedDeadLetters(wire ?? { deleted: 0 })
+}
+
 const getEvents: Backend['getEvents'] = async (filters) => {
   const [rows, values] = await Promise.all([
     get<EventsPageWire>('getEvents', '/api/v1/events', eventsQueryWindowed(filters, filters)),
@@ -1040,6 +1304,18 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   getArtifacts,
   getArtifactFile,
   queuePayloadAction,
+  // Operations (#77)
+  getSensorCatalog,
+  getSensorDetail,
+  getAlerts,
+  getOpenAlertCount,
+  setAlertsAcknowledged,
+  acknowledgeAllAlerts,
+  getAlertDetail,
+  getSourceHealth,
+  getTopology,
+  getDeadLetters,
+  purgeDeadLetters,
 }
 
 /** The guarded live implementation of `name`, or undefined when this slice

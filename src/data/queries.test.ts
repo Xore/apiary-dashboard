@@ -319,10 +319,10 @@ describe('mock writes', () => {
     expect((await q.getIpProfile(ip))?.blocked).toBe(false)
   })
 
-  it('dead-letter purge removes only the rows it was given', async () => {
+  it('dead-letter purge removes only the scope the query names', async () => {
     const matching = await q.getDeadLetters('mapper_parsing')
     const before = (await q.getDeadLetters('')).length
-    await q.purgeDeadLetters(matching.map((d) => d.id))
+    await q.purgeDeadLetters('mapper_parsing')
     expect((await q.getDeadLetters('')).length).toBe(before - matching.length)
   })
 

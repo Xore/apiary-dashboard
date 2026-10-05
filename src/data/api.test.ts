@@ -144,6 +144,18 @@ describe('which queries the real backend answers', () => {
         'queuePayloadAction',
         'setRunChild',
         'startAnalysisRun',
+        // operations (#77)
+        'acknowledgeAllAlerts',
+        'getAlertDetail',
+        'getAlerts',
+        'getDeadLetters',
+        'getOpenAlertCount',
+        'getSensorCatalog',
+        'getSensorDetail',
+        'getSourceHealth',
+        'getTopology',
+        'purgeDeadLetters',
+        'setAlertsAcknowledged',
       ].sort(),
     )
   })
@@ -157,8 +169,9 @@ describe('which queries the real backend answers', () => {
   })
 
   it('answers nothing for a query this slice has not wired', () => {
-    expect(liveQuery('getAlerts', undefined)).toBeUndefined()
+    // Still mock-only after #77: no backend endpoint serves either.
     expect(liveQuery('getOverview', undefined)).toBeUndefined()
+    expect(liveQuery('getAttackers', undefined)).toBeUndefined()
   })
 
   it('leaves getPreferences and savePreferences on the mock — the public-query deadlock', () => {
@@ -849,5 +862,434 @@ describe('the settings slice fails as an error, never as an empty panel', () => 
       stub(fixtures)
       await expect(call(), name).rejects.toThrow(ApiError)
     }
+  })
+})
+// ---- Operations (#77) ------------------------------------------------------
+
+/** One alert-state document as worker.rs `Notifier::observe` writes it: the
+ * eight fields and nothing else — no severity, no acknowledger. */
+const alertDoc = (key: string, acknowledged = false) => ({
+  Key: key,
+  Message: `yara matched on ${key}`,
+  Link: '/events?q=uname',
+  FirstSeen: '2026-10-04T08:00:00Z',
+  LastSeen: '2026-10-04T20:41:03Z',
+  LastNotified: null,
+  Count: 12,
+  Acknowledged: acknowledged,
+  _doc_id: key,
+})
+
+const alertPageWire = { total: 3, rows: [alertDoc('yara:abc123'), alertDoc('pipeline:dead-letters', true), alertDoc('stale:cowrie')] }
+
+const healthWire = {
+  cluster_status: 'green', total_documents: 12_345,
+  sensors: [{ sensor: 'cowrie', documents: 900, last_seen: '2026-10-04T20:41:03Z', state: 'ACTIVE' }],
+  yara: { enabled: true, last_scan: '2026-10-04T03:00:00Z', rules_sha256: 'ff', samples: 40, matched: 2, errors: 0 },
+  runtime: { uptime_seconds: 7200, rss_bytes: 1_048_576, vm_bytes: 2_097_152 },
+  ingest: { state: 'healthy', last_ingest: '2026-10-04T20:41:03Z', age_seconds: 12, recent_dead_letters: 3 },
+  dead_letters: 91,
+  pipeline: { state: 'healthy', acked: 10, failed: 1, dropped: 0, active: 2, decode_failures: 0 },
+  webhook: { available: false, reason: 'not configured', state: 'disabled', target: '', messages: 0, consecutive_failures: 0, failure_threshold: 5, last_success: null, last_failure: null, updated_at: '' },
+  unattributed_24h: 4,
+}
+
+const topologyWire = {
+  generated_at: '2026-10-04T20:41:03Z',
+  sensors: [
+    { sensor: 'cowrie', stack: 'honeypot-cowrie', containers: ['hp-cowrie'], ingress: ['portbridge', 'tunnel-only'], hostnames: [], ports: [{ proto: 'tcp', public: 22, host: 19022, proxy: true }], rawIndex: 'honeypot-v2' },
+    { sensor: 'dionaea', stack: 'honeypot-dionaea', containers: ['hp-dionaea'], ingress: ['traefik'], hostnames: ['smtp.example.test'], ports: [], rawIndex: 'unmapped' },
+  ],
+  flow: { nodes: [{ name: 'VPS Traefik (:443 hostnames)', layer: 0 }, { name: 'cowrie', layer: 1 }], links: [{ source: 'VPS Traefik (:443 hostnames)', target: 'cowrie' }] },
+  stacks: [{ stack: 'honeypot-cowrie', containers: [{ name: 'hp-cowrie', adapterVisible: true }] }],
+}
+
+const sensorOverviewWire = {
+  sensor: 'cowrie', window: 'now-7d', events: 900, unique_sources: 40,
+  first_seen: '2026-10-04T08:00:00Z', last_seen: '2026-10-04T20:41:03Z', hourly: [4, 9],
+  top_sources: [{ key: '203.0.113.42', count: 7 }], top_countries: [{ key: 'NL', count: 9 }],
+  top_lists: [{ label: 'commands', rows: [{ key: 'uname -a', count: 3 }] }],
+  measures: [{ label: 'commands', total: 120, max: 9, unit: 'count' }],
+}
+
+const operationsFixtures = (over: Record<string, unknown> = {}) => ({
+  '/api/v1/alerts': alertPageWire,
+  '/api/v1/source-health': healthWire,
+  '/api/v1/topology': topologyWire,
+  '/api/v1/services': { available: true, services: [{ name: 'hp-cowrie', state: 'running', exit_code: null, started_at: '2026-10-04T08:00:00Z', restart_count: 0 }] },
+  '/api/v1/config': configWire,
+  '/api/v1/sensors/catalog': { window: 'now-14d', sensors: [{ sensor: 'cowrie', events: 900, last_seen: '2026-10-04T20:41:03Z' }] },
+  '/api/v1/sensors/cowrie/overview': sensorOverviewWire,
+  '/api/v1/sensors/cowrie/events': { sensor: 'cowrie', total: 1, rows: [{ id: 'ev-1', when: '2026-10-04T20:41:03Z', src_ip: '203.0.113.42', src_port: 51322, dst_port: 19022, fields: { eventid: 'cowrie.command.input', input: 'uname -a' } }] },
+  '/api/v1/store/dead-letters': { total: 1, rows: [{ _doc_id: 'dl-1', '@timestamp': '2026-10-04T19:00:00Z', reason: 'mapper_parsing_exception', logset: 'nginx' }] },
+  ...over,
+})
+
+describe('alerts', () => {
+  it('reads the store page the issue documents, one single-member group per document', async () => {
+    const calls = stub(operationsFixtures())
+    const groups = await live('getAlerts')()
+    expect(Object.fromEntries(new URL(calls[0]).searchParams)).toEqual({ offset: '0', size: '100' })
+    expect(groups).toHaveLength(3)
+    // One document per key, so nothing folds: the page's client-side
+    // grouping has nothing left to merge.
+    expect(groups.every((g) => g.members.length === 1)).toBe(true)
+    expect(groups[0]).toMatchObject({ kind: 'yara', message: 'yara matched on yara:abc123', count: 12, acknowledged: false })
+    // The key's own prefix is the only kind the document carries.
+    expect(groups.map((g) => g.kind).sort()).toEqual(['pipeline', 'stale', 'yara'])
+  })
+
+  it('reads every alert as info: the document has no severity field at all', async () => {
+    // Gap #2. worker.rs writes Key/Message/Link/FirstSeen/LastSeen/Count/
+    // Acknowledged/LastNotified — there is no severity to read, so nothing
+    // is inferred from the key. Every row, and no exception.
+    stub(operationsFixtures())
+    const groups = await live('getAlerts')()
+    expect(groups.map((g) => g.severity)).toEqual(['info', 'info', 'info'])
+    expect(groups.every((g) => g.members.every((m) => m.severity === 'info'))).toBe(true)
+  })
+
+  it('carries no acknowledger, because the document has nowhere to put one', async () => {
+    // Gap #2, second half: `acknowledgedBy` has no source at all upstream.
+    stub(operationsFixtures())
+    const [group] = await live('getAlerts')()
+    expect(group.members[0]).not.toHaveProperty('acknowledgedBy')
+  })
+
+  it('counts the open alerts from the same page, for the shell bell', async () => {
+    const calls = stub(operationsFixtures())
+    expect(await live('getOpenAlertCount')()).toBe(2)
+    expect(new URL(calls[0]).pathname).toBe('/api/v1/alerts')
+  })
+
+  it('POSTs the ack body the handler requires, once per key', async () => {
+    // `ack` has no serde default (stores.rs AckBody), so the direction rides
+    // in the body — that is what makes a reopen the same call, flipped.
+    const calls = stub(operationsFixtures({ '/api/v1/alerts/yara%3Aabc123/ack': { ok: true, key: 'yara:abc123', ack: true } }))
+    await live('setAlertsAcknowledged')(['yara:abc123'], true)
+    const call = vi.mocked(globalThis.fetch).mock.calls.at(-1)!
+    expect(call[0]).toBe('http://backend.test/api/v1/alerts/yara%3Aabc123/ack')
+    expect(call[1]?.method).toBe('POST')
+    expect(JSON.parse(String(call[1]?.body))).toEqual({ ack: true })
+    // Two calls, not one: `guardReadOnly` spends a config read on every write,
+    // because a query named `get*` can still be a write and only the config
+    // document says so.
+    expect(calls.map((url) => new URL(url).pathname)).toEqual(['/api/v1/config', '/api/v1/alerts/yara%3Aabc123/ack'])
+  })
+
+  it('reopens with the same call, flag flipped', async () => {
+    stub(operationsFixtures({ '/api/v1/alerts/stale%3Acowrie/ack': { ok: true, key: 'stale:cowrie', ack: false } }))
+    await live('setAlertsAcknowledged')(['stale:cowrie'], false)
+    expect(JSON.parse(String(vi.mocked(globalThis.fetch).mock.calls.at(-1)![1]?.body))).toEqual({ ack: false })
+  })
+
+  it('acknowledges N keys as N requests — there is no bulk endpoint', async () => {
+    // Gap #1. The loop is the contract, not a workaround: stores.rs exposes
+    // one POST per key and no scope=all to ask for.
+    const calls = stub(operationsFixtures({
+      '/api/v1/alerts/yara%3Aabc123/ack': { ok: true, key: 'yara:abc123', ack: true },
+      '/api/v1/alerts/stale%3Acowrie/ack': { ok: true, key: 'stale:cowrie', ack: true },
+    }))
+    expect(await live('acknowledgeAllAlerts')()).toBe(2)
+    // One page read plus one POST per OPEN key: the already-acknowledged
+    // record is skipped, so the call count follows the open set. The
+    // read-only guard is spent once per WRITE CALL, not once per key.
+    expect(calls.map((url) => new URL(url).pathname)).toEqual([
+      '/api/v1/config',
+      '/api/v1/alerts',
+      '/api/v1/config',
+      '/api/v1/alerts/yara%3Aabc123/ack',
+      '/api/v1/alerts/stale%3Acowrie/ack',
+    ])
+  })
+
+  it('acknowledges nothing when every alert is already acknowledged', async () => {
+    const calls = stub(operationsFixtures({ '/api/v1/alerts': { total: 1, rows: [alertDoc('yara:abc123', true)] } }))
+    expect(await live('acknowledgeAllAlerts')()).toBe(0)
+    // The page read and the two read-only guards; with no open key left there
+    // is no POST to spend.
+    expect(calls.map((url) => new URL(url).pathname)).toEqual(['/api/v1/config', '/api/v1/alerts', '/api/v1/config'])
+  })
+
+  it('finds a group page by key in the same store page the board reads', async () => {
+    const calls = stub(operationsFixtures())
+    const detail = await live('getAlertDetail')('yara:abc123')
+    expect(detail?.group).toMatchObject({ kind: 'yara', members: [{ key: 'yara:abc123' }] })
+    expect(new URL(calls[0]).pathname).toBe('/api/v1/alerts')
+    // A key the store does not hold is the page's own 404.
+    expect(await live('getAlertDetail')('nope')).toBeNull()
+  })
+
+  it('picks the evidence pane pivots off the message and the link', async () => {
+    stub(operationsFixtures({
+      '/api/v1/alerts': { total: 1, rows: [{ ...alertDoc('yara:abc123'), Message: 'malware d41d8cd98f00b204e9800998ecf8427e00000000000000000000000000000000 from 203.0.113.42', Link: '/events?q=198.51.100.7' }] },
+    }))
+    const detail = await live('getAlertDetail')('yara:abc123')
+    expect(detail?.sources.sort()).toEqual(['198.51.100.7', '203.0.113.42'])
+    // A 32-hex name is a MD5 of the empty string, not a hash of anything
+    // here: the pane pivots on sha256 digests, so only a 64-hex run counts.
+    expect(detail?.hashes).toEqual(['d41d8cd98f00b204e9800998ecf8427e00000000000000000000000000000000'])
+    expect(detail?.hashes).not.toContain('d41d8cd98f00b204e9800998ecf8427e')
+  })
+
+  it('refuses a write while the deployment is read-only', async () => {
+    stub(operationsFixtures({ '/api/v1/config': { ...configWire, payload: { behavior: { read_only: true } } } }))
+    await expect(live('setAlertsAcknowledged')(['yara:abc123'], true)).rejects.toThrow(ApiError)
+    await expect(live('acknowledgeAllAlerts')()).rejects.toThrow(ApiError)
+  })
+})
+
+describe('the dead-letter purge, an admin-only destructive write', () => {
+  it('DELETEs the same q scope the list searched', async () => {
+    // The issue body says `/api/v1/store/dead-letters`, and there is no such
+    // literal route: the route IS `/api/v1/store/{name}` (stores.rs L553 /
+    // L601) and `name` is the allowlist key `store_config` spells
+    // "dead-letters". So the path is the same, and the scope is `q`.
+    const calls = stub(operationsFixtures({ '/api/v1/store/dead-letters': { deleted: 7 } }))
+    expect(await live('purgeDeadLetters')('mapper_parsing_exception')).toBe(7)
+    expect(calls).toHaveLength(2)
+    const call = vi.mocked(globalThis.fetch).mock.calls.at(-1)!
+    expect(call[1]?.method).toBe('DELETE')
+    expect(new URL(String(call[0])).searchParams.get('q')).toBe('mapper_parsing_exception')
+  })
+
+  it('purges every retained dead letter when the query box is empty', async () => {
+    // The documented "the operator purges exactly the scope they were looking
+    // at" contract: an absent q is a match_all, not a no-op.
+    const calls = stub(operationsFixtures({ '/api/v1/store/dead-letters': { deleted: 91 } }))
+    expect(await live('purgeDeadLetters')('   ')).toBe(91)
+    expect(new URL(String(vi.mocked(globalThis.fetch).mock.calls.at(-1)![0])).searchParams.has('q')).toBe(false)
+    expect(calls.map((url) => new URL(url).pathname)).toEqual(['/api/v1/config', '/api/v1/store/dead-letters'])
+  })
+
+  it('refuses a viewer before any fetch, and a session-less caller too', async () => {
+    const calls = stub(operationsFixtures({ '/api/v1/store/dead-letters': { deleted: 7 } }))
+    const viewer = { name: 'Analyst', email: 'a@example.test', roles: ['viewer'] }
+    await expect(liveQuery('purgeDeadLetters', viewer)!('x')).rejects.toThrow(ApiError)
+    await expect(liveQuery('purgeDeadLetters', null)!('x')).rejects.toThrow(ApiError)
+    // Nothing reached the backend: the refusal is the seam's, made first.
+    expect(calls).toEqual([])
+  })
+
+  it('still refuses under read-only', async () => {
+    stub(operationsFixtures({ '/api/v1/config': { ...configWire, payload: { behavior: { read_only: true } } } }))
+    await expect(live('purgeDeadLetters')('x')).rejects.toThrow(ApiError)
+  })
+
+  it('reads a row that names none of the expected keys without throwing', async () => {
+    // Gap #9: the documents are written by Elasticsearch, not this repo, so
+    // which keys a row carries is unverified. Every unknown degrades to a
+    // blank cell, never to an exception and never to an invented value.
+    stub(operationsFixtures({ '/api/v1/store/dead-letters': { total: 1, rows: [{ _doc_id: 'dl-2', '@timestamp': '2026-10-04T19:00:00Z', whatever: 'unmapped' }] } }))
+    const rows = await live('getDeadLetters')('')
+    expect(rows[0]).toMatchObject({ id: 'dl-2', timestamp: '2026-10-04T19:00:00Z', reason: '', source: '', index: '' })
+  })
+
+  it('reads the alternate key spellings the store rows use', async () => {
+    stub(operationsFixtures({ '/api/v1/store/dead-letters': { total: 1, rows: [{ _doc_id: 'dl-3', '@timestamp': '2026-10-04T19:00:00Z', error: 'boom', pipeline: 'filebeat' }] } }))
+    expect((await live('getDeadLetters')(''))[0]).toMatchObject({ reason: 'boom', source: 'filebeat' })
+  })
+
+  it('sends the query box as the store q, verbatim', async () => {
+    const calls = stub(operationsFixtures())
+    await live('getDeadLetters')('  mapper_parsing  ')
+    const search = new URL(calls[0]).searchParams
+    expect(search.get('q')).toBe('mapper_parsing')
+    expect(Object.fromEntries([...search].filter(([k]) => k !== 'q'))).toEqual({ offset: '0', size: '100' })
+  })
+
+  it('leaves index empty: the store adds _doc_id, not an index field', async () => {
+    // Gap #8. There is no `_index` on the row to read, so the page's column
+    // is blank rather than guessed at from the store name.
+    stub(operationsFixtures())
+    expect((await live('getDeadLetters')(''))[0].index).toBe('')
+  })
+})
+
+describe('source health', () => {
+  it('maps the whole document, and reads deadLetters as the 24h count its tile claims', async () => {
+    // Gap #11: the page's tile says "last 24 h", so it is fed
+    // `ingest.recent_dead_letters` (3), NOT the wire's all-time
+    // `dead_letters` (91) which is a different number entirely.
+    const calls = stub(operationsFixtures())
+    const health = await live('getSourceHealth')()
+    expect(new URL(calls[0]).pathname).toBe('/api/v1/source-health')
+    expect(health).toMatchObject({ clusterStatus: 'green', indexedDocuments: 12_345, deadLetters: 3, unattributed24h: 4 })
+    expect(health.feeds).toEqual([{ sensor: 'cowrie', state: 'fresh', documents: 900, lastSeen: '2026-10-04T20:41:03Z' }])
+    expect(health.ingest).toMatchObject({ state: 'fresh', recentDeadLetters: 3 })
+  })
+
+  it('has no webhook field to carry the delivery health', async () => {
+    // Gap #10: the wire's `webhook` is typed and tested in
+    // contracts/operations.ts but deliberately not added to the page type
+    // (per scope), so it is dropped rather than smuggled onto another field.
+    stub(operationsFixtures())
+    const health = await live('getSourceHealth')()
+    expect(health).not.toHaveProperty('webhook')
+  })
+
+  it('reads a cluster status the page cannot colour as yellow, never as green', async () => {
+    stub(operationsFixtures({ '/api/v1/source-health': { ...healthWire, cluster_status: 'unreachable' } }))
+    expect((await live('getSourceHealth')()).clusterStatus).toBe('yellow')
+  })
+
+  it('reads a disabled pipeline as stopped and a 5xx as stopped', async () => {
+    stub(operationsFixtures({ '/api/v1/source-health': { ...healthWire, pipeline: { ...healthWire.pipeline, state: 'disabled' } } }))
+    expect((await live('getSourceHealth')()).pipeline.state).toBe('stopped')
+    stub(operationsFixtures({ '/api/v1/source-health': { ...healthWire, pipeline: { ...healthWire.pipeline, state: '503 Service Unavailable' } } }))
+    expect((await live('getSourceHealth')()).pipeline.state).toBe('stopped')
+    stub(operationsFixtures({ '/api/v1/source-health': { ...healthWire, pipeline: { ...healthWire.pipeline, state: '404 Not Found' } } }))
+    expect((await live('getSourceHealth')()).pipeline.state).toBe('degraded')
+  })
+})
+
+describe('the fleet topology', () => {
+  it('joins the static shape with the feeds and the container states', async () => {
+    const calls = stub(operationsFixtures())
+    const topo = await live('getTopology')()
+    // Three requests: the shape, the feeds and the container states are
+    // three documents (topology.rs: "static fleet shape; liveness joins
+    // live elsewhere").
+    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/services', '/api/v1/source-health', '/api/v1/topology'])
+    expect(topo.sensors).toEqual([
+      { sensor: 'cowrie', ingress: ['portbridge'], hostnames: [], ports: [{ proto: 'tcp', public: 22, host: 19022 }], rawIndex: 'honeypot-v2', feed: 'fresh' },
+      { sensor: 'dionaea', ingress: ['traefik'], hostnames: ['smtp.example.test'], ports: [], rawIndex: 'unmapped', feed: 'silent' },
+    ])
+    expect(topo.stacks).toEqual([{ stack: 'honeypot-cowrie', containers: [{ name: 'hp-cowrie', state: 'running' }] }])
+  })
+
+  it('drops an ingress the page cannot colour, and names the survivors it can', async () => {
+    // Gap #6: the wire's vocabulary is traefik / portbridge / tunnel-only,
+    // and the page's adds "direct" / "+PROXY" which the wire never emits.
+    // "tunnel-only" is dropped; the other two stay.
+    stub(operationsFixtures())
+    expect((await live('getTopology')()).sensors[0].ingress).toEqual(['portbridge'])
+  })
+
+  it('turns flow node names into the indices the sankey wants', async () => {
+    stub(operationsFixtures())
+    const { flow } = await live('getTopology')()
+    expect(flow.links).toEqual([{ source: 0, target: 1, value: 1 }])
+  })
+
+  it('reads an unavailable services adapter as no live state, not as stopped', async () => {
+    stub(operationsFixtures({ '/api/v1/services': { available: false, services: [] } }))
+    expect((await live('getTopology')()).stacks[0].containers[0]).toEqual({ name: 'hp-cowrie', state: 'unknown' })
+  })
+
+  it('fails loudly rather than showing every container as unknown', async () => {
+    // The dangerous wrong answer is a topology that reads "nothing is
+    // running" when the backend is merely down.
+    for (const path of ['/api/v1/topology', '/api/v1/source-health', '/api/v1/services']) {
+      stub(operationsFixtures({ [path]: fail(502) }))
+      await expect(live('getTopology')()).rejects.toThrow(ApiError)
+    }
+  })
+})
+
+describe('sensors', () => {
+  it('reads the catalog as the one aggregation it is', async () => {
+    const calls = stub(operationsFixtures())
+    expect(await live('getSensorCatalog')()).toEqual([{ sensor: 'cowrie', events: 900 }])
+    expect(new URL(calls[0]).pathname).toBe('/api/v1/sensors/catalog')
+  })
+
+  it('builds a detail from the overview bundle and the sensor-event rows', async () => {
+    const calls = stub(operationsFixtures())
+    const detail = (await live('getSensorDetail')('cowrie'))!
+    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual([
+      '/api/v1/sensors/cowrie/events',
+      '/api/v1/sensors/cowrie/overview',
+      '/api/v1/source-health',
+      '/api/v1/topology',
+    ])
+    expect(detail).toMatchObject({ uniqueSources: 40, firstSeen: '2026-10-04T08:00:00Z', topSources: [{ label: '203.0.113.42', count: 7 }], topLists: [{ label: 'commands' }] })
+    expect(detail.timeline.map((b) => b.total)).toEqual([4, 9])
+    expect(detail.measures).toEqual([{ label: 'commands', value: 120, peak: '9 max' }])
+    expect(detail.recentEvents).toHaveLength(1)
+  })
+
+  it('leaves byType and reading empty: the overview carries neither', async () => {
+    // Gap #7. Returned empty, not faked: there is no endpoint that could
+    // fill either, and a fabricated leaderboard would be a worse lie than a
+    // blank panel.
+    stub(operationsFixtures())
+    const detail = (await live('getSensorDetail')('cowrie'))!
+    expect(detail.byType).toEqual([])
+    expect(detail.reading).toEqual({ what: '', columns: [], artefacts: [] })
+  })
+
+  it('leaves a live sensor identity blank rather than inventing one', async () => {
+    // The catalog is a terms aggregation: it has a name, a count and a
+    // last-seen, and no kind, ports, persona or location. The header's
+    // "no listener" and blank decoy are the honest rendering of that.
+    stub(operationsFixtures())
+    const { sensor } = (await live('getSensorDetail')('cowrie'))!
+    expect(sensor).toMatchObject({ id: 'cowrie', name: 'cowrie', kind: '', what: '', location: '', status: 'online', eventsLast24h: 900 })
+    // The ports ARE real: the topology's exposure is the sensor's listening
+    // surface, and the header lists the host leg.
+    expect(sensor.ports).toEqual([{ proto: 'tcp', port: 19022 }])
+  })
+
+  it('reads the health page own verdict as the sensor status, not an inference', async () => {
+    const detail = async (state: string) => {
+      stub(operationsFixtures({ '/api/v1/source-health': { ...healthWire, sensors: [{ ...healthWire.sensors[0], state }] } }))
+      return (await live('getSensorDetail')('cowrie'))!.sensor.status
+    }
+    expect(await detail('ACTIVE')).toBe('online')
+    expect(await detail('QUIET')).toBe('degraded')
+    expect(await detail('STALE')).toBe('degraded')
+  })
+
+  it('answers a sensor the backend does not have with null, not an error', async () => {
+    stub(operationsFixtures({ '/api/v1/sensors/ghost/overview': fail(404, 'not found'), '/api/v1/sensors/ghost/events': { sensor: 'ghost', total: 0, rows: [] } }))
+    // The 404 is the overview's, and the other three legs are asked in the
+    // same fan-out — but only the overview decides the answer.
+    expect(await live('getSensorDetail')('ghost')).toBeNull()
+  })
+
+  it('keeps a sensor-event row as the sensor wrote it, with only the classified fields filled', async () => {
+    // These rows are sensors.rs `SensorEvent`, NOT the shared events.rs
+    // `EventRow`: no pivots, no country, no session. The eleven gaps are
+    // filled at the seam with what is genuinely absent upstream — the kind
+    // off the sensor's own event name, everything else empty or `info`.
+    stub(operationsFixtures())
+    const [sensorEvent] = (await live('getSensorDetail')('cowrie'))!.recentEvents
+    expect(sensorEvent).toMatchObject({ id: 'ev-1', sensor: 'cowrie', srcIp: '203.0.113.42', srcPort: 51322, dstPort: 19022, type: 'command.input', eventName: 'cowrie.command.input', severity: 'info' })
+    expect(sensorEvent.fields).toEqual({ eventid: 'cowrie.command.input', input: 'uname -a' })
+    expect(sensorEvent).toMatchObject({ asn: '', org: '', city: '', country: '', sessionId: '', techniques: [] })
+  })
+})
+
+describe('the operations slice fails as an error, never as an empty panel', () => {
+  it('maps a 502 on each endpoint to the state the unavailable scenario produces', async () => {
+    const cases: Array<[string, () => Promise<unknown>, Record<string, unknown>]> = [
+      ['getSensorCatalog', () => live('getSensorCatalog')(), { '/api/v1/sensors/catalog': fail(502) }],
+      ['getSensorDetail', () => live('getSensorDetail')('cowrie'), { '/api/v1/sensors/cowrie/overview': fail(502) }],
+      ['getSensorDetail (events)', () => live('getSensorDetail')('cowrie'), { '/api/v1/sensors/cowrie/overview': sensorOverviewWire, '/api/v1/sensors/cowrie/events': fail(502), '/api/v1/source-health': healthWire, '/api/v1/topology': topologyWire }],
+      ['getAlerts', () => live('getAlerts')(), { '/api/v1/alerts': fail(502) }],
+      ['getOpenAlertCount', () => live('getOpenAlertCount')(), { '/api/v1/alerts': fail(502) }],
+      ['getAlertDetail', () => live('getAlertDetail')('yara:abc123'), { '/api/v1/alerts': fail(502) }],
+      ['getSourceHealth', () => live('getSourceHealth')(), { '/api/v1/source-health': fail(502) }],
+      ['getDeadLetters', () => live('getDeadLetters')('x'), { '/api/v1/store/dead-letters': fail(502) }],
+      ['purgeDeadLetters', () => live('purgeDeadLetters')('x'), { '/api/v1/config': configWire, '/api/v1/store/dead-letters': fail(502) }],
+      ['setAlertsAcknowledged', () => live('setAlertsAcknowledged')(['k'], true), { '/api/v1/config': configWire, '/api/v1/alerts/k/ack': fail(502) }],
+      ['acknowledgeAllAlerts', () => live('acknowledgeAllAlerts')(), { '/api/v1/config': configWire, '/api/v1/alerts': { total: 1, rows: [alertDoc('k')] }, '/api/v1/alerts/k/ack': fail(502) }],
+    ]
+    for (const [name, call, fixtures] of cases) {
+      stub(operationsFixtures(fixtures))
+      await expect(call(), name).rejects.toThrow(ApiError)
+    }
+  })
+
+  it('never renders a failed operations fetch as an empty fleet', async () => {
+    stub({
+      '/api/v1/sensors/catalog': () => {
+        throw new TypeError('fetch failed')
+      },
+    })
+    const out = await live('getSensorCatalog')().catch((error: unknown) => error)
+    expect(out).toBeInstanceOf(ApiError)
+    expect((out as ApiError).kind).toBe('unavailable')
   })
 })
