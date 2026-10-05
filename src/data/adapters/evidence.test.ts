@@ -1,7 +1,7 @@
 // Evidence slice adapters: one realistic wire fixture per endpoint, mapped to
 // the page types the payload/analysis pages already render.
 import { describe, expect, it } from 'vitest'
-import type { CapeRunWire, GhidraRunDetailWire, GithubAnalysisWire, RevDeckRunWire, SandboxRunDetailWire, SandboxRunWire } from '../contracts/evidence'
+import type { CapeRunWire, GhidraRunDetailWire, GhidraRunWire, GithubAnalysisWire, RevDeckRunWire, SandboxRunDetailWire, SandboxRunWire } from '../contracts/evidence'
 import {
   analyzerCatalog,
   artifactRows,
@@ -93,6 +93,10 @@ const sandboxWire = {
   stderr: '',
 } satisfies SandboxRunWire
 
+// The importer nests the payload under the producer's source label, so every
+// row the store or a detail endpoint serves carries it under `sandbox`.
+const sandboxDetail = { sandbox: sandboxWire } satisfies SandboxRunDetailWire
+
 const ghidraWire = {
   sha256: '1'.repeat(64),
   requested_at: '2026-10-01T10:00:00Z',
@@ -119,7 +123,11 @@ const ghidraWire = {
   fuzzy_hashes: { ssdeep: '3:AXGBicFlg', tlsh: 'T1abc', imphash: '0'.repeat(32) },
   types: [{ name: 'conn', kind: 'class', size: 32, fields: [{ name: 'fd', type: 'int', offset: 0, size: 4 }] }],
   ai_triage: { summary: 'C2 beacon', model: 'qwen2.5-coder:14b', confidence: 'high', family_guess: 'Generic Downloader', behaviors: ['beacon'] },
-} satisfies GhidraRunDetailWire
+} satisfies GhidraRunWire
+
+// `ioc_correlation` is written by detail.rs BESIDE the label, not inside it.
+const emptyKinds = { floss_only: [], sandbox_static_only: [], confirmed_at_runtime: [] }
+const ghidraDetail = { ghidra: ghidraWire, ioc_correlation: { has_sandbox_run: true, has_floss_data: true, is_empty: false, ips: { floss_only: ['198.51.100.4'], sandbox_static_only: [], confirmed_at_runtime: ['198.51.100.4'] }, domains: emptyKinds, urls: emptyKinds, unc_paths: emptyKinds } } satisfies GhidraRunDetailWire
 
 const githubWire = {
   sha256: '2'.repeat(64),
@@ -176,7 +184,7 @@ describe('evidence adapters', () => {
   })
 
   it('maps GET /sandbox/{job} and /store/sandbox-runs, keeping the risk verdict', () => {
-    const run = sandboxRun(sandboxWire)
+    const run = sandboxRun(sandboxDetail)
     expect(sandboxVerdict(78)).toBe('malicious')
     expect(run).toMatchObject({ job: 'sbx-8812', hash: 'f'.repeat(64), at: '2026-10-01T09:04:31Z', verdict: 'malicious', risk: 78, durationSeconds: 266 })
     expect(run.changedPaths).toEqual(['/etc/cron.d/kworker', '/tmp/.x'])
@@ -188,7 +196,7 @@ describe('evidence adapters', () => {
   })
 
   it('reads a Windows sandbox run off the same row type', () => {
-    expect(sandboxRun({ ...sandboxWire, platform: 'windows-kvm' }).route.name).toBe('windows-kvm')
+    expect(sandboxRun({ sandbox: { ...sandboxWire, platform: 'windows-kvm' } }).route.name).toBe('windows-kvm')
   })
 
   it('maps GET /sandbox/golden-image-status, absent when unconfigured', () => {
@@ -201,7 +209,7 @@ describe('evidence adapters', () => {
   })
 
   it('maps GET /ghidra/{sha}, narrowing a free-form type kind to the page three', () => {
-    const [analysis] = ghidraRunPage({ total: 1, rows: [ghidraWire] }).runs
+    const [analysis] = ghidraRunPage({ total: 1, rows: [ghidraDetail] }).runs
     expect(analysis.run.exitStatus).toBe('ok')
     expect(analysis.functionsTotal).toBe(2)
     expect(analysis.functions[0]).toMatchObject({ name: 'main', calls: 1, callers: [], callees: ['connect'] })
@@ -301,7 +309,7 @@ describe('evidence adapters', () => {
   })
 
   it('maps a sandbox detail row carrying the importer doc id', () => {
-    const detailWire: SandboxRunDetailWire = { ...sandboxWire, _doc_id: 'sbx:8812' }
+    const detailWire: SandboxRunDetailWire = { ...sandboxDetail, _doc_id: 'sbx:8812' }
     expect(sandboxRun(detailWire).job).toBe('sbx-8812')
   })
 })

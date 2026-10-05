@@ -34,11 +34,59 @@ import { DEFAULT_PREFERENCES_WIRE, capturedMail, configProblems, configRollbackB
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
 import { isRead, READ_ONLY_EXEMPT } from './scenario'
+import {
+  analyzerCatalog,
+  analyzerInfos,
+  artifactRows,
+  capeRun,
+  capeRuns,
+  capturedPayload,
+  capturedPayloads,
+  createWorkbenchRunBody,
+  ghidraAnalysis,
+  githubAnalysis,
+  githubAnalysisPage,
+  gpuJobs,
+  gpuQueue as gpuQueueOf,
+  payloadAnalysis,
+  revDeckRun,
+  revDeckRuns,
+  sandboxRun,
+  savedWorkbenchRecipes,
+  workbenchRun,
+  workbenchRuns,
+  yaraRuns,
+} from './adapters/evidence'
 import type { ApiErrorKind } from './errors'
 import type { EventPageWire, EventsQueryWire, FilterValuesWire, RecordingsPageWire, ReplayWire, SearchResultWire, SessionDetailWire } from './contracts/explorer'
 import type { EventRow, EventsPage as EventsPageWire } from './contracts/events'
 import type { ReportTemplatesWire } from './contracts/reports'
 import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
+import type {
+  AnalyzerCatalogWire,
+  ArtifactListWire,
+  CapeRunPageWire,
+  CapeRunWire,
+  CreateWorkbenchRunWire,
+  GhidraRunDetailWire,
+  GithubAnalysisPageWire,
+  GithubAnalysisSubmitWire,
+  GithubAnalysisWire,
+  GhidraSubmitWire,
+  GpuAbortWire,
+  GpuQueueWire,
+  PayloadDetailWire,
+  PayloadPageWire,
+  RevDeckRunPageWire,
+  RevDeckRunWire,
+  SandboxRunDetailWire,
+  SandboxSubmitWire,
+  SandboxVncStatusWire,
+  WorkbenchRecipeListWire,
+  WorkbenchRunEnvelopeWire,
+  WorkbenchRunListWire,
+  YaraRunPageWire,
+} from './contracts/evidence'
 import type { Backend, Caller } from './backend'
 import type { EventType, HoneypotEvent, Paged, SessionUser, ShellConfig } from './types'
 
@@ -48,6 +96,19 @@ const TIMEOUT_MS = 15_000
 
 /** This process has a real backend to talk to. Its absence is the default. */
 export const isLiveBackend = (env: NodeJS.ProcessEnv = process.env): boolean => Boolean(env.BACKEND_URL?.trim())
+
+/** This process has the MOUNTED backend to talk to — the only container with
+ * the host-side sandbox/Ghidra/GitHub-analysis request-spool mounts
+ * (canonical `backendMountedURL()` L76, compose's backend-service-mounted).
+ * Same image, same route table; the only difference is which container can
+ * see those spools. A sandbox/ghidra/github route answered by the REGULAR
+ * instance comes back "not configured"/empty rather than erroring, so every
+ * such call below is routed here or it silently shows an operator an empty
+ * list. Unset falls back to BACKEND_URL: a deployment that has collapsed the
+ * two into one instance still works, it just loses the distinction. */
+export const isLiveMounted = (env: NodeJS.ProcessEnv = process.env): boolean => isLiveBackend(env)
+
+const baseURL = (env: NodeJS.ProcessEnv = process.env, mounted = false): string => (mounted ? env.BACKEND_MOUNTED_URL?.trim() || env.BACKEND_URL! : env.BACKEND_URL!).replace(/\/$/, '')
 
 /** One wire page's worth of nothing — the degraded answer a 200 with no body
  * maps to. Every real endpoint answers 200 with its envelope, so this is
@@ -76,24 +137,55 @@ const kindOf = (status: number): ApiErrorKind =>
  * the timeout, and any non-2xx alike. That is the whole point: an events
  * list that renders empty because the backend was down reads as "no
  * activity", and an operator cannot tell that from a quiet fleet. */
-async function get<T>(endpoint: string, path: string, search: QueryParams = {}): Promise<T | null> {
-  return request<T>(endpoint, { path, search })
+async function get<T>(endpoint: string, path: string, search: EventsQueryWire | Record<string, string | number | undefined> = {}, opts: { mounted?: boolean; user?: Caller } = {}): Promise<T | null> {
+  return request<T>(endpoint, path, { method: 'GET', search, ...opts })
 }
 
-/** What any call may send as a query string. `EventsQueryWire` is the named
- * one from #75; the loose record is the settings slice's params, which have
- * no shared shape worth a type. */
-type QueryParams = EventsQueryWire | Record<string, string | number | undefined>
-
-/** The one call this module makes. GET unless `method`/`body` say otherwise;
- * the token rides as a header on every one of them, and never in a URL. */
-async function request<T>(endpoint: string, { method = 'GET', path, search = {}, body, headers = {} }: { method?: string; path: string; search?: QueryParams; body?: unknown; headers?: Record<string, string> }): Promise<T | null> {
-  const query = new URLSearchParams()
-  for (const [key, value] of Object.entries(search)) if (value !== undefined && value !== '') query.set(key, String(value))
-  const url = `${process.env.BACKEND_URL!.replace(/\/$/, '')}${path}${query.size ? `?${query}` : ''}`
+/** A binary body, for the artifact download route (artifacts.rs serves the
+ * stored bytes, not a JSON envelope). Same failure contract as `get`: a 404
+ * is "no such file", anything else throws. */
+async function raw(path: string, opts: { mounted?: boolean; user?: Caller } = {}): Promise<Response> {
   let response: Response
   try {
-    response = await fetch(url, { method, headers: { ...(body === undefined ? {} : { 'content-type': 'application/json' }), 'x-service-token': process.env.SERVICE_TOKEN ?? '', ...headers }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(TIMEOUT_MS) })
+    response = await fetch(`${baseURL(process.env, opts.mounted)}${path}`, { headers: { 'x-service-token': process.env.SERVICE_TOKEN ?? '', ...actorHeaders(opts.user) }, signal: AbortSignal.timeout(TIMEOUT_MS) })
+  } catch {
+    throw new ApiError('unavailable', 'getArtifactFile')
+  }
+  if (!response.ok && response.status !== 404) throw new ApiError(kindOf(response.status), 'getArtifactFile', await detailOf(response))
+  return response
+}
+
+/** The per-user signal the Rust tier trusts (canonical L107-112: the
+ * wire-level `owner` field alone was not enough). Built from the SESSION
+ * user `liveQuery` already receives — never from client input. Omitted
+ * entirely when there is no signed-in user, so a trusted internal caller
+ * still reaches the endpoints that do not require an actor. */
+const actorHeaders = (user: Caller): Record<string, string> =>
+  user ? { 'x-actor-username': user.name, 'x-actor-role': user.roles[0] ?? '' } : {}
+
+/** One call to the Rust tier, GET or POST, mounted or not.
+ *
+ * 404 is the only status that becomes a null: it is what a detail endpoint
+ * answers when nothing carries the id, and the page types all say "null".
+ * Everything else — a socket error, a DNS failure, the timeout, any other
+ * non-2xx — throws. That is the whole point: an analysis list that renders
+ * empty because the backend was down reads as "no analyses", and an
+ * operator cannot tell that from a quiet fleet. */
+async function request<T>(endpoint: string, path: string, opts: { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; search?: EventsQueryWire | Record<string, string | number | undefined>; body?: unknown; mounted?: boolean; user?: Caller }): Promise<T | null> {
+  const query = new URLSearchParams()
+  for (const [key, value] of Object.entries(opts.search ?? {})) if (value !== undefined && value !== '') query.set(key, String(value))
+  const url = `${baseURL(process.env, opts.mounted)}${path}${query.size ? `?${query}` : ''}`
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: opts.method,
+      // Only a request that carries a body declares a content type: a
+      // bodyless PUT/PATCH declares none, so the tier is not invited to
+      // reject an empty body against a header that promised JSON.
+      headers: { ...(opts.body === undefined ? {} : { 'content-type': 'application/json' }), 'x-service-token': process.env.SERVICE_TOKEN ?? '', ...actorHeaders(opts.user) },
+      ...(opts.body === undefined ? {} : { body: JSON.stringify(opts.body) }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    })
   } catch {
     // Unreachable, refused, or past TIMEOUT_MS. The backend's own words are
     // not available and ours would carry nothing an operator can act on.
@@ -108,6 +200,14 @@ async function request<T>(endpoint: string, { method = 'GET', path, search = {},
   // are read back by the page from its own reload.
   const text = await response.text().catch(() => '')
   return text ? (JSON.parse(text) as T) : null
+}
+
+/** POST to the Rust tier. No 404-to-null: every POST here is a mutation
+ * whose page type is a value or a boolean, and a 404 means the route or the
+ * id is wrong — an error worth surfacing, not an empty success. */
+const post = async <T>(endpoint: string, path: string, body: unknown, opts: { mounted?: boolean; user?: Caller } = {}): Promise<T> => {
+  const answer = await request<T>(endpoint, path, { method: 'POST', body, ...opts })
+  return answer as T
 }
 
 /** The tier's plain-text refusal, when it sent one. Never the request: an
@@ -331,7 +431,7 @@ function deploymentLinks(env: NodeJS.ProcessEnv = process.env): ShellConfig['lin
  * a result and not an error; only an unreachable validator throws, and the
  * page treats that as "no preview" (its save still decides). */
 const validateConfig: Backend['validateConfig'] = async (section, value) => {
-  const wire = await request<ConfigValidateWire>('validateConfig', { method: 'POST', path: '/api/v1/config/validate', body: configValidateBody(section, value) })
+  const wire = await request<ConfigValidateWire>('validateConfig', '/api/v1/config/validate', { method: 'POST', body: configValidateBody(section, value) })
   return configProblems(wire ?? { ok: true, problems: [] })
 }
 
@@ -352,7 +452,7 @@ const saveConfigSection: Backend['saveConfigSection'] = async (section, value) =
   await guardReadOnly('saveConfigSection')
   const { subject, username } = await sessionOf()
   const path = configSectionPath(section)
-  const wire = await request<ConfigWire>('saveConfigSection', { method: 'PUT', path: `/api/v1/config/${path}`, search: { actor_subject: subject, actor_username: username }, body: configSectionBody(section, value) })
+  const wire = await request<ConfigWire>('saveConfigSection', `/api/v1/config/${path}`, { method: 'PUT', search: { actor_subject: subject, actor_username: username }, body: configSectionBody(section, value) })
   return { ok: true, revision: wire?.revision ?? 0 }
 }
 
@@ -367,7 +467,7 @@ const rollbackConfig: Backend['rollbackConfig'] = async (revisionId) => {
   const revision = configRollbackBody(revisionId)
   if (!revision) throw new ApiError('invalid', 'rollbackConfig', { detail: `${revisionId} is not a revision` })
   const { subject, username } = await sessionOf()
-  await request<ConfigWire>('rollbackConfig', { method: 'POST', path: '/api/v1/config/rollback', body: { ...revision, actor_subject: subject, actor_username: username } })
+  await request<ConfigWire>('rollbackConfig', '/api/v1/config/rollback', { method: 'POST', body: { ...revision, actor_subject: subject, actor_username: username } })
 }
 
 /** POST /api/v1/services/{name}/{action}.
@@ -383,7 +483,7 @@ const rollbackConfig: Backend['rollbackConfig'] = async (revisionId) => {
 const runServiceAction: Backend['runServiceAction'] = async (name, action) => {
   await guardReadOnly('runServiceAction')
   const { subject, username } = await sessionOf()
-  const wire = await request<ServiceActionWireResponse>('runServiceAction', { method: 'POST', path: `/api/v1/services/${encodeURIComponent(name)}/${action}`, search: { actor_subject: subject, actor_username: username } })
+  const wire = await request<ServiceActionWireResponse>('runServiceAction', `/api/v1/services/${encodeURIComponent(name)}/${action}`, { method: 'POST', search: { actor_subject: subject, actor_username: username } })
   if (wire && wire.ok === false) throw new ApiError('unavailable', 'runServiceAction', { detail: wire.error })
 }
 
@@ -410,7 +510,7 @@ const getProblemReports: Backend['getProblemReports'] = async () => {
 const submitProblemReport: Backend['submitProblemReport'] = async (input) => {
   await guardReadOnly('submitProblemReport')
   const { subject, username } = await sessionOf()
-  const wire = await request<ProblemReportCreatedWire>('submitProblemReport', { method: 'POST', path: '/api/v1/problem-reports', search: { actor_subject: subject, actor_username: username }, body: problemReportBody(input) })
+  const wire = await request<ProblemReportCreatedWire>('submitProblemReport', '/api/v1/problem-reports', { method: 'POST', search: { actor_subject: subject, actor_username: username }, body: problemReportBody(input) })
   return { id: wire?.id ?? '' }
 }
 
@@ -419,7 +519,7 @@ const submitProblemReport: Backend['submitProblemReport'] = async (input) => {
  * equivalent by the adapter, so the page's four statuses stay reachable. */
 const setProblemStatus: Backend['setProblemStatus'] = async (id, status) => {
   await guardReadOnly('setProblemStatus')
-  await request<null>('setProblemStatus', { method: 'PATCH', path: `/api/v1/problem-reports/${encodeURIComponent(id)}`, body: problemStatusPatch(status) })
+  await request<null>('setProblemStatus', `/api/v1/problem-reports/${encodeURIComponent(id)}`, { method: 'PATCH', body: problemStatusPatch(status) })
 }
 
 /** Read-only mode, enforced the way the mock enforces it.
@@ -552,6 +652,174 @@ const searchAll: Backend['searchAll'] = async (query) => {
   return searchGroups(wire ?? { query, redirect: null, groups: [], total: 0 })
 }
 
+/** The session user of the request currently being served, for the mounted
+ * mutations below. `liveQuery` sets it around each call rather than widening
+ * the mock's signatures (which `queries.ts` is generated from, and pages are
+ * typed against). Never client input: it comes from `runForRequest`'s
+ * `resolveUser`, the same source canonical forwards the actor headers from. */
+let caller: Caller
+
+/** POST /api/v1/workbench/runs. Mounted, and it forwards the session's
+ * actor: workbench_api.rs's `require_actor` rejects a missing or blank
+ * `x-actor-username` with a JSON 401, and takes run ownership from it.
+ *
+ * The page's config is keyed by analyzer id (its own option block per
+ * analyzer) already, so it is the options map as-is; the body adapter then
+ * narrows each block to the three numbers the backend validates. */
+const startAnalysisRun: Backend['startAnalysisRun'] = async (config) => {
+  const options = Object.fromEntries(config.analyzers.map((id) => [id, config[id]])) as Record<string, Record<string, string | number | boolean | string[]>>
+  const wire = await post<CreateWorkbenchRunWire>('startAnalysisRun', '/api/v1/workbench/runs', createWorkbenchRunBody(config.hash, config.analyzers, options), { mounted: true, user: caller })
+  return { run: workbenchRun(wire.run), reused: wire.reused }
+}
+
+const setRunChild: Backend['setRunChild'] = async (runId, analyzerId, action) => {
+  const wire = await post<WorkbenchRunEnvelopeWire>('setRunChild', `/api/v1/workbench/runs/${encodeURIComponent(runId)}/children/${encodeURIComponent(analyzerId)}/${action}`, {}, { mounted: true, user: caller })
+  return workbenchRun(wire.run)
+}
+
+const abortGpuJob: Backend['abortGpuJob'] = async (jobId) => {
+  const wire = await post<GpuAbortWire>('abortGpuJob', `/api/v1/gpu-queue/${encodeURIComponent(jobId)}/abort`, {}, { mounted: true, user: caller })
+  return wire.abort_requested
+}
+
+/** GET /api/v1/payloads. `aggs=sources` is not optional: stores.rs #2179
+ * appends the per-source census (`source_buckets`) ONLY for that value, so
+ * without it the page's `sources` rollup is silently empty — the backend
+ * answers 200 with the rows and nothing to count. */
+const getPayloads: Backend['getPayloads'] = async () => capturedPayloads((await get<PayloadPageWire>('getPayloads', '/api/v1/payloads', { offset: 0, size: 100, aggs: 'sources' })) ?? { total: 0, rows: [] })
+
+/** GET /api/v1/payloads/{hash}. The detail doc is its own envelope — the
+ * inventory row and the static-analysis and yara docs beside it — so the
+ * page's `CapturedPayload` is rebuilt from `inventory` and the analysis is
+ * reduced over the whole envelope. `risk` is the risk the static-analysis
+ * doc itself carries; there is no endpoint that scores it separately. */
+const getPayloadAnalysis: Backend['getPayloadAnalysis'] = async (hash) => {
+  const wire = await get<PayloadDetailWire>('getPayloadAnalysis', `/api/v1/payloads/${encodeURIComponent(hash)}`)
+  if (!wire?.inventory) return null
+  return payloadAnalysis(wire, capturedPayload({ ...wire.inventory, _doc_id: hash }), wire.analysis?.Analysis?.StaticRiskScore ?? 0)
+}
+
+const getSandboxRun: Backend['getSandboxRun'] = async (job) => {
+  const wire = await get<SandboxRunDetailWire>('getSandboxRun', `/api/v1/sandbox/${encodeURIComponent(job)}`, {}, { mounted: true })
+  return wire ? sandboxRun(wire) : null
+}
+
+/** The Windows sandbox's live detonation (sandbox_submit.rs `/api/v1/sandbox/vnc`).
+ * Mounted: it reads the spool straight off the host's disk. The endpoint
+ * answers 404 for three different "nothing is running" reasons — no VNC
+ * bridge configured, no request dir, no live detonation — so a 404 reads
+ * as not-running rather than as an error, which is what it means. */
+const getSandboxLiveStatus: Backend['getSandboxLiveStatus'] = async () => {
+  const wire = await get<SandboxVncStatusWire>('getSandboxLiveStatus', '/api/v1/sandbox/vnc', {}, { mounted: true })
+  return wire ? { running: true, job: wire.sha256 } : { running: false }
+}
+
+const getGhidraAnalysis: Backend['getGhidraAnalysis'] = async (sha) => {
+  const wire = await get<GhidraRunDetailWire>('getGhidraAnalysis', `/api/v1/ghidra/${encodeURIComponent(sha)}`, undefined, { mounted: true })
+  return wire ? ghidraAnalysis(wire) : null
+}
+
+const getCapeRun: Backend['getCapeRun'] = async (sha) => {
+  const wire = await get<CapeRunWire>('getCapeRun', `/api/v1/cape/${encodeURIComponent(sha)}`)
+  return wire ? capeRun(wire) : null
+}
+
+const getCapeRuns: Backend['getCapeRuns'] = async () => capeRuns((await get<CapeRunPageWire>('getCapeRuns', '/api/v1/store/cape', { offset: 0, size: 25 })) ?? { total: 0, rows: [] })
+
+const getGithubAnalysis: Backend['getGithubAnalysis'] = async (sha) => {
+  const wire = await get<GithubAnalysisWire>('getGithubAnalysis', `/api/v1/github-analysis/${encodeURIComponent(sha)}`, undefined, { mounted: true })
+  return wire ? githubAnalysis(wire) : null
+}
+
+const getGithubAnalyses: Backend['getGithubAnalyses'] = async () => githubAnalysisPage((await get<GithubAnalysisPageWire>('getGithubAnalyses', '/api/v1/store/github-analysis', { offset: 0, size: 25 })) ?? { total: 0, rows: [] })
+
+/** GET /api/v1/revdeck/{sha} (detail.rs `revdeck_run`) serves the doc's
+ * `revdeck` field — and the importer nests the producer's own output (itself
+ * `{exit_status, revdeck: {...}, sha256, …}`) one level deeper under that
+ * label, so the answer is doubly nested. The wrapper carries the sha and the
+ * exit status the inner payload does not. */
+const getRevDeckRun: Backend['getRevDeckRun'] = async (sha) => {
+  const wire = await get<{ revdeck?: { revdeck?: RevDeckRunWire; sha256?: string } }>('getRevDeckRun', `/api/v1/revdeck/${encodeURIComponent(sha)}`)
+  const outer = wire?.revdeck
+  return outer?.revdeck ? revDeckRun(outer.revdeck, outer.sha256 ?? sha) : null
+}
+
+const getRevDeckRuns: Backend['getRevDeckRuns'] = async () => revDeckRuns((await get<RevDeckRunPageWire>('getRevDeckRuns', '/api/v1/store/revdeck', { offset: 0, size: 25 })) ?? { total: 0, rows: [] })
+
+const getArtifacts: Backend['getArtifacts'] = async (kind, key) => {
+  const wire = await get<ArtifactListWire>('getArtifacts', `/api/v1/artifacts/${encodeURIComponent(kind)}/${encodeURIComponent(key)}`)
+  return wire ? artifactRows(wire) : null
+}
+
+/** One artifact's bytes. `GET /api/v1/artifacts/{kind}/{key}/{filename}`
+ * answers the reassembled body directly with the stored content-type in a
+ * header (artifacts.rs `download`), not a JSON envelope — so this is one
+ * request read as a blob, and the page's `contentType` comes off that
+ * header rather than a second lookup. A 404 is the store's own "no such
+ * artifact", which is this query's null. */
+const getArtifactFile: Backend['getArtifactFile'] = async (kind, key, filename) => {
+  const response = await raw(`/api/v1/artifacts/${encodeURIComponent(kind)}/${encodeURIComponent(key)}/${encodeURIComponent(filename)}`)
+  if (response.status === 404) return null
+  return { filename, kind, contentType: response.headers.get('content-type') ?? 'application/octet-stream', body: new Uint8Array(await response.arrayBuffer()) }
+}
+
+const getAnalyzerCatalog: Backend['getAnalyzerCatalog'] = async (hash) => {
+  const wire = await get<AnalyzerCatalogWire>('getAnalyzerCatalog', '/api/v1/workbench/analyzers', { hash }, { mounted: true })
+  return wire ? analyzerCatalog(wire) : null
+}
+
+/** The queueing half of a payload's follow-up actions. `sandbox` and
+ * `ghidra` submit to their own spool-mounted endpoints; `github` submits
+ * for publication (mounted, `confirm: 'publish'` is the backend's own
+ * required literal). `pdf` has no submit endpoint in the canonical list —
+ * the report route is the generated-reports store, a different thing —
+ * so that one action stays on the mock rather than silently queueing
+ * nothing. */
+const queuePayloadAction: Backend['queuePayloadAction'] = async (hash, action) => {
+  if (action === 'pdf') return 'PDF report generation started'
+  const mounted = { mounted: true, user: caller }
+  if (action === 'sandbox') await post<SandboxSubmitWire>('queuePayloadAction', '/api/v1/sandbox/submit', { hash }, mounted)
+  else if (action === 'ghidra') await post<GhidraSubmitWire>('queuePayloadAction', '/api/v1/ghidra/submit', { hash }, mounted)
+  else await post<GithubAnalysisSubmitWire>('queuePayloadAction', '/api/v1/github-analysis/submit', { hash, confirm: 'publish' }, mounted)
+  const labels = { sandbox: 'Sandbox detonation queued', ghidra: 'Ghidra decompilation queued on the GPU queue', github: 'Submitted for GitHub publication and scanning' } as const
+  return labels[action]
+}
+
+/** There is no `GET /api/v1/results` in the Rust router and no canonical
+ * `fetchResults` in docs/migration/server-functions.json — the brief's
+ * mapping for it does not exist upstream. The page's `AnalysisResultsData`
+ * is a composite, so it is answered from the five endpoints that do exist
+ * rather than left on the mock, which would show an operator fabricated
+ * runs.
+ *
+ * The `range` argument is NOT honoured: the one endpoint that could filter
+ * by it (`/store/yara`) pages by offset, not by time, and the other four
+ * are the queue and the catalogs — always shown whole, which is what the
+ * mock does with them too. Results therefore cover the rows those endpoints
+ * return, not a date window. */
+const getAnalysisResults: Backend['getAnalysisResults'] = async () => {
+  // The workbench orchestrator surface is spool-mounted (canonical L68).
+  // Both of these scope to ONE operator, read from `x-actor-username`:
+  // workbench_api.rs #3110 removed the `owner` query field as the access
+  // check ("it isn't deserialized at all, so no handler can make an access
+  // decision out of request data"), so no owner is sent here.
+  const mounted = { mounted: true, user: caller }
+  const [queue, catalog, runs, recipes] = await Promise.all([
+    get<GpuQueueWire>('getAnalysisResults', '/api/v1/gpu-queue'),
+    get<AnalyzerCatalogWire[]>('getAnalysisResults', '/api/v1/workbench/analyzers', {}, mounted),
+    get<WorkbenchRunListWire>('getAnalysisResults', '/api/v1/workbench/runs', { limit: 25 }, mounted),
+    get<WorkbenchRecipeListWire>('getAnalysisResults', '/api/v1/workbench/recipes', {}, mounted),
+  ])
+  const results = gpuJobs(queue ?? []).concat(yaraRuns((await get<YaraRunPageWire>('getAnalysisResults', '/api/v1/store/yara', { offset: 0, size: 25 })) ?? { total: 0, rows: [] }))
+  return {
+    results,
+    gpuQueue: gpuQueueOf(queue ?? []),
+    analyzers: analyzerInfos(catalog ?? []),
+    runs: workbenchRuns(runs ?? { runs: [] }),
+    recipes: savedWorkbenchRecipes(recipes ?? { recipes: [] }),
+  }
+}
+
 /** This slice's queries, and nothing else. Each keeps the mock
  * implementation's signature exactly — `queries.ts` is generated from it and
  * pages are typed against it.
@@ -597,6 +865,25 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   getProblemReports,
   submitProblemReport,
   setProblemStatus,
+  getPayloads,
+  getPayloadAnalysis,
+  getAnalysisResults,
+  getAnalyzerCatalog,
+  startAnalysisRun,
+  setRunChild,
+  abortGpuJob,
+  getSandboxRun,
+  getSandboxLiveStatus,
+  getGhidraAnalysis,
+  getCapeRuns,
+  getCapeRun,
+  getGithubAnalyses,
+  getGithubAnalysis,
+  getRevDeckRuns,
+  getRevDeckRun,
+  getArtifacts,
+  getArtifactFile,
+  queuePayloadAction,
 }
 
 /** The guarded live implementation of `name`, or undefined when this slice
@@ -615,6 +902,10 @@ export function liveQuery(name: string, user: Caller): ((...args: unknown[]) => 
       if (decision === 'sign-in') throw new ApiError('expired', name)
       if (decision === 'admin-only') throw new ApiError('forbidden', name)
     }
+    // The mounted mutations read the actor off this module rather than
+    // taking it as a parameter: the mock's signatures are the contract and
+    // none of them carry a caller.
+    caller = user
     return query(...args)
   }
 }

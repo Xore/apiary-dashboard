@@ -101,13 +101,49 @@ afterEach(() => {
 })
 
 describe('which queries the real backend answers', () => {
-  it('names only this slice, leaving the rest to the mock', () => {
+  it('names only the wired slices, leaving the rest to the mock', () => {
     expect(liveQueryNames().sort()).toEqual(
       [
-        // #75 — events & sessions
-        'getCommands', 'getEventDetail', 'getEvents', 'getRecordings', 'getReplayDetail', 'getSessionDetail', 'searchAll', 'searchHistory',
-        // #81 — settings, preferences and shell
-        'getMail', 'getProblemReports', 'getSettings', 'getShellConfig', 'rollbackConfig', 'runServiceAction', 'saveConfigSection', 'setProblemStatus', 'submitProblemReport', 'validateConfig',
+        // events & sessions (#75)
+        'getCommands',
+        'getEventDetail',
+        'getEvents',
+        'getRecordings',
+        'getReplayDetail',
+        'getSessionDetail',
+        'searchAll',
+        'searchHistory',
+        // settings, preferences and shell (#81)
+        'getMail',
+        'getProblemReports',
+        'getSettings',
+        'getShellConfig',
+        'rollbackConfig',
+        'runServiceAction',
+        'saveConfigSection',
+        'setProblemStatus',
+        'submitProblemReport',
+        'validateConfig',
+        // evidence & analysis (#78)
+        'abortGpuJob',
+        'getAnalysisResults',
+        'getAnalyzerCatalog',
+        'getArtifacts',
+        'getArtifactFile',
+        'getCapeRun',
+        'getCapeRuns',
+        'getGithubAnalyses',
+        'getGithubAnalysis',
+        'getGhidraAnalysis',
+        'getPayloadAnalysis',
+        'getPayloads',
+        'getRevDeckRun',
+        'getRevDeckRuns',
+        'getSandboxLiveStatus',
+        'getSandboxRun',
+        'queuePayloadAction',
+        'setRunChild',
+        'startAnalysisRun',
       ].sort(),
     )
   })
@@ -393,6 +429,201 @@ describe('a degraded body degrades, and a failed call errors', () => {
   })
 })
 
+// ---- the Evidence & analysis slice (#78) -------------------------------------
+
+describe('the mounted base', () => {
+  it('routes a spool route to BACKEND_MOUNTED_URL, never the regular base', async () => {
+    process.env.BACKEND_MOUNTED_URL = 'http://mounted.test'
+    const calls = stub({ '/api/v1/sandbox/sbx-1': { sandbox: { job: 'sbx-1', sha256: 'a'.repeat(64), completed_at: '', exit_status: 'ok', run_status: 'ok', duration_seconds: 1, risk_score: 10, platform: 'linux-x86_64' }, _doc_id: 'sbx:1' } })
+    await live('getSandboxRun')('sbx-1')
+    expect(calls[0]).toMatch(/^http:\/\/mounted\.test\/api\/v1\/sandbox\//)
+    // A sandbox answer off the REGULAR instance comes back empty rather than
+    // erroring, which is the whole hazard this routing exists to prevent.
+    expect(calls[0]).not.toContain('backend.test')
+  })
+
+  it('falls back to BACKEND_URL when the mounted base is unset', async () => {
+    delete process.env.BACKEND_MOUNTED_URL
+    const calls = stub({ '/api/v1/ghidra/': { ghidra: { sha256: 'b'.repeat(64), requested_at: '', started_at: '', completed_at: '', exit_status: 'ok', functions: [] } } })
+    await live('getGhidraAnalysis')('b'.repeat(64))
+    expect(calls[0]).toMatch(/^http:\/\/backend\.test\/api\/v1\/ghidra\//)
+  })
+})
+
+describe('the actor the Rust tier trusts', () => {
+  const admin = { name: 'alice', email: 'a@example.test', roles: ['admin'] }
+
+  it('forwards the session user on a mounted mutation, never client input', async () => {
+    const calls = stub({ '/api/v1/gpu-queue/gj-1/abort': { ok: true, job_id: 'gj-1', abort_requested: true } })
+    expect(await liveQuery('abortGpuJob', admin)!('gj-1')).toBe(true)
+    const init = vi.mocked(fetch).mock.calls.at(-1)?.[1] as RequestInit
+    const headers = init.headers as Record<string, string>
+    expect(headers['x-actor-username']).toBe('alice')
+    expect(headers['x-actor-role']).toBe('admin')
+    // The token rides as a header and never in the URL.
+    expect(headers['x-service-token']).toBe('test-token')
+    expect(calls[0]).not.toContain('test-token')
+  })
+
+  it('sends no actor headers when there is no signed-in user', async () => {
+    stub({ '/api/v1/gpu-queue/gj-1/abort': { ok: true, job_id: 'gj-1', abort_requested: true } })
+    await liveQuery('abortGpuJob', undefined)!('gj-1')
+    const init = vi.mocked(fetch).mock.calls.at(-1)?.[1] as RequestInit
+    expect((init.headers as Record<string, string>)['x-actor-username']).toBeUndefined()
+  })
+
+  it('refuses a viewer the same way the mock refuses them, before any fetch', async () => {
+    stub({ '/api/v1/gpu-queue/gj-1/abort': { ok: true, job_id: 'gj-1', abort_requested: true } })
+    await expect(liveQuery('abortGpuJob', { name: 'V', email: 'v@example.test', roles: ['viewer'] })!('gj-1')).rejects.toThrow(ApiError)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('the Evidence queries against a fixture per endpoint', () => {
+  it('maps GET /payloads, sources rollup included', async () => {
+    const calls = stub({ '/api/v1/payloads': { total: 1, rows: [{ _doc_id: 'd1', sha256: 'c'.repeat(64), size_bytes: 12, kind: 'PE32', first_seen: '', last_seen: '', sources: ['cowrie'], tags: [] }], source_buckets: [{ key: 'cowrie', doc_count: 1 }] } })
+    expect(await live('getPayloads')()).toMatchObject({ sources: [{ id: 'cowrie', label: 'cowrie', count: 1 }] })
+    expect(calls[0]).toContain('offset=0')
+    // Without aggs=sources the backend answers 200 and simply omits the
+    // census, so the rollup would be empty for no visible reason.
+    expect(calls[0]).toContain('aggs=sources')
+  })
+
+  it('maps GET /payloads/{hash}, a 404 being the page null', async () => {
+    stub({ '/api/v1/payloads/deadbeef': fail(404, 'not found') })
+    expect(await live('getPayloadAnalysis')('deadbeef')).toBeNull()
+  })
+
+  it('maps GET /sandbox/{job} and the double-nested GET /revdeck/{sha}', async () => {
+    stub({
+      '/api/v1/sandbox/sbx-9': { sandbox: { job: 'sbx-9', sha256: 'd'.repeat(64), completed_at: '2026-10-01T09:00:00Z', exit_status: 'ok', run_status: 'ok', duration_seconds: 5, risk_score: 80, platform: 'windows-kvm', iocs: [] }, _doc_id: 'sbx:9' },
+      '/api/v1/revdeck/': { revdeck: { sha256: 'e'.repeat(64), revdeck: { workflow: 'revdeck-v1', status: 'complete', answer: 'It beaconed.', steps: [], citations: { valid: ['a'], invalid: [] } } } },
+    })
+    expect(await live('getSandboxRun')('sbx-9')).toMatchObject({ job: 'sbx-9', verdict: 'malicious', route: { name: 'windows-kvm' } })
+    expect(await live('getRevDeckRun')('e'.repeat(64))).toMatchObject({ sha: 'e'.repeat(64), status: 'completed', summary: 'It beaconed.' })
+  })
+
+  it('reads a VNC 404 as "not running", which is what it means', async () => {
+    stub({ '/api/v1/sandbox/vnc': fail(404, 'no Windows-sandbox detonation is currently running') })
+    expect(await live('getSandboxLiveStatus')()).toEqual({ running: false })
+  })
+
+  it('maps the store pages for CAPE, GitHub and RevDeck', async () => {
+    stub({
+      '/api/v1/store/cape': { total: 0, rows: [] },
+      '/api/v1/store/github-analysis': { total: 1, rows: [{ _doc_id: 'g1', github_analysis: { sha256: 'f'.repeat(64), requested_at: '', started_at: '', completed_at: '2026-10-01T12:00:00Z', exit_status: 'ok', commit: 'abc', scanners: [] } }] },
+      '/api/v1/store/revdeck': { total: 1, rows: [{ _doc_id: 'r1', sha256: '9'.repeat(64), revdeck: { workflow: 'revdeck-v1', status: 'complete', answer: 'yes', steps: [], citations: { valid: [], invalid: [] } } }] },
+    })
+    expect(await live('getCapeRuns')()).toEqual([])
+    const gh = await live('getGithubAnalyses')()
+    expect(gh[0]).toMatchObject({ sha: 'f'.repeat(64), status: 'dry_run', requestedBy: 'unknown' })
+    expect((await live('getRevDeckRuns')())[0]).toMatchObject({ sha: '9'.repeat(64) })
+  })
+
+  it('maps GET /artifacts/{kind}/{key}, a 404 being the page null', async () => {
+    stub({ '/api/v1/artifacts/ghidra/abc': { rows: [{ filename: 'main.c', kind: 'ghidra', content_type: 'text/plain', size_bytes: 12, imported_at: '2026-10-01T00:00:00Z' }] } })
+    expect(await live('getArtifacts')('ghidra', 'abc')).toEqual([{ filename: 'main.c', kind: 'ghidra', contentType: 'text/plain', sizeBytes: 12, importedAt: '2026-10-01T00:00:00Z' }])
+    stub({ '/api/v1/artifacts/ghidra/none': fail(404, 'not found') })
+    expect(await live('getArtifacts')('ghidra', 'none')).toBeNull()
+  })
+
+  it('reads the artifact route as bytes, its content-type off the header', async () => {
+    const calls: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        calls.push(url)
+        if (url.includes('/none/')) return new Response('no such artifact', { status: 404 })
+        // The route answers the reassembled body directly, not a JSON
+        // envelope — parsing it as JSON would be the bug this test pins.
+        return new Response(new Uint8Array([0x4d, 0x5a]), { status: 200, headers: { 'content-type': 'application/x-dosexec' } })
+      }),
+    )
+    expect(await live('getArtifactFile')('ghidra', 'abc', 'sample.exe')).toMatchObject({ filename: 'sample.exe', kind: 'ghidra', contentType: 'application/x-dosexec' })
+    // One request, not a metadata lookup followed by a download.
+    expect(calls).toHaveLength(1)
+    expect(await live('getArtifactFile')('ghidra', 'none', 'gone.exe')).toBeNull()
+  })
+
+  it('never renders a failed Evidence fetch as an empty list', async () => {
+    stub({ '/api/v1/store/cape': fail(502, 'elasticsearch refused') })
+    const error = (await live('getCapeRuns')().then(() => null, (e: unknown) => e)) as ApiError
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error.kind).toBe('unavailable')
+  })
+})
+
+describe('getAnalysisResults, a composite with no results endpoint of its own', () => {
+  const admin = { name: 'alice', email: 'a@example.test', roles: ['admin'] }
+  const empty = { total: 0, rows: [] }
+
+  it('fans out to the five endpoints that do exist', async () => {
+    const calls = stub({
+      '/api/v1/gpu-queue': [{ job_id: 'gj-1', job_type: 'decompile', ref: 'a'.repeat(64), model: 'qwen', estimated_vram_mib: 18_000, status: 'running', requested_at: '2026-10-01T14:00:00Z', started_at: '', finished_at: '', abort_requested: false, error: '', attempts: 1, result: null }],
+      '/api/v1/workbench/analyzers': [{ classification: { code: 'c', label: 'Executable', platform: 'PE', category: 'executable', analysis_path: 'x', dynamic: false }, analyzers: [] }],
+      '/api/v1/workbench/runs': { runs: [] },
+      '/api/v1/workbench/recipes': { recipes: [] },
+      '/api/v1/store/yara': empty,
+    })
+    const data = (await liveQuery('getAnalysisResults', admin)!()) as Awaited<ReturnType<Backend['getAnalysisResults']>>
+    expect(data.gpuQueue[0]).toMatchObject({ jobId: 'gj-1', status: 'running', vramMib: 18_000 })
+    expect(data.results[0]).toMatchObject({ id: 'gj-1', analyzer: 'workbench' })
+    // #3110: identity is the actor header alone. An `owner` query param here
+    // would read as if it scoped the list, and it is not deserialized at all.
+    expect(calls.some((url) => url.includes('owner='))).toBe(false)
+    expect(calls.filter((url) => url.includes('/api/v1/workbench/'))).toHaveLength(3)
+  })
+
+  it('routes the workbench half to the mounted base', async () => {
+    process.env.BACKEND_MOUNTED_URL = 'http://mounted.test'
+    const calls = stub({ '/api/v1/gpu-queue': [], '/api/v1/workbench/analyzers': [], '/api/v1/workbench/runs': { runs: [] }, '/api/v1/workbench/recipes': { recipes: [] }, '/api/v1/store/yara': { total: 0, rows: [] } })
+    await liveQuery('getAnalysisResults', admin)!()
+    const workbench = calls.filter((url) => url.includes('/api/v1/workbench/'))
+    expect(workbench).toHaveLength(3)
+    expect(workbench.every((url) => new URL(url).origin === 'http://mounted.test')).toBe(true)
+  })
+})
+
+describe('the mutations', () => {
+  const admin = { name: 'alice', email: 'a@example.test', roles: ['admin'] }
+
+  it('POSTs the workbench run body to the mounted base', async () => {
+    process.env.BACKEND_MOUNTED_URL = 'http://mounted.test'
+    const calls = stub({ '/api/v1/workbench/runs': { run: { id: 'wr-1', payload_sha256: 'a'.repeat(64), payload_kind: 'PE32', owner: 'alice', state: 'queued', created_at: '', updated_at: '', children: [] }, reused: false } })
+    const run = await liveQuery('startAnalysisRun', admin)!({ hash: 'a'.repeat(64), analyzers: ['static'], static: { minStringLength: 4 } })
+    expect(run).toMatchObject({ reused: false, run: { id: 'wr-1', hash: 'a'.repeat(64) } })
+    expect(calls[0]).toMatch(/^http:\/\/mounted\.test\/api\/v1\/workbench\/runs$/)
+    const body = JSON.parse((vi.mocked(fetch).mock.calls.at(-1)?.[1] as RequestInit).body as string)
+    // The page's 'static' analyzer id goes out as the workbench's own name.
+    expect(body.analyzers[0].analyzer_id).toBe('deterministic')
+  })
+
+  it('POSTs a child action and reports what the abort route said', async () => {
+    const calls = stub({ '/api/v1/workbench/runs/wr-1/children/ghidra/retry': { run: { id: 'wr-1', payload_sha256: 'a'.repeat(64), payload_kind: 'PE32', owner: 'alice', state: 'queued', created_at: '', updated_at: '', children: [] } }, '/api/v1/gpu-queue/gj-1/abort': { ok: true, job_id: 'gj-1', abort_requested: true } })
+    expect(await liveQuery('setRunChild', admin)!('wr-1', 'ghidra', 'retry')).toMatchObject({ id: 'wr-1' })
+    expect(await liveQuery('abortGpuJob', admin)!('gj-1')).toBe(true)
+    expect(calls[0]).toContain('/children/ghidra/retry')
+    expect(calls[1]).toContain('/gpu-queue/gj-1/abort')
+  })
+
+  it('reports a refused abort as false rather than throwing it away', async () => {
+    stub({ '/api/v1/gpu-queue/gj-2/abort': { ok: true, job_id: 'gj-2', abort_requested: false } })
+    expect(await liveQuery('abortGpuJob', admin)!('gj-2')).toBe(false)
+  })
+
+  it('submits each payload action to its own spool route', async () => {
+    const calls = stub({ '/api/v1/sandbox/submit': { queued: true }, '/api/v1/ghidra/submit': { queued: true }, '/api/v1/github-analysis/submit': { queued: true } })
+    expect(await liveQuery('queuePayloadAction', admin)!('a'.repeat(64), 'sandbox')).toBe('Sandbox detonation queued')
+    expect(await liveQuery('queuePayloadAction', admin)!('a'.repeat(64), 'ghidra')).toMatch(/GPU queue/)
+    await liveQuery('queuePayloadAction', admin)!('a'.repeat(64), 'github')
+    expect(calls[2]).toContain('/github-analysis/submit')
+    // The body field is `hash`, not `sha256`, on all three submit routes.
+    for (const call of vi.mocked(fetch).mock.calls.slice(-3)) expect(JSON.parse((call[1] as RequestInit).body as string).hash).toBe('a'.repeat(64))
+    // `confirm` is the backend's own required literal, not an assumption.
+    expect(JSON.parse((vi.mocked(fetch).mock.calls.at(-1)?.[1] as RequestInit).body as string).confirm).toBe('publish')
+  })
+})
+
 // ---- the settings slice -------------------------------------------------------
 
 const configWire = { revision: 14, payload: { presentation: { app_name: 'APIARY' }, behavior: { default_time_window: '24h', read_only: false }, honeypot: { alert_cooldown: '15m' } } }
@@ -596,6 +827,7 @@ describe('services, mail and problem reports', () => {
     expect(url.searchParams.has('actor_subject')).toBe(false)
     expect(url.searchParams.has('actor_username')).toBe(false)
   })
+
 })
 
 describe('the settings slice fails as an error, never as an empty panel', () => {

@@ -12,6 +12,7 @@ import type {
   AnalyzerId,
   AnalyzerInfo,
   AnalysisResult,
+  GpuJob,
   CapeRun,
   CapturedPayload,
   CountRow,
@@ -48,7 +49,6 @@ import type {
   RevDeckRunWire,
   SandboxRunDetailWire,
   SandboxRunPageWire,
-  SandboxRunWire,
   SaveWorkbenchRecipeBody,
   WorkbenchAnalyzerWire,
   WorkbenchRunEnvelopeWire,
@@ -152,7 +152,10 @@ export function payloadAnalysis(wire: PayloadDetailWire, payload: CapturedPayloa
 
 // ---- Sandbox ---------------------------------------------------------------
 
-/** GET /api/v1/sandbox/{job} and GET /api/v1/store/sandbox-runs.
+/** GET /api/v1/sandbox/{job} and GET /api/v1/store/sandbox-runs. The row
+ * nests the run under the importer's `sandbox` label (es_importer.rs
+ * `build_document`), so the label is unwrapped here rather than by every
+ * caller.
  *
  * Big gaps, all on the page side: the run's `packets`, `output`, `dns`,
  * `connections`, `route`, `processes`, `sockets`, `stdout`/`stderr`,
@@ -161,33 +164,34 @@ export function payloadAnalysis(wire: PayloadDetailWire, payload: CapturedPayloa
  * logs under `artifacts` and free-form `network_summary` instead. The page
  * type is not widened to hold them.
  */
-export function sandboxRun(wire: SandboxRunWire | SandboxRunDetailWire): SandboxRun {
+export function sandboxRun(wire: SandboxRunDetailWire): SandboxRun {
+  const run = wire.sandbox
   const technique = (id: string) => ({ id, name: id, tactic: id, events: 0 })
   return {
-    job: wire.job,
-    hash: wire.sha256,
-    at: wire.completed_at,
-    verdict: sandboxVerdict(wire.risk_score),
-    risk: wire.risk_score,
-    platform: wire.platform,
-    durationSeconds: wire.duration_seconds,
+    job: run.job,
+    hash: run.sha256,
+    at: run.completed_at,
+    verdict: sandboxVerdict(run.risk_score),
+    risk: run.risk_score,
+    platform: run.platform,
+    durationSeconds: run.duration_seconds,
     packets: 0,
-    changedPaths: lines(wire.changed_files),
-    syscalls: (wire.top_syscalls ?? []).map((s) => ({ id: s.name, label: s.name, count: s.count })),
+    changedPaths: lines(run.changed_files),
+    syscalls: (run.top_syscalls ?? []).map((s) => ({ id: s.name, label: s.name, count: s.count })),
     processesAdded: [],
-    socketsAdded: lines(wire.sockets_after),
-    output: wire.stdout ?? '',
+    socketsAdded: lines(run.sockets_after),
+    output: run.stdout ?? '',
     dns: [],
     connections: [],
     iocsStatic: [],
-    iocsDynamic: lines(wire.iocs),
-    techniques: (wire.techniques ?? []).map((t) => ({ ...technique(t.id), name: t.name })),
-    diagnostics: { exit_status: wire.exit_status, run_status: wire.run_status ?? '' },
-    route: { name: wire.platform.toLowerCase().includes('windows') ? 'windows-kvm' : 'linux-qemu', vm: '', snapshot: '' },
+    iocsDynamic: lines(run.iocs),
+    techniques: (run.techniques ?? []).map((t) => ({ ...technique(t.id), name: t.name })),
+    diagnostics: { exit_status: run.exit_status, run_status: run.run_status ?? '' },
+    route: { name: run.platform.toLowerCase().includes('windows') ? 'windows-kvm' : 'linux-qemu', vm: '', snapshot: '' },
     processes: { added: [], removed: [] },
-    sockets: { before: lines(wire.sockets_before), after: lines(wire.sockets_after) },
-    stdout: wire.stdout ?? '',
-    stderr: wire.stderr ?? '',
+    sockets: { before: lines(run.sockets_before), after: lines(run.sockets_after) },
+    stdout: run.stdout ?? '',
+    stderr: run.stderr ?? '',
     network: { bytes: 0, protocols: [], remoteIps: [], hostEvents: [], attempts: [], guest: { packets: 0, pcapBytes: 0, protocols: [], events: [] } },
     staticIocs: { remoteIps: [], uncPaths: [], downloadUrls: [], downloadCradles: 0 },
     logs: { kernel: '', hostTcpdump: '', guestTcpdump: '', serialConsole: '', qemu: '', domainState: '' },
@@ -222,7 +226,10 @@ export function goldenImageStatus(wire: Record<string, unknown> & { configured: 
 
 // ---- Ghidra ----------------------------------------------------------------
 
-/** GET /api/v1/ghidra/{sha} and GET /api/v1/store/ghidra-runs.
+/** GET /api/v1/ghidra/{sha} and GET /api/v1/store/ghidra-runs. The row
+ * nests the analysis under the importer's `ghidra` label; `ioc_correlation`
+ * is written by detail.rs BESIDE that label (and canonical reads it from
+ * there, ghidra.$sha.tsx:1103), so it is read off the row, not the run.
  *
  * Gaps: the worker records `arch` nowhere (it is not in `result`), so the
  * page reads it from LIEF's `architecture`; `functionsTotal` is the length
@@ -232,7 +239,8 @@ export function goldenImageStatus(wire: Record<string, unknown> & { configured: 
  * whose own shape is not the page's thread/message form.
  */
 export function ghidraAnalysis(wire: GhidraRunDetailWire): GhidraAnalysis {
-  const floss = wire.floss?.strings ?? {}
+  const doc = wire.ghidra
+  const floss = doc.floss?.strings ?? {}
   const totals = {
     decoded: floss.decoded?.length ?? 0,
     stack: floss.stack?.length ?? 0,
@@ -246,18 +254,18 @@ export function ghidraAnalysis(wire: GhidraRunDetailWire): GhidraAnalysis {
     confirmedAtRuntime: k?.confirmed_at_runtime ?? [],
   })
   return {
-    hash: wire.sha256,
-    at: wire.completed_at,
-    arch: wire.lief?.architecture ?? '',
+    hash: doc.sha256,
+    at: doc.completed_at,
+    arch: doc.lief?.architecture ?? '',
     run: {
-      requestedAt: wire.requested_at,
-      startedAt: wire.started_at,
-      completedAt: wire.completed_at,
-      exitStatus: wire.exit_status === 'ok' ? 'ok' : 'error',
-      ...(wire.exit_status === 'ok' ? {} : { error: `Ghidra worker exited ${wire.exit_status}.` }),
+      requestedAt: doc.requested_at,
+      startedAt: doc.started_at,
+      completedAt: doc.completed_at,
+      exitStatus: doc.exit_status === 'ok' ? 'ok' : 'error',
+      ...(doc.exit_status === 'ok' ? {} : { error: `Ghidra worker exited ${doc.exit_status}.` }),
     },
-    functionsTotal: wire.functions.length,
-    functions: wire.functions.map((fn) => ({
+    functionsTotal: doc.functions.length,
+    functions: doc.functions.map((fn) => ({
       name: fn.name,
       address: fn.address,
       size: fn.size ?? 0,
@@ -267,25 +275,25 @@ export function ghidraAnalysis(wire: GhidraRunDetailWire): GhidraAnalysis {
       callees: (fn.callees ?? []).map((c) => c.name),
       decompiled: fn.decompiled ?? '',
     })),
-    imports: (wire.imports ?? []).map((i) => ({ id: typeof i === 'string' ? i : i.name, label: typeof i === 'string' ? i : i.name, count: typeof i === 'string' ? 1 : i.count ?? 1 })),
-    strings: wire.strings ?? [],
-    cryptoConstants: (wire.findcrypt ?? []).map((c) => ({ name: c.name, address: c.address, algorithm: '' })),
-    fuzzy: { ssdeep: wire.fuzzy_hashes?.ssdeep ?? '', tlsh: wire.fuzzy_hashes?.tlsh ?? '', imphash: wire.fuzzy_hashes?.imphash ?? '' },
+    imports: (doc.imports ?? []).map((i) => ({ id: typeof i === 'string' ? i : i.name, label: typeof i === 'string' ? i : i.name, count: typeof i === 'string' ? 1 : i.count ?? 1 })),
+    strings: doc.strings ?? [],
+    cryptoConstants: (doc.findcrypt ?? []).map((c) => ({ name: c.name, address: c.address, algorithm: '' })),
+    fuzzy: { ssdeep: doc.fuzzy_hashes?.ssdeep ?? '', tlsh: doc.fuzzy_hashes?.tlsh ?? '', imphash: doc.fuzzy_hashes?.imphash ?? '' },
     lief: {
-      format: wire.lief?.format === 'PE' ? 'PE' : 'ELF',
-      architecture: wire.lief?.architecture ?? '',
-      entrypoint: wire.lief?.entrypoint ?? '',
-      isPie: wire.lief?.is_pie ?? false,
-      stripped: wire.lief?.stripped ?? false,
-      isDll: wire.lief?.is_dll ?? null,
-      compileTimestamp: wire.lief?.compile_timestamp ?? null,
-      sectionCount: wire.lief?.section_count ?? 0,
-      libraries: wire.lief?.libraries ?? [],
+      format: doc.lief?.format === 'PE' ? 'PE' : 'ELF',
+      architecture: doc.lief?.architecture ?? '',
+      entrypoint: doc.lief?.entrypoint ?? '',
+      isPie: doc.lief?.is_pie ?? false,
+      stripped: doc.lief?.stripped ?? false,
+      isDll: doc.lief?.is_dll ?? null,
+      compileTimestamp: doc.lief?.compile_timestamp ?? null,
+      sectionCount: doc.lief?.section_count ?? 0,
+      libraries: doc.lief?.libraries ?? [],
     },
-    capa: (wire.capa?.capabilities ?? []).map((c) => ({ capability: c.name, namespace: c.namespace, matches: c.matches, ...(c.attck?.[0] ? { attck: c.attck[0] } : {}) })),
-    capaAttack: wire.capa?.attack ?? [],
-    capaMbc: wire.capa?.mbc ?? [],
-    floss: { decoded: floss.decoded ?? [], stack: floss.stack ?? [], tight: floss.tight ?? [], static: floss.static ?? [], totals, truncated: wire.floss?.truncated ?? false },
+    capa: (doc.capa?.capabilities ?? []).map((c) => ({ capability: c.name, namespace: c.namespace, matches: c.matches, ...(c.attck?.[0] ? { attck: c.attck[0] } : {}) })),
+    capaAttack: doc.capa?.attack ?? [],
+    capaMbc: doc.capa?.mbc ?? [],
+    floss: { decoded: floss.decoded ?? [], stack: floss.stack ?? [], tight: floss.tight ?? [], static: floss.static ?? [], totals, truncated: doc.floss?.truncated ?? false },
     iocCorrelation: {
       hasSandboxRun: correlation?.has_sandbox_run ?? false,
       ips: evidence(correlation?.ips),
@@ -294,18 +302,18 @@ export function ghidraAnalysis(wire: GhidraRunDetailWire): GhidraAnalysis {
       uncPaths: evidence(correlation?.unc_paths),
     },
     aiTriage: {
-      summary: wire.ai_triage?.summary ?? '',
-      model: wire.ai_triage?.model ?? '',
-      confidence: wire.ai_triage?.confidence === 'high' ? 'high' : wire.ai_triage?.confidence === 'low' ? 'low' : 'medium',
-      familyGuess: wire.ai_triage?.family_guess ?? '',
-      behaviors: wire.ai_triage?.behaviors ?? [],
+      summary: doc.ai_triage?.summary ?? '',
+      model: doc.ai_triage?.model ?? '',
+      confidence: doc.ai_triage?.confidence === 'high' ? 'high' : doc.ai_triage?.confidence === 'low' ? 'low' : 'medium',
+      familyGuess: doc.ai_triage?.family_guess ?? '',
+      behaviors: doc.ai_triage?.behaviors ?? [],
     },
     // The wire's `kind` is free-form; the page allows three. Anything else
     // reads as a typedef, which is the shape RevDeck actually emits.
-    types: (wire.types ?? []).map((t) => ({ ...t, kind: t.kind === 'struct' || t.kind === 'enum' ? t.kind : 'typedef' })),
-    globals: wire.globals ?? [],
-    annotations: { revision: wire.annotations?.revision ?? 0, entries: wire.annotations?.entries ?? [] },
-    memoryMap: wire.memory_map ?? [],
+    types: (doc.types ?? []).map((t) => ({ ...t, kind: t.kind === 'struct' || t.kind === 'enum' ? t.kind : 'typedef' })),
+    globals: doc.globals ?? [],
+    annotations: { revision: doc.annotations?.revision ?? 0, entries: doc.annotations?.entries ?? [] },
+    memoryMap: doc.memory_map ?? [],
     chat: { threads: [], messages: [] },
     symbolRecovery: { matched: 0, total: 0, candidates: [] },
   }
@@ -347,32 +355,38 @@ export function revDeckRun(wire: RevDeckRunWire, sha: string): RevDeckRun {
   }
 }
 
-/** GET /api/v1/store/revdeck?offset&size. */
+/** GET /api/v1/store/revdeck?offset&size. The subject sha lives on the doc
+ * beside the label (the importer copies `sha256` up, and canonical reads it
+ * the same way — revdeck.index.tsx:25), never inside the nested run. */
 export function revDeckRuns(wire: RevDeckRunPageWire): RevDeckRun[] {
-  return wire.rows.flatMap((row) => (row.revdeck ? [revDeckRun(row.revdeck, row.sha256 ?? '')] : []))
+  return wire.rows.flatMap((row) => (row.revdeck ? [revDeckRun(row.revdeck, row.sha256 ?? row.file?.hash?.sha256 ?? '')] : []))
 }
 
 // ---- CAPE ------------------------------------------------------------------
 
-/** GET /api/v1/cape/{sha} and GET /api/v1/store/cape. The handler's
- * `report_summary` is what carries the process list and call counts; the
- * page's `processes` (pid/name/commandLine) reads `command_line` off it,
- * and `config`/`log` read CAPE's own `debug_log` and payload config.
+/** GET /api/v1/cape/{sha} and GET /api/v1/store/cape. The detail endpoint
+ * writes `report_summary` into the nested `cape` field, and that summary is
+ * what carries the process list and call counts; the page's `processes`
+ * (pid/name/commandLine) reads `module_path` off it, and `config`/`log`
+ * read CAPE's own `debug_log` and payload config. A STORE row has no
+ * summary (the generic store serves the `_source` verbatim), so its
+ * processes and call counts are genuinely empty rather than wrong.
  */
 export function capeRun(wire: CapeRunWire): CapeRun {
-  const summary = wire.report_summary
+  const doc = wire
+  const summary = doc.report_summary
   return {
-    sha: wire.sha256,
-    at: wire.completed_at,
-    status: wire.cape_status === 'reported' ? 'reported' : 'failed_analysis',
-    malscore: wire.score ?? summary?.malscore ?? 0,
-    signatures: wire.signatures.map((s) => ({ name: s.name, severity: s.severity ?? 0, description: s.description })),
+    sha: doc.sha256,
+    at: doc.completed_at,
+    status: doc.cape_status === 'reported' ? 'reported' : 'failed_analysis',
+    malscore: doc.score ?? summary?.malscore ?? 0,
+    signatures: doc.signatures.map((s) => ({ name: s.name, severity: s.severity ?? 0, description: s.description })),
     processes: (summary?.processes ?? []).map((p) => ({ pid: p.process_id, name: p.process_name, commandLine: p.module_path })),
     dumps: lines((summary?.payloads as string[] | undefined) ?? undefined),
     config: (summary?.configs as Record<string, string> | undefined) ?? {},
     log: typeof summary?.debug_log === 'string' ? summary.debug_log : '',
-    taskId: wire.task_id,
-    capeStatus: wire.cape_status,
+    taskId: doc.task_id,
+    capeStatus: doc.cape_status,
     malstatus: summary?.malstatus ?? '',
     totalCalls: summary?.total_calls ?? 0,
     sections: summary?.summary_keys ?? [],
@@ -380,16 +394,13 @@ export function capeRun(wire: CapeRunWire): CapeRun {
   }
 }
 
-/** GET /api/v1/store/cape?offset&size. Rows are namespaced under `cape` by
- * the importer; the store serves them without the summary reduction. */
+/** GET /api/v1/store/cape?offset&size. Rows are nested under `cape` by the
+ * importer, and the store serves them WITHOUT the summary reduction, so
+ * every row here has empty processes/call counts until its detail endpoint
+ * adds them — a real gap, not a mapping failure.
+ */
 export function capeRuns(wire: CapeRunPageWire): CapeRun[] {
-  return wire.rows.flatMap((row) => {
-    const doc = row.cape
-    if (!doc) return []
-    const summary = doc.report_summary
-    if (!summary) return []
-    return [capeRun({ ...doc, report_summary: summary })]
-  })
+  return wire.rows.flatMap((row) => (row.cape ? [capeRun(row.cape)] : []))
 }
 
 // ---- GitHub analysis -------------------------------------------------------
@@ -408,40 +419,49 @@ function scannerVerdicts(wire: GithubAnalysisWire): GithubAnalysis['results'] {
 
 const githubStatus = (wire: GithubAnalysisWire): GithubStatus => (wire.exit_status === 'ok' && wire.report_pdf ? 'published' : 'dry_run')
 
-/** GET /api/v1/github-analysis/{sha} and GET /api/v1/store/github-analysis.
+/** GET /api/v1/github-analysis/{sha}. The handler serves the doc's
+ * `github_analysis` field unwrapped, with `requested_by` and `view_url`
+ * written INTO that inner object.
+ *
  * `denylist_blocked` and `quota_exceeded` are refusals the backend records
  * in the audit log, not states the result document carries; a refused
  * publication reads here as `dry_run`.
  *
  * `requestedBy` is required on the page but only `detail.rs` computes it
- * (from the audit log); the store rows carry no such field, so a row from
- * `GET /api/v1/store/github-analysis` reads as "unknown" rather than
- * claiming nobody asked for it.
+ * (from the audit log), so a store row — which carries no such field —
+ * reads as "unknown" rather than claiming nobody asked for it.
  */
 export function githubAnalysis(wire: GithubAnalysisWire): GithubAnalysis {
-  const detections = wire.verdict?.malicious ?? 0
+  const doc = wire
+  const requestedBy = doc.requested_by
+  const viewUrl = doc.view_url
+
+  const detections = doc.verdict?.malicious ?? 0
   return {
-    sha: wire.sha256,
-    at: wire.completed_at,
-    status: githubStatus(wire),
+    sha: doc.sha256,
+    at: doc.completed_at,
+    status: githubStatus(doc),
     detections,
-    engines: wire.verdict?.total ?? 0,
-    risk: wire.verdict?.level === 'high' ? 'high' : wire.verdict?.level === 'medium' ? 'medium' : 'low',
-    ...(wire.family ? { family: wire.family } : {}),
-    results: scannerVerdicts(wire),
-    yaraRules: wire.yara_auto_rules ?? [],
-    repoPath: wire.sample_path ?? '',
-    ...(wire.commit ? { commit: { sha: wire.commit, url: wire.view_url ?? '' } } : {}),
-    ...(wire.run_url ? { runUrl: wire.run_url } : {}),
-    requestedBy: wire.requested_by || 'unknown',
-    ...(wire.report_pdf ? { reportPdf: wire.report_pdf } : {}),
-    ...(wire.view_url ? { viewUrl: wire.view_url } : {}),
+    engines: doc.verdict?.total ?? 0,
+    risk: doc.verdict?.level === 'high' ? 'high' : doc.verdict?.level === 'medium' ? 'medium' : 'low',
+    ...(doc.family ? { family: doc.family } : {}),
+    results: scannerVerdicts(doc),
+    yaraRules: doc.yara_auto_rules ?? [],
+    repoPath: doc.sample_path ?? '',
+    ...(doc.commit ? { commit: { sha: doc.commit, url: viewUrl ?? '' } } : {}),
+    ...(doc.run_url ? { runUrl: doc.run_url } : {}),
+    requestedBy: requestedBy || 'unknown',
+    ...(doc.report_pdf ? { reportPdf: doc.report_pdf } : {}),
+    ...(viewUrl ? { viewUrl } : {}),
   }
 }
 
-/** GET /api/v1/store/github-analysis?offset&size. */
+/** GET /api/v1/store/github-analysis?offset&size. Rows are still nested under
+ * the importer's `github_analysis` label, and the two fields the detail
+ * endpoint computes (`requested_by`, `view_url`) are absent from a store row,
+ * so it reads as "unknown" rather than claiming nobody asked for it. */
 export function githubAnalysisPage(wire: GithubAnalysisPageWire): GithubAnalysis[] {
-  return wire.rows.map(githubAnalysis)
+  return wire.rows.map((row) => githubAnalysis(row.github_analysis))
 }
 
 // ---- Artifacts -------------------------------------------------------------
@@ -641,6 +661,28 @@ export function gpuJobs(wire: GpuJobWire[]): AnalysisResult[] {
     at: job.requested_at,
     summary: `${job.job_type} · ${job.model}`,
     detail: { jobId: job.job_id, jobType: job.job_type, status: job.status },
+  }))
+}
+
+/** The same queue as the page's own job rows. The wire's `status` is the
+ * backend's word; the page allows five, and anything else reads as queued
+ * rather than inventing a state the page cannot render. `vram_mib` is
+ * `estimated_vram_mib` — what the queue admits by, which is what the page
+ * labels it. */
+export function gpuQueue(wire: GpuJobWire[]): GpuJob[] {
+  return wire.map((job) => ({
+    jobId: job.job_id,
+    requestedAt: job.requested_at,
+    ...(job.started_at ? { startedAt: job.started_at } : {}),
+    ...(job.finished_at ? { finishedAt: job.finished_at } : {}),
+    ...(job.error ? { error: job.error } : {}),
+    jobType: job.job_type,
+    model: job.model,
+    status: (['queued', 'running', 'done', 'failed', 'aborted'].includes(job.status) ? job.status : 'queued') as GpuJob['status'],
+    attempts: job.attempts,
+    abortRequested: job.abort_requested,
+    ref: job.ref,
+    vramMib: job.estimated_vram_mib,
   }))
 }
 
