@@ -12,6 +12,8 @@
 // `/investigate/cluster` do share: all three wrap the same
 // `investigate::Correlation` struct, differing only in their own envelope.
 
+import type { EventRow } from './events'
+
 // ---- GET /api/v1/attackers?offset&size ---------------------------------------
 
 /** One attackers-v1 `_source` (attacker_identity.rs `Entity`), exactly as
@@ -285,19 +287,27 @@ export interface EventRowWire {
   record: Record<string, unknown>
 }
 
+/** The `records` of a Correlation: events.rs `EventRow`, built by
+ * investigate.rs's `row_from_source` from a bare `_source` rather than by
+ * `row_from_hit`, so `id` is "" on every one of them — there is no hit to
+ * take a document id from. Everything else is the struct the explorer reads,
+ * so it maps through `pageEvent` unchanged. */
+export type CorrelationRecordWire = EventRow
+
 /** The shared body of the three investigate drill-downs
  * (investigate.rs `Correlation`), built by the one `build_correlation` all
- * three call. `records` is capped at CORRELATION_LIMIT (200) across the
- * honeypot/Suricata and portbridge hits together, newest first; `truncated`
- * says so when `total` outruns it. `sensors` is capped at 10 and carries a
- * synthetic `portbridge` entry when the tunnel pass had any hits. */
+ * three call. `truncated` says so when `total` outruns the records; `sensors`
+ * is capped at 10 and carries a synthetic `portbridge` entry when the tunnel
+ * pass had any hits. */
 export interface CorrelationWire {
   total: number
   truncated: boolean
   sensors: KvWire[]
   tunnel_connections: number
   tunnel_os_guesses: string[]
-  records: EventRowWire[]
+  /** Capped at CORRELATION_LIMIT (200) across the honeypot/Suricata and
+   * portbridge hits together, newest first. */
+  records: CorrelationRecordWire[]
 }
 
 /** investigate.rs `PortbridgeProfile`: the second, separate p0f/portbridge
@@ -390,4 +400,46 @@ export interface IpBlockWrittenWire {
   BlockedBy: string
   BlockedAt: string
   ExpiresAt: string | null
+}
+// ---- GET /api/v1/charts/{attck-coverage,kill-chain-sankey,campaign-timeline}
+
+/** GET /api/v1/charts/attck-coverage — kill_chain.rs `AttckGrid`. The
+ * cells index into BOTH lists (`tactic_idx`, `technique_idx`), and
+ * `techniques` entries are `"T1059.004 Unix Shell"` — id and name joined by
+ * one space, so the seam splits them back apart. */
+export interface AttckGridWire {
+  tactics: string[]
+  techniques: string[]
+  cells: Array<{ tactic_idx: number; technique_idx: number; count: number }>
+}
+
+/** GET /api/v1/charts/kill-chain-sankey — kill_chain.rs `SankeyData`. Links
+ * carry tactic NAMES as source/target, unlike the topology's own flow graph
+ * (operations.ts), so the page's index-shaped links need a name→index pass. */
+export interface SankeyWire {
+  nodes: Array<{ name: string }>
+  links: Array<{ source: string; target: string; value: number }>
+}
+
+/** GET /api/v1/charts/campaign-timeline — kill_chain.rs `TimelineRow`, a
+ * bare array over campaigns-v1 sorted by `first` ascending. Times are epoch
+ * MILLIS (`start_ms`, `end_ms`), which the page renders through Date. */
+export interface CampaignTimelineWire {
+  cidr: string
+  start_ms: number
+  end_ms: number
+  score: number
+  events: number
+}
+
+// ---- GET /api/v1/charts/attacker-fusion?id= -------------------------------
+
+/** GET /api/v1/charts/attacker-fusion — fusion.rs `Fusion`. `categories`
+ * and `values` are positional: each column counts distinct values two or
+ * more of the entity's member IPs share. A 404 is the backend's "no such
+ * attacker entity". */
+export interface FusionWire {
+  categories: string[]
+  values: number[]
+  ips: string[]
 }
