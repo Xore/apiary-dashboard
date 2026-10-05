@@ -82,7 +82,7 @@ export const ROWS: Row[] = [
 
   // ---- Direct handlers ----------------------------------------------------------
   { source: 'api/artifact.$kind.$key.$filename.ts', destination: ['/api/artifact/$kind/$key/$filename'], status: 'implemented', note: 'Mock files built from the run.' , security: 'handler\'s own session check; artifact admission gate' },
-  { source: 'api/canarytoken.$id.download.ts', destination: ['/api/canarytoken/$id/download'], status: 'implemented', note: 'Mock token files.' , security: 'handler\'s own session check; admission gate' },
+  { source: 'api/canarytoken.$id.download.ts', destination: ['/api/canarytoken/$id/download'], status: 'implemented', note: 'The token file proxied off the Rust tier\'s own /api/v1/canarytokens/{id}/download; a 404 there is a 404 here.', security: 'handler\'s own session check; admission gate' },
   { source: 'api/export.$name.ts', destination: ['/api/export/$name'], status: 'implemented', note: 'Same allowlist; full scope, capped at the export limit.' , security: 'handler\'s own session check; name allowlist; export admission gate' },
   { source: 'api/payload.$hash.download.ts', destination: ['/api/payload/$hash/download'], status: 'implemented', note: 'Admins only; a harmless stand-in for the live bytes.' , security: 'handler\'s own session check, then admin role; hash validated; payload admission gate' },
   { source: 'api/raw-report.$kind.$sha.ts', destination: ['/api/raw-report/$kind/$sha'], status: 'implemented', note: '' , security: 'handler\'s own session check; kind allowlist; admission gate' },
