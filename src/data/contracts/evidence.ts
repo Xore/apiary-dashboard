@@ -183,11 +183,13 @@ export interface SandboxRunWire {
   truncated?: boolean
 }
 
-/** GET /api/v1/sandbox/{job} (detail.rs `sandbox_run`) — the raw `_source`
- * plus the `_doc_id` one_doc attaches. The Windows and GHOSTS sandboxes write
- * the same keys (the importers share the `sandbox` label), so one row type
- * covers all three. */
-export interface SandboxRunDetailWire extends SandboxRunWire {
+/** GET /api/v1/sandbox/{job} (detail.rs `sandbox_run`) and
+ * GET /api/v1/store/sandbox-runs: the raw `_source`, which es_importer.rs's
+ * `build_document` nests under the `sandbox` source label, plus the `_doc_id`
+ * one_doc attaches. The Windows and GHOSTS sandboxes share the label, so one
+ * row type covers all three. */
+export interface SandboxRunDetailWire {
+  sandbox: SandboxRunWire
   _doc_id?: string
 }
 
@@ -302,9 +304,15 @@ export interface IocKindCorrelationWire {
   confirmed_at_runtime: string[]
 }
 
-/** GET /api/v1/ghidra/{sha} (detail.rs `ghidra_run`): the raw `_source` plus
- * `_doc_id` and the folded-in correlation. */
-export interface GhidraRunDetailWire extends GhidraRunWire {
+/** GET /api/v1/ghidra/{sha} (detail.rs `ghidra_run`) and
+ * GET /api/v1/store/ghidra-runs: the raw `_source`, which es_importer.rs's
+ * `build_document` nests under the `ghidra` source label, plus `_doc_id` and
+ * the correlation folded in at the DOC level (not inside the label —
+ * `ghidra_run` writes `doc["ioc_correlation"]` beside the nested result, and
+ * frontend-next's ghidra.$sha.tsx:1103 reads it from there). */
+export interface GhidraRunDetailWire {
+  ghidra: GhidraRunWire
+  ioc_correlation?: IocCorrelationWire
   _doc_id?: string
 }
 
@@ -332,11 +340,11 @@ export interface GhidraSubmitWire {
   queued: true
 }
 
-/** The revdeck-analysis-v1 `_source`'s `revdeck` field (the doc itself is
- * `{version, sha256, requested_at, started_at, completed_at, exit_status,
- * revdeck, revdeck_chat_threads, revdeck_recovery}`). detail.rs
- * `revdeck_run` serves the `revdeck` field alone, so `sha`/`at` are not on
- * the wire for this endpoint -- the adapter takes the subject sha. */
+/** The revdeck-analysis-v1 `_source`'s `revdeck` field. The importer
+ * (es_importer.rs `build_document`) nests the whole producer payload under
+ * the `revdeck` source label, and detail.rs `revdeck_run` serves that same
+ * nested field alone — so `sha`/`at` are not on the wire for this endpoint
+ * and the adapter takes the subject sha. */
 export interface RevDeckRunWire {
   workflow: string
   status: 'complete' | 'max_turns' | string
@@ -348,12 +356,15 @@ export interface RevDeckRunWire {
   error?: string
 }
 
-/** GET /api/v1/store/revdeck?offset&size: raw `_source` rows. */
+/** GET /api/v1/store/revdeck?offset&size: raw `_source` rows. The importer's
+ * `sha256` is on the doc (and under `file.hash`), never inside the nested
+ * `revdeck` payload, so a row's subject comes from the side of the doc. */
 export interface RevDeckRunPageWire {
   total: number
   rows: Array<{
     _doc_id: string
     sha256?: string
+    file?: { hash?: { sha256?: string } }
     requested_at?: string
     completed_at?: string
     exit_status?: string
@@ -363,7 +374,9 @@ export interface RevDeckRunPageWire {
 
 /** One cape-analysis-v1 `_source` (cape-worker.py). The handler strips
  * `report` (CAPE's own unbounded report) and adds `report_summary`
- * (detail.rs `summarize_cape_report`). */
+ * (detail.rs `summarize_cape_report`) — but only on the DETAIL endpoint;
+ * `GET /api/v1/cape/{sha}/raw` serves the doc's `cape` field verbatim, so a
+ * raw read has no `report_summary` at all. */
 export interface CapeRunWire {
   version?: number
   sha256: string
@@ -378,7 +391,7 @@ export interface CapeRunWire {
   category?: string | null
   signatures: Array<{ name: string; description: string; severity: number | null }>
   error?: string
-  report_summary: {
+  report_summary?: {
     machine?: unknown
     package?: string
     route?: string
@@ -397,14 +410,12 @@ export interface CapeRunWire {
   } | null
 }
 
-/** GET /api/v1/store/cape?offset&size: raw `_source` rows, namespaced under
- * `cape` by the importer, with the same `report_summary` reduction. */
+/** GET /api/v1/store/cape?offset&size: raw `_source` rows, still nested under
+ * the importer's `cape` source label, and served WITHOUT the summary
+ * reduction. */
 export interface CapeRunPageWire {
   total: number
-  rows: Array<{
-    _doc_id: string
-    cape?: Omit<CapeRunWire, 'report_summary'> & { report_summary?: CapeRunWire['report_summary'] }
-  }>
+  rows: Array<{ _doc_id: string; cape?: CapeRunWire }>
 }
 
 /** One github-analysis-v1 `_source` (collect-results.py `build_result`).
@@ -432,10 +443,14 @@ export interface GithubAnalysisWire {
   view_url?: string | null
 }
 
-/** GET /api/v1/store/github-analysis?offset&size: raw `_source` rows. */
+/** GET /api/v1/store/github-analysis?offset&size: raw `_source` rows, still
+ * nested under the `github_analysis` source label and without the two
+ * doc-computed fields. The importer puts `file.hash.sha256`, `exit_status`
+ * and `@timestamp` beside the label, so a row without a nested result has
+ * no sha to link. */
 export interface GithubAnalysisPageWire {
   total: number
-  rows: Array<GithubAnalysisWire & { _doc_id: string }>
+  rows: Array<{ github_analysis: GithubAnalysisWire; _doc_id: string; file?: { hash?: { sha256?: string } } }>
 }
 
 /** POST /api/v1/github-analysis/submit body (SubmitBody). `confirm` must
