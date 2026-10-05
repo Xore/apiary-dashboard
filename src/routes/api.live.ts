@@ -155,7 +155,10 @@ function relay(upstream: ReadableStream<Uint8Array>, release: () => void): Reada
         buffered += decoder.decode(value, { stream: true })
         const frames = buffered.split('\n\n')
         buffered = frames.pop() ?? ''
-        controller.enqueue(encoder.encode(frames.map(translated).join('\n\n') + (frames.length ? '\n\n' : '')))
+        // Nothing to send when the chunk ended mid-frame: enqueuing an empty
+        // chunk here would be a zero-byte read the client pays for on every
+        // split frame, and axum splits a large row across chunks routinely.
+        if (frames.length) controller.enqueue(encoder.encode(frames.map(translated).join('\n\n') + '\n\n'))
       } catch {
         // The upstream failed mid-stream. Closing is the honest end: the
         // browser's EventSource reconnects and re-syncs from /api/v1/events.

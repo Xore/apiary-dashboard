@@ -183,6 +183,19 @@ describe('/api/chart/$name — the allowlist is the contract', () => {
     expect(calls).toEqual([])
   })
 
+  it('treats an unrecognised ?mock= as no scenario, exactly as the funnel does', async () => {
+    // `?mock=` only means anything when it names one of the ten
+    // (`isScenario`). A value outside them is not a request to bypass the
+    // mock, so the backend answers it — the same rule the server-function
+    // funnel applies (src/data/backend.ts `runForRequest`, which sends
+    // anything that is not a scenario upstream). One rule decides the tier
+    // for a given URL, whichever way it is reached.
+    const calls = backend({ '/api/v1/charts/os-distribution': json([]) })
+    const response = await get({ request: asUser('/api/chart/os-distribution?mock=nonsense'), params: { name: 'os-distribution' } })
+    expect(response.status).toBe(200)
+    expect(calls).toEqual(['http://backend.test/api/v1/charts/os-distribution?mock=nonsense'])
+  })
+
   it('refuses a caller with no session, before the backend is reached', async () => {
     const calls = backend({ '/api/v1/charts/os-distribution': json([]) })
     const response = await get({ request: asUser('/api/chart/os-distribution', ''), params: { name: 'os-distribution' } })
@@ -257,6 +270,16 @@ describe('/api/topology/flow — one slice of the tier\'s document', () => {
     delete process.env.BACKEND_URL
     expect((await get({ request: asUser('/api/topology/flow') })).status).toBe(200)
     expect(calls).toEqual([])
+  })
+
+  it('treats an unrecognised ?mock= as no scenario, exactly as the funnel does', async () => {
+    // As on the chart route: only one of the ten names a scenario, so a
+    // value outside them is an ordinary unscoped request and the backend
+    // answers it. One rule decides the tier, for every route.
+    const calls = backend({ '/api/v1/topology': json({ flow: { nodes: [], links: [] } }) })
+    const response = await get({ request: asUser('/api/topology/flow?mock=nonsense') })
+    expect(response.status).toBe(200)
+    expect(calls).toEqual(['http://backend.test/api/v1/topology'])
   })
 
   it('refuses a caller with no session, before the backend is reached', async () => {
@@ -414,6 +437,30 @@ describe('/api/live — the gate covers the real stream', () => {
     await response.body?.cancel()
   })
 
+  it('falls back to the mock when the link names no scenario and no backend is configured', async () => {
+    delete process.env.BACKEND_URL
+    const calls = backend({})
+    const response = await get({ request: asUser('/api/live') })
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toBe('text/event-stream')
+    expect(calls).toEqual([])
+    await response.body?.cancel()
+  })
+
+  it('treats an unrecognised ?mock= as no scenario, exactly as the funnel does', async () => {
+    // `?mock=` names a scenario only when it is one of the ten, so
+    // `?mock=nonsense` is an ordinary unscoped request and the Rust tier's
+    // stream answers it — the same rule (src/data/backend.ts
+    // `runForRequest`) the server-function funnel applies. The mock is
+    // bypassed by a value that is NOT a scenario, which is why the ten
+    // are the whole contract here.
+    const calls = backend({ '/api/v1/live': upstream([]) })
+    const response = await get({ request: asUser('/api/live?mock=nonsense') })
+    expect(response.status).toBe(200)
+    expect(calls).toEqual(['http://backend.test/api/v1/live'])
+    await response.body?.cancel()
+  })
+
   it('answers the outage scenarios with their statuses, on either tier', async () => {
     backend({})
     for (const [scenario, status] of [
@@ -424,6 +471,32 @@ describe('/api/live — the gate covers the real stream', () => {
       const response = await get({ request: asUser(`/api/live?mock=${scenario}`) })
       expect({ scenario, status: response.status }).toEqual({ scenario, status })
     }
+  })
+
+  it('reassembles a frame the upstream split across chunks', async () => {
+    // A large row does not fit one read, so the relay has to hold a partial
+    // frame until its blank line arrives. Emitting the first half on its own
+    // would hand the browser a JSON.parse failure and a dropped event.
+    const frame = `event: event\ndata: ${JSON.stringify({ ...row, detail: 'x'.repeat(4000) })}\n\n`
+    const cut = frame.indexOf('\n\n') - 200
+    backend({
+      '/api/v1/live': () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              const encoder = new TextEncoder()
+              controller.enqueue(encoder.encode(frame.slice(0, cut)))
+              controller.enqueue(encoder.encode(frame.slice(cut)))
+              controller.close()
+            },
+          }),
+          { headers: { 'content-type': 'text/event-stream' } },
+        ),
+    })
+    const body = await read(await get({ request: asUser('/api/live') }))
+    const line = body.trim().replace(/^data: /, '')
+    expect(line).not.toContain('\n')
+    expect(JSON.parse(line).srcIp).toBe('203.0.113.42')
   })
 
   it('never puts the token in the upstream URL', async () => {
