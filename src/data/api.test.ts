@@ -2293,8 +2293,11 @@ describe('the Monitor slice reads the endpoints the Rust tier actually serves', 
   })
 
   it('reads the auth-events list and counts its own 24-hour window', async () => {
+    // The window counts against the wall clock: pin it an hour past the fixture.
+    vi.useFakeTimers({ now: new Date('2026-10-04T20:00:00Z'), toFake: ['Date'] })
     const calls = stub(monitorFixtures())
     const out = await live('getAuthEvents')()
+    vi.useRealTimers()
     expect(calls[0]).toContain('/api/v1/store/auth-events?offset=0&size=100')
     // username and redirect_uri are nested under `details` by the
     // auth-events-worker, not at the top level; Keycloak leaves the redirect
