@@ -174,6 +174,17 @@ describe('which queries the real backend answers', () => {
         'generateReportFrom',
         'getReports',
         'saveReportDefinition',
+        // monitor (#74)
+        'acknowledgeAllAnomalies',
+        'acknowledgeAnomalies',
+        'getAgentCampaigns',
+        'getAuthEvents',
+        'getLlmAnalyses',
+        'getMlAnomalies',
+        'getOverview',
+        'getOverviewViews',
+        'semanticSearch',
+        'setAnomalyDisposition',
       ].sort(),
     )
   })
@@ -187,8 +198,8 @@ describe('which queries the real backend answers', () => {
   })
 
   it('answers nothing for a query this slice has not wired', () => {
-    // Still mock-only after #77: no backend endpoint serves either.
-    expect(liveQuery('getOverview', undefined)).toBeUndefined()
+    // Still mock-only after #74: no backend endpoint serves either. #74 wired
+    // `getOverview`; `getAttackers` is the sources slice's (#76) work.
     expect(liveQuery('getAttackers', undefined)).toBeUndefined()
   })
 
@@ -1778,5 +1789,422 @@ describe('the reports writes', () => {
     await expect(liveQuery('generateReport', viewer)!('rd_7f3a')).rejects.toThrow(ApiError)
     // getReports is a read, so the same viewer gets it.
     await expect(liveQuery('getReports', viewer)!()).resolves.toMatchObject({ elements: templatesWire.elements })
+  })
+})
+
+// ---- the Monitor slice (#74) -------------------------------------------------
+
+/** One ml-anomalies `_source`, as ml-worker `write_anomaly` builds it: the
+ * optional markers are Python `None` reaching Elasticsearch, which is the
+ * shape the adapter's own tests pin. */
+const mlRow = {
+  '@timestamp': '2026-10-04T20:41:03Z',
+  severity: 'critical',
+  composite_score: 0.87,
+  model_scores: { isolation_forest: 0.91, lstm_ae: null, hbos: 0.62 },
+  explanation: 'Command-and-control beacon on an unseen JA4 fingerprint.',
+  src_ip: '203.0.113.42',
+  src_country: 'NL',
+  src_port: 4444,
+  dst_ip: '10.0.0.7',
+  dst_port: '8080',
+  proto: 'tcp',
+  sensor: 'cowrie',
+  event_type: 'cowrie.command.input',
+  community_id: null,
+  source_event_id: 'ev_9f2c1a',
+  source_index: 'honeypot-v2-2026.10.04',
+  alert_threshold: 0.62,
+  model_state_id: 'iso@r41',
+  status: 'open',
+}
+
+/** One agent-intrusion-campaigns `_source`. The `events` entries carry NO
+ * `source_index`: `build_campaign_verdict` never writes that key, which is
+ * the gap the adapter documents and the test below pins. */
+const campaignRow = {
+  '@timestamp': '2026-10-04T21:00:00Z',
+  campaign_id: 'cmp-7712',
+  start: '2026-10-04T20:00:00Z',
+  end: '2026-10-04T21:00:00Z',
+  severity: 'critical',
+  matched_categories: ['credential-access', 'execution'],
+  correlation_identifiers: ['203.0.113.42', 'fingerprint:curl/8.5.0'],
+  event_count: 2,
+  events: [
+    { event_id: 'ev_9f2c1a', timestamp: '2026-10-04T20:41:03Z', matched_rules: [{ rule: 'base64-pipe-shell', reason: 'echo | base64 -d | sh', trust_boundary: 'trust-boundary-3', decode_chain: [{ transform: 'base64', input_sha256: 'aa', output_sha256: 'bb', output_len: 128 }] }] },
+    { event_id: 'ev_9f2c1b', timestamp: '2026-10-04T20:55:00Z', matched_rules: [] },
+  ],
+}
+
+const authRow = {
+  '@timestamp': '2026-10-04T19:00:00Z',
+  event_id: 'kc-4411',
+  type: 'LOGIN_ERROR',
+  realm: 'honeypot',
+  client_id: 'grafana',
+  user_id: null,
+  ip_address: '203.0.113.42',
+  error: 'invalid_user_credentials',
+  details: { username: 'admin', redirect_uri: '' },
+}
+
+const llmRow = {
+  '@timestamp': '2026-10-04T20:50:00Z',
+  analysis_id: 'an-88',
+  doc_type: 'session',
+  session_id: 'sess-77a1',
+  payload_sha256: '',
+  src_ip: '203.0.113.42',
+  model: 'claude-haiku-4-5-20251001',
+  summary: 'Credential stuffing against the SSH decoy, then a payload drop.',
+  intent: 'credential stuffing',
+  behaviors: ['modifies credentials', 'clears history'],
+  severity: 'high',
+  confidence: 'high',
+  error: '',
+}
+
+const dashboardWire = {
+  protocols: [{ key: 'ssh', count: 412, link: '/events?proto=ssh' }],
+  top_ports: [{ key: '22', count: 980, link: '/events?port=22' }],
+  countries: [{ key: 'NL', count: 611, link: '/events?country=NL' }],
+  asns: [{ key: 'AS64496 Example Transit', count: 402, link: '/asn/AS64496' }],
+  providers: [{ key: 'hosting', count: 380, link: '/ips' }],
+  top_ips: [{ key: '203.0.113.42', count: 210, link: '/ips/203.0.113.42' }],
+  top_paths: [{ key: '/bin/busybox', count: 88, link: '/history?q=busybox' }],
+  top_creds: [{ key: 'root / toor', count: 140, link: '/history?q=root' }],
+  top_commands: [{ key: 'uname -a', count: 66, link: '/commands' }],
+  clients: [{ key: 'curl/8.5.0', count: 120, link: '/ips' }],
+  fingerprints: [{ key: 'fingerprint:curl/8.5.0', count: 120, link: '/ips' }],
+  alerts: [{ key: 'ET SCAN Nmap', count: 12, link: '/history?q=nmap' }],
+  alert_cats: [{ key: 'scan', count: 40, link: '/alerts' }],
+  payloads: [{ shasum: 'ab12', download: '/tmp/x', count: 3, link: '/payloads/ab12', vt: 'https://vt/ab12' }],
+  logins: 18,
+  heatmap: [{ sensor: 'cowrie', cells: [{ label: '00', count: 4, pct: 100 }, { label: '01', count: 2, pct: 50 }] }],
+  map_points: [{ city: 'Amsterdam', country: 'NL', lat: 52.37, lon: 4.9, events: 611, ips: 24, url: '/events?city=Amsterdam' }],
+  sensors: [{ name: 'cowrie', count: 980, last_seen: '2026-10-04T20:41:03Z', state: 'active' }],
+}
+
+const kpisWire = { total: 1900, last24h: 980, previous24h: 820, change24h: '+19%', unique_ips: 214, hourly: [1, 2, 3], logins: 18, ready: true }
+
+/** `emptyDashboard` is what a bodyless 200 maps to; every other slice's
+ * fixture set includes the config doc the read-only guard reads before a
+ * write, and this one needs it for the same reason. */
+const monitorFixtures = (overrides: Record<string, unknown> = {}) => ({
+  '/api/v1/overview/kpis': kpisWire,
+  '/api/v1/overview/dashboard': dashboardWire,
+  '/api/v1/payloads': { total: 37, rows: [] },
+  '/api/v1/campaigns': { total: 1, rows: [] },
+  '/api/v1/events': { total: 2, offset: 0, rows: [] },
+  '/api/v1/store/ml-anomalies': { total: 1, rows: [{ ...mlRow, _doc_id: 'anom-1' }] },
+  '/api/v1/ml-anomalies/acks': {},
+  '/api/v1/ml-anomalies/stats': { total: 9, open: 4 },
+  '/api/v1/ml-health': [{ model: 'isolation_forest', timestamp: '2026-10-04T17:00:00Z', accepted: true, reason: 'within tolerance', anomaly_rate_new: 0.021, anomaly_rate_previous: 0.019, train_samples: 184_220 }],
+  '/api/v1/charts/ml-anomaly-scores': [{ name: 'isolation_forest', points: [{ time: '2026-10-04T20:00:00Z', value: 0.91 }, { time: '2026-10-04T21:00:00Z', value: 0.55 }] }],
+  '/api/v1/store/llm-analysis': { total: 1, rows: [{ ...llmRow, _doc_id: 'llm-1' }] },
+  '/api/v1/llm-search': { available: true, hits: [] },
+  '/api/v1/store/agent-campaigns': { total: 1, rows: [{ ...campaignRow, _doc_id: 'cmp-doc-1' }] },
+  '/api/v1/store/auth-events': { total: 1, rows: [{ ...authRow, _doc_id: 'kc-doc-1' }] },
+  '/api/v1/ml-anomalies/ack': { Key: 'anom-1', Acknowledged: true, AckedBy: '', AckedAt: '2026-10-05T00:00:00Z' },
+  '/api/v1/ml-anomalies/ack-all': { changed: 4 },
+  '/api/v1/ml-anomalies/disposition': { key: 'anom-1', status: 'true_positive', disposed_at: '2026-10-05T00:00:00Z' },
+  '/api/v1/config': configWire,
+  ...overrides,
+})
+
+describe('the Monitor slice reads the endpoints the Rust tier actually serves', () => {
+  it('builds the overview from the KPIs, the payload count and the recent events', async () => {
+    const calls = stub(monitorFixtures())
+    const out = await live('getOverview')()
+    expect(calls.map((url) => `${new URL(url).pathname}${new URL(url).search}`).sort()).toEqual(['/api/v1/events?offset=0&size=18', '/api/v1/overview/kpis', '/api/v1/payloads?offset=0&size=15'])
+    // Only the three tiles /overview/kpis can fill, plus the payloads tile
+    // overview.rs's own module doc sends to the store listing.
+    expect(out.kpis.map((kpi) => [kpi.id, kpi.value])).toEqual([
+      ['events', 980],
+      ['sources', 214],
+      ['logins', 18],
+      ['payloads', 37],
+    ])
+    // The events tile carries the wire's own hourly sparkline and the real
+    // previous-period figure — this is the one tile with a genuine trend.
+    expect(out.kpis[0]).toMatchObject({ previous: 820, trend: [1, 2, 3] })
+  })
+
+  it('leaves the sessions KPI tile out — no endpoint counts sessions', async () => {
+    // GAP: a session is an event correlation built per row by the events
+    // slice's endpoint; no aggregation over them exists in the Rust tier. The
+    // tile is dropped rather than filled with a count of anything else.
+    stub(monitorFixtures())
+    expect((await live('getOverview')()).kpis.map((kpi) => kpi.id)).not.toContain('sessions')
+  })
+
+  it('leaves the overview source, country and credential lists empty rather than inventing rows', async () => {
+    // GAP: `/overview/dashboard`'s `top_ips` is a key and a count — no country,
+    // ASN, session rollup, risk score or provider — and the wire deliberately
+    // never splits credentials into usernames and passwords, only `user / pass`
+    // pairs. A row of zeros would read as a real source with no context.
+    stub(monitorFixtures())
+    const out = await live('getOverview')()
+    expect(out.topSources).toEqual([])
+    expect(out.topCountries).toEqual([])
+    expect(out.topUsernames).toEqual([])
+    expect(out.topPasswords).toEqual([])
+    // The KPIs' own unique-address count is real, so it is the sources tile.
+    expect(out.kpis.find((kpi) => kpi.id === 'sources')?.value).toBe(214)
+  })
+
+  it('buckets the recent events into the 24 hours the timeline chart draws', async () => {
+    const now = Date.now()
+    const at = (minutesAgo: number) => new Date(now - minutesAgo * 60_000).toISOString()
+    stub(monitorFixtures({ '/api/v1/events': { total: 3, offset: 0, rows: [row, { ...row, id: 'ev_2', time: at(2), proto: 'http' }, { ...row, id: 'ev_3', time: at(30), proto: 'ssh' }] } }))
+    const { timeline } = await live('getOverview')()
+    expect(timeline).toHaveLength(24)
+    expect(timeline.at(-1)?.total).toBe(2)
+    expect(timeline.at(-1)?.byProtocol).toEqual({ ssh: 1, http: 1 })
+    // 30 minutes back is still inside the final hour bucket; the sum across
+    // the sheet is the three rows the page asked for.
+    expect(timeline.reduce((sum, b) => sum + b.total, 0)).toBe(3)
+  })
+
+  it('fills the fifteen views the dashboard endpoint carries', async () => {
+    const calls = stub(monitorFixtures())
+    const views = await live('getOverviewViews')()
+    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/campaigns', '/api/v1/overview/dashboard', '/api/v1/payloads'])
+    expect(views.protocols).toEqual([{ id: 'ssh', label: 'ssh', count: 412 }])
+    expect(views.credentials).toEqual([{ id: 'root / toor', label: 'root / toor', count: 140 }])
+    // A heat cell's `pct`/`label` are the backend's own intensity, which the
+    // page's `HeatmapRow.cells` is a bare count series with no field for.
+    expect(views.heatmap).toEqual([{ sensor: 'cowrie', cells: [4, 2] }])
+    // `state` is the backend's three-value string; `SensorFeed.state` is the
+    // page's four.
+    expect(views.feeds).toEqual([{ sensor: 'cowrie', state: 'fresh', documents: 980, lastSeen: '2026-10-04T20:41:03Z' }])
+  })
+
+  it('leaves the twenty view tabs the dashboard endpoint has no slice for empty', async () => {
+    // GAP: vectors, ml-backlog, netflow, conformance, CVEs and the
+    // OS/TCP/ICS/decoy/JA4/TLS/SSH/endlessh breakdowns are the
+    // `/api/v1/charts/*` routes — a different endpoint, already served to the
+    // browser by the chart proxy in #82. They are empty here rather than
+    // invented, which is why the deep-dive tabs render empty against live
+    // data while the live tab is fully live.
+    stub(monitorFixtures())
+    const views = await live('getOverviewViews')()
+    for (const key of ['vectors', 'mlBacklog', 'netflowBytes', 'netflowPackets', 'conformance', 'cves', 'osDistribution', 'tcpClusters', 'icsFunctions', 'decoyRequests', 'decoyClients', 'ja4h', 'ja4l', 'ja4x', 'tls', 'ssh', 'endlessh'] as const) {
+      expect(views[key], key).toEqual(key === 'vectors' ? {} : [])
+    }
+  })
+
+  it('reads the anomaly rows, the ack sidecar, the backlog and the model health', async () => {
+    const calls = stub(monitorFixtures())
+    const out = await live('getMlAnomalies')()
+    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/charts/ml-anomaly-scores', '/api/v1/ml-anomalies/acks', '/api/v1/ml-anomalies/stats', '/api/v1/ml-health', '/api/v1/store/ml-anomalies'])
+    expect(out.anomalies).toMatchObject([{ id: 'anom-1', severity: 'critical', compositeScore: 0.87, srcIp: '203.0.113.42', status: 'open', sourceIndex: 'honeypot-v2-2026.10.04' }])
+    // `open` is the all-time backlog, which is why it feeds its own labelled
+    // tile rather than the 24-hour one.
+    expect(out.openBacklog).toBe(4)
+    expect(out.modelHealth).toEqual([{ model: 'isolation_forest', timestamp: '2026-10-04T17:00:00Z', accepted: true, reason: 'within tolerance', anomalyRateNew: 0.021, anomalyRatePrevious: 0.019, trainSamples: 184_220 }])
+  })
+
+  it('lets an operator verdict win over an ack, because the two stores are merged', async () => {
+    // detail.rs writes the disposition ONTO the anomaly document and the ack
+    // into a sidecar, so a bulk acknowledge must not downgrade a verdict.
+    stub(monitorFixtures({ '/api/v1/ml-anomalies/acks': { 'anom-1': { Key: 'anom-1', Acknowledged: true, AckedBy: 'A', AckedAt: '2026-10-05T00:00:00Z' } }, '/api/v1/store/ml-anomalies': { total: 1, rows: [{ ...mlRow, status: 'true_positive', _doc_id: 'anom-1' }] } }))
+    expect((await live('getMlAnomalies')()).anomalies[0].status).toBe('true_positive')
+  })
+
+  it('reads the ack sidecar when the anomaly document says open', async () => {
+    stub(monitorFixtures({ '/api/v1/ml-anomalies/acks': { 'anom-1': { Key: 'anom-1', Acknowledged: true, AckedBy: 'A', AckedAt: '2026-10-05T00:00:00Z' } } }))
+    expect((await live('getMlAnomalies')()).anomalies[0].status).toBe('acknowledged')
+  })
+
+  it('reads a detector that did not fire as a stored null, not a zero score', async () => {
+    // ml-worker #1969 writes JSON null for a detector that did not fire, so
+    // `lstm_ae: null` is a real reading — the adapter's `score()` is what maps
+    // it to the page's numeric field.
+    stub(monitorFixtures())
+    expect((await live('getMlAnomalies')()).anomalies[0].modelScores).toEqual({ isolationForest: 0.91, lstmAe: 0, hbos: 0.62 })
+  })
+
+  it('leaves the 24-hour tile and its three breakdowns at zero — no windowed store query', async () => {
+    // GAP: `/api/v1/store/ml-anomalies` takes only offset/size/q, so a 24-hour
+    // window has to be spelled as a Lucene range in a query string this seam
+    // otherwise passes through untouched. The rows are real and unfiltered;
+    // the 24-hour figures over them are not claimed.
+    stub(monitorFixtures())
+    const out = await live('getMlAnomalies')()
+    expect(out.total24h).toBe(0)
+    expect(out.bySeverity).toEqual([])
+    expect(out.topSources).toEqual([])
+    // `folded` is the page's own same-address-and-second grouping over the
+    // loaded page; one stored document is one anomaly, so nothing is claimed.
+    expect(out.anomalies.map((a) => a.folded)).toEqual([1])
+  })
+
+  it('transposes the ml-anomaly-scores chart into the page one-row-per-instant shape', async () => {
+    stub(monitorFixtures())
+    expect((await live('getMlAnomalies')()).scoreTimeline).toEqual([
+      { time: '2026-10-04T20:00:00Z', isolationForest: 0.91, lstmAe: 0, hbos: 0 },
+      { time: '2026-10-04T21:00:00Z', isolationForest: 0.55, lstmAe: 0, hbos: 0 },
+    ])
+  })
+
+  it('drops a detector outside the three the page has a column for', async () => {
+    // The chart answers one Series per model, taken from the data so a new
+    // detector shows up with no dashboard change. The page's ScorePoint has a
+    // fixed field per detector, so an unknown one has no column — it is
+    // dropped, not folded into a detector that did not score it.
+    stub(monitorFixtures({ '/api/v1/charts/ml-anomaly-scores': [{ name: 'autoencoder', points: [{ time: '2026-10-04T20:00:00Z', value: 0.99 }] }] }))
+    expect((await live('getMlAnomalies')()).scoreTimeline).toEqual([{ time: '2026-10-04T20:00:00Z', isolationForest: 0, lstmAe: 0, hbos: 0 }])
+  })
+
+  it('sweeps every open anomaly, admin-only, through the backend endpoint', async () => {
+    stub(monitorFixtures())
+    // The sweep is the WHOLE index, not the loaded page, so the returned
+    // count is the backend's own — a live `changed` can be lower than the
+    // open rows on screen when a row carries a disposition.
+    expect(await live('acknowledgeAllAnomalies')()).toBe(4)
+    expect(bodiesOf()).toEqual([{ path: '/api/v1/ml-anomalies/ack-all', body: {} }])
+  })
+
+  it('acks one anomaly per call and counts what changed', async () => {
+    stub(monitorFixtures({ '/api/v1/ml-anomalies/ack': { Key: 'anom-1', Acknowledged: false, AckedBy: '', AckedAt: '2026-10-05T00:00:00Z' } }))
+    // `ack: false` is the endpoint's own un-ack, which the page's signature
+    // cannot express — so a row the backend leaves un-acked counts as
+    // unchanged rather than as a success the operator did not get.
+    expect(await live('acknowledgeAnomalies')(['anom-1'])).toBe(0)
+    expect(bodiesOf()).toEqual([{ path: '/api/v1/ml-anomalies/ack', body: { key: 'anom-1', ack: true } }])
+  })
+
+  it('writes a verdict onto the anomaly document and refuses acknowledged as one', async () => {
+    stub(monitorFixtures())
+    expect(await live('setAnomalyDisposition')(['anom-1'], 'true_positive', 'Confirmed dropper download')).toBeUndefined()
+    expect(bodiesOf()).toEqual([{ path: '/api/v1/ml-anomalies/disposition', body: { key: 'anom-1', status: 'true_positive', reason: 'Confirmed dropper download' } }])
+    // The backend's closed set is the three verdicts plus the 'open'
+    // retraction; the ack lives only in the sidecar, so nothing the page can
+    // send is lost by the refusal.
+    // The page type accepts it (`AnomalyStatus`); the page's own signature
+    // narrows the argument away before it reaches here, so this is the
+    // adapter's refusal rather than a wire 400.
+    await expect((live('setAnomalyDisposition') as (ids: string[], status: string, reason: string) => Promise<unknown>)(['anom-1'], 'acknowledged', '')).rejects.toThrow('acknowledged is not a disposition')
+  })
+
+  it('keeps the three anomaly writes admin-only on the live path', async () => {
+    const analyst = { id: 'u', name: 'A', email: 'a@example.test', roles: ['viewer' as const] }
+    // Refused before any fetch — the seam applies the same decision
+    // `backend()` does, so a role is refused identically on either tier.
+    for (const call of [() => (liveQuery('acknowledgeAllAnomalies', analyst) as () => Promise<unknown>)(), () => (liveQuery('acknowledgeAnomalies', analyst) as (ids: string[]) => Promise<unknown>)(['anom-1']), () => (liveQuery('setAnomalyDisposition', analyst) as (ids: string[], status: 'open', reason: string) => Promise<unknown>)(['anom-1'], 'open', '')]) {
+      const refused = await call().catch((error: unknown) => error)
+      expect(refused).toBeInstanceOf(ApiError)
+      expect((refused as ApiError).kind).toBe('forbidden')
+    }
+  })
+
+  it('honours read-only before acking or disposing', async () => {
+    // Nothing in the Rust tier enforces read-only: it is a dashboard
+    // preference, so a live call would otherwise write with the toggle on.
+    stub(monitorFixtures({ '/api/v1/config': { ...configWire, payload: { behavior: { read_only: true } } } }))
+    await expect(live('acknowledgeAllAnomalies')()).rejects.toThrow(ApiError)
+    await expect(live('setAnomalyDisposition')(['anom-1'], 'true_positive', '')).rejects.toThrow(ApiError)
+  })
+
+  it('reads the llm-analysis list and maps the error doc_type to report', async () => {
+    const calls = stub(monitorFixtures({ '/api/v1/store/llm-analysis': { total: 1, rows: [{ ...llmRow, doc_type: 'error', summary: '', _doc_id: 'llm-1' }] } }))
+    const out = await live('getLlmAnalyses')()
+    expect(calls[0]).toContain('/api/v1/store/llm-analysis?offset=0&size=100')
+    // llm-worker `record_error` writes a fourth doc_type the page type does
+    // not model; it reads as the page's catch-all analysis shape.
+    expect(out).toMatchObject([{ id: 'an-88', docType: 'report', severity: 'high', confidence: 'high' }])
+  })
+
+  it('asks the llm-search endpoint for a query, and never for an empty one', async () => {
+    const calls = stub(monitorFixtures({ '/api/v1/llm-search': { available: true, hits: [{ ...llmRow, score: 0.42 }] } }))
+    const out = await live('semanticSearch')('credential stuffing')
+    expect(calls).toEqual(['http://backend.test/api/v1/llm-search?q=credential+stuffing'])
+    // A hit has no `_doc_id` — the search returns `_source` plus `_score` — so
+    // the id is `analysis_id`.
+    expect(out).toMatchObject({ available: true, hits: [{ id: 'an-88', score: 0.42, sessionId: 'sess-77a1' }] })
+    // `q` is required and a blank one is an error upstream, so the page's
+    // no-search-yet state never leaves this tier.
+    const blank = stub(monitorFixtures())
+    expect(await live('semanticSearch')('   ')).toEqual({ available: true, hits: [] })
+    expect(blank).toEqual([])
+  })
+
+  it('renders the llm-search backend own words when embeddings are not configured', async () => {
+    // `available: false` is an ANSWER about the deployment, not a failure —
+    // the same shape `getCredentials`'s `available: false` is a failure on,
+    // and deliberately different: llm_search.rs always answers 200 and says
+    // why the search is unavailable, which is what the page shows.
+    stub(monitorFixtures({ '/api/v1/llm-search': { available: false, reason: 'embeddings are not configured' } }))
+    expect(await live('semanticSearch')('beacon')).toEqual({ available: false, reason: 'embeddings are not configured' })
+  })
+
+  it('keeps source_index empty on every campaign event — the backend never writes it', async () => {
+    const calls = stub(monitorFixtures())
+    const [campaign] = await live('getAgentCampaigns')()
+    expect(calls[0]).toContain('/api/v1/store/agent-campaigns?offset=0&size=100')
+    // THE GAP: `build_campaign_verdict` reads the source hit's `_index` into
+    // a `CorrelatorEvent` field it then discards, and never writes
+    // `source_index` onto the stored document. AgentCampaign.tsx:19 builds a
+    // history link whose `_index:` clause is therefore empty and will never
+    // match. The adapter substitutes '' and no index name is synthesised —
+    // the real fix is APIARY writing the field. This link is dead until then.
+    expect(campaign.events.map((e) => e.sourceIndex)).toEqual(['', ''])
+    expect(campaign.events[0].matchedRules).toMatchObject([{ rule: 'base64-pipe-shell', trustBoundary: 'trust-boundary-3', decodeChain: [{ transform: 'base64', outputLen: 128 }] }])
+  })
+
+  it('reads the auth-events list and counts its own 24-hour window', async () => {
+    const calls = stub(monitorFixtures())
+    const out = await live('getAuthEvents')()
+    expect(calls[0]).toContain('/api/v1/store/auth-events?offset=0&size=100')
+    // username and redirect_uri are nested under `details` by the
+    // auth-events-worker, not at the top level; Keycloak leaves the redirect
+    // unset on most event types, and `''` means absent.
+    expect(out.events).toMatchObject([{ id: 'kc-4411', ip: '203.0.113.42', username: 'admin', clientId: 'grafana', redirectUri: undefined }])
+    // Neither the store passthrough nor anything else aggregates Keycloak
+    // events, so these two rollups are counted here over the loaded page.
+    expect(out.byClient).toEqual([{ id: 'grafana', label: 'grafana', count: 1 }])
+    expect(out.topSources).toEqual([{ id: '203.0.113.42', label: '203.0.113.42', count: 1 }])
+  })
+
+  it('maps a failed Monitor fetch to an error, never to an empty panel', async () => {
+    // The whole point of the seam: an anomaly list that renders empty because
+    // the backend was down reads as "no anomalies", and an operator cannot
+    // tell that from a quiet fleet.
+    const cases: Array<[string, () => Promise<unknown>, Record<string, unknown>]> = [
+      ['getOverview', () => live('getOverview')(), { '/api/v1/overview/kpis': fail(502) }],
+      ['getOverviewViews', () => live('getOverviewViews')(), { '/api/v1/overview/dashboard': fail(502) }],
+      ['getMlAnomalies', () => live('getMlAnomalies')(), { '/api/v1/store/ml-anomalies': fail(502) }],
+      ['acknowledgeAllAnomalies', () => live('acknowledgeAllAnomalies')(), { '/api/v1/ml-anomalies/ack-all': fail(502) }],
+      ['acknowledgeAnomalies', () => live('acknowledgeAnomalies')(['anom-1']), { '/api/v1/ml-anomalies/ack': fail(502) }],
+      ['setAnomalyDisposition', () => live('setAnomalyDisposition')(['anom-1'], 'true_positive', ''), { '/api/v1/ml-anomalies/disposition': fail(502) }],
+      ['getLlmAnalyses', () => live('getLlmAnalyses')(), { '/api/v1/store/llm-analysis': fail(502) }],
+      ['semanticSearch', () => live('semanticSearch')('beacon'), { '/api/v1/llm-search': fail(502) }],
+      ['getAgentCampaigns', () => live('getAgentCampaigns')(), { '/api/v1/store/agent-campaigns': fail(502) }],
+      ['getAuthEvents', () => live('getAuthEvents')(), { '/api/v1/store/auth-events': fail(502) }],
+    ]
+    for (const [name, call, fixtures] of cases) {
+      stub(monitorFixtures(fixtures))
+      await expect(call(), name).rejects.toThrow(ApiError)
+    }
+  })
+})
+
+describe('the Monitor slice keeps the mock path untouched', () => {
+  it('leaves every Monitor query answering from the mock without BACKEND_URL', async () => {
+    // The default: an unconfigured deployment talks to nobody, and the ten
+    // scenarios the smoke gate depends on keep working.
+    delete process.env.BACKEND_URL
+    for (const name of ['getOverview', 'getOverviewViews', 'getMlAnomalies', 'acknowledgeAllAnomalies', 'acknowledgeAnomalies', 'setAnomalyDisposition', 'getLlmAnalyses', 'semanticSearch', 'getAgentCampaigns', 'getAuthEvents'] as const) {
+      expect(liveQuery(name, undefined), name).toBeUndefined()
+    }
+    const { backend } = await import('./backend')
+    // The mock's own figures are still the mock's: four KPIs, folded rows and
+    // all — nothing above reached for a fixture.
+    const mock = backend('normal', { name: 'A', email: 'a@x.test', roles: ['admin'] })
+    expect((await mock.getOverview()).kpis).toHaveLength(5)
+    expect((await mock.getMlAnomalies()).anomalies.some((a) => a.folded > 1)).toBe(true)
+    expect((await mock.getAgentCampaigns())[0].events[0].sourceIndex).not.toBe('')
   })
 })

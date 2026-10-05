@@ -28,6 +28,23 @@ import {
   sessionDetail,
 } from './adapters/explorer'
 import { toHoneypotEvent } from './adapters/events'
+import { networkCampaigns } from './adapters/sources'
+import {
+  mlAckBody,
+  mlDispositionBody,
+  toAckAllCount,
+  toAckedCount,
+  toAgentCampaign,
+  toAuthFailure,
+  toLlmAnalysis,
+  toMlAnomalies,
+  toModelHealth,
+  toOpenBacklog,
+  toOverviewKpis,
+  toOverviewViews,
+  toPayloadCount,
+  toSemanticSearch,
+} from './adapters/monitor'
 import type { EventRowGap } from './adapters/events'
 import type { SensorEventGap } from './adapters/operations'
 import { generateReportResult, generatedReportPage, reportDefinitionBody, reportDefinitions, reportTemplates, savedReportDefinition } from './adapters/reports'
@@ -82,7 +99,7 @@ import {
 import type { ApiErrorKind } from './errors'
 import type { EventPageWire, EventsQueryWire, FilterValuesWire, RecordingsPageWire, ReplayWire, SearchResultWire, SessionDetailWire } from './contracts/explorer'
 import type { EventRow, EventsPage as EventsPageWire } from './contracts/events'
-import type { ChartName, Charts, FlowGraph } from './contracts/charts'
+import type { ChartName, Charts, FlowGraph, Series as SeriesWire } from './contracts/charts'
 import type {
   CanaryFiredPageWire,
   CanaryTokenTypeWire,
@@ -114,6 +131,23 @@ import type {
 } from './contracts/operations'
 import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
 import type {
+  AgentCampaignRow,
+  AuthEventRow,
+  Dashboard,
+  LlmAnalysisRow,
+  LlmSearchResponse,
+  MlAckAllResponse,
+  MlAckRecord,
+  MlAcks,
+  MlAnomalyRow,
+  MlAnomalyStats,
+  MlDispositionResponse,
+  MlModelHealth,
+  OverviewKpis,
+  StorePage,
+} from './contracts/monitor'
+import type { CampaignPageWire } from './contracts/sources'
+import type {
   AnalyzerCatalogWire,
   ArtifactListWire,
   CapeRunPageWire,
@@ -139,7 +173,7 @@ import type {
   YaraRunPageWire,
 } from './contracts/evidence'
 import type { Backend, Caller } from './backend'
-import type { EventType, HoneypotEvent, Paged, Sensor, SensorFields, SessionUser, ShellConfig } from './types'
+import type { CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Protocol, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig, TimeBucket } from './types'
 
 /** A dashboard that hangs forever is worse than one that errors. Same budget
  * as the canonical BFF's own backend calls (backend.server.ts). */
@@ -1525,6 +1559,361 @@ const getAnalysisResults: Backend['getAnalysisResults'] = async () => {
   }
 }
 
+// ---- the Monitor slice: overview, ML, LLM, campaigns, auth ------------------
+
+/** GET /api/v1/overview/kpis (overview.rs `kpis`, L115) — the five KPI tiles.
+ *
+ * Only three have a counterpart here and `toOverviewKpis` is a Pick of three.
+ * The other two are a real GAP, named in the tests rather than invented:
+ *
+ * - **sessions** — no endpoint counts sessions. A session is an event
+ *   correlation the events slice's own endpoint builds per row; there is no
+ *   aggregation over them anywhere in the Rust tier.
+ * - **payloads** — overview.rs's own module doc says it is not here: "captured
+ *   payloads stay on the store listing the frontend already reads; their
+ *   count is a doc count over captured artifacts, not an event aggregation".
+ *   `/api/v1/payloads` (stores.rs `payloads`) serves that count, and the
+ *   evidence slice already reads it — so the tile is filled from there below,
+ *   which is the same number the backend means.
+ *
+ * `change24h` (a percent string) and `ready` (false while the hourly rollup
+ * has not covered the window) are dropped by the adapter: `Kpi` has no field
+ * for either. `ready: false` therefore renders as a real reading rather than
+ * an error — the KPIs are live-aggregated, not wrong, when it is false. */
+const getOverview: Backend['getOverview'] = async () => {
+  const [kpis, payloads, recent] = await Promise.all([
+    get<OverviewKpis>('getOverview', '/api/v1/overview/kpis'),
+    get<PayloadPageWire>('getOverview', '/api/v1/payloads', { offset: 0, size: 15 }),
+    get<EventsPageWire>('getOverview', '/api/v1/events', { offset: 0, size: 18 }),
+  ])
+  const rows = recent?.rows ?? []
+  return {
+    // No server-side "generated at": every endpoint answers with its own
+    // timestamps, so this is the stamp of the read.
+    generatedAt: new Date().toISOString(),
+    kpis: toOverviewKpis(kpis ?? EMPTY_KPIS).concat(kpiTile('payloads', 'Payloads captured', toPayloadCount(payloads ?? EMPTY_PAYLOADS))),
+    // The page's own 24 hourly buckets, computed from the events page the
+    // overview already reads for its recent rows. The wire's `hourly` sparkline
+    // is counts per hour over the KPI window and carries no timestamps, so a
+    // timeline built from it would have to invent them; this one is real, and
+    // it is what ProtocolTimeline draws. A GAP: `/api/v1/events` pages by
+    // offset, not by time, so these are the first 18 events' hours, not a
+    // bucket per hour across the window — a fleet quieter than 18 events in
+    // 24h draws near-empty buckets rather than fabricated ones.
+    timeline: hourBuckets(rows),
+    topProtocols: protocolNames(rows),
+    // GAP, not invented: `AttackSource` needs asn/org/sessions/riskScore/tags/
+    // provider/city per address, and the dashboard endpoint's `top_ips` carries
+    // a key and a count and nothing else — no country, no ASN, no session rollup.
+    // A row of zeros would read as a real source with no context, so the
+    // overview's "top sources" list is left empty against live data; the ASNs,
+    // countries and providers tabs carry the same figures in the shape the wire
+    // does fill.
+    topSources: [],
+    topCountries: [],
+    // GAP: usernames and passwords are only ever paired, as one `top_creds`
+    // key — the wire deliberately never splits them into two lists, and the
+    // credential tab shows the pairs.
+    topUsernames: [],
+    topPasswords: [],
+    // The same gap the events slice fills at the seam (`pageEvent`): seven
+    // fields a row cannot carry, filled here rather than left undefined.
+    recentEvents: rows.map(pageEvent),
+    // GAP: the dashboard endpoint's `sensors` is a feed triple (name, count,
+    // last_seen, state), not the `Sensor` the page's header renders — no kind,
+    // ports, persona or location. The feed rows are on the heatmap tab as
+    // `views.feeds`, which is where they belong.
+    sensors: [],
+  }
+}
+
+/** The KPI tile a `/api/v1/payloads` doc count fills. Its `previous` is the
+ * count itself: the overview's caption says "Last 24h vs. previous 24h" and a
+ * store total is all-time, so the trend line is empty and the tile shows no
+ * change rather than a fabricated one. */
+const kpiTile = (id: string, label: string, value: number): Kpi => ({ id, label, value, previous: value, trend: [] })
+
+const EMPTY_KPIS: OverviewKpis = { total: 0, last24h: 0, previous24h: 0, change24h: '', unique_ips: 0, hourly: [], logins: 0, ready: false }
+const EMPTY_PAYLOADS: PayloadPageWire = { total: 0, rows: [] }
+
+/** Twenty-four hourly buckets, oldest first, over the rows the events page
+ * returned: the 24 hours ending NOW, so the last bucket is the current hour
+ * and the first is 23 hours back. Empty cells stay at 0 and are never
+ * back-filled, so the timeline has the shape the chart expects whatever the
+ * fleet's volume is. */
+const hourBuckets = (rows: EventRow[]): TimeBucket[] => {
+  const now = Date.now()
+  const start = now - 24 * HOUR_MS
+  const buckets: TimeBucket[] = Array.from({ length: 24 }, (_, i) => ({ time: new Date(start + i * HOUR_MS).toISOString(), total: 0, byProtocol: {} }))
+  for (const row of rows) {
+    const at = Date.parse(row.time)
+    // A row outside the window (the handler does not filter by it) is dropped
+    // rather than folded into the nearest bucket: it would land in a wrong hour.
+    if (!Number.isFinite(at) || at < start || at > now) continue
+    const bucket = buckets[Math.min(23, Math.floor((at - start) / HOUR_MS))]
+    bucket.total += 1
+    bucket.byProtocol[row.proto] = (bucket.byProtocol[row.proto] ?? 0) + 1
+  }
+  return buckets
+}
+
+const HOUR_MS = 3_600_000
+
+/** The overview's `topProtocols`: the five most-seen protocol names on the
+ * same events page. `SERIES` in the chart is what stacks the bars, and it
+ * falls back to an "other" bucket for anything outside its palette, so the
+ * top five is exactly what the chart draws stacked. */
+const protocolNames = (rows: EventRow[]): Protocol[] => {
+  const counts = new Map<string, number>()
+  for (const row of rows) counts.set(row.proto, (counts.get(row.proto) ?? 0) + 1)
+  return [...counts].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([proto]) => proto)
+}
+
+/** GET /api/v1/overview/dashboard — the four of the eighteen views tabs.
+ *
+ * `getOverviewViews` returns the whole `OverviewViews`, and the eighteen
+ * slices of this one endpoint cover fifteen of its fields. The other twenty
+ * are a GAP, kept as empty arrays rather than invented, and named in the
+ * tests: vectors, ml-backlog, netflow, conformance, CVEs and the OS/TCP/ICS/
+ * decoy/JA4/TLS/SSH/endlessh breakdowns have no dashboard slice — they are the
+ * `/api/v1/charts/*` routes (already wired by the chart proxy in #82, and a
+ * different endpoint this query does not reach), so the deep-dive tabs render
+ * empty against live data while the live tab is fully live.
+ *
+ * `campaigns` and `payloads` are the two views the dashboard DOES carry, but
+ * not in the shape the table renders: `payloads` is `DashboardPayloadRow`
+ * (shasum, download path, count, a drill-down link and a VirusTotal link) and
+ * the table wants kind/platform/size/verdict/sources/copies; `campaigns` is
+ * not a dashboard slice at all. Both are filled from the endpoints that serve
+ * them properly — `/api/v1/payloads?aggs=sources` (evidence's own query) and
+ * `/api/v1/campaigns?size=15` — which is the same move the evidence and
+ * sources slices already make. */
+const getOverviewViews: Backend['getOverviewViews'] = async () => {
+  const [dashboard, payloads, campaigns] = await Promise.all([
+    get<Dashboard>('getOverviewViews', '/api/v1/overview/dashboard'),
+    get<PayloadPageWire>('getOverviewViews', '/api/v1/payloads', { offset: 0, size: 15, aggs: 'sources' }),
+    get<CampaignPageWire>('getOverviewViews', '/api/v1/campaigns', { offset: 0, size: 15 }),
+  ])
+  const live = toOverviewViews(dashboard ?? EMPTY_DASHBOARD)
+  return {
+    ...live,
+    payloads: capturedPayloads(payloads ?? EMPTY_PAYLOADS).payloads,
+    campaigns: networkCampaigns(campaigns ?? { total: 0, rows: [] }),
+    vectors: {},
+    mlBacklog: [],
+    netflowBytes: [],
+    netflowPackets: [],
+    conformance: [],
+    cves: [],
+    osDistribution: [],
+    tcpClusters: [],
+    icsFunctions: [],
+    decoyRequests: [],
+    decoyClients: [],
+    ja4h: [],
+    ja4l: [],
+    ja4x: [],
+    tls: [],
+    ssh: [],
+    endlessh: [],
+  }
+}
+
+const EMPTY_DASHBOARD: Dashboard = {
+  protocols: [], top_ports: [], countries: [], asns: [], providers: [], top_ips: [], top_paths: [], top_creds: [], top_commands: [], clients: [], fingerprints: [], alerts: [], alert_cats: [], payloads: [], logins: 0, heatmap: [], map_points: [], sensors: [],
+}
+
+/** The page's own `CountRow` rollup: group by a key, count, keep the top
+ * `limit`. The mock's `countBy`, verbatim in behaviour — three lines, no shared
+ * helper exists for the seam. */
+const counted = (values: Array<string | undefined>, limit: number): CountRow[] => {
+  const counts = new Map<string, number>()
+  for (const value of values) if (value !== undefined) counts.set(value, (counts.get(value) ?? 0) + 1)
+  return [...counts].sort((a, b) => b[1] - a[1]).slice(0, limit).map(([label, count]) => ({ id: label, label, count }))
+}
+
+/** GET /api/v1/store/ml-anomalies + the three ML documents the page needs,
+ * fanned out as one read.
+ *
+ * The ack sidecar and the stats rollup are the two things that cannot be
+ * derived from the rows: `status` lives on the anomaly document but
+ * `acknowledged` lives only in `/acks`, so the two stores are merged here
+ * (the adapter owns the precedence), and `open` in `/stats` is an ALL-TIME
+ * backlog — that total minus every dispositioned ∪ acknowledged id — not a
+ * 24-hour figure, which is why it feeds its own labelled tile.
+ *
+ * GAP: `total24h` and the three breakdowns the page computes over them
+ * (`bySeverity`, `topSources`, `eventTypes`) need a WINDOWED store query.
+ * `/api/v1/store/ml-anomalies` accepts only `offset`, `size` and `q` — a
+ * Lucene query string, which is how the canonical page asks for the window
+ * (two paged reads, `q: @timestamp:[now-24h TO now]`). Those reads are not
+ * made here: the window would have to be spelled as a Lucene range in a query
+ * string this seam otherwise passes through untouched, and the two reads cost
+ * twice what one does. So against live data the "last 24h" tile and the three
+ * breakdowns it feeds are zero, while the rows themselves, the backlog and the
+ * model health are real. The rows are the page's own list — they are not
+ * filtered, and the page's `N of M anomalies` count is honest.
+ *
+ * `scoreTimeline` needs `/api/v1/charts/ml-anomaly-scores` (charts.rs
+ * `ml_anomaly_scores`, L847), a chart the proxy route in #82 already serves
+ * to the browser but not through this seam — it is read here rather than left
+ * fabricated, because the rows it returns are the same `composite_score` and
+ * `model_scores` the anomaly rows already carry and the page's chart is one
+ * panel of one view. */
+const getMlAnomalies: Backend['getMlAnomalies'] = async () => {
+  const [page, acks, stats, health, scores] = await Promise.all([
+    get<StorePage<MlAnomalyRow>>('getMlAnomalies', '/api/v1/store/ml-anomalies', { offset: 0, size: 100 }),
+    get<MlAcks>('getMlAnomalies', '/api/v1/ml-anomalies/acks'),
+    get<MlAnomalyStats>('getMlAnomalies', '/api/v1/ml-anomalies/stats'),
+    get<MlModelHealth[]>('getMlAnomalies', '/api/v1/ml-health'),
+    get<SeriesWire[]>('getMlAnomalies', '/api/v1/charts/ml-anomaly-scores'),
+  ])
+  const anomalies = toMlAnomalies(page ?? { total: 0, rows: [] }, acks ?? {})
+  return {
+    // `folded` is the page's own client-side grouping (same address and
+    // second), which the adapter omits by type. Against live rows it is 1 for
+    // every row: the grouping is over the LOADED page, and each stored
+    // document is one anomaly. A real fold would need the windowed reads the
+    // gap above names, so no row is claimed to stand for more than it is.
+    // `MlAnomaly extends Record<string, unknown>`, so `Omit<MlAnomaly,
+    // 'folded'>` is structurally vacuous — `keyof` is `string | number` and
+    // the omission subtracts nothing, which is why the adapter's own return
+    // type cannot carry the field this adds. The fields are all genuinely
+    // present; only the omission's promise of which ones is inexpressible.
+    anomalies: anomalies.map((a) => ({ ...a, folded: 1 }) as MlAnomaly),
+    total24h: 0,
+    openBacklog: toOpenBacklog(stats ?? { total: 0, open: 0 }),
+    bySeverity: [],
+    topSources: [],
+    eventTypes: [],
+    scoreTimeline: scorePoints(scores ?? []),
+    modelHealth: (health ?? []).map(toModelHealth),
+  }
+}
+
+/** `/api/v1/charts/ml-anomaly-scores` → the page's `ScorePoint` series. The
+ * chart answers one `Series` per model (`{name, points: [{time, value}]}`),
+ * taken from the data itself so a new detector shows up with no dashboard
+ * change; the page's `ScorePoint` is the transpose — one row per instant with
+ * a fixed field per detector. The three the page names are filled; a detector
+ * outside that set has no column and is dropped rather than folded into one of
+ * them, which is the same reason the adapter's `modelScores` is a fixed object.
+ */
+const scorePoints = (series: SeriesWire[]): ScorePoint[] => {
+  const byModel = new Map(series.map((s) => [s.name, new Map(s.points.map((p) => [p.time, p.value]))]))
+  const times = [...new Set(series.flatMap((s) => s.points.map((p) => p.time)))].sort()
+  const scoreOf = (name: string, time: string): number => byModel.get(name)?.get(time) ?? 0
+  return times.map((time) => ({ time, isolationForest: scoreOf('isolation_forest', time), lstmAe: scoreOf('lstm_ae', time), hbos: scoreOf('hbos', time) }))
+}
+
+/** POST /api/v1/ml-anomalies/ack-all (detail.rs `ml_anomaly_ack_all`, L754).
+ * The handler takes a JSON body even though every field has a default, so
+ * `{}` is sent at minimum; the actor rides in it when there is one. The
+ * sweep is the WHOLE index — every open anomaly, not the loaded page — so the
+ * returned `changed` is what the backend says it changed and the page re-reads
+ * the list for the rest. Admin-only by `ADMIN_QUERIES`, before this runs.
+ *
+ * One deliberate divergence from the mock: a row carrying a DISPOSITION is
+ * refused by this endpoint (the handler will not overwrite an operator
+ * verdict with an acknowledgement), so a live `changed` can be lower than the
+ * number of open rows on screen. That is the backend's own answer, not a
+ * count of what was skipped. */
+const acknowledgeAllAnomalies: Backend['acknowledgeAllAnomalies'] = async () => {
+  await guardReadOnly('acknowledgeAllAnomalies')
+  const actor = await actorOf()
+  const wire = await post<MlAckAllResponse>('acknowledgeAllAnomalies', '/api/v1/ml-anomalies/ack-all', actor ? { actor } : {})
+  return toAckAllCount(wire)
+}
+
+/** The actor `detail.rs` stamps onto the ack and disposition documents. The
+ * Rust tier has no session concept, so it is a body field on the stated trust
+ * model that this process is the only caller and the service token gates it —
+ * the same shape the settings slice's writes use (`actor_subject` /
+ * `actor_username`), and for the same reason: read from the session this
+ * process already holds, never from client input. A session that does not
+ * resolve sends no actor at all, which records a blank actor — worse than no
+ * attribution, never worse than a fabricated one.
+ *
+ * One store read per WRITE, not per id, so acking a page of 25 is one read and
+ * twenty-five POSTs. */
+const actorOf = async (): Promise<string> => (await sessionOf()).username
+
+/** POST /api/v1/ml-anomalies/ack (detail.rs `ml_anomaly_ack`, L630) — one
+ * anomaly per call, so N ids is N requests. `ack: false` un-acks, which is how
+ * the anomaly panel's toggle reopens a row; the page's signature
+ * `acknowledgeAnomalies(ids)` carries no flag, so the seam reads the intent
+ * off the ids it was handed — every id is acked, which is what that query
+ * means on the mock and what its only call site does. Returns how many
+ * changed, read back off the records the POST wrote. */
+const acknowledgeAnomalies: Backend['acknowledgeAnomalies'] = async (ids) => {
+  await guardReadOnly('acknowledgeAnomalies')
+  const actor = await actorOf()
+  const records: MlAckRecord[] = []
+  for (const key of ids) records.push(await post<MlAckRecord>('acknowledgeAnomalies', '/api/v1/ml-anomalies/ack', mlAckBody(key, true, actor)))
+  return toAckedCount(records)
+}
+
+/** POST /api/v1/ml-anomalies/disposition (detail.rs `ml_anomaly_disposition`,
+ * L857) — the operator's verdict, written ONTO the anomaly document. The
+ * response echoes what was sent, so the seam's `void` return drops it and the
+ * page re-reads the anomaly, as it does on the mock. `mlDispositionBody`
+ * refuses 'acknowledged': the backend's closed set is the three verdicts plus
+ * the 'open' retraction, and the ack lives only in the sidecar, so nothing the
+ * page can send is lost. */
+const setAnomalyDisposition: Backend['setAnomalyDisposition'] = async (ids, status, reason) => {
+  await guardReadOnly('setAnomalyDisposition')
+  const actor = await actorOf()
+  for (const key of ids) await post<MlDispositionResponse>('setAnomalyDisposition', '/api/v1/ml-anomalies/disposition', mlDispositionBody(key, status, reason, actor))
+}
+
+/** GET /api/v1/store/llm-analysis (stores.rs `generic` over the
+ * `llm-analysis` allowlist key, L491) — the page's own list, unpaged like the
+ * mock's. The handler clamps `size` to 100 (L128), so that is the page size
+ * asked for rather than one this seam invents. */
+const getLlmAnalyses: Backend['getLlmAnalyses'] = async () => ((await get<StorePage<LlmAnalysisRow>>('getLlmAnalyses', '/api/v1/store/llm-analysis', { offset: 0, size: 100 })) ?? { total: 0, rows: [] }).rows.map(toLlmAnalysis)
+
+/** GET /api/v1/llm-search?q= (llm_search.rs `search`) — always HTTP 200, and
+ * `available: false` is an ANSWER about the deployment (embeddings not
+ * configured), not a failure: the page renders the backend's own reason. An
+ * empty-but-configured search is `available: true` with no hits and stays one.
+ *
+ * An empty query never reaches the backend: `q` is required and a blank one
+ * answers an error, so the page's no-search-yet state is returned here rather
+ * than as a failed call. */
+const semanticSearch: Backend['semanticSearch'] = async (query) => {
+  if (!query.trim()) return { available: true, hits: [] }
+  return toSemanticSearch((await get<LlmSearchResponse>('semanticSearch', '/api/v1/llm-search', { q: query.trim() })) ?? { available: false, reason: 'the backend returned no body' })
+}
+
+/** GET /api/v1/store/agent-campaigns (stores.rs `generic` over the
+ * `agent-campaigns` allowlist key, L500) — the page's list, unpaged like the
+ * mock's and clamped to the handler's own 100. */
+const getAgentCampaigns: Backend['getAgentCampaigns'] = async () => ((await get<StorePage<AgentCampaignRow>>('getAgentCampaigns', '/api/v1/store/agent-campaigns', { offset: 0, size: 100 })) ?? { total: 0, rows: [] }).rows.map(toAgentCampaign)
+
+/** GET /api/v1/store/auth-events — the page's own list AND its 24-hour stats,
+ * off ONE read.
+ *
+ * The canonical page makes two (issue #74's `fetchPage` and
+ * `fetchStatsWindow`, the second at `size=200`) because it pages a list and
+ * separately wants a window. This page does not page — `RecordList` renders
+ * every row it is handed — and its `failed24h` counts the rows in the list it
+ * already has, so one read of the handler's own page cap serves both. That is
+ * the mock's arithmetic too (it filters its own fixtures), and it is why the
+ * "last 24h" figures are a window over the loaded page rather than over the
+ * store: a fleet with more than 100 failures shows 24h counts for the first
+ * 100. GAP, named in the tests.
+ *
+ * `byClient` and `topSources` are counted here, not by the backend: neither
+ * `/api/v1/store/auth-events` (a raw passthrough) nor anything else exposes a
+ * Keycloak-event aggregation. */
+const getAuthEvents: Backend['getAuthEvents'] = async () => {
+  const events = ((await get<StorePage<AuthEventRow>>('getAuthEvents', '/api/v1/store/auth-events', { offset: 0, size: 100 })) ?? { total: 0, rows: [] }).rows.map(toAuthFailure)
+  const recent = events.filter((e) => Date.now() - Date.parse(e.timestamp) < DAY_MS)
+  return { events, failed24h: recent.length, byClient: counted(recent.map((e) => e.clientId), 10), topSources: counted(recent.map((e) => e.ip), 10) }
+}
+
+const DAY_MS = 86_400_000
+
 /** This slice's queries, and nothing else. Each keeps the mock
  * implementation's signature exactly — `queries.ts` is generated from it and
  * pages are typed against it.
@@ -1629,6 +2018,17 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   deleteGeneratedReport,
   generatePayloadReport,
   generateReportFrom,
+  // Monitor (#74)
+  getOverview,
+  getOverviewViews,
+  getMlAnomalies,
+  acknowledgeAnomalies,
+  acknowledgeAllAnomalies,
+  setAnomalyDisposition,
+  getLlmAnalyses,
+  semanticSearch,
+  getAgentCampaigns,
+  getAuthEvents,
 }
 
 /** The guarded live implementation of `name`, or undefined when this slice
