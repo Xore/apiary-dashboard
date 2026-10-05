@@ -18,6 +18,8 @@ import type {
   EsStorage,
   MailAddress,
   Preferences,
+  ProblemReport,
+  ProblemStatus,
   ReporterStats,
   ReportTemplate,
   ServiceStatus,
@@ -36,6 +38,9 @@ import type {
   PreferencesPatchWire,
   PreferencesWire,
   ProblemReportBody,
+  ProblemReportRowWire,
+  ProblemReportsPageWire,
+  ProblemStatusPatchWire,
   ReporterStatsWire,
   ServiceLogsWire,
   ServicesWire,
@@ -174,6 +179,47 @@ export const preferencesWriteBody = (subject: string, patch: PreferencesPatchWir
  * document's timezone (preferences.rs `default_preferences`), so pass the
  * deployment default rather than the operator's. */
 export const preferencesResetBody = (subject: string, username?: string, timezone?: string) => ({ subject, ...(username ? { username } : {}), ...(timezone ? { timezone } : {}) })
+
+/** preferences.rs `default_preferences` — the document a subject starts
+ * from, and the one `POST /api/v1/preferences/reset` restores. Mirrored here
+ * because the sign-in pages render preferences BEFORE any subject exists,
+ * and nothing on the wire serves a document for a subject who has not
+ * signed in. It is the one place in this slice where the backend's Rust
+ * default is restated in TypeScript, and the values were read off the
+ * function rather than taken from the mock — they differ (the mock's
+ * `notifyCanary` is true and has no wire field at all).
+ *
+ * If the Rust default ever moves, this is the line that goes stale; the
+ * adapter's own test is what catches it. */
+export const DEFAULT_PREFERENCES_WIRE: PreferencesDocWire = {
+  theme: 'system',
+  palette: 'claude',
+  density: 'comfortable',
+  reduced_motion: 'system',
+  collapsed_sidebar: false,
+  landing_page: '/',
+  remember_filters: false,
+  rows_per_page: 50,
+  wrap_long_values: false,
+  timezone: 'browser',
+  clock: 'h24',
+  timestamps: 'relative',
+  auto_refresh: true,
+  refresh_interval_seconds: 30,
+  live_toasts: true,
+  live_toast_interval_seconds: 60,
+  map_basemap: 'osm',
+  map_clustering: true,
+  map_animation: true,
+  high_contrast: false,
+  large_evidence_text: false,
+  notify_severity: 'high',
+  notify_sound: false,
+  notify_desktop: false,
+  default_event_window: '24h',
+  preserve_filters: false,
+  open_details_new_tab: false,
+}
 
 // ---- dashboard config ------------------------------------------------------
 
@@ -484,14 +530,60 @@ export const esStorage = (wire: StorageWire): EsStorage => ({
 
 // ---- problem reports -------------------------------------------------------
 
-/** Page → POST /api/v1/problem-reports body.
+/** One stored report, as `GET /api/v1/store/problem-reports` passes it
+ * through. `status` is the store's own vocabulary — open | triaged | closed
+ * (problem_reports.rs `VALID_STATUSES`); the page's union is wider by two,
+ * and a status outside the page's union reads as `open`.
+ *
+ * `hasSnapshot` is inferred, not read: the store route excludes
+ * `dom_snapshot` from `_source`, so its absence is the only signal that the
+ * capture carried one — which is exactly what the page's flag asks. The
+ * apiCalls carry the wire's `url`, which the page calls `path`. */
+export const problemReport = (wire: ProblemReportRowWire): ProblemReport => ({
+  id: wire.id,
+  submittedAt: wire.submitted_at,
+  submittedBy: wire.submitted_by_name || wire.submitted_by,
+  status: (['open', 'triaged', 'fixed', 'wontfix'] as const).find((s) => s === wire.status) ?? 'open',
+  page: wire.page,
+  expected: wire.expected,
+  actual: wire.actual,
+  consoleErrors: wire.console_errors ?? [],
+  networkFailures: wire.network_failures ?? [],
+  apiCalls: (wire.api_calls ?? []).map((call) => ({ method: call.method, path: call.url, status: call.status })),
+  actionTrail: (wire.action_trail ?? []).map((entry) => entry.detail),
+  userAgent: wire.user_agent ?? '',
+  hasSnapshot: wire.dom_snapshot === undefined,
+})
+
+/** GET /api/v1/store/problem-reports. The envelope's `rows` is required —
+ * a 200 with no rows array is not an answer this handler produces. */
+export const problemReports = (wire: ProblemReportsPageWire): ProblemReport[] => wire.rows.map(problemReport)
+
+/** PATCH /api/v1/problem-reports/{id} body.
+ *
+ * The store's three statuses are open | triaged | closed; the page's other
+ * two — `fixed` and `wontfix` — both mean "done", which is what `closed`
+ * holds, so both land there. Sent verbatim they would be a 400 on a status
+ * the store has no room for, and the page's own two terminal choices would
+ * be unreachable against a real backend. */
+export const problemStatusPatch = (status: ProblemStatus): ProblemStatusPatchWire => ({ status: status === 'fixed' || status === 'wontfix' ? 'closed' : status })
+
+/** Page → POST /api/v1/problem-reports body, plus the actor this process
+ * attributes it to.
  *
  * The page's `actionTrail` is `string[]` and the wire's is
  * `{at, kind, detail}[]`; the page's `apiCalls` carry `path` where the wire
  * carries the full `url` plus the request and response bodies. The trail
  * strings go across as `detail`, and the server redacts and truncates
  * everything here before it is stored — `expected` in particular must be
- * non-empty or the POST is a 400. */
+ * non-empty or the POST is a 400.
+ *
+ * The three actor fields are QUERY params on this endpoint, not body members
+ * (problem_reports.rs `submit` takes `Query(actor): Query<ActorQuery>` and
+ * `Json(body)` separately), so the seam sends them as `search` and they are
+ * not mixed in here. `actor_display_name` has no page source and is left
+ * off: the server falls back to `actor_username` when it is empty, which is
+ * what the stored `submitted_by_name` would have said anyway. */
 export const problemReportBody = (input: ProblemReportInput): ProblemReportBody => ({
   page: input.page,
   expected: input.expected,

@@ -56,15 +56,19 @@ const searchWire: SearchResultWire = {
   groups: [{ title: 'Commands', hits: [{ label: 'uname -a', count: 12, url: '/events?cmd=uname%20-a' }], more: 340, more_url: '/history?q=uname' }],
 }
 
-/** Serves one body per path, and records the URLs it was asked for. */
+/** Serves one body per path, and records the URLs it was asked for. The
+ * longest matching prefix wins, so a fixture set does not have to be written
+ * in path order — `/api/v1/config` and `/api/v1/config/history` are both
+ * real, and which one answers must not depend on object key order. */
 function stub(responses: Record<string, unknown | (() => never)>) {
   const calls: string[] = []
+  const prefixes = Object.entries(responses).sort(([a], [b]) => b.length - a.length)
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
       calls.push(url)
       const path = new URL(url).pathname
-      const body = Object.entries(responses).find(([prefix]) => path.startsWith(prefix))
+      const body = prefixes.find(([prefix]) => path.startsWith(prefix))
       if (!body) throw new TypeError(`no fixture for ${path}`)
       const value = body[1]
       if (typeof value === 'function') return value()
@@ -99,7 +103,12 @@ afterEach(() => {
 describe('which queries the real backend answers', () => {
   it('names only this slice, leaving the rest to the mock', () => {
     expect(liveQueryNames().sort()).toEqual(
-      ['getCommands', 'getEventDetail', 'getEvents', 'getRecordings', 'getReplayDetail', 'getSessionDetail', 'searchAll', 'searchHistory'].sort(),
+      [
+        // #75 — events & sessions
+        'getCommands', 'getEventDetail', 'getEvents', 'getRecordings', 'getReplayDetail', 'getSessionDetail', 'searchAll', 'searchHistory',
+        // #81 — settings, preferences and shell
+        'getMail', 'getProblemReports', 'getSettings', 'getShellConfig', 'rollbackConfig', 'runServiceAction', 'saveConfigSection', 'setProblemStatus', 'submitProblemReport', 'validateConfig',
+      ].sort(),
     )
   })
 
@@ -114,6 +123,18 @@ describe('which queries the real backend answers', () => {
   it('answers nothing for a query this slice has not wired', () => {
     expect(liveQuery('getAlerts', undefined)).toBeUndefined()
     expect(liveQuery('getOverview', undefined)).toBeUndefined()
+  })
+
+  it('leaves getPreferences and savePreferences on the mock — the public-query deadlock', () => {
+    // The trap #81 exists to not fall into. `getPreferences` is a
+    // PUBLIC_QUERY: the navigation guard calls it on every navigation and
+    // the sign-in pages render with it, so it runs BEFORE a subject exists.
+    // The real endpoint needs one (an empty subject is a 400), so wiring it
+    // breaks sign-in itself. Both halves stay on the mock, deliberately —
+    // wiring only the write would save to the wire and render from the mock.
+    expect(liveQuery('getPreferences', undefined)).toBeUndefined()
+    expect(liveQuery('savePreferences', undefined)).toBeUndefined()
+    expect(liveQueryNames()).not.toContain('getPreferences')
   })
 
   it('applies the same authorization decision the mock does', async () => {
@@ -368,6 +389,233 @@ describe('a degraded body degrades, and a failed call errors', () => {
       const error = (await live('getEvents')({}).then(() => null, (e: unknown) => e)) as ApiError
       expect(error.kind, String(status)).toBe(kind)
       if (retryAfter) expect(error.retryAfter).toBe(retryAfter)
+    }
+  })
+})
+
+// ---- the settings slice -------------------------------------------------------
+
+const configWire = { revision: 14, payload: { presentation: { app_name: 'APIARY' }, behavior: { default_time_window: '24h', read_only: false }, honeypot: { alert_cooldown: '15m' } } }
+const storageWire = { cluster_status: 'green', index_count: 42, doc_count: 1_000, store_bytes: 2_048 }
+const servicesWire = { available: true, services: [{ name: 'hp-tanner', state: 'running', exit_code: null, started_at: '2026-10-04T08:00:00Z', restart_count: 0 }] }
+const reportInput = { page: '/settings', expected: 'x', actual: 'y', actionTrail: [], consoleErrors: [], networkFailures: [], apiCalls: [], domSnapshot: '', userAgent: 'UA' }
+
+/** Every document `getSettings` reads, so one fan-out test does not hand-build
+ * eight fixtures; the ones under test override their own path. */
+const settingsFixtures = (over: Record<string, unknown> = {}) => ({
+  '/api/v1/config': configWire,
+  '/api/v1/config/history': { entries: [{ revision: 41, time: '2026-10-04T08:00:00Z', actor_subject: 'oidc|1', actor_username: 'operator', action: 'update', fields: ['behavior'] }] },
+  '/api/v1/users': { users: [{ subject: 'oidc|1', username: 'operator', role: 'admin', first_seen_at: '2026-06-01T00:00:00Z', last_seen_at: '2026-10-04T08:00:00Z' }] },
+  '/api/v1/audit': { events: [{ actor_subject: 'oidc|1', actor_username: 'operator', action: 'config.update', fields: ['behavior'], revision: 41, result: 'success' }] },
+  '/api/v1/services': servicesWire,
+  '/api/v1/reporter-stats': { available: false, reason: 'no reporter metrics indexed yet' },
+  '/api/v1/settings/storage': storageWire,
+  '/api/v1/reports/templates': { templates: [{ id: 'executive', name: 'Executive', description: 'One-page brief' }], elements: [] },
+  ...over,
+})
+
+describe('the settings page, fanned out over its eight documents', () => {
+  it('reads the wire ones and leaves preferences at the backend default', async () => {
+    const calls = stub(settingsFixtures())
+    const out = await live('getSettings')()
+    expect(out.config.revision).toBe(14)
+    expect(out.config.presentation.appName).toBe('APIARY')
+    expect(out.users[0]).toMatchObject({ subject: 'oidc|1', username: 'operator' })
+    expect(out.history[0]).toMatchObject({ id: '41', actor: 'operator' })
+    expect(out.services[0]).toMatchObject({ name: 'hp-tanner', state: 'running' })
+    expect(out.storage).toMatchObject({ clusterStatus: 'green', indexCount: 42 })
+    expect(out.reportTemplates).toHaveLength(1)
+    // NOT the wire's per-subject document — that GET is the public-query trap
+    // and is not wired. The backend's own default_preferences render instead.
+    expect(out.preferences).toMatchObject({ theme: 'system', rowsPerPage: 50, notifyCanary: false })
+    // The preferences endpoint is never called from a signed-in page either.
+    expect(calls.some((url) => url.includes('/api/v1/preferences'))).toBe(false)
+  })
+
+  it('fails the whole read when one leg fails, rather than building a panel of defaults', async () => {
+    // A `revision: 0` fallback would be a real baseline every later save then
+    // conflicts against, blaming an editor who never existed.
+    stub(settingsFixtures({ '/api/v1/users': fail(502, 'store down') }))
+    await expect(live('getSettings')()).rejects.toThrow(ApiError)
+  })
+
+  it('renders a never-written config document as the shell reads it', async () => {
+    stub(settingsFixtures({ '/api/v1/config': { revision: 0, payload: {} } }))
+    const out = await live('getSettings')()
+    expect(out.config.revision).toBe(0)
+    expect(out.config.presentation.appName).toBe('')
+    expect(out.config.behavior.readOnly).toBe(false)
+  })
+})
+
+describe('the shell config', () => {
+  it('reads the config document, and takes links from the deployment environment', async () => {
+    // `links` has no endpoint — canonical builds them from its own process
+    // env, so this tier does too rather than inventing a source.
+    stub({ '/api/v1/config': configWire })
+    process.env.HONEYPOT_DOMAIN = 'hp.example.test'
+    process.env.KIBANA_PUBLIC_URL = 'https://kibana.other.test/'
+    const out = await live('getShellConfig')()
+    expect(out.presentation.appName).toBe('APIARY')
+    expect(out.links).toEqual({ kibana: 'https://kibana.other.test/', evebox: 'https://evebox.hp.example.test', arkime: 'https://arkime.hp.example.test' })
+    // accountConsole is derived from the OIDC issuer, which this tier does
+    // not configure: an absent link is a missing button, never a wrong one.
+    expect(out.links.accountConsole).toBeUndefined()
+    delete process.env.HONEYPOT_DOMAIN
+    delete process.env.KIBANA_PUBLIC_URL
+  })
+
+  it('leaves an unconfigured tool out rather than guessing at a URL', async () => {
+    stub({ '/api/v1/config': configWire })
+    const out = await live('getShellConfig')()
+    expect(out.links).toEqual({})
+  })
+})
+
+describe('the config writes', () => {
+  it('validates a section on its own, against the endpoint that persists nothing', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ ok: false, problems: ['behavior.default_time_window is not a window', 'unknown config section "mystery"'] }), { status: 200, headers: { 'content-type': 'application/json' } }))
+    vi.stubGlobal('fetch', fetchMock)
+    // A refusal is a 200 carrying problems — a result, not an error.
+    expect(await live('validateConfig')('behavior', { defaultTimeWindow: 'nope' } as never)).toEqual({
+      'behavior.default_time_window': 'is not a window',
+      'unknown config section "mystery"': 'unknown config section "mystery"',
+    })
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body))
+    expect(body).toEqual({ behavior: expect.objectContaining({ default_time_window: 'nope' }) })
+  })
+
+  it('saves a whole section to the route its own name has', async () => {
+    const calls = stub({ '/api/v1/config/behavior': { ...configWire, revision: 15 } })
+    const out = await live('saveConfigSection')('behavior', { defaultTimeWindow: '7d', rowsPerPageOptions: [50], readOnly: false } as never)
+    expect(new URL(calls[0]).pathname).toBe('/api/v1/config/behavior')
+    const body = JSON.parse(String(vi.mocked(globalThis.fetch).mock.calls[0][1]?.body))
+    // The handler REPLACES its block, so every field the page holds must
+    // ride — a partial body would drop what it omits. Only what the page
+    // carries is sent; a field absent from the page type is absent from the
+    // document too, because the page owns the section.
+    expect(body).toMatchObject({ default_time_window: '7d', read_only: false, rows_per_page_options: [50] })
+    expect(body).not.toHaveProperty('revision')
+    expect(out).toEqual({ ok: true, revision: 15 })
+  })
+
+  it('sends presentation to its own route, not to the section that 404s', async () => {
+    const calls = stub({ '/api/v1/config/presentation': configWire })
+    await live('saveConfigSection')('presentation', { appName: 'APIARY', titleFormat: '{ip}' } as never)
+    expect(new URL(calls[0]).pathname).toBe('/api/v1/config/presentation')
+  })
+
+  it('rolls back by integer revision, and refuses an id that is not one', async () => {
+    const calls = stub({ '/api/v1/config/rollback': configWire })
+    await live('rollbackConfig')('41')
+    const body = JSON.parse(String(vi.mocked(globalThis.fetch).mock.calls[0][1]?.body))
+    expect(body).toMatchObject({ revision: 41 })
+    // The page's id is that same integer rendered, so `rev-41` parses too —
+    // the adapter strips the prefix rather than sending a string revision
+    // the backend would reject as negative.
+    await live('rollbackConfig')('rev-41')
+    expect(JSON.parse(String(vi.mocked(globalThis.fetch).mock.calls[1][1]?.body))).toMatchObject({ revision: 41 })
+    // Anything that is not a revision is refused here, before the call.
+    await expect(live('rollbackConfig')('rev-x')).rejects.toThrow(ApiError)
+    expect(calls).toHaveLength(2)
+  })
+})
+
+describe('read-only mode, which the Rust tier does not enforce', () => {
+  it('refuses a write with the same 423 the mock gives', async () => {
+    // Nothing in the backend implements read_only — it is a dashboard
+    // preference. Without this the guard would exist for the mock tier only:
+    // passing its tests and absent in production.
+    stub({ '/api/v1/config': { ...configWire, payload: { behavior: { read_only: true } } } })
+    const error = (await live('setProblemStatus')('pr-1', 'triaged').then(() => null, (e: unknown) => e)) as ApiError
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error.kind).toBe('locked')
+    // One config read, and the guarded write never leaves.
+    expect(vi.mocked(globalThis.fetch)).toHaveBeenCalledTimes(1)
+
+    // A container restart is guarded too — nothing exempts it, exactly as
+    // the mock treats it. The two exemptions are the writes that turn
+    // read-only off, which is why they need the flag readable at all.
+    stub({ '/api/v1/config': { ...configWire, payload: { behavior: { read_only: true } } }, '/api/v1/services/hp-tanner/restart': { ok: true } })
+    await expect(live('runServiceAction')('hp-tanner', 'restart')).rejects.toThrow(ApiError)
+  })
+
+  it('still allows turning it off, and ones own preferences and reports', async () => {
+    stub({ '/api/v1/config': { ...configWire, payload: { behavior: { read_only: true } } }, '/api/v1/config/rollback': configWire, '/api/v1/problem-reports': { id: 'pr-1' } })
+    await expect(live('rollbackConfig')('41')).resolves.toBeUndefined()
+    expect(await live('submitProblemReport')(reportInput)).toEqual({ id: 'pr-1' })
+  })
+})
+
+describe('services, mail and problem reports', () => {
+  it('asks the services adapter for the action and reports its own refusal', async () => {
+    const calls = stub({ '/api/v1/config': configWire, '/api/v1/services/hp-tanner/restart': { ok: true, name: 'hp-tanner', action: 'restart' } })
+    await expect(live('runServiceAction')('hp-tanner', 'restart')).resolves.toBeUndefined()
+    expect(new URL(calls[calls.length - 1]).pathname).toBe('/api/v1/services/hp-tanner/restart')
+    // The handler answers 200 with an ack that can be a refusal; it is not an
+    // HTTP error, so it would otherwise reach the page as a success.
+    stub({ '/api/v1/config': configWire, '/api/v1/services/hp-tanner/restart': { ok: false, error: 'adapter unreachable' } })
+    await expect(live('runServiceAction')('hp-tanner', 'restart')).rejects.toThrow(ApiError)
+  })
+
+  it('answers a mail session that captured nothing with null, not an error', async () => {
+    stub({ '/api/v1/mail/': fail(404, 'no capture') })
+    expect(await live('getMail')('sess-none')).toBeNull()
+  })
+
+  it('lists problem reports from the store passthrough, the only endpoint that serves them', async () => {
+    // The Rust tier serves only the POST and the PATCH under
+    // /api/v1/problem-reports — no GET — so the list comes from the
+    // allowlisted generic store, exactly as canonical's page reads it.
+    const calls = stub({ '/api/v1/store/problem-reports': { total: 1, rows: [{ id: 'pr-1', submitted_at: '2026-10-04T08:00:00Z', submitted_by: 'oidc|1', page: '/settings', expected: 'x', actual: 'y', action_trail: [], console_errors: [], network_failures: [], api_calls: [], user_agent: 'UA', status: 'open' }] } })
+    const out = await live('getProblemReports')()
+    expect(Object.fromEntries(new URL(calls[0]).searchParams)).toEqual({ offset: '0', size: '100' })
+    expect(out[0]).toMatchObject({ id: 'pr-1', status: 'open' })
+  })
+
+  it('folds a status the store cannot hold into one it can', async () => {
+    const calls = stub({ '/api/v1/config': configWire, '/api/v1/problem-reports/pr-1': null })
+    await live('setProblemStatus')('pr-1', 'fixed')
+    expect(JSON.parse(String(vi.mocked(globalThis.fetch).mock.calls[1][1]?.body))).toEqual({ status: 'closed' })
+    expect(new URL(calls[calls.length - 1]).pathname).toBe('/api/v1/problem-reports/pr-1')
+  })
+
+  it('attributes every write to the session subject, never to a blank actor', async () => {
+    // The Rust tier has no session concept: each actor-attributed write takes
+    // `actor_subject`/`actor_username` and writes them into the audit log
+    // verbatim. `SessionUser` carries no subject, so the seam reads the
+    // session record. With no session resolvable the fields are omitted
+    // rather than sent empty — `request` drops empty params, so the backend
+    // applies its own `#[serde(default)]` and the row is its own doing.
+    // Inventing a subject, or passing "unknown", would put a name in a log
+    // that reads as a real editor; this asserts it neither happens.
+    const calls = stub({ '/api/v1/config': configWire, '/api/v1/config/behavior': configWire })
+    await live('saveConfigSection')('behavior', {} as never)
+    const url = new URL(calls[calls.length - 1])
+    expect(url.pathname).toBe('/api/v1/config/behavior')
+    expect(url.searchParams.has('actor_subject')).toBe(false)
+    expect(url.searchParams.has('actor_username')).toBe(false)
+  })
+})
+
+describe('the settings slice fails as an error, never as an empty panel', () => {
+  it('maps a 502 on each endpoint to the state the unavailable scenario produces', async () => {
+    const cases: Array<[string, () => Promise<unknown>, Record<string, unknown>]> = [
+      ['getSettings', () => live('getSettings')(), settingsFixtures({ '/api/v1/audit': fail(502) })],
+      ['getSettings (services)', () => live('getSettings')(), settingsFixtures({ '/api/v1/services': fail(503, 'adapter unconfigured') })],
+      ['getShellConfig', () => live('getShellConfig')(), { '/api/v1/config': fail(502) }],
+      ['validateConfig', () => live('validateConfig')('behavior', {} as never), { '/api/v1/config/validate': fail(502) }],
+      ['saveConfigSection', () => live('saveConfigSection')('honeypot', {} as never), { '/api/v1/config': configWire, '/api/v1/config/honeypot': fail(502) }],
+      ['rollbackConfig', () => live('rollbackConfig')('41'), { '/api/v1/config': configWire, '/api/v1/config/rollback': fail(502) }],
+      ['runServiceAction', () => live('runServiceAction')('hp-tanner', 'restart'), { '/api/v1/config': configWire, '/api/v1/services/hp-tanner/restart': fail(502) }],
+      ['getMail', () => live('getMail')('sess-1'), { '/api/v1/mail/': fail(502) }],
+      ['getProblemReports', () => live('getProblemReports')(), { '/api/v1/store/problem-reports': fail(502) }],
+      ['submitProblemReport', () => live('submitProblemReport')(reportInput), { '/api/v1/config': configWire, '/api/v1/problem-reports': fail(502) }],
+      ['setProblemStatus', () => live('setProblemStatus')('pr-1', 'triaged'), { '/api/v1/config': configWire, '/api/v1/problem-reports/pr-1': fail(502) }],
+    ]
+    for (const [name, call, fixtures] of cases) {
+      stub(fixtures)
+      await expect(call(), name).rejects.toThrow(ApiError)
     }
   })
 })

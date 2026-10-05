@@ -29,13 +29,18 @@ import {
 } from './adapters/explorer'
 import { toHoneypotEvent } from './adapters/events'
 import type { EventRowGap } from './adapters/events'
+import { reportTemplates } from './adapters/reports'
+import { DEFAULT_PREFERENCES_WIRE, capturedMail, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
+import { isRead, READ_ONLY_EXEMPT } from './scenario'
 import type { ApiErrorKind } from './errors'
 import type { EventPageWire, EventsQueryWire, FilterValuesWire, RecordingsPageWire, ReplayWire, SearchResultWire, SessionDetailWire } from './contracts/explorer'
 import type { EventRow, EventsPage as EventsPageWire } from './contracts/events'
+import type { ReportTemplatesWire } from './contracts/reports'
+import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
 import type { Backend, Caller } from './backend'
-import type { EventType, HoneypotEvent, Paged } from './types'
+import type { EventType, HoneypotEvent, Paged, SessionUser, ShellConfig } from './types'
 
 /** A dashboard that hangs forever is worse than one that errors. Same budget
  * as the canonical BFF's own backend calls (backend.server.ts). */
@@ -71,13 +76,24 @@ const kindOf = (status: number): ApiErrorKind =>
  * the timeout, and any non-2xx alike. That is the whole point: an events
  * list that renders empty because the backend was down reads as "no
  * activity", and an operator cannot tell that from a quiet fleet. */
-async function get<T>(endpoint: string, path: string, search: EventsQueryWire | Record<string, string | number | undefined> = {}): Promise<T | null> {
+async function get<T>(endpoint: string, path: string, search: QueryParams = {}): Promise<T | null> {
+  return request<T>(endpoint, { path, search })
+}
+
+/** What any call may send as a query string. `EventsQueryWire` is the named
+ * one from #75; the loose record is the settings slice's params, which have
+ * no shared shape worth a type. */
+type QueryParams = EventsQueryWire | Record<string, string | number | undefined>
+
+/** The one call this module makes. GET unless `method`/`body` say otherwise;
+ * the token rides as a header on every one of them, and never in a URL. */
+async function request<T>(endpoint: string, { method = 'GET', path, search = {}, body, headers = {} }: { method?: string; path: string; search?: QueryParams; body?: unknown; headers?: Record<string, string> }): Promise<T | null> {
   const query = new URLSearchParams()
   for (const [key, value] of Object.entries(search)) if (value !== undefined && value !== '') query.set(key, String(value))
   const url = `${process.env.BACKEND_URL!.replace(/\/$/, '')}${path}${query.size ? `?${query}` : ''}`
   let response: Response
   try {
-    response = await fetch(url, { headers: { 'x-service-token': process.env.SERVICE_TOKEN ?? '' }, signal: AbortSignal.timeout(TIMEOUT_MS) })
+    response = await fetch(url, { method, headers: { ...(body === undefined ? {} : { 'content-type': 'application/json' }), 'x-service-token': process.env.SERVICE_TOKEN ?? '', ...headers }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(TIMEOUT_MS) })
   } catch {
     // Unreachable, refused, or past TIMEOUT_MS. The backend's own words are
     // not available and ours would carry nothing an operator can act on.
@@ -88,7 +104,10 @@ async function get<T>(endpoint: string, path: string, search: EventsQueryWire | 
     const retryAfter = Number(response.headers.get('retry-after'))
     throw new ApiError(kindOf(response.status), endpoint, { ...(Number.isFinite(retryAfter) ? { retryAfter } : {}), ...(await detailOf(response)) })
   }
-  return (await response.json()) as T
+  // 204 and an empty 200 carry nothing; the writes that answer `Json(doc)`
+  // are read back by the page from its own reload.
+  const text = await response.text().catch(() => '')
+  return text ? (JSON.parse(text) as T) : null
 }
 
 /** The tier's plain-text refusal, when it sent one. Never the request: an
@@ -191,6 +210,239 @@ function pageEvent(row: EventRow): HoneypotEvent {
   // ones cannot be expressed. `organization` is the seventh gap field and
   // is left off: absent, not empty, as toHoneypotEvent does throughout.
   return { ...toHoneypotEvent(row), ...gap } as HoneypotEvent
+}
+
+// ---- the settings slice -----------------------------------------------------
+
+/** The session behind the request's cookie, read once per call and used for
+ * both facts this slice needs from it: the identity the pages render
+ * (`SettingsData.user`) and the SUBJECT the wire attributes writes to.
+ *
+ * `SessionUser` carries a display name and an email but no subject — the
+ * subject lives one layer down, in the session record (src/server/session.ts
+ * `Session.sub`). The Rust tier has no session concept: it takes
+ * `actor_subject` / `actor_username` as params or body fields on the stated
+ * trust model that this process is the only caller and the service token
+ * gates it (preferences.rs's module doc, config.rs `ActorQuery`). So the
+ * store is read here rather than a subject being invented; a store that does
+ * not answer yields empty actor fields, which records a blank actor — worse
+ * than no attribution, never worse than a fabricated one.
+ *
+ * The queries take no caller argument (their signatures are the contract), so
+ * this re-resolves the session the funnel already resolved. One extra store
+ * read on the slice's writes, against correctness we would otherwise have to
+ * fake. */
+async function sessionOf(): Promise<{ user: SessionUser | null; subject: string; username: string }> {
+  try {
+    const [{ getRequest }, { sessions, sidFrom }, { userOf }] = await Promise.all([import('@tanstack/react-start/server'), import('#/server/session'), import('#/server/identity')])
+    const session = await sessions.get(sidFrom(getRequest()))
+    return session ? { user: userOf(session), subject: session.sub, username: session.username } : { user: null, subject: '', username: '' }
+  } catch {
+    return { user: null, subject: '', username: '' }
+  }
+}
+
+/** The nine documents `getSettings` reads, fanned out as one page.
+ *
+ * One failing leg fails the whole read rather than handing the page a
+ * half-built `SettingsData`: an admin panel built from partly-dead stores
+ * lies worse than a missing one, and a silently-defaulted `revision: 0` is
+ * worse still — it is a real baseline that every later save then conflicts
+ * against, blaming a concurrent editor who never existed. The canonical
+ * frontend draws the same line (frontend-next `fetchAdminData`, #2311), so
+ * this is `Promise.all` and the rejection is the `ApiError` the page's error
+ * boundary already tells apart.
+ *
+ * `/api/v1/preferences` is NOT among the nine: see `getPreferences` below. */
+const getSettings: Backend['getSettings'] = async () => {
+  const [config, users, history, audit, services, reporter, storage, templates, session] = await Promise.all([
+    get<ConfigWire>('getSettings', '/api/v1/config'),
+    get<UsersWire>('getSettings', '/api/v1/users'),
+    get<ConfigHistoryWire>('getSettings', '/api/v1/config/history'),
+    get<AuditWire>('getSettings', '/api/v1/audit', { limit: 100 }),
+    get<ServicesWire>('getSettings', '/api/v1/services'),
+    get<ReporterStatsWire>('getSettings', '/api/v1/reporter-stats'),
+    get<StorageWire>('getSettings', '/api/v1/settings/storage'),
+    get<ReportTemplatesWire>('getSettings', '/api/v1/reports/templates'),
+    sessionOf(),
+  ])
+  return settingsData({
+    // The signed-in operator. The wire has no session, so it comes from the
+    // one this process holds — the same SessionUser the mock answers `user`
+    // with, so the identity panel reads the same whichever tier answered.
+    user: session.user ?? ANONYMOUS_USER,
+    config: config ?? { revision: 0, payload: {} },
+    templates: reportTemplates(templates ?? { templates: [], elements: [] }).templates,
+    users: users ?? { users: [] },
+    // The backend's own `default_preferences`, NOT the wire's per-subject
+    // document: `GET /api/v1/preferences` needs a subject and is a
+    // PUBLIC_QUERY (authorize.ts:9 — the navigation guard and the sign-in
+    // pages call it before sign-in), so it is deliberately NOT wired here.
+    // See `getPreferences` below for the full reasoning. These are the
+    // defaults the appearance pane edits, so the page renders real values.
+    preferences: DEFAULT_PREFERENCES_WIRE,
+    services: services ?? { available: false, services: [] },
+    history: history ?? { entries: [] },
+    audit: audit ?? { events: [] },
+    reporter: reporter ?? { available: false },
+    storage: storage ?? { cluster_status: 'unreachable', index_count: 0, doc_count: 0, store_bytes: 0 },
+  })
+}
+
+/** What the identity panel shows for a caller no session resolved. The mock
+ * has a fixture user; a live call that reached here has no session at all,
+ * and saying so beats borrowing a name. */
+const ANONYMOUS_USER: SessionUser = { name: '—', email: '', roles: [] }
+
+/** `GET /api/v1/config` for the shell: the presentation and behavior blocks
+ * every page renders with.
+ *
+ * `links` has no endpoint — that is canonical's finding, verified rather
+ * than assumed: frontend-next builds all three from its own process
+ * environment (`fetchInvestigationConfig`, events.tsx), an explicit
+ * `KIBANA_PUBLIC_URL` / `EVEBOX_PUBLIC_URL` / `ARKIME_PUBLIC_URL` winning
+ * outright over `https://{tool}.{HONEYPOT_DOMAIN}`. Deployment config, not
+ * telemetry, so it is read from the environment here too. A tool that is
+ * neither configured nor derivable is left out rather than guessed at.
+ *
+ * `accountConsole` stays absent: canonical derives it from the OIDC issuer
+ * (oidc.server.ts `accountConsoleActions`) and this tier has no issuer
+ * configuration — `OIDC_DISABLED` is a yes/no, not a URL. An absent link is
+ * a missing button, never a wrong one. */
+const getShellConfig: Backend['getShellConfig'] = async () => {
+  const wire = await get<ConfigWire>('getShellConfig', '/api/v1/config')
+  return shellConfig(wire ?? { revision: 0, payload: {} }, deploymentLinks())
+}
+
+function deploymentLinks(env: NodeJS.ProcessEnv = process.env): ShellConfig['links'] {
+  const domain = (env.HONEYPOT_DOMAIN ?? '').trim().replace(/\.+$/, '')
+  const base = (tool: string, explicit: string | undefined) => {
+    const trimmed = (explicit ?? '').trim()
+    return trimmed || (domain ? `https://${tool}.${domain}` : '')
+  }
+  const kibana = base('kibana', env.KIBANA_PUBLIC_URL)
+  const evebox = base('evebox', env.EVEBOX_PUBLIC_URL)
+  const arkime = base('arkime', env.ARKIME_PUBLIC_URL)
+  return { ...(kibana ? { kibana } : {}), ...(evebox ? { evebox } : {}), ...(arkime ? { arkime } : {}) }
+}
+
+/** POST /api/v1/config/validate — the persist-nothing preview the debounced
+ * editor asks for. A refused section is a 200 carrying `problems`, which is
+ * a result and not an error; only an unreachable validator throws, and the
+ * page treats that as "no preview" (its save still decides). */
+const validateConfig: Backend['validateConfig'] = async (section, value) => {
+  const wire = await request<ConfigValidateWire>('validateConfig', { method: 'POST', path: '/api/v1/config/validate', body: configValidateBody(section, value) })
+  return configProblems(wire ?? { ok: true, problems: [] })
+}
+
+/** PUT /api/v1/config/{section} (or `/presentation`, which is the same
+ * handler on its own route) — one section, replaced whole, since the handler
+ * assigns `doc.payload[key] = value` rather than merging.
+ *
+ * No `If-Match`: the optimistic-concurrency precondition is optional, and
+ * config.rs's absent-header path is explicitly the last-write-wins one. The
+ * page's signature carries no revision to check against, and inventing one
+ * would make every save a conflict check the UI has no state to resolve.
+ * A 409 therefore cannot arise, and a validation refusal cannot either:
+ * `put_config_field` stores whatever it is given and the validator only runs
+ * on the separate `/config/validate` route — so a refusal here is a genuine
+ * fault, and it is thrown rather than dressed up as a per-field problem the
+ * page would show against the wrong field. */
+const saveConfigSection: Backend['saveConfigSection'] = async (section, value) => {
+  await guardReadOnly('saveConfigSection')
+  const { subject, username } = await sessionOf()
+  const path = configSectionPath(section)
+  const wire = await request<ConfigWire>('saveConfigSection', { method: 'PUT', path: `/api/v1/config/${path}`, search: { actor_subject: subject, actor_username: username }, body: configSectionBody(section, value) })
+  return { ok: true, revision: wire?.revision ?? 0 }
+}
+
+/** POST /api/v1/config/rollback. The wire's revision is an integer; the
+ * page's history row renders it (the adapter's `id` is `String(revision)`,
+ * and the mock uses `rev-41`). Both parse — the prefix is the page's own
+ * decoration, not a wire key. Anything that is not a revision is refused
+ * here rather than sent as one the backend would reject as negative
+ * (config.rs `rollback` 400s `revision < 0`). */
+const rollbackConfig: Backend['rollbackConfig'] = async (revisionId) => {
+  await guardReadOnly('rollbackConfig')
+  const revision = configRollbackBody(revisionId)
+  if (!revision) throw new ApiError('invalid', 'rollbackConfig', { detail: `${revisionId} is not a revision` })
+  const { subject, username } = await sessionOf()
+  await request<ConfigWire>('rollbackConfig', { method: 'POST', path: '/api/v1/config/rollback', body: { ...revision, actor_subject: subject, actor_username: username } })
+}
+
+/** POST /api/v1/services/{name}/{action}.
+ *
+ * This restarts containers — in a normal deployment, the very stack this
+ * dashboard is served from. It is wired because it is what the operator
+ * asked for and what canonical serves, admin-gated by `ADMIN_QUERIES`, and
+ * a failure is the backend's own status rather than a swallowed one: the
+ * handler answers 503 when the services adapter is unconfigured and 400 for
+ * an action it does not accept, both of which reach the page as errors.
+ * Enabling this anywhere non-disposable is a deployment decision, not a
+ * code one. */
+const runServiceAction: Backend['runServiceAction'] = async (name, action) => {
+  await guardReadOnly('runServiceAction')
+  const { subject, username } = await sessionOf()
+  const wire = await request<ServiceActionWireResponse>('runServiceAction', { method: 'POST', path: `/api/v1/services/${encodeURIComponent(name)}/${action}`, search: { actor_subject: subject, actor_username: username } })
+  if (wire && wire.ok === false) throw new ApiError('unavailable', 'runServiceAction', { detail: wire.error })
+}
+
+/** GET /api/v1/mail/{id} — one document serves both the summary and the
+ * detailed read. A 404 is the page's own "no message for this session",
+ * which is an answer about the session rather than a failure. */
+const getMail: Backend['getMail'] = async (sessionId) => {
+  const wire = await get<MailWire>('getMail', `/api/v1/mail/${encodeURIComponent(sessionId)}`)
+  return wire ? capturedMail(wire) : null
+}
+
+/** GET /api/v1/store/problem-reports — the allowlisted generic store
+ * passthrough, which is where the list comes from: the Rust tier serves only
+ * the POST and the PATCH under `/api/v1/problem-reports`, exactly as
+ * canonical's own page reads them. `size` is the handler's own cap. */
+const getProblemReports: Backend['getProblemReports'] = async () => {
+  const wire = await get<ProblemReportsPageWire>('getProblemReports', '/api/v1/store/problem-reports', { offset: 0, size: 100 })
+  return problemReports(wire ?? { total: 0, rows: [] })
+}
+
+/** POST /api/v1/problem-reports. The server redacts and truncates
+ * everything here before it is stored — this is not a second redaction pass,
+ * the trust boundary is on that side. */
+const submitProblemReport: Backend['submitProblemReport'] = async (input) => {
+  await guardReadOnly('submitProblemReport')
+  const { subject, username } = await sessionOf()
+  const wire = await request<ProblemReportCreatedWire>('submitProblemReport', { method: 'POST', path: '/api/v1/problem-reports', search: { actor_subject: subject, actor_username: username }, body: problemReportBody(input) })
+  return { id: wire?.id ?? '' }
+}
+
+/** PATCH /api/v1/problem-reports/{id} — 204, or a 404 for a report that is
+ * not there. A status the store has no room for is folded to its wire
+ * equivalent by the adapter, so the page's four statuses stay reachable. */
+const setProblemStatus: Backend['setProblemStatus'] = async (id, status) => {
+  await guardReadOnly('setProblemStatus')
+  await request<null>('setProblemStatus', { method: 'PATCH', path: `/api/v1/problem-reports/${encodeURIComponent(id)}`, body: problemStatusPatch(status) })
+}
+
+/** Read-only mode, enforced the way the mock enforces it.
+ *
+ * `scenario.ts` refuses a non-read write with a 423 when
+ * `CONFIG.behavior.readOnly` is on — but it wraps the MOCK. A live call
+ * bypasses that entirely, and nothing in the Rust tier enforces read-only at
+ * all: it is a dashboard preference, not a backend guarantee. So without
+ * this the guard would silently apply to the mock tier only, which is the
+ * worst shape a guard can have — it passes the tests and stops existing in
+ * production. One config read per write buys the same 423 the mock gives.
+ *
+ * The predicate is the mock's own, inverted exactly as scenario.ts:72 inverts
+ * it: a query whose name IS a read is not guarded, and a query that is not
+ * one is. `READ_ONLY_SKIP` is the one addition, because the name alone does
+ * not say what the query does — `getMail` STARTS WITH `get` and would read as
+ * a read, but it is the page's read of a capture; it needs no exemption and
+ * gets none. What DOES need one is already listed: `saveConfigSection` and
+ * `rollbackConfig` are how read-only gets turned off. */
+async function guardReadOnly(name: string): Promise<void> {
+  if (isRead(name) || READ_ONLY_EXEMPT.has(name)) return
+  const wire = await get<ConfigWire>(name, '/api/v1/config')
+  if (wire?.payload.behavior?.read_only) throw new ApiError('locked', name)
 }
 
 // ---- the wire queries -------------------------------------------------------
@@ -302,7 +554,30 @@ const searchAll: Backend['searchAll'] = async (query) => {
 
 /** This slice's queries, and nothing else. Each keeps the mock
  * implementation's signature exactly — `queries.ts` is generated from it and
- * pages are typed against it. */
+ * pages are typed against it.
+ *
+ * DELIBERATELY ABSENT, and the reason is the one thing in this slice worth
+ * reading before changing anything:
+ *
+ * - `getPreferences` — a PUBLIC_QUERY (authorize.ts:9). The navigation guard
+ *   resolves it on every navigation and the sign-in pages render with it, so
+ *   it runs BEFORE sign-in. The real `GET /api/v1/preferences` needs the
+ *   service token AND a subject: an empty subject is a 400 (preferences.rs
+ *   `subject` validation). A pre-sign-in call has no subject, so wiring it
+ *   turns the sign-in page into a 400 on every load — the deadlock the task
+ *   brief names. Canonical does not reach the backend here either: it builds
+ *   the pre-session values from its own process environment. So this leaves
+ *   it, and both `savePreferences` with it, on the mock. Wiring one half of
+ *   the pair is worse than wiring neither — the pane would save to one store
+ *   and render from another.
+ *
+ * - `savePreferences` — same document, same reason. `PUT
+ *   /api/v1/preferences` merges a `deny_unknown_fields` patch, so it can be
+ *   wired without the read; it is not, because it would then write the wire
+ *   while `getPreferences` renders the mock.
+ *
+ * - `getAttackers` / `getFacets` / `getSourceHealth` — other slices' work,
+ *   or no endpoint at all (filter-values serves keys only, with no counts). */
 const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>>> = {
   getEvents,
   getCommands,
@@ -312,6 +587,16 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   getRecordings,
   getReplayDetail,
   searchAll,
+  getSettings,
+  getShellConfig,
+  validateConfig,
+  saveConfigSection,
+  rollbackConfig,
+  runServiceAction,
+  getMail,
+  getProblemReports,
+  submitProblemReport,
+  setProblemStatus,
 }
 
 /** The guarded live implementation of `name`, or undefined when this slice

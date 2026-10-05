@@ -10,8 +10,10 @@ import { enlargedRead, originalArgs } from './mock/large'
 import type { MockScenario } from './scenarios'
 
 /** Writes read-only mode still allows: turning it off, and one's own
- * preferences and problem reports. */
-const READ_ONLY_EXEMPT: ReadonlySet<string> = new Set(['saveConfigSection', 'rollbackConfig', 'savePreferences', 'submitProblemReport'])
+ * preferences and problem reports. Exported because src/data/api.ts enforces
+ * the same rule on the live tier, which has no read-only concept of its own:
+ * one list, or the guard silently applies to the mock tier only. */
+export const READ_ONLY_EXEMPT: ReadonlySet<string> = new Set(['saveConfigSection', 'rollbackConfig', 'savePreferences', 'submitProblemReport'])
 
 const readOnly = () => CONFIG.behavior.readOnly
 
