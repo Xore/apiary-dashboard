@@ -13,6 +13,7 @@ import { isLiveBackend, liveQuery, liveQueryNames } from './api'
 import { commandsQuery, eventsQuery, recordingSourceIpQuery } from './adapters/explorer'
 import type { EventPageWire, FilterValuesWire, RecordingsPageWire, ReplayWire, SearchResultWire, SessionDetailWire } from './contracts/explorer'
 import type { EventRow } from './contracts/events'
+import type { CorrelationWire, IpProfileWire, SourcesPageWire } from './contracts/sources'
 import type { Backend } from './backend'
 
 /** One wire row, as events.rs's `row_from_hit` builds it. */
@@ -147,6 +148,18 @@ describe('which queries the real backend answers', () => {
         'queuePayloadAction',
         'setRunChild',
         'startAnalysisRun',
+        // sources & correlation (#76)
+        'getAttackers',
+        'getCluster',
+        'getIdentityFusion',
+        'getInfraClusters',
+        'getIpProfile',
+        'getKillChain',
+        'getNetwork',
+        'getNetworkCampaigns',
+        'getSourceProfiles',
+        'resolveHash',
+        'setIpBlocked',
         // operations (#77)
         'acknowledgeAllAlerts',
         'getAlertDetail',
@@ -198,9 +211,16 @@ describe('which queries the real backend answers', () => {
   })
 
   it('answers nothing for a query this slice has not wired', () => {
-    // Still mock-only after #74: no backend endpoint serves either. #74 wired
-    // `getOverview`; `getAttackers` is the sources slice's (#76) work.
-    expect(liveQuery('getAttackers', undefined)).toBeUndefined()
+    // Still mock-only across every slice wired so far. No endpoint serves the
+    // overview KPIs, and no endpoint serves a facet COUNT (filter-values gives
+    // keys only). #74 wired `getOverview` and #76 wired `getAttackers`, so
+    // neither is listed here any more.
+    expect(liveQuery('getFacets', undefined)).toBeUndefined()
+    // The entity pages whose membership needs an address list nothing
+    // serves: investigate/cidr returns no members, and investigate/cluster
+    // 404s a cluster of fewer than two.
+    expect(liveQuery('getAsn', undefined)).toBeUndefined()
+    expect(liveQuery('getIdentity', undefined)).toBeUndefined()
   })
 
   it('leaves getPreferences and savePreferences on the mock — the public-query deadlock', () => {
@@ -2186,6 +2206,371 @@ describe('the Monitor slice reads the endpoints the Rust tier actually serves', 
     ]
     for (const [name, call, fixtures] of cases) {
       stub(monitorFixtures(fixtures))
+      await expect(call(), name).rejects.toThrow(ApiError)
+    }
+  })
+})
+
+// ---- sources & correlation (#76) ------------------------------------------
+
+const ip = '203.0.113.42'
+const cidr = '203.0.113.0/24'
+
+const sourcesWire: SourcesPageWire = {
+  total_unique: 2,
+  truncated: true,
+  rows: [{ ip, country: 'NL', events: 812, logins: 96, sessions: 31, sensors: ['cowrie'], first: '2026-09-25T04:11:00Z', last: '2026-10-04T21:02:00Z' }],
+}
+
+const attackerWire = {
+  id: 'att_9f21c4',
+  ips: [ip, '198.51.100.7'],
+  fingerprints: ['hassh:a7b1c0'],
+  payloads: ['9f86d0818'],
+  credentials: ['root:root'],
+  sensors: ['cowrie'],
+  events: 4210,
+  first: '2026-09-12T10:00:00Z',
+  last: '2026-10-04T20:44:00Z',
+  updated: '2026-10-04T21:00:00Z',
+  verdicts: [],
+  techniques: ['T1059.004'],
+  ports_touched: 18,
+  dest_ips: 240,
+  protocols_touched: 4,
+  scan: '',
+}
+
+const campaignWire = {
+  cidr,
+  score: 71,
+  events: 4210,
+  unique_ips: 12,
+  dst_ips_touched: 240,
+  ports_touched_counted: 18,
+  protocols_touched: 4,
+  scan: 'horizontal',
+  sensors: ['cowrie'],
+  ports: ['22', '23', '2323'],
+  creds: 9,
+  payloads: 3,
+  alerts: 14,
+  providers: ['hosting'],
+  fingerprints: 5,
+  first: '2026-09-30T00:00:00Z',
+  last: '2026-10-04T21:00:00Z',
+  generated: '2026-10-04T21:05:00Z',
+  explanation: 'horizontal scan across 240 hosts',
+}
+
+const credEdgeWire = { user: 'root', pass: 'admin', unique_ips: 14, ips: [ip], sensors: ['cowrie'], events: 210, first: '2026-09-28T00:00:00Z', last: '2026-10-04T19:12:00Z' }
+
+const clusterWire = { kind: 'asn', value: 'AS15169 Google LLC', events: 880, sources: 6, sensors: ['cowrie'], generated: '2026-10-04T21:05:00Z' }
+
+/** One correlation `records` row. `id` is "" on every row the three
+ * investigate endpoints serve: they build rows from a bare `_source`, so
+ * there is no hit to take a document id from. */
+const correlationRecord = (srcIp: string, sensor = 'cowrie') => ({ id: '', src_ip_claimed: '', time: '2026-10-04T20:41:03Z', sensor, src_ip: srcIp, country: 'NL', port: '22', proto: 'ssh', detail: 'command.input: uname -a', session: 'sess-77a1', pivots: { ...pivots, shasum: 'ab12cd34' }, record: { honeypot: { eventid: 'cowrie.command.input' } } })
+
+const correlationWire: CorrelationWire = { total: 2, truncated: false, sensors: [{ key: 'cowrie', count: 2 }], tunnel_connections: 1, tunnel_os_guesses: ['Linux 4.x'], records: [correlationRecord(ip), correlationRecord('198.51.100.7')] }
+
+const ipProfileWire: IpProfileWire = {
+  ip, total: 4210, first: '2026-09-25T04:11:00Z', last: '2026-10-04T21:02:00Z', country: 'NL', asn: 'Example Hosting B.V.',
+  sensors: [{ key: 'cowrie', count: 3900 }], ports: [{ key: '22', count: 900 }], protos: [{ key: 'ssh', count: 800 }],
+  credentials: [{ key: 'root', count: 96 }], commands: [{ key: 'uname -a', count: 40 }], sessions: [{ key: 'sess-77a1', count: 31 }],
+  techniques: [{ id: 'T1059.004', name: 'Unix Shell', domain: 'Execution', evidence: 'a shell command was recorded', count: 40, url: 'https://attack.mitre.org/techniques/T1059/004/' }],
+  payloads: [{ key: 'ab12cd34', count: 3 }], alerts: [], fingerprints: [{ key: 'hassh:a7b1c0', count: 60 }], paths: [],
+  events: [correlationRecord(ip)],
+  portbridge: null,
+  correlation: correlationWire,
+  confirmed_malicious: true,
+}
+
+const mapPointsWire = {
+  protocols: [], top_ports: [], countries: [], asns: [], providers: [], top_ips: [], top_paths: [], top_creds: [], top_commands: [],
+  clients: [], fingerprints: [], alerts: [], alert_cats: [], payloads: [], heatmap: [], sensors: [], logins: 0,
+  map_points: [{ city: 'Amsterdam', country: 'NL', lat: 52.37, lon: 4.9, events: 812, ips: 14, url: '/events?city=Amsterdam' }],
+}
+
+/** The two endpoints that must never be registered twice, and the two that
+ * answer the same path for two different page types. */
+const sourcesFixtures = (over: Record<string, unknown> = {}) => ({
+  '/api/v1/sources': sourcesWire,
+  '/api/v1/attackers': { total: 1, rows: [{ ...attackerWire, _doc_id: attackerWire.id }] },
+  '/api/v1/campaigns': { total: 1, rows: [{ ...campaignWire, _doc_id: cidr }] },
+  '/api/v1/clusters': { total: 1, rows: [{ ...clusterWire, _doc_id: 'asn:AS15169 Google LLC' }] },
+  '/api/v1/cred-reuse': [credEdgeWire],
+  '/api/v1/overview/dashboard': mapPointsWire,
+  '/api/v1/investigate/ip/203.0.113.42': ipProfileWire,
+  '/api/v1/ip-block/203.0.113.42': { IP: ip, Blocked: true, Active: true, BlockedBy: 'analyst', BlockedAt: '2026-10-04T12:00:00Z', ExpiresAt: null },
+  '/api/v1/investigate/cidr/203.0.113.0%2F24': { cidr, correlation: correlationWire },
+  '/api/v1/investigate/cluster': { kind: 'fingerprint', value: 'hassh:a7b1c0', ip_count: 2, correlation: correlationWire },
+  '/api/v1/config': configWire,
+  ...over,
+})
+
+describe('the sources slice reads the endpoints the Rust tier actually serves', () => {
+  it('builds the attack-sources page from the two documents it needs', async () => {
+    const calls = stub(sourcesFixtures())
+    const out = await live('getSourceProfiles')()
+    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/overview/dashboard', '/api/v1/sources'])
+    expect(out.sources).toHaveLength(1)
+    expect(out.mapPoints).toEqual([{ country: 'NL', lat: 52.37, lon: 4.9, events: 812, ips: 14 }])
+    // The sources handler caps a page at `min(offset + size, 1000)`; asking
+    // for its ceiling is what makes the list the whole 1000-bucket answer.
+    expect(new URL(calls[0]).searchParams.get('size')).toBe('1000')
+  })
+
+  it('registers /overview/dashboard once — ?parts= is the endpoint selector, not a second route', async () => {
+    // The Monitor slice reads the same path for its own slice. Two entries
+    // would be the same request twice; one helper serves both.
+    const calls = stub(sourcesFixtures())
+    await live('getSourceProfiles')()
+    const dashboards = calls.filter((url) => new URL(url).pathname === '/api/v1/overview/dashboard')
+    expect(dashboards).toHaveLength(1)
+    expect(new URL(dashboards[0]).searchParams.get('parts')).toBe('map_points')
+  })
+
+  it('GAP 1: SourceProfile.org stays empty — the sources row has no organization field', async () => {
+    // The row is a terms aggregation over `source.ip` with country, event
+    // counts and an activity window; it never asks for an organization, so
+    // none is synthesised. Same for total_unique and truncated, which the
+    // page type has no field for: the header counts the rows it was given.
+    stub(sourcesFixtures())
+    const { sources } = await live('getSourceProfiles')()
+    expect(sources[0]).toMatchObject({ ip, country: 'NL', org: '', events: 812, logins: 96, sessions: 31 })
+  })
+
+  it('GAP 2: MapPoint drops the wire city and url', async () => {
+    // `city` has no page field and `url` is the backend's own drill-down
+    // link; the map is pinned by country, which the page can link.
+    stub(sourcesFixtures())
+    const { mapPoints: pins } = await live('getSourceProfiles')()
+    expect(pins[0]).not.toHaveProperty('city')
+    expect(pins[0]).not.toHaveProperty('url')
+    expect(pins[0].ips).toBe(14)
+  })
+
+  it('reads the three store pages and the bare cred-reuse array', async () => {
+    const attackersCalls = stub(sourcesFixtures())
+    expect(await live('getAttackers')()).toMatchObject([{ id: 'att_9f21c4', ips: [ip, '198.51.100.7'], destIps: 240, portsTouched: 18 }])
+    expect(new URL(attackersCalls[0]).searchParams.get('size')).toBe('100')
+
+    const campaignCalls = stub(sourcesFixtures())
+    const { campaigns, credReuse } = await live('getNetworkCampaigns')()
+    expect(campaignCalls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/campaigns', '/api/v1/cred-reuse'])
+    expect(campaigns).toHaveLength(1)
+    expect(credReuse[0]).toEqual({ id: 'root:admin', user: 'root', pass: 'admin', uniqueIps: 14, sensors: ['cowrie'], events: 210, last: '2026-10-04T19:12:00Z' })
+
+    const clusterCalls = stub(sourcesFixtures())
+    expect(await live('getInfraClusters')()).toEqual([{ id: 'asn:AS15169 Google LLC', kind: 'asn', value: 'AS15169 Google LLC', sources: 6, events: 880, sensors: ['cowrie'] }])
+    expect(new URL(clusterCalls[0]).searchParams.get('size')).toBe('100')
+  })
+
+  it('GAP 3: a campaign portsTouched is the size of the ports list, not the scored count', async () => {
+    // `ports_touched_counted` is what the correlator blended into `score`,
+    // not a port count; the page's own value is the list it can render.
+    stub(sourcesFixtures())
+    const { campaigns } = await live('getNetworkCampaigns')()
+    expect(campaigns[0].portsTouched).toBe(3)
+    expect(campaigns[0]).not.toHaveProperty('ports_touched_counted')
+    // Also GAP 3: asns and sequence have no writer field at all.
+    expect(campaigns[0].asns).toEqual([])
+    expect(campaigns[0].sequence).toEqual([])
+  })
+
+  it('GAP 4: cred-reuse ids are the rejoined user:pass, and ips/first are dropped', async () => {
+    // A bare array, not a paged read: no envelope, nothing to page.
+    stub(sourcesFixtures())
+    const { credReuse } = await live('getNetworkCampaigns')()
+    expect(credReuse[0].id).toBe('root:admin')
+    expect(credReuse[0]).not.toHaveProperty('ips')
+    expect(credReuse[0]).not.toHaveProperty('first')
+  })
+
+  it('GAP 5: an unknown cluster kind degrades to fingerprint, never a wider union', async () => {
+    // The page's fifth kind, `credential`, has no cluster document at all,
+    // and ClusterKind is not widened to match a backend that never writes
+    // one. An unrecognised wire value degrades the same way.
+    stub(sourcesFixtures({ '/api/v1/clusters': { total: 2, rows: [{ ...clusterWire, kind: 'credential', _doc_id: 'credential:root' }, { ...clusterWire, kind: 'sessions', _doc_id: 'sessions:x' }] } }))
+    const out = await live('getInfraClusters')()
+    expect(out.map((cluster) => cluster.kind)).toEqual(['fingerprint', 'fingerprint'])
+    // `id` is rebuilt from the wire's own kind:value, not from the store's
+    // `_doc_id` — which for an unknown kind is the raw string the backend
+    // indexed, and carries the value too.
+    expect(out[0].id).toBe('credential:AS15169 Google LLC')
+  })
+
+  it('fans the kill-chain page out over its three chart documents', async () => {
+    const calls = stub(
+      sourcesFixtures({
+        '/api/v1/charts/attck-coverage': { tactics: ['Execution', 'Initial Access'], techniques: ['T1059.004 Unix Shell', 'T1190 Exploit Public-Facing Application'], cells: [{ tactic_idx: 0, technique_idx: 0, count: 40 }, { tactic_idx: 1, technique_idx: 1, count: 7 }] },
+        '/api/v1/charts/kill-chain-sankey': { nodes: [{ name: 'Reconnaissance' }, { name: 'Initial Access' }], links: [{ source: 'Reconnaissance', target: 'Initial Access', value: 12 }] },
+        '/api/v1/charts/campaign-timeline': [{ cidr, start_ms: 1_757_000_000_000, end_ms: 1_757_100_000_000, score: 71, events: 4210 }],
+      }),
+    )
+    const out = await live('getKillChain')()
+    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/charts/attck-coverage', '/api/v1/charts/campaign-timeline', '/api/v1/charts/kill-chain-sankey'])
+    // The grid's technique entries are "T1059.004 Unix Shell"; the page wants
+    // the id and the name apart.
+    expect(out.coverage).toEqual([
+      { tactic: 'Execution', technique: 'T1059.004', name: 'Unix Shell', events: 40 },
+      { tactic: 'Initial Access', technique: 'T1190', name: 'Exploit Public-Facing Application', events: 7 },
+    ])
+    // The sankey names its tactics; the page's Sankey indexes into nodes.
+    expect(out.flow.links).toEqual([{ source: 0, target: 1, value: 12 }])
+    // The timeline's times are epoch millis; the chart parses ISO strings.
+    expect(out.timeline).toEqual([{ cidr, first: '2025-09-04T15:33:20.000Z', last: '2025-09-05T19:20:00.000Z', events: 4210 }])
+  })
+
+  it('answers the ip profile from investigate/ip joined with the block and the entity', async () => {
+    const calls = stub(sourcesFixtures())
+    const out = (await live('getIpProfile')(ip))!
+    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/attackers', '/api/v1/investigate/ip/203.0.113.42', '/api/v1/ip-block/203.0.113.42'])
+    expect(out.source).toMatchObject({ ip, org: 'Example Hosting B.V.', riskScore: 0, tags: [] })
+    expect(out.blocked).toBe(true)
+    expect(out.block).toEqual({ by: 'analyst', at: '2026-10-04T12:00:00Z' })
+    expect(out.attackerId).toBe('att_9f21c4')
+    expect(out.techniques).toEqual([{ id: 'T1059.004', name: 'Unix Shell', tactic: 'Execution', events: 40 }])
+    // The correlation's rows carry no document id (row_from_source), and
+    // they still map through the page event like any other row.
+    expect(out.events[0]).toMatchObject({ id: '', sensor: 'cowrie', srcIp: ip, sessionId: 'sess-77a1' })
+  })
+
+  it('answers an address with no events as the page null, a 404 upstream', async () => {
+    stub(sourcesFixtures({ '/api/v1/investigate/ip/203.0.113.42': fail(404, 'no events for this ip') }))
+    expect(await live('getIpProfile')(ip)).toBeNull()
+  })
+
+  it('GAP 6: a lapsed block record reads as no block at all', async () => {
+    // The backend computes `Active` fresh on read, so a record it still
+    // reports `Blocked: true` over reads as blocked-but-unattributed. A
+    // never-blocked address has no document at all and the handler
+    // synthesizes `{IP, Blocked:false}` — also no block.
+    const lapsed = { IP: ip, Blocked: true, Active: false, BlockedBy: 'analyst', BlockedAt: '2026-10-01T12:00:00Z' }
+    stub(sourcesFixtures({ '/api/v1/ip-block/203.0.113.42': lapsed }))
+    const out = (await live('getIpProfile')(ip))!
+    expect(out.blocked).toBe(false)
+    expect(out.block).toBeUndefined()
+    stub(sourcesFixtures({ '/api/v1/ip-block/203.0.113.42': { IP: ip, Blocked: false, Active: false } }))
+    expect((await live('getIpProfile')(ip))!.blocked).toBe(false)
+  })
+
+  it('GAP 7: the block write carries no duration and no actor — a permanent block', async () => {
+    // THE slice's dangerous gap. BlockBody takes `expires_days` and
+    // `actor`; the page's setter is `setIpBlocked(ip, blocked)` and has no
+    // field for either, so neither is sent and the backend stores
+    // `ExpiresAt: null`. An operator who wants a week gets one until they
+    // lift it, and the page's confirm dialog claims no duration either.
+    stub(sourcesFixtures({ '/api/v1/ip-block': { IP: ip, Blocked: true, BlockedBy: '', BlockedAt: '2026-10-04T21:00:00Z', ExpiresAt: null } }))
+    await live('setIpBlocked')(ip, true)
+    const [write] = bodiesOf().filter((call) => call.path === '/api/v1/ip-block')
+    expect(write.body).toEqual({ ip, blocked: true })
+    expect(write.body).not.toHaveProperty('expires_days')
+    expect(write.body).not.toHaveProperty('actor')
+  })
+
+  it('keeps the block write admin-only on the live path, before any fetch', async () => {
+    const viewer = { id: 'u', name: 'A', email: 'a@example.test', roles: ['viewer' as const] }
+    const calls = stub(sourcesFixtures())
+    const refused = await liveQuery('setIpBlocked', viewer)!('203.0.113.42', true).catch((error: unknown) => error)
+    expect(refused).toBeInstanceOf(ApiError)
+    expect((refused as ApiError).kind).toBe('forbidden')
+    expect(calls).toHaveLength(0)
+  })
+
+  it('honours read-only before writing a block', async () => {
+    stub(sourcesFixtures({ '/api/v1/config': { ...configWire, payload: { behavior: { read_only: true } } } }))
+    await expect(live('setIpBlocked')(ip, true)).rejects.toThrow(ApiError)
+  })
+
+  it('builds a network page from its CIDR correlation, percent-encoding the slash', async () => {
+    const calls = stub(sourcesFixtures())
+    const out = (await live('getNetwork')(cidr))!
+    expect(calls.some((url) => new URL(url).pathname === '/api/v1/investigate/cidr/203.0.113.0%2F24')).toBe(true)
+    expect(out).toMatchObject({ cidr, asn: 'AS64496', org: 'Example Transit', country: 'NL' })
+    expect(out.group.members.map((m) => m.ip)).toEqual([ip, '198.51.100.7'])
+    expect(out.group.totalMatches).toBe(2)
+    expect(out.campaign).toMatchObject({ cidr, score: 71 })
+    // The group is folded from the records it was given: no organization
+    // and no login count, because nothing upstream carries either.
+    expect(out.group.members.every((m) => m.org === '' && m.logins === 0)).toBe(true)
+    expect(out.group.networks).toEqual([{ id: '198.51.100.0/24', label: '198.51.100.0/24', count: 1 }, { id: '203.0.113.0/24', label: '203.0.113.0/24', count: 1 }])
+  })
+
+  it('asks the campaigns store for the network own campaign, and leaves it off when the store holds none', async () => {
+    stub(sourcesFixtures({ '/api/v1/campaigns': { total: 0, rows: [] } }))
+    expect((await live('getNetwork')(cidr))!.campaign).toBeUndefined()
+  })
+
+  it('builds a cluster page from the same correlation, with kind and value as separate params', async () => {
+    const calls = stub(sourcesFixtures())
+    const out = (await live('getCluster')('fingerprint', 'hassh:a7b1c0'))!
+    const asked = calls.find((url) => new URL(url).pathname === '/api/v1/investigate/cluster')!
+    // A value with spaces decodes differently through a packed path
+    // segment than through a query string, so they are separate params.
+    expect(new URL(asked).searchParams.get('kind')).toBe('fingerprint')
+    expect(new URL(asked).searchParams.get('value')).toBe('hassh:a7b1c0')
+    expect(out).toMatchObject({ kind: 'fingerprint', value: 'hassh:a7b1c0' })
+    expect(out.group.members).toHaveLength(2)
+  })
+
+  it('answers a cluster the backend does not correlate with the page null', async () => {
+    // Fewer than two members is the handler's own 404; a kind its
+    // membership filter does not know (`credential`, which the page has and
+    // no cluster document does) is a 400.
+    stub(sourcesFixtures({ '/api/v1/investigate/cluster': fail(404, 'cluster not found') }))
+    expect(await live('getCluster')('payload', '9f86d0818')).toBeNull()
+    stub(sourcesFixtures({ '/api/v1/investigate/cluster': fail(400, 'unknown cluster kind') }))
+    await expect(live('getCluster')('credential', 'root:toor')).rejects.toThrow(ApiError)
+  })
+
+  it('reads the identity why-merged table from the fusion chart endpoint', async () => {
+    const calls = stub(sourcesFixtures({ '/api/v1/charts/attacker-fusion': { categories: ['JA3', 'HASSH'], values: [2, 1], ips: [ip, '198.51.100.7'] } }))
+    expect(await live('getIdentityFusion')('att_9f21c4')).toEqual({ categories: ['JA3', 'HASSH'], values: [2, 1], ips: [ip, '198.51.100.7'] })
+    expect(new URL(calls[0]).searchParams.get('id')).toBe('att_9f21c4')
+    // A 404 is the backend's "no such attacker entity".
+    stub(sourcesFixtures({ '/api/v1/charts/attacker-fusion': fail(404, 'no such attacker entity') }))
+    expect(await live('getIdentityFusion')('att_nope')).toBeNull()
+  })
+
+  it('resolves a hash through the cluster endpoint the cluster page already reads', async () => {
+    // One seam entry, two page types: `resolveHash` and `getCluster` ask
+    // the same upstream path with the same query shape.
+    const calls = stub(sourcesFixtures({ '/api/v1/investigate/cluster': { kind: 'payload', value: '9f86d0818', ip_count: 2, correlation: correlationWire } }))
+    expect(await live('resolveHash')('9f86d0818')).toEqual({ kind: 'cluster', clusterKind: 'payload', value: '9f86d0818' })
+    const asked = calls.filter((url) => new URL(url).pathname === '/api/v1/investigate/cluster')
+    expect(asked.length).toBeGreaterThan(0)
+    // A HASSH-prefixed lookup matches the bare value the store holds.
+    stub(sourcesFixtures({ '/api/v1/investigate/cluster': { kind: 'fingerprint', value: 'hassh:a7b1c0', ip_count: 2, correlation: correlationWire } }))
+    expect(await live('resolveHash')('a7b1c0')).toEqual({ kind: 'cluster', clusterKind: 'fingerprint', value: 'hassh:a7b1c0' })
+    // A 404 for every kind is the page's not-found, not an error.
+    stub(sourcesFixtures({ '/api/v1/investigate/cluster': fail(404, 'cluster not found') }))
+    expect(await live('resolveHash')('deadbeef')).toEqual({ kind: 'not-found', value: 'deadbeef' })
+  })
+
+  it('leaves the mock answering when BACKEND_URL is unset or a scenario is in force', async () => {
+    delete process.env.BACKEND_URL
+    for (const name of ['getSourceProfiles', 'getAttackers', 'getNetworkCampaigns', 'getInfraClusters', 'getKillChain', 'getIpProfile', 'getNetwork', 'getCluster', 'resolveHash', 'getIdentityFusion'] as const) {
+      expect(liveQuery(name, undefined), name).toBeUndefined()
+    }
+  })
+
+  it('maps a failed sources fetch to an error, never to an empty list', async () => {
+    const cases: Array<[string, () => Promise<unknown>, Record<string, unknown>]> = [
+      ['getSourceProfiles', () => live('getSourceProfiles')(), { '/api/v1/sources': fail(502) }],
+      ['getAttackers', () => live('getAttackers')(), { '/api/v1/attackers': fail(502) }],
+      ['getNetworkCampaigns', () => live('getNetworkCampaigns')(), { '/api/v1/campaigns': fail(502) }],
+      ['getInfraClusters', () => live('getInfraClusters')(), { '/api/v1/clusters': fail(502) }],
+      ['getKillChain', () => live('getKillChain')(), { '/api/v1/charts/attck-coverage': fail(502) }],
+      ['getIpProfile', () => live('getIpProfile')(ip), { '/api/v1/investigate/ip/203.0.113.42': fail(502) }],
+      ['getNetwork', () => live('getNetwork')(cidr), { '/api/v1/investigate/cidr/203.0.113.0%2F24': fail(502) }],
+      ['getCluster', () => live('getCluster')('payload', '9f86'), { '/api/v1/investigate/cluster': fail(502) }],
+      ['getIdentityFusion', () => live('getIdentityFusion')('att_1'), { '/api/v1/charts/attacker-fusion': fail(502) }],
+      ['setIpBlocked', () => live('setIpBlocked')(ip, true), { '/api/v1/ip-block': fail(502) }],
+    ]
+    for (const [name, call, fixtures] of cases) {
+      stub(sourcesFixtures(fixtures))
       await expect(call(), name).rejects.toThrow(ApiError)
     }
   })

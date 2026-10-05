@@ -28,7 +28,6 @@ import {
   sessionDetail,
 } from './adapters/explorer'
 import { toHoneypotEvent } from './adapters/events'
-import { networkCampaigns } from './adapters/sources'
 import {
   mlAckBody,
   mlDispositionBody,
@@ -48,6 +47,22 @@ import {
 import type { EventRowGap } from './adapters/events'
 import type { SensorEventGap } from './adapters/operations'
 import { generateReportResult, generatedReportPage, reportDefinitionBody, reportDefinitions, reportTemplates, savedReportDefinition } from './adapters/reports'
+import {
+  attackers,
+  attackCoverage,
+  campaignTimeline,
+  correlationGroup,
+  credReuse,
+  identityFusion,
+  infraClusters,
+  ipBlockRecord,
+  ipProfile,
+  killChainFlow,
+  mapPoints,
+  networkCampaigns,
+  setIpBlockBody,
+  sourceProfiles,
+} from './adapters/sources'
 import {
   alertAckBody,
   alertPage,
@@ -146,7 +161,6 @@ import type {
   OverviewKpis,
   StorePage,
 } from './contracts/monitor'
-import type { CampaignPageWire } from './contracts/sources'
 import type {
   AnalyzerCatalogWire,
   ArtifactListWire,
@@ -172,8 +186,24 @@ import type {
   WorkbenchRunListWire,
   YaraRunPageWire,
 } from './contracts/evidence'
+import type {
+  AttackerPageWire,
+  AttckGridWire,
+  CampaignPageWire,
+  CampaignTimelineWire,
+  ClusterCorrelationWire,
+  ClusterPageWire,
+  CidrCorrelationWire,
+  CredEdgeWire,
+  FusionWire,
+  IpBlockWire,
+  IpProfileWire,
+  MapPointsWire,
+  SankeyWire,
+  SourcesPageWire,
+} from './contracts/sources'
 import type { Backend, Caller } from './backend'
-import type { CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Protocol, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig, TimeBucket } from './types'
+import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Protocol, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig, TimeBucket } from './types'
 
 /** A dashboard that hangs forever is worse than one that errors. Same budget
  * as the canonical BFF's own backend calls (backend.server.ts). */
@@ -928,6 +958,201 @@ export async function openLiveStream(signal: AbortSignal): Promise<Response> {
 export const liveRow = pageEvent
 
 // ---- the wire queries -------------------------------------------------------
+
+// ---- the sources & correlation slice ---------------------------------------
+
+/** GET /api/v1/sources?offset&size — the attack-sources list. The page does
+ * not page this list (one loader, no paging control), so one full page is
+ * asked for at the handler's own ceiling: `size` is bounded by
+ * `min(offset + size, 1000)` (aggregates.rs L88) and the terms aggregation
+ * it fills stops at the same 1000 buckets, so a smaller ask would only
+ * shorten the list.
+ *
+ * The page's `mapPoints` is the OTHER endpoint (see `fetchMapPoints`): two
+ * calls, joined here because the page reads one loader. */
+const getSourceProfiles: Backend['getSourceProfiles'] = async () => {
+  const [sources, points] = await Promise.all([get<SourcesPageWire>('getSourceProfiles', '/api/v1/sources', { offset: 0, size: 1000 }), getDashboardSlice('getSourceProfiles', 'map_points')])
+  return { sources: sourceProfiles(sources ?? { total_unique: 0, truncated: false, rows: [] }), mapPoints: points }
+}
+
+/** GET /api/v1/overview/dashboard?parts=map_points — the world map's pins.
+ *
+ * The one helper both this slice's map and the Monitor slice's overview
+ * read, so the path is registered ONCE: `?parts=` is the endpoint's own
+ * selector (dashboard.rs `allowed_aggs`, L88), not a second route. A
+ * second registration of the path would be the same request with the same
+ * body, which is exactly what a shared seam entry prevents. */
+const getDashboardSlice = async (endpoint: string, part: string) => mapPoints((await get<MapPointsWire>(endpoint, '/api/v1/overview/dashboard', { parts: part })) ?? { map_points: [] } as unknown as MapPointsWire)
+
+/** GET /api/v1/attackers?offset&size — the attacker-entity store, one page
+ * per the page's own loader. `size` is capped at 100 by
+ * `store_search_body` (stores.rs L124) whatever is asked for, so the ask
+ * is the cap rather than a number the handler will silently reduce. */
+const getAttackers: Backend['getAttackers'] = async () => attackers((await get<AttackerPageWire>('getAttackers', '/api/v1/attackers', { offset: 0, size: 100 })) ?? { total: 0, rows: [] })
+
+/** GET /api/v1/campaigns and GET /api/v1/cred-reuse — the campaign list and
+ * the credential-reuse edges, joined because the page reads one loader.
+ *
+ * `cred-reuse` is the slice's one bare-array read (correlations.rs L344), so
+ * it is not paged and carries no envelope; a 200 with no body is the only
+ * way it reads empty. */
+const getNetworkCampaigns: Backend['getNetworkCampaigns'] = async () => {
+  const [page, edges] = await Promise.all([get<CampaignPageWire>('getNetworkCampaigns', '/api/v1/campaigns', { size: 100 }), get<CredEdgeWire[]>('getNetworkCampaigns', '/api/v1/cred-reuse')])
+  return { campaigns: networkCampaigns(page ?? { total: 0, rows: [] }), credReuse: credReuse(edges ?? []) }
+}
+
+/** GET /api/v1/clusters?offset&size — the attacker-cluster store. Same
+ * 100-row cap as the other store pages above. */
+const getInfraClusters: Backend['getInfraClusters'] = async () => infraClusters((await get<ClusterPageWire>('getInfraClusters', '/api/v1/clusters', { offset: 0, size: 100 })) ?? { total: 0, rows: [] })
+
+/** GET /api/v1/charts/{attck-coverage,kill-chain-sankey,campaign-timeline} —
+ * the kill-chain page's three charts. Three documents: the ATT&CK grid, the
+ * tactic sankey and the campaign timeline are three aggregations, and the
+ * page shows all three at once. */
+const getKillChain: Backend['getKillChain'] = async () => {
+  const [grid, sankey, timeline] = await Promise.all([
+    get<AttckGridWire>('getKillChain', '/api/v1/charts/attck-coverage'),
+    get<SankeyWire>('getKillChain', '/api/v1/charts/kill-chain-sankey'),
+    get<CampaignTimelineWire[]>('getKillChain', '/api/v1/charts/campaign-timeline'),
+  ])
+  const coverage = attackCoverage(grid ?? { tactics: [], techniques: [], cells: [] })
+  return { ...coverage, flow: killChainFlow(sankey ?? { nodes: [], links: [] }), timeline: campaignTimeline(timeline ?? []) }
+}
+
+/** GET /api/v1/investigate/ip/{ip}, joined with the two endpoints the page
+ * renders beside it: /api/v1/ip-block/{ip} for the block badge, and the
+ * attackers store for the `attackerId` link.
+ *
+ * Three documents, three questions, one page. The ip-block record is read
+ * through the request's own `x-actor-username`, which ip_block.rs's read
+ * path does not check but the page's permission model treats as the
+ * operator's own view.
+ *
+ * `attackerId` is resolved by asking the store for the entity that
+ * carries this address (`?ip=`, the store's own Lucene narrowing,
+ * stores.rs L177), because no endpoint resolves an address to an entity id
+ * directly. The page treats it as optional, so a store that holds none
+ * simply leaves the link off. */
+const getIpProfile: Backend['getIpProfile'] = async (ip) => {
+  const [wire, block, entities] = await Promise.all([
+    get<IpProfileWire>('getIpProfile', `/api/v1/investigate/ip/${encodeURIComponent(ip)}`),
+    get<IpBlockWire>('getIpProfile', `/api/v1/ip-block/${encodeURIComponent(ip)}`),
+    get<AttackerPageWire>('getIpProfile', '/api/v1/attackers', { offset: 0, size: 100, ip }),
+  ])
+  if (!wire) return null
+  const record = block ? ipBlockRecord(block) : null
+  return { ...ipProfile(wire), blocked: Boolean(record), ...(record ? { block: record } : {}), events: wire.events.map(pageEvent), ...(entities?.rows[0] ? { attackerId: entities.rows[0].id } : {}) }
+}
+
+/** POST /api/v1/ip-block — the block toggle, admin-only (authorize.ts:14),
+ * enforced before the fetch by `liveQuery`, the same decision the mock tier
+ * makes, so no check is added here.
+ *
+ * The PAGE IS A SUBSET of the endpoint, and this is the slice's one place
+ * where that is load-bearing rather than cosmetic. `BlockBody` carries
+ * `expires_days` and `actor` (ip_block.rs L34); the page's setter is
+ * `setIpBlocked(ip, blocked)` and has no field for either, so
+ * `setIpBlockBody` sends neither and the backend stores `ExpiresAt: null` —
+ * a PERMANENT block. An operator who wanted a week gets one until they lift
+ * it, and nothing on the page says otherwise. The wire contract keeps both
+ * fields typed (`SetIpBlockBody`), so the moment the page can express a
+ * duration they are one line away.
+ *
+ * The write is therefore the page's own two states and nothing more; the
+ * returned record is dropped, exactly as `setAlertsAcknowledged` drops its
+ * envelope, because the page re-reads the profile it came from. */
+const setIpBlocked: Backend['setIpBlocked'] = async (ip, blocked) => {
+  await guardReadOnly('setIpBlocked')
+  await post('setIpBlocked', '/api/v1/ip-block', setIpBlockBody(ip, blocked))
+}
+
+/** GET /api/v1/investigate/cidr/{cidr} — a network's members, events and
+ * breakdown. The `Correlation` the endpoint wraps is the whole answer;
+ * `correlationGroup` folds its records into the page's `SourceGroup`.
+ *
+ * `{cidr}` carries a literal "/", which axum's router splits on the RAW
+ * request target, so the path segment is percent-encoded (investigate.rs
+ * L540) — the same encoding every link to `/networks/$cidr` already does.
+ *
+ * The campaign card on the page is the campaigns store read for this one
+ * prefix (`?q=` is the store's own Lucene narrowing); a prefix the
+ * correlator never scored has none, and the page says so rather than
+ * inventing one. The network's own ASN/org/country come from its first
+ * member's row: the correlation endpoint carries no address attributes, and
+ * the address itself is public data already on the row. */
+const getNetwork: Backend['getNetwork'] = async (cidr) => {
+  const wire = await get<CidrCorrelationWire>('getNetwork', `/api/v1/investigate/cidr/${encodeURIComponent(cidr)}`)
+  if (!wire) return null
+  const events = wire.correlation.records.map(pageEvent)
+  const group = correlationGroup(wire.correlation, events)
+  if (!group.members.length) return null
+  const page = await get<CampaignPageWire>('getNetwork', '/api/v1/campaigns', { size: 100, q: `cidr:${cidr}` })
+  // `networkCampaigns` maps the store page, so the prefix's own campaign is
+  // the first row or nothing: a store page that does not hold it is a
+  // prefix the correlator never scored, and the page says so.
+  const campaigns = networkCampaigns(page ?? { total: 0, rows: [] })
+  const campaign = campaigns.find((row) => row.cidr === cidr)
+  // `events` is non-empty here: a group with no member is the page's
+  // not-found, returned above.
+  const first = events.find((row) => row.asn || row.org) ?? events[0]
+  return { cidr, asn: first.asn, org: first.org, country: first.country, group, ...(campaign ? { campaign } : {}) }
+}
+
+/** GET /api/v1/investigate/cluster?kind=&value= — the same endpoint
+ * `resolveHash` asks, with the same question shape, so both go through one
+ * fetch (`clusterCorrelation` below) rather than registering the path twice.
+ *
+ * A cluster kind the page knows but the backend does not — `credential` —
+ * is a 400 upstream (`cluster_membership_filter`, investigate.rs L578), so
+ * the page's not-found is the honest answer for it: no cluster document of
+ * that kind exists either. A kind with fewer than two members is the
+ * handler's own 404. */
+const getCluster: Backend['getCluster'] = async (kind, value) => {
+  const wire = await clusterCorrelation('getCluster', kind, value)
+  if (!wire) return null
+  const events = wire.correlation.records.map(pageEvent)
+  const group = correlationGroup(wire.correlation, events)
+  if (!group.members.length) return null
+  return { kind: kind as ClusterEntity['kind'], value, group }
+}
+
+/** GET /api/v1/charts/attacker-fusion?id= — the identity page's "Why merged"
+ * table. The backend's own per-category shared-value counts, which is
+ * exactly what the page's mock computes; a 404 is "no such entity", the
+ * page's null. */
+const getIdentityFusion: Backend['getIdentityFusion'] = async (id) => {
+  const wire = await get<FusionWire>('getIdentityFusion', '/api/v1/charts/attacker-fusion', { id })
+  return wire ? identityFusion(wire) : null
+}
+
+/** The IOC lookup's hash half: `GET /api/v1/investigate/cluster` with the
+ * value as a fingerprint, which is the endpoint the cluster page reads too
+ * — so it asks the SAME question through the same `clusterCorrelation`
+ * helper rather than registering the path a second time.
+ *
+ * The page's three answers are kept in the page's order of confidence:
+ * a payload whose hash is exactly the value, else the cluster whose
+ * fingerprint (HASSH-prefixed or bare) is it, else not-found. A 200 whose
+ * `value` came back different is a miss, not a hit: the endpoint matches
+ * a term, and a term match on a normalized value is still the cluster's
+ * value, not the operator's. */
+const resolveHash: Backend['resolveHash'] = async (value) => {
+  const wanted = value.toLowerCase().replace(/^hassh:/, '')
+  for (const kind of ['payload', 'fingerprint']) {
+    const wire = await clusterCorrelation('resolveHash', kind, value)
+    if (wire?.correlation.total && wire.value.toLowerCase().replace(/^hassh:/, '') === wanted) return { kind: 'cluster', clusterKind: wire.kind, value: wire.value }
+  }
+  return { kind: 'not-found', value }
+}
+
+/** The one investigate/cluster fetch, shared by the two page types that
+ * need it. `kind` and `value` are SEPARATE query parameters on purpose
+ * (investigate.rs L604): a value such as "AS15169 Google LLC" decodes
+ * differently through a packed path segment than through a query string.
+ * A 400 (a kind the membership filter does not know) is a 400 for this
+ * page too, not a silent empty cluster. */
+const clusterCorrelation = (endpoint: string, kind: string, value: string): Promise<ClusterCorrelationWire | null> => get<ClusterCorrelationWire>(endpoint, '/api/v1/investigate/cluster', { kind, value })
+
 
 /** GET /api/v1/sensors/catalog. A terms aggregation over a 14-day window
  * (sensors.rs `catalog`, L428): a name, an event count and a last-seen, and
@@ -1938,8 +2163,7 @@ const DAY_MS = 86_400_000
  *   wired without the read; it is not, because it would then write the wire
  *   while `getPreferences` renders the mock.
  *
- * - `getAttackers` / `getFacets` / `getSourceHealth` — other slices' work,
- *   or no endpoint at all (filter-values serves keys only, with no counts).
+ * - `getAttackers` / `getSourceHealth` — other slices' work.
  *
  * - `previewReport` — reports' own gap: the backend renders a report, it does
  *   not preview a draft, and there is no `/reports/preview` route. The
@@ -1948,6 +2172,18 @@ const DAY_MS = 86_400_000
  *   of the reports gap list (`sandbox-runs` / payload search for the artifact
  *   pickers) is in contracts/reports.ts, typed and deliberately unadapted: no
  *   page type exists to adapt them to.
+ *
+ * - `getFacets` — no endpoint at all: filter-values serves keys only, with
+ *   no counts, and the events slice's read of it is why the counts are gone.
+ *
+ * - `getSourceIdentity` / `getSourceNetwork` / `getAsn` / `getIdentity` /
+ *   `getCampaign` / `getBlockedIps` — page types whose membership the
+ *   endpoints above answer but whose shape needs a member set nothing
+ *   serves: `investigate/cluster` 404s a cluster of fewer than two members
+ *   and `investigate/cidr` returns no address list at all (its group is
+ *   folded from the records it does return, as `getNetwork`'s comment says).
+ *   `getBlockedIps` is the export route's own job (`ip-block-export`), not
+ *   a list endpoint — see downloads.ts.
  *
  * Gaps that are wired anyway, and why, are in the slice's own tests: the
  * lossy scope filters, the scope keys with no page field, `schedule.enabled`
@@ -2003,7 +2239,19 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   getTopology,
   getDeadLetters,
   purgeDeadLetters,
-// Tools (#80)
+  // Sources and correlation (#76)
+  getSourceProfiles,
+  getAttackers,
+  getNetworkCampaigns,
+  getInfraClusters,
+  getKillChain,
+  getIpProfile,
+  setIpBlocked,
+  getNetwork,
+  getCluster,
+  getIdentityFusion,
+  resolveHash,
+  // Tools (#80)
   getCanarytokens,
   createCanarytoken,
   getCredentials,
