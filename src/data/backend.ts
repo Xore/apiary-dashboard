@@ -56,8 +56,9 @@ export function backend(scenario: MockScenario = 'normal', caller?: Caller): Bac
  * the response status and reach the pages in the same states. */
 export async function runForRequest(name: string, args: unknown[], scenario: unknown): Promise<unknown> {
   const [{ getRequest, setResponseStatus }, { resolveUser }] = await Promise.all([import('@tanstack/react-start/server'), import('#/server/identity')])
-  const user = await resolveUser(getRequest())
-  const live = isScenario(scenario) ? undefined : (await import('./api')).liveQuery(name, user)
+  const request = getRequest()
+  const user = await resolveUser(request)
+  const live = isScenario(scenario) ? undefined : (await import('./api')).liveQuery(name, user, request.headers.get('x-request-id') || undefined)
   const query = (live ?? backend(isScenario(scenario) ? scenario : 'normal', user)[name as QueryName]) as ((...a: unknown[]) => Promise<unknown>) | undefined
   if (!query) throw new Error(`unknown query ${name}`)
   try {

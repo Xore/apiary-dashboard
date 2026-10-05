@@ -479,6 +479,7 @@ describe('a degraded body degrades, and a failed call errors', () => {
     for (const [status, kind, retryAfter] of [
       [400, 'invalid', undefined],
       [403, 'forbidden', undefined],
+      [423, 'locked', undefined],
       [401, 'unavailable', undefined],
       [503, 'overloaded', 30],
       [504, 'unavailable', undefined],
@@ -488,6 +489,46 @@ describe('a degraded body degrades, and a failed call errors', () => {
       expect(error.kind, String(status)).toBe(kind)
       if (retryAfter) expect(error.retryAfter).toBe(retryAfter)
     }
+  })
+})
+
+describe('the seam itself (#185)', () => {
+  it('forwards the request id across the hop, and arms a timeout', async () => {
+    stub({ '/api/v1/event/': { ...row } })
+    await liveQuery('getEventDetail', undefined, 'req-42')!('ev_9f2c1a')
+    const init = vi.mocked(globalThis.fetch).mock.calls[0][1]
+    expect(init?.headers).toMatchObject({ 'x-request-id': 'req-42' })
+    expect(init?.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('maps a timed-out call to unavailable, not an empty answer', async () => {
+    stub({
+      '/api/v1/event/': () => {
+        throw new DOMException('The operation timed out.', 'TimeoutError')
+      },
+    })
+    const error = (await live('getEventDetail')('e').then(() => null, (e: unknown) => e)) as ApiError
+    expect(error.kind).toBe('unavailable')
+    expect(error.status).toBe(502)
+  })
+
+  it('queues past BACKEND_MAX_INFLIGHT and sheds past BACKEND_MAX_QUEUE', async () => {
+    // Defaults 25 in flight + 50 waiting: the 76th concurrent call is shed.
+    const pending: Array<() => void> = []
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => pending.push(() => resolve(new Response('null', { status: 404 }))))))
+    const calls = Array.from({ length: 76 }, () => live('getEventDetail')('e').then(() => 'ok', (e: unknown) => e))
+    const shed = (await calls[75]) as ApiError
+    expect(shed).toBeInstanceOf(ApiError)
+    expect(shed.kind).toBe('overloaded')
+    expect(shed.retryAfter).toBe(1)
+    expect(pending).toHaveLength(25)
+    // Each finished call hands its slot to the next waiter, until all 75 ran.
+    while (pending.length) {
+      pending.shift()!()
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    }
+    expect(await Promise.all(calls.slice(0, 75))).toEqual(Array(75).fill('ok'))
+    expect(vi.mocked(globalThis.fetch).mock.calls).toHaveLength(75)
   })
 })
 
