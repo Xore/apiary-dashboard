@@ -30,7 +30,7 @@ import {
 import { toHoneypotEvent } from './adapters/events'
 import type { EventRowGap } from './adapters/events'
 import type { SensorEventGap } from './adapters/operations'
-import { reportTemplates } from './adapters/reports'
+import { generateReportResult, generatedReportPage, reportDefinitionBody, reportDefinitions, reportTemplates, savedReportDefinition } from './adapters/reports'
 import {
   alertAckBody,
   alertPage,
@@ -92,7 +92,14 @@ import type {
   CredentialListWire,
   CredentialRecordWire,
 } from './contracts/tools'
-import type { ReportTemplatesWire } from './contracts/reports'
+import type {
+  GenerateReportWire,
+  GeneratedReportPageWire,
+  ReportDeletedWire,
+  ReportDefinitionEnvelopeWire,
+  ReportDefinitionsWire,
+  ReportTemplatesWire,
+} from './contracts/reports'
 import type {
   AckAlertWire,
   AlertPageWire,
@@ -1118,6 +1125,133 @@ const purgeDeadLetters: Backend['purgeDeadLetters'] = async (query) => {
   return purgedDeadLetters(wire ?? { deleted: 0 })
 }
 
+// ---- the reports studio (#79) -----------------------------------------------
+
+/** The studio's whole read, fanned out over the three documents it is made
+ * of: the template/element catalog (`reports_api::templates`), the saved
+ * definitions (`reports_api::list_definitions`) and the generated history
+ * (`GET /api/v1/store/generated-reports`, stores.rs `generic` on the
+ * `generated-reports` key).
+ *
+ * The two lists are separate stores upstream and one page here — every one of
+ * the four studio pages reads all three — so this is three requests, not a
+ * round trip the backend offers. `size` is the handler's own cap (100); a
+ * history longer than that is not paged by this tier, because the page has no
+ * paging control for it: it filters what came back.
+ *
+ * `Promise.all`, like every other composite read here: a half-built studio is
+ * worse than an erroring one. */
+const getReports: Backend['getReports'] = async () => {
+  const [templates, definitions, generated] = await Promise.all([
+    get<ReportTemplatesWire>('getReports', '/api/v1/reports/templates'),
+    get<ReportDefinitionsWire>('getReports', '/api/v1/reports/definitions'),
+    get<GeneratedReportPageWire>('getReports', '/api/v1/store/generated-reports', { offset: 0, size: 100 }),
+  ])
+  const { reports } = generatedReportPage(generated ?? { total: 0, rows: [] })
+  return {
+    ...reportTemplates(templates ?? { templates: [], elements: [] }),
+    definitions: reportDefinitions(definitions ?? { definitions: [] }),
+    // The adapter names the page's list `reports`; the page type names it
+    // `generated`, and the rename is a field name, not a mapping.
+    generated: reports,
+  }
+}
+
+/** POST or PUT /api/v1/reports/definitions[/{id}].
+ *
+ * The verb is the page's empty id, not a probe: `create_definition` 400s a
+ * non-empty `id` (reports_api.rs, "id is assigned by the server") and
+ * `replace_definition` 400s an id that disagrees with the path — so a create
+ * carrying the id and a replace carrying none both fail on the wire, and
+ * sending the id in the body is what the replace route asks for ("must match
+ * the path or be omitted").
+ *
+ * The response envelope is the stored definition, and the page re-reads the
+ * studio after a save, so what comes back is not merged over the draft. */
+const saveReportDefinition: Backend['saveReportDefinition'] = async (definition) => {
+  await guardReadOnly('saveReportDefinition')
+  const body = reportDefinitionBody(definition)
+  const wire = definition.id
+    ? await request<ReportDefinitionEnvelopeWire>('saveReportDefinition', `/api/v1/reports/definitions/${encodeURIComponent(definition.id)}`, { method: 'PUT', body })
+    : await post<ReportDefinitionEnvelopeWire>('saveReportDefinition', '/api/v1/reports/definitions', body)
+  if (!wire) throw new ApiError('unavailable', 'saveReportDefinition')
+  return savedReportDefinition(wire)
+}
+
+/** DELETE /api/v1/reports/definitions/{id}. Answers `{ deleted: id }`; the
+ * page's own type is `void`, so there is nothing to adapt. */
+const deleteReportDefinition: Backend['deleteReportDefinition'] = async (id) => {
+  await guardReadOnly('deleteReportDefinition')
+  await request<ReportDeletedWire>('deleteReportDefinition', `/api/v1/reports/definitions/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
+/** POST /api/v1/reports/definitions/{id}/generate — the "Generate now"
+ * button on a saved definition. `origin` is the backend's own default
+ * (`manual`), so the body is sent empty rather than repeating it; the route
+ * takes `Option<Json<GenerateBody>>`, which is why an empty POST is legal. */
+const generateReport: Backend['generateReport'] = async (definitionId) => {
+  await guardReadOnly('generateReport')
+  const wire = await post<GenerateReportWire>('generateReport', `/api/v1/reports/definitions/${encodeURIComponent(definitionId)}/generate`, {})
+  return generateReportResult(wire)
+}
+
+/** DELETE /api/v1/reports/generated/{id}. As above: `{ deleted: id }` into a
+ * `void`. */
+const deleteGeneratedReport: Backend['deleteGeneratedReport'] = async (id) => {
+  await guardReadOnly('deleteGeneratedReport')
+  await request<ReportDeletedWire>('deleteGeneratedReport', `/api/v1/reports/generated/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
+/** POST /api/v1/payloads/{hash}/report (lib.rs:670, `generate_payload_report`)
+ * — the one-click "Generate PDF" on the payload page. The brief's list has no
+ * endpoint for it; the route is registered, and its response is
+ * `{ id, generated }`, so the id is read off the nested meta like any other.
+ *
+ * An ephemeral payload-scoped definition the backend builds itself and never
+ * persists, so the returned report carries no `definitionId` — the history
+ * page's own "one-off" label, which the mock also produces here. */
+const generatePayloadReport: Backend['generatePayloadReport'] = async (hash) => {
+  await guardReadOnly('generatePayloadReport')
+  const wire = await post<GenerateReportWire>('generatePayloadReport', `/api/v1/payloads/${encodeURIComponent(hash)}/report`, {})
+  return generateReportResult(wire)
+}
+
+/**
+ * The wizard's final step: generate the draft, keeping it as a reusable
+ * definition when asked.
+ *
+ * Two wire calls, and the draft must be a SAVED definition either way:
+ * `reports_api::generate` takes an id and reads the definition out of the
+ * store (reports_api.rs `generate`, "no such report definition" on a miss).
+ * The backend has no ephemeral path for a default template the way
+ * `generate_payload_report` has one for `payload` — that is the only
+ * template the renderer shortcuts, and a wizard draft is arbitrary. So a
+ * one-off is created, generated, then dropped again, which leaves the store
+ * in the state the mock's `keep: false` branch leaves.
+ *
+ * It composes the three writes above rather than repeating them, so the
+ * read-only guard and the bodies are the same code: a one-off re-reads
+ * `/api/v1/config` twice more, which is one config document and not a
+ * correctness question.
+ *
+ * `previewReport` has no endpoint at all, so the page's row counts and its
+ * page-count estimate stay mock-derived while the live tier is set. The
+ * report the operator gets is a real PDF, and `sizeBytes` comes off the wire
+ * rather than from that estimate. */
+const generateReportFrom: Backend['generateReportFrom'] = async (definition, keep) => {
+  // A one-off is created, so it carries no id: `create_definition` 400s one.
+  const saved = await saveReportDefinition(keep ? definition : { ...definition, id: '' })
+  // `generateReport` is nullable because the mock misses a definition it has
+  // dropped; on the wire the definition was just saved and a miss is a 404
+  // this throws on, so a null here would be the mock, and the mock never
+  // reaches this function.
+  const report = await generateReport(saved.id)
+  if (!report) throw new ApiError('unavailable', 'generateReportFrom')
+  if (keep) return { report, definition: saved }
+  await deleteReportDefinition(saved.id)
+  return { report }
+}
+
 const getEvents: Backend['getEvents'] = async (filters) => {
   const [rows, values] = await Promise.all([
     get<EventsPageWire>('getEvents', '/api/v1/events', eventsQueryWindowed(filters, filters)),
@@ -1416,7 +1550,20 @@ const getAnalysisResults: Backend['getAnalysisResults'] = async () => {
  *   while `getPreferences` renders the mock.
  *
  * - `getAttackers` / `getFacets` / `getSourceHealth` — other slices' work,
- *   or no endpoint at all (filter-values serves keys only, with no counts). */
+ *   or no endpoint at all (filter-values serves keys only, with no counts).
+ *
+ * - `previewReport` — reports' own gap: the backend renders a report, it does
+ *   not preview a draft, and there is no `/reports/preview` route. The
+ *   wizard's review step therefore stays mock-derived while the live tier is
+ *   set — real counts and a real PDF, but the two disagree. The other half
+ *   of the reports gap list (`sandbox-runs` / payload search for the artifact
+ *   pickers) is in contracts/reports.ts, typed and deliberately unadapted: no
+ *   page type exists to adapt them to.
+ *
+ * Gaps that are wired anyway, and why, are in the slice's own tests: the
+ * lossy scope filters, the scope keys with no page field, `schedule.enabled`
+ * and `schedule.failures`, the wire fields the page types do not carry, and
+ * the `{ deleted }` responses nothing adapts. */
 const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>>> = {
   getEvents,
   getCommands,
@@ -1467,13 +1614,21 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   getTopology,
   getDeadLetters,
   purgeDeadLetters,
-  // Tools (#80)
+// Tools (#80)
   getCanarytokens,
   createCanarytoken,
   getCredentials,
   provisionCredential,
   rotateCredential,
   linkCredentialToken,
+  // Reports (#79)
+  getReports,
+  saveReportDefinition,
+  deleteReportDefinition,
+  generateReport,
+  deleteGeneratedReport,
+  generatePayloadReport,
+  generateReportFrom,
 }
 
 /** The guarded live implementation of `name`, or undefined when this slice
