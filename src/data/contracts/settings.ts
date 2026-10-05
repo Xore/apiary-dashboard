@@ -424,6 +424,59 @@ export interface ProblemReportCreatedWire {
   id: string
 }
 
+/** One `dashboard-problem-reports-v1` document, as
+ * `GET /api/v1/store/problem-reports` passes it through (stores.rs
+ * `store_config` excludes `dom_snapshot` from `_source`; `_doc_id` rides
+ * along for row-level actions).
+ *
+ * Note what is NOT here: there is no `GET /api/v1/problem-reports`. The
+ * Rust tier serves only the POST and the PATCH; the list the settings and
+ * problem-reports pages render comes from the allowlisted generic store
+ * passthrough, exactly as the canonical page reads it. The document is
+ * post-redaction by construction — problem_reports.rs redacts on write, so
+ * nothing below is a second pass. */
+export interface ProblemReportRowWire extends Record<string, unknown> {
+  id: string
+  submitted_at: string
+  /** The OIDC subject the BFF passed; the display name is `submitted_by_name`. */
+  submitted_by: string
+  submitted_by_name?: string
+  page: string
+  expected: string
+  actual: string
+  /** The four capture lists are omitted, not empty: they are truncated by
+   * size (the trail to 200 entries, 50 console errors, 50 network failures,
+   * 30 API calls) and a document that hit the cap is not the same thing as
+   * one that had nothing to report. `api.ts`'s caller is the seam's only
+   * reader and passes the wire shape straight through, so the contract does
+   * not narrow them — the adapter defaults each to `[]`, which is the
+   * honest reading of an absent list and is why `ProblemReport`'s own field
+   * types stay non-optional. */
+  action_trail?: ProblemActionTrailWire[]
+  console_errors?: string[]
+  network_failures?: string[]
+  api_calls?: ProblemApiCallWire[]
+  /** Absent: the store excludes it from `_source`, so its presence can only
+   * be inferred from that exclusion. */
+  dom_snapshot?: string
+  user_agent?: string
+  status: string
+}
+
+/** GET /api/v1/store/problem-reports?offset=&size=. `size` is clamped to 100
+ * (stores.rs `store_search_body`), newest first by `submitted_at`. */
+export interface ProblemReportsPageWire {
+  total: number
+  rows: ProblemReportRowWire[]
+}
+
+/** PATCH /api/v1/problem-reports/{id} body: problem_reports.rs `StatusPatch`.
+ * The wire accepts exactly open | triaged | closed — `fixed` and `wontfix`
+ * are the page's own vocabulary and have no status the store can hold. */
+export interface ProblemStatusPatchWire {
+  status: string
+}
+
 // ---- captured mail ---------------------------------------------------------
 
 /** mail.rs `MailAddress` — both parts default to "" when the header
