@@ -213,17 +213,16 @@ const TIMEOUT_MS = 15_000
 /** This process has a real backend to talk to. Its absence is the default. */
 export const isLiveBackend = (env: NodeJS.ProcessEnv = process.env): boolean => Boolean(env.BACKEND_URL?.trim())
 
-/** This process has the MOUNTED backend to talk to — the only container with
- * the host-side sandbox/Ghidra/GitHub-analysis request-spool mounts
- * (canonical `backendMountedURL()` L76, compose's backend-service-mounted).
- * Same image, same route table; the only difference is which container can
- * see those spools. A sandbox/ghidra/github route answered by the REGULAR
- * instance comes back "not configured"/empty rather than erroring, so every
- * such call below is routed here or it silently shows an operator an empty
- * list. Unset falls back to BACKEND_URL: a deployment that has collapsed the
- * two into one instance still works, it just loses the distinction. */
-export const isLiveMounted = (env: NodeJS.ProcessEnv = process.env): boolean => isLiveBackend(env)
-
+/** The backend's base URL. `mounted` selects the MOUNTED instance — the only
+ * container with the host-side sandbox/Ghidra/GitHub-analysis request-spool
+ * mounts (canonical `backendMountedURL()` L76, compose's
+ * backend-service-mounted). Same image, same route table; the only difference
+ * is which container can see those spools. A sandbox/ghidra/github route
+ * answered by the REGULAR instance comes back "not configured"/empty rather
+ * than erroring, so every such call below is routed with `mounted: true` or it
+ * silently shows an operator an empty list. Unset falls back to BACKEND_URL: a
+ * deployment that has collapsed the two into one instance still works, it just
+ * loses the distinction. */
 const baseURL = (env: NodeJS.ProcessEnv = process.env, mounted = false): string => (mounted ? env.BACKEND_MOUNTED_URL?.trim() || env.BACKEND_URL! : env.BACKEND_URL!).replace(/\/$/, '')
 
 /** One wire page's worth of nothing — the degraded answer a 200 with no body
@@ -393,13 +392,17 @@ const post = async <T>(endpoint: string, path: string, body: unknown, opts: { mo
  * this is the second function rather than a reuse.)
  *
  * What it does share with `request()` is the base URL and the one place the
- * token is attached, so neither can drift. Nothing is buffered and nothing
- * is re-encoded: the upstream body is handed back as-is, so the connection
+ * token is attached, so neither can drift. Two deliberate differences: it is
+ * NOT mounted (no sandbox/ghidra/github spool answers the live stream, so the
+ * mounted instance would gain nothing), and it sends no actor headers — its one
+ * caller is the fleet-wide feed, not an operator action to attribute. Nothing
+ * is buffered and nothing is re-encoded: the upstream body is handed back as-is,
+ * so the connection
  * closes when the client goes away and a frame is never held waiting on the
  * next one. `signal` is the caller's — the request's own abort, which is how
  * a disconnect upstream stops the poller rather than leaking it. */
 async function stream(endpoint: string, path: string, signal: AbortSignal): Promise<Response> {
-  const url = `${process.env.BACKEND_URL!.replace(/\/$/, '')}${path}`
+  const url = `${baseURL()}${path}`
   let response: Response
   try {
     response = await fetch(url, { headers: { 'x-service-token': process.env.SERVICE_TOKEN ?? '' }, signal })

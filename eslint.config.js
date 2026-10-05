@@ -23,6 +23,12 @@ export default [
       'src/themes/astryx/*/*.js',
       'src/themes/astryx/*/*.d.ts',
       '.tanstack/**',
+      // Per-agent checkouts are full copies of this tree. Linting them at the
+      // repo root runs the same files many times and OOMs the 4 GB heap
+      // (20k+ duplicate TS files once six worktrees exist). Each worktree
+      // lints itself against this same config when CI runs there.
+      '.claude/**',
+      '.grit/**',
     ],
   },
 ]
