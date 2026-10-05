@@ -16,6 +16,9 @@ import type { EventRow } from './contracts/events'
 import type { Backend } from './backend'
 
 /** One wire row, as events.rs's `row_from_hit` builds it. */
+/** Reports writes run the read-only guard first, so `calls` is offset by the
+ * `/api/v1/config` read every mutation makes before it writes. */
+const WRITE_AT = 1
 const pivots = {
   persona: '', site: '', asset: '', fingerprint: 'curl/8.5.0', fingerprint_kind: 'User-Agent',
   command: 'uname -a', user: 'root', pass: 'toor', path: '', shasum: '',
@@ -163,6 +166,14 @@ describe('which queries the real backend answers', () => {
         'linkCredentialToken',
         'provisionCredential',
         'rotateCredential',
+        // reports (#79)
+        'deleteGeneratedReport',
+        'deleteReportDefinition',
+        'generatePayloadReport',
+        'generateReport',
+        'generateReportFrom',
+        'getReports',
+        'saveReportDefinition',
       ].sort(),
     )
   })
@@ -1315,6 +1326,55 @@ const toolsFixtures = (over: Record<string, unknown> = {}) => ({
   ...over,
 })
 
+// ---- Reports (#79) ----------------------------------------------------------
+
+/** The catalog, as reports_api.rs `templates` writes it: the four artifact
+ * flags and the template's own title/theme/window that the page type has no
+ * field for. */
+const templatesWire = {
+  templates: [
+    { id: 'executive', name: 'Executive', description: 'One-page brief', title: 'Executive brief', theme: 'dark', window: '7d', elements: ['summary'], sandbox: false, payload: false, ghidra: false },
+    { id: 'payload', name: 'Payload', description: 'One sample', title: 'Payload report', theme: 'dark', window: '30d', elements: ['summary', 'appendix'], sandbox: false, payload: true, ghidra: false },
+  ],
+  elements: [{ id: 'summary', label: 'Summary', description: 'Headline numbers' }],
+}
+
+/** A saved definition as the store holds it. `network` is on the wire scope
+ * and has no page counterpart; `updated` has no page field either. */
+const definitionWire = {
+  id: 'rd_7f3a',
+  name: 'Weekly SSH brief',
+  template: 'executive',
+  theme: 'light',
+  branding: { title: 'SSH activity', author: 'SOC', classification: 'TLP:AMBER' },
+  scope: { window: '7d', ip: '203.0.113.42', network: '203.0.113.0/24', sensor: 'cowrie' },
+  elements: ['summary'],
+  appendix_limit: 50,
+  schedule: { enabled: true, frequency: 'weekly', hour: 6, minute: 30, weekday: 1, month_day: 1, next_run_at: '2026-10-05T06:30:00Z', failures: 0 },
+  created: '2026-09-01T10:00:00Z',
+  updated: '2026-09-20T10:00:00Z',
+}
+
+const generatedWire = {
+  id: 'gr_19c2',
+  definition_id: 'rd_7f3a',
+  name: 'Weekly SSH brief',
+  template: 'executive',
+  theme: 'light',
+  title: 'SSH activity',
+  size_bytes: 184_320,
+  created_at: '2026-09-28T06:30:04Z',
+  origin: 'schedule',
+}
+
+const reportsFixtures = (over: Record<string, unknown> = {}) => ({
+  '/api/v1/reports/templates': templatesWire,
+  '/api/v1/reports/definitions': { definitions: [definitionWire] },
+  '/api/v1/store/generated-reports': { total: 1, rows: [{ ...generatedWire, _doc_id: 'gr_19c2' }] },
+  '/api/v1/config': configWire,
+  ...over,
+})
+
 /** The POST bodies the stub was asked to send, by path. `stub` records URLs
  * only, so a body assertion goes through the recorded request directly. */
 const bodiesOf = (): Array<{ path: string; body: unknown }> =>
@@ -1477,5 +1537,246 @@ describe('the tools slice reads the endpoints the Rust tier actually serves', ()
       stub(toolsFixtures(fixtures))
       await expect(call(), name).rejects.toThrow(ApiError)
     }
+  })
+})
+
+const savedDefinition = {
+  id: '', name: 'Draft', template: 'executive', theme: 'dark' as const, elements: ['summary'],
+  scope: { window: '7d', ip: [], sensor: [], port: [], signature: [] },
+  branding: { title: '', author: '', headerLeft: '', headerRight: '', footerLeft: '', classification: '' },
+  schedule: null, appendixLimit: 50, created: '',
+}
+
+describe('the reports studio reads its three documents', () => {
+  it('maps the catalog, the definitions and the generated history into one page', async () => {
+    const calls = stub(reportsFixtures())
+    const data = await live('getReports')()
+    // `size` is the generic store handler's own cap (stores.rs store_page).
+    expect(new URL(calls[2]).searchParams.get('size')).toBe('100')
+    expect(data.templates[0]).toEqual({ id: 'executive', name: 'Executive', description: 'One-page brief', elements: ['summary'] })
+    expect(data.elements).toEqual(templatesWire.elements)
+    expect(data.definitions[0]).toMatchObject({ id: 'rd_7f3a', theme: 'light', scope: { window: '7d', ip: ['203.0.113.42'], sensor: ['cowrie'] } })
+    // The generated store row carries `_doc_id` beside the meta; the id comes
+    // off the meta and the extra field is dropped, not merged.
+    expect(data.generated).toEqual([{ id: 'gr_19c2', title: 'SSH activity', template: 'executive', origin: 'schedule', createdAt: generatedWire.created_at, sizeBytes: 184_320, definitionId: 'rd_7f3a' }])
+  })
+
+  it('fails as an error, never as a studio with nothing in it', async () => {
+    stub({ ...reportsFixtures(), '/api/v1/store/generated-reports': fail(502) })
+    await expect(live('getReports')()).rejects.toThrow(ApiError)
+    stub({ ...reportsFixtures(), '/api/v1/reports/definitions': () => { throw new TypeError('fetch failed') } })
+    await expect(live('getReports')()).rejects.toThrow(ApiError)
+  })
+})
+
+describe('the reports slice gaps, each one where it belongs', () => {
+  it('GAP 1: a scope filter is one string on the wire and a list on the page, so both directions are lossy', async () => {
+    // Read: three values on the page, the first on the wire. The store builds
+    // a single term query, so a second value has nowhere to go.
+    stub(reportsFixtures())
+    const [def] = (await live('getReports')()).definitions
+    expect(def.scope.ip).toEqual(['203.0.113.42'])
+
+    // Save: the page keeps three, the body keeps one.
+    const calls = stub(reportsFixtures({ '/api/v1/reports/definitions': { definition: definitionWire } }))
+    await live('saveReportDefinition')({ ...savedDefinition, scope: { ...savedDefinition.scope, ip: ['203.0.113.42', '198.51.100.4'] } })
+    expect(JSON.parse(String(vi.mocked(globalThis.fetch).mock.calls[WRITE_AT][1]?.body)).scope.ip).toBe('203.0.113.42')
+    expect(calls).toHaveLength(2)
+  })
+
+  it('GAP 2: the wire scope keys with no page field are lost on a page round-trip', async () => {
+    // `network` is in the store's scope and the page type has nowhere to put
+    // it, so the page never shows it and a save never sends it back — the
+    // definition is silently re-scoped on the next edit. Asserted, not fixed:
+    // adding a page field is a types.ts change this slice does not make.
+    stub(reportsFixtures())
+    const [def] = (await live('getReports')()).definitions
+    expect(definitionWire.scope.network).toBe('203.0.113.0/24')
+    expect(JSON.stringify(def)).not.toContain('203.0.113.0/24')
+
+    const calls = stub(reportsFixtures({ '/api/v1/reports/definitions': { definition: definitionWire } }))
+    await live('saveReportDefinition')({ ...savedDefinition, id: 'rd_7f3a' })
+    expect(JSON.parse(String(vi.mocked(globalThis.fetch).mock.calls[WRITE_AT][1]?.body)).scope).not.toHaveProperty('network')
+    expect(calls).toHaveLength(2)
+  })
+
+  it('GAP 3: a disabled schedule reads as no schedule, so saving re-sends it as no schedule', async () => {
+    // The page has no on/off, so `enabled: false` becomes `schedule: null`
+    // and the save body omits `schedule` entirely. That is the backend's own
+    // behaviour (reports_store stores the absent schedule as disabled), not a
+    // bug papered over here: the schedule the operator disabled stays off.
+    stub(reportsFixtures({ '/api/v1/reports/definitions': { definitions: [{ ...definitionWire, schedule: { enabled: false, frequency: 'weekly', hour: 6, minute: 30, weekday: 1, month_day: 1 } }] } }))
+    const [def] = (await live('getReports')()).definitions
+    expect(def.schedule).toBeNull()
+
+    stub(reportsFixtures({ '/api/v1/reports/definitions': { definition: definitionWire } }))
+    await live('saveReportDefinition')(def)
+    expect(JSON.parse(String(vi.mocked(globalThis.fetch).mock.calls[WRITE_AT][1]?.body))).not.toHaveProperty('schedule')
+  })
+
+  it('GAP 3b: schedule.enabled=false and schedule.failures have no page field, and failures is not sent back', async () => {
+    // `failures` is the scheduler's own consecutive-failure counter, cleared
+    // by any success. The page type has no field for it, so a save would
+    // reset it — here the body omits the whole schedule rather than sending a
+    // fabricated `failures: 0`, which is what keeps the counter intact.
+    stub(reportsFixtures({ '/api/v1/reports/definitions': { definitions: [{ ...definitionWire, schedule: { ...definitionWire.schedule, failures: 7 } }] } }))
+    const [def] = (await live('getReports')()).definitions
+    expect(JSON.stringify(def)).not.toContain('failures')
+
+    stub(reportsFixtures({ '/api/v1/reports/definitions': { definition: definitionWire } }))
+    await live('saveReportDefinition')(def)
+    const body = JSON.parse(String(vi.mocked(globalThis.fetch).mock.calls[WRITE_AT][1]?.body))
+    expect(body.schedule).toEqual({ enabled: true, frequency: 'weekly', hour: 6, minute: 30, weekday: 1, month_day: 1 })
+  })
+
+  it('GAP 4: the wire fields with no page field are dropped, and an empty generated title falls back to name', async () => {
+    // `updated` on the definition; the template's title/theme/window and its
+    // sandbox/payload/ghidra flags; the generated row's `name` and `theme`.
+    stub(reportsFixtures())
+    const data = await live('getReports')()
+    expect(definitionWire.updated).toBe('2026-09-20T10:00:00Z')
+    expect(JSON.stringify(data.definitions[0])).not.toContain('2026-09-20T10:00:00Z')
+    // The artifact flag that says which template this is: `payload: true` on
+    // the wire, and nothing on the page to put it in.
+    expect(JSON.stringify(data.templates[1])).not.toContain('Payload report')
+    expect(JSON.stringify(data.templates[1])).not.toContain('30d')
+    expect(JSON.stringify(data.generated[0])).not.toContain('Executive brief')
+
+    // The fallback is the one that is not a loss: the history row's title
+    // reads from `name` when `title` is empty.
+    stub(reportsFixtures({ '/api/v1/store/generated-reports': { total: 1, rows: [{ ...generatedWire, title: '', _doc_id: 'gr_19c2' }] } }))
+    expect((await live('getReports')()).generated[0].title).toBe('Weekly SSH brief')
+  })
+
+  it('GAP 5: the sandbox-run and payload search lists are typed with no seam function and no page type', async () => {
+    // contracts/reports.ts types SandboxRunPageWire and PayloadSearchPageWire
+    // for the artifact pickers `generatePayloadReport` and `generateReportFrom`
+    // would need. No page type consumes them, so nothing fetches them; the
+    // assertion is that adding one is not needed to build the studio and that
+    // the two generators work without picker data.
+    stub(reportsFixtures({ [`/api/v1/payloads/${'a'.repeat(64)}/report`]: { id: 'gr_a', generated: { ...generatedWire, id: 'gr_a', definition_id: '', name: 'Payload aaa', title: '' } } }))
+    const made = await live('generatePayloadReport')('a'.repeat(64))
+    expect(made).toMatchObject({ id: 'gr_a', title: 'Payload aaa', definitionId: '' })
+  })
+
+  it('GAP 6: previewReport and getFacets have no endpoint, so they stay on the mock', async () => {
+    // Verified in the Rust router: lib.rs registers templates, the three
+    // definition routes, generate, delete_generated and generate_payload_report,
+    // and nothing else under /api/v1/reports. There is no preview route and
+    // no facet route; /api/v1/filter-values serves keys with no counts, which
+    // is why getFacets cannot be built from it either.
+    expect(liveQueryNames()).not.toContain('previewReport')
+    expect(liveQueryNames()).not.toContain('getFacets')
+    expect(liveQuery('previewReport', undefined)).toBeUndefined()
+    expect(liveQuery('getFacets', undefined)).toBeUndefined()
+  })
+
+  it('GAP 7: both deletes answer { deleted: id } and the page type is void, so nothing adapts', async () => {
+    const calls = stub(reportsFixtures({
+      '/api/v1/reports/definitions/rd_7f3a': { deleted: 'rd_7f3a' },
+      '/api/v1/reports/generated/gr_19c2': { deleted: 'gr_19c2' },
+    }))
+    await expect(live('deleteReportDefinition')('rd_7f3a')).resolves.toBeUndefined()
+    await expect(live('deleteGeneratedReport')('gr_19c2')).resolves.toBeUndefined()
+    // One config read per delete (the guard), then one request each.
+    expect(calls).toEqual([
+      'http://backend.test/api/v1/config',
+      'http://backend.test/api/v1/reports/definitions/rd_7f3a',
+      'http://backend.test/api/v1/config',
+      'http://backend.test/api/v1/reports/generated/gr_19c2',
+    ])
+  })
+})
+
+describe('the reports writes', () => {
+  it('creates with POST and replaces with PUT, because the backend refuses the other pairing', async () => {
+    // create_definition 400s a non-empty id ("id is assigned by the server"),
+    // and replace_definition 400s an id that disagrees with the path.
+    const calls = stub(reportsFixtures({
+      '/api/v1/reports/definitions': { definition: definitionWire },
+    }))
+    await live('saveReportDefinition')(savedDefinition)
+    expect(calls[1]).toBe('http://backend.test/api/v1/reports/definitions')
+    expect(vi.mocked(globalThis.fetch).mock.calls[WRITE_AT][1]).toMatchObject({ method: 'POST' })
+
+    stub(reportsFixtures({ '/api/v1/reports/definitions/rd_7f3a': { definition: definitionWire } }))
+    const saved = await live('saveReportDefinition')({ ...savedDefinition, id: 'rd_7f3a' })
+    expect(vi.mocked(globalThis.fetch).mock.calls[WRITE_AT][1]).toMatchObject({ method: 'PUT' })
+    expect(saved).toMatchObject({ id: 'rd_7f3a', theme: 'light' })
+  })
+
+  it('generates a saved definition, and a payload report with no definition at all', async () => {
+    const calls = stub(reportsFixtures({
+      '/api/v1/reports/definitions/rd_7f3a/generate': { generated: generatedWire },
+      '/api/v1/payloads/bb/report': { id: 'gr_bb', generated: { ...generatedWire, id: 'gr_bb', definition_id: '', name: 'Payload bb', title: '' } },
+    }))
+    expect(await live('generateReport')('rd_7f3a')).toMatchObject({ id: 'gr_19c2', origin: 'schedule' })
+    // origin defaults to "manual" server-side and the body is optional, so
+    // this is an empty POST rather than a repeated default.
+    expect(vi.mocked(globalThis.fetch).mock.calls[WRITE_AT][1]).toMatchObject({ method: 'POST' })
+    expect(await live('generatePayloadReport')('bb')).toMatchObject({ id: 'gr_bb', title: 'Payload bb', definitionId: '' })
+    expect(calls[WRITE_AT + 2]).toBe('http://backend.test/api/v1/payloads/bb/report')
+  })
+
+  it('the wizard generates through a saved definition, and drops it again for a one-off', async () => {
+    // generate takes an id and reads the definition out of the store, so a
+    // draft must exist first. keep: true keeps it and returns it; keep: false
+    // creates, generates, then deletes — the same store state the mock leaves.
+    const created = { definition: { ...definitionWire, id: 'rd_new' } }
+    stub(reportsFixtures({
+      '/api/v1/reports/definitions': created,
+      '/api/v1/reports/definitions/rd_new/generate': { generated: { ...generatedWire, id: 'gr_new', definition_id: 'rd_new' } },
+    }))
+    const kept = await live('generateReportFrom')(savedDefinition, true)
+    expect(kept.definition).toMatchObject({ id: 'rd_new' })
+    expect(kept.report).toMatchObject({ id: 'gr_new', definitionId: 'rd_new' })
+
+    // Each composed write makes the read-only check itself, which re-reads
+    // /api/v1/config. The requests are the contract; how many times the guard
+    // asks for the config is its own business, so those reads are filtered.
+    const requests = vi.mocked(globalThis.fetch).mock.calls.map((call) => [String(call[0]), (call[1])?.method]).filter(([url]) => url !== 'http://backend.test/api/v1/config')
+    expect(requests).toEqual([
+      ['http://backend.test/api/v1/reports/definitions', 'POST'],
+      ['http://backend.test/api/v1/reports/definitions/rd_new/generate', 'POST'],
+    ])
+
+    vi.clearAllMocks()
+    stub(reportsFixtures({
+      '/api/v1/reports/definitions': created,
+      '/api/v1/reports/definitions/rd_new/generate': { generated: { ...generatedWire, id: 'gr_new', definition_id: 'rd_new' } },
+      '/api/v1/reports/definitions/rd_new': { deleted: 'rd_new' },
+    }))
+    const once = await live('generateReportFrom')(savedDefinition, false)
+    expect(once.definition).toBeUndefined()
+    expect(once.report).toMatchObject({ id: 'gr_new' })
+    expect(vi.mocked(globalThis.fetch).mock.calls.map((call) => String(call[0])).filter((url) => url !== 'http://backend.test/api/v1/config')).toEqual([
+      'http://backend.test/api/v1/reports/definitions',
+      'http://backend.test/api/v1/reports/definitions/rd_new/generate',
+      'http://backend.test/api/v1/reports/definitions/rd_new',
+    ])
+  })
+
+  it('refuses every reports write in read-only mode, the guard the Rust tier has no concept of', async () => {
+    const locked = { ...configWire, payload: { ...configWire.payload, behavior: { ...configWire.payload.behavior, read_only: true } } }
+    const calls = stub(reportsFixtures({ '/api/v1/config': locked }))
+    await expect(live('saveReportDefinition')(savedDefinition)).rejects.toThrow(ApiError)
+    await expect(live('deleteReportDefinition')('rd_7f3a')).rejects.toThrow(ApiError)
+    await expect(live('generateReport')('rd_7f3a')).rejects.toThrow(ApiError)
+    await expect(live('deleteGeneratedReport')('gr_19c2')).rejects.toThrow(ApiError)
+    await expect(live('generatePayloadReport')('bb')).rejects.toThrow(ApiError)
+    await expect(live('generateReportFrom')(savedDefinition, true)).rejects.toThrow(ApiError)
+    // One config read per refused write, and nothing else: no write reached
+    // the backend.
+    expect(new Set(calls)).toEqual(new Set(['http://backend.test/api/v1/config']))
+    expect(calls).toHaveLength(6)
+  })
+
+  it('refuses a non-admin the same writes the mock refuses them', async () => {
+    stub(reportsFixtures())
+    const viewer = { id: 'u', name: 'A', email: 'a@example.test', roles: ['viewer' as const] }
+    await expect(liveQuery('saveReportDefinition', viewer)!(savedDefinition)).rejects.toThrow(ApiError)
+    await expect(liveQuery('generateReport', viewer)!('rd_7f3a')).rejects.toThrow(ApiError)
+    // getReports is a read, so the same viewer gets it.
+    await expect(liveQuery('getReports', viewer)!()).resolves.toMatchObject({ elements: templatesWire.elements })
   })
 })
