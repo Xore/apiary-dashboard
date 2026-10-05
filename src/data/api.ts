@@ -60,6 +60,7 @@ import {
 import type { ApiErrorKind } from './errors'
 import type { EventPageWire, EventsQueryWire, FilterValuesWire, RecordingsPageWire, ReplayWire, SearchResultWire, SessionDetailWire } from './contracts/explorer'
 import type { EventRow, EventsPage as EventsPageWire } from './contracts/events'
+import type { ChartName, Charts, FlowGraph } from './contracts/charts'
 import type { ReportTemplatesWire } from './contracts/reports'
 import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
 import type {
@@ -115,6 +116,12 @@ const baseURL = (env: NodeJS.ProcessEnv = process.env, mounted = false): string 
  * only reachable through a fixture or a proxy that swapped the body. */
 const EMPTY_PAGE = { total: 0, offset: 0, rows: [] }
 const EMPTY_VALUES: FilterValuesWire = { sensors: [], countries: [], cities: [], protos: [], ports: [], kinds: [] }
+
+/** What GET /api/v1/topology answers. Only `flow` is read — the route serves
+ * that one slice, as canonical's does — but the rest is declared so the
+ * field being read is a checked one and not an `unknown`. backend-service
+ * topology.rs:644 `TopologyResponse`. */
+type TopologyWire = { flow: FlowGraph }
 
 // ---- the call ---------------------------------------------------------------
 
@@ -208,6 +215,41 @@ async function request<T>(endpoint: string, path: string, opts: { method: 'GET' 
 const post = async <T>(endpoint: string, path: string, body: unknown, opts: { mounted?: boolean; user?: Caller } = {}): Promise<T> => {
   const answer = await request<T>(endpoint, path, { method: 'POST', body, ...opts })
   return answer as T
+}
+
+/** The one call this module makes for a body it does not parse: the live
+ * event stream (#82).
+ *
+ * `request()` is unusable here and stays that way. It reads the body as text
+ * and JSON-parses it — a stream never ends, so `response.text()` never
+ * settles; it turns a 404 into `null`, whereas a stream's status decides
+ * whether the browser opens it at all; and it arms `AbortSignal.timeout`,
+ * which would cut a stream that is long-lived by design. (The brief's note
+ * that the seam already has a `raw()` helper for binary bodies does not
+ * hold: there is no `raw()` in this module — every call here is JSON. So
+ * this is the second function rather than a reuse.)
+ *
+ * What it does share with `request()` is the base URL and the one place the
+ * token is attached, so neither can drift. Nothing is buffered and nothing
+ * is re-encoded: the upstream body is handed back as-is, so the connection
+ * closes when the client goes away and a frame is never held waiting on the
+ * next one. `signal` is the caller's — the request's own abort, which is how
+ * a disconnect upstream stops the poller rather than leaking it. */
+async function stream(endpoint: string, path: string, signal: AbortSignal): Promise<Response> {
+  const url = `${process.env.BACKEND_URL!.replace(/\/$/, '')}${path}`
+  let response: Response
+  try {
+    response = await fetch(url, { headers: { 'x-service-token': process.env.SERVICE_TOKEN ?? '' }, signal })
+  } catch {
+    // Unreachable or refused. The upstream sent no status, so there is none
+    // to pass through — same ApiError the JSON path raises, which the route
+    // turns into its own 502.
+    throw new ApiError('unavailable', endpoint)
+  }
+  // A refusal is passed up as-is (the route renders the status); a 200 with
+  // no body is not a stream, and EventSource would hang on it forever.
+  if (!response.ok || !response.body) throw new ApiError(kindOf(response.status), endpoint, await detailOf(response))
+  return response
 }
 
 /** The tier's plain-text refusal, when it sent one. Never the request: an
@@ -544,6 +586,81 @@ async function guardReadOnly(name: string): Promise<void> {
   const wire = await get<ConfigWire>(name, '/api/v1/config')
   if (wire?.payload.behavior?.read_only) throw new ApiError('locked', name)
 }
+
+// ---- the three proxy routes (#82) -------------------------------------------
+
+/** GET /api/v1/charts/{name} — one chart's payload, passed through.
+ *
+ * The allowlist is the caller's (`isChartName`, run before this is reached),
+ * and it is exactly the Rust tier's own route table: all 21 names are axum
+ * paths, 17 in charts.rs, 3 in kill_chain.rs (the sankey, the campaign
+ * timeline and the ATT&CK grid) and 1 in fusion.rs (the fusion), each
+ * compared name by name against its `#[utoipa::path]` attribute. So a chart
+ * this list names does exist upstream — a name that did not would fail the
+ * router with a 404, which `get()` maps to null and the route to 502, never
+ * to a wrong or default payload.
+ *
+ * `search` is forwarded verbatim, as canonical forwards it
+ * (`frontend-next/src/routes/api/chart.$name.ts`): `attacker-fusion` is the
+ * only handler with a query extractor (fusion.rs:21 `FusionQuery { id }`),
+ * and the rest take state alone, so an extra parameter is ignored rather
+ * than rejected. Only `id` reaches a body — but the whole string is passed
+ * because that is what the canonical proxy does, and a narrower one would
+ * silently change behaviour for any future chart that takes a second param.
+ *
+ * `null` means the tier had no answer: 404 (no such route or attacker) and
+ * any 5xx both land here, and the route turns both into its 502. */
+export async function liveChart(name: ChartName, search: URLSearchParams): Promise<Charts[ChartName] | null> {
+  return get<Charts[ChartName]>(`chart/${name}`, `/api/v1/charts/${name}`, Object.fromEntries(search))
+}
+
+/** GET /api/v1/topology — the one slice the browser sees: `flow`.
+ *
+ * The endpoint answers the whole document (topology.rs:644
+ * `TopologyResponse { generated_at, sensors, flow, stacks }`); canonical
+ * serves `.flow` and drops the rest, and so does this, because
+ * `/api/topology/flow` has always been that one graph and widening it would
+ * put fleet hostnames and ports behind a path whose name promises a flow
+ * graph. No query: `topology::topology` (topology.rs:698) takes no extractor
+ * beyond state, and the graph is assembled per request from static tables.
+ *
+ * The wire shape is `FlowGraph { nodes: Vec<FlowNode>, links: Vec<FlowLink> }`
+ * with `{name, layer}` and `{source, target}` (topology.rs:664-679) — already
+ * the `FlowGraph` in `contracts/charts.ts`, so it passes through untouched,
+ * which is why the mock builds the same shape by hand. */
+export async function liveTopologyFlow(): Promise<FlowGraph | null> {
+  const wire = await get<TopologyWire>('topology/flow', '/api/v1/topology')
+  return wire?.flow ?? null
+}
+
+/** GET /api/v1/live — the Rust tier's SSE stream, opened.
+ *
+ * The upstream emits `event: event` with `data:` set to an `events.rs`
+ * `row_from_hit` document (live.rs:146-148). Neither is what this tier's
+ * browser client reads: `src/data/liveStream.ts` registers only
+ * `onmessage`, which fires for the unnamed default event, and every
+ * consumer holds a `HoneypotEvent`, not a wire row. Canonical bridges the
+ * same gap on the client instead (its lib/live.ts listens for the name
+ * `event` and parses `EventRow` itself); here the browser client is already
+ * written against this tier's own framing, so the route translates frames
+ * as they pass — see its `translated`, and `liveRow` below for the mapping.
+ * What this function returns is the upstream body untouched; the framing is
+ * the route's business because the route owns the contract it serves. */
+export async function openLiveStream(signal: AbortSignal): Promise<Response> {
+  return stream('live', '/api/v1/live', signal)
+}
+
+/** One wire row off the stream, as the page's event type.
+ *
+ * The stream's rows are built by `events::row_from_hit` (live.rs:115), the
+ * same builder `/api/v1/events` uses, so a row off it maps through
+ * `pageEvent` exactly as a row off the events list does — including the gap
+ * fields the row cannot fill, which the browser would otherwise read as
+ * undefined off a live frame while the very same event on the list renders.
+ *
+ * Exported (rather than `pageEvent` itself) because the route needs it per
+ * frame: a stream translates a row at a time, not a page at a time. */
+export const liveRow = pageEvent
 
 // ---- the wire queries -------------------------------------------------------
 
