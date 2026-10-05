@@ -137,22 +137,62 @@ const kindOf = (status: number): ApiErrorKind =>
  * the timeout, and any non-2xx alike. That is the whole point: an events
  * list that renders empty because the backend was down reads as "no
  * activity", and an operator cannot tell that from a quiet fleet. */
-async function get<T>(endpoint: string, path: string, search: EventsQueryWire | Record<string, string | number | undefined> = {}, opts: { mounted?: boolean; user?: Caller } = {}): Promise<T | null> {
+async function get<T>(endpoint: string, path: string, search: SearchParams = {}, opts: { mounted?: boolean; user?: Caller } = {}): Promise<T | null> {
   return request<T>(endpoint, path, { method: 'GET', search, ...opts })
 }
 
-/** A binary body, for the artifact download route (artifacts.rs serves the
+/** A binary body, for the file routes (artifacts.rs and the rest serve the
  * stored bytes, not a JSON envelope). Same failure contract as `get`: a 404
  * is "no such file", anything else throws. */
-async function raw(path: string, opts: { mounted?: boolean; user?: Caller } = {}): Promise<Response> {
+async function raw(path: string, opts: { mounted?: boolean; user?: Caller; search?: SearchParams } = {}, endpoint = 'getArtifactFile'): Promise<Response> {
+  const query = queryOf(opts.search)
   let response: Response
   try {
-    response = await fetch(`${baseURL(process.env, opts.mounted)}${path}`, { headers: { 'x-service-token': process.env.SERVICE_TOKEN ?? '', ...actorHeaders(opts.user) }, signal: AbortSignal.timeout(TIMEOUT_MS) })
+    response = await fetch(`${baseURL(process.env, opts.mounted)}${path}${query.size ? `?${query}` : ''}`, { headers: { 'x-service-token': process.env.SERVICE_TOKEN ?? '', ...actorHeaders(opts.user) }, signal: AbortSignal.timeout(TIMEOUT_MS) })
   } catch {
-    throw new ApiError('unavailable', 'getArtifactFile')
+    throw new ApiError('unavailable', endpoint)
   }
-  if (!response.ok && response.status !== 404) throw new ApiError(kindOf(response.status), 'getArtifactFile', await detailOf(response))
+  if (!response.ok && response.status !== 404) throw new ApiError(kindOf(response.status), endpoint, await detailOf(response))
   return response
+}
+
+/** What any call may send as a query string. The named shape is #75's; the
+ * loose record is the settings slice's params, which have no shared shape
+ * worth a type. */
+type SearchParams = EventsQueryWire | Record<string, string | number | undefined>
+
+/** `request` builds its query this way; `raw` needs the same, and a dropped
+ * param on an export is a download of the wrong rows. */
+const queryOf = (search: SearchParams = {}): URLSearchParams => {
+  const query = new URLSearchParams()
+  for (const [key, value] of Object.entries(search)) if (value !== undefined && value !== '') query.set(key, String(value))
+  return query
+}
+
+/** What a file route answers: the bytes and the type to serve them under.
+ * `found: false` is the 404 an endpoint gives when nothing carries the id —
+ * distinct from "the mock answers this", which is `null` from `getRaw`. */
+export type RawFile = { found: true; body: Uint8Array; contentType: string } | { found: false }
+
+/** GET a file the dashboard hands over — a recording, a payload's bytes, a
+ * CSV export — as bytes rather than as JSON, for the download routes
+ * (src/data/downloads.ts).
+ *
+ * `request()` cannot be bent into this: it parses every body as JSON and
+ * folds a 404 into `null`, which would turn "no such recording" into an
+ * empty download. This is the smallest equivalent that shares `raw`'s URL,
+ * query building, token header, actor headers, timeout and error mapping,
+ * and nothing else: it returns the bytes and lets the route decide what a
+ * missing file means.
+ *
+ * The upstream `content-disposition` is deliberately NOT returned. The
+ * filename a download carries is this tier's contract (the pages link
+ * `events.csv`, the backend answers `honeypot-events.csv`), and a header
+ * from the wire is not sanitized the way the route's own `file()` is. */
+export async function getRaw(endpoint: string, path: string, search: SearchParams = {}): Promise<RawFile | null> {
+  const response = await raw(path, { search }, endpoint)
+  if (response.status === 404) return { found: false }
+  return { found: true, body: new Uint8Array(await response.arrayBuffer()), contentType: response.headers.get('content-type') ?? 'application/octet-stream' }
 }
 
 /** The per-user signal the Rust tier trusts (canonical L107-112: the
@@ -171,9 +211,8 @@ const actorHeaders = (user: Caller): Record<string, string> =>
  * non-2xx — throws. That is the whole point: an analysis list that renders
  * empty because the backend was down reads as "no analyses", and an
  * operator cannot tell that from a quiet fleet. */
-async function request<T>(endpoint: string, path: string, opts: { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; search?: EventsQueryWire | Record<string, string | number | undefined>; body?: unknown; mounted?: boolean; user?: Caller }): Promise<T | null> {
-  const query = new URLSearchParams()
-  for (const [key, value] of Object.entries(opts.search ?? {})) if (value !== undefined && value !== '') query.set(key, String(value))
+async function request<T>(endpoint: string, path: string, opts: { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; search?: SearchParams; body?: unknown; mounted?: boolean; user?: Caller }): Promise<T | null> {
+  const query = queryOf(opts.search)
   const url = `${baseURL(process.env, opts.mounted)}${path}${query.size ? `?${query}` : ''}`
   let response: Response
   try {
@@ -912,6 +951,16 @@ export function liveQuery(name: string, user: Caller): ((...args: unknown[]) => 
 
 /** The names this module answers, for the report and the tests. */
 export const liveQueryNames = (): string[] => Object.keys(LIVE)
+
+/** The shell's export cap, read through the same `getShellConfig` the pages
+ * use — `GET /api/v1/config`'s `behavior.max_export_rows`, whose default is
+ * 5000 (config.rs:804). The download route needs this through its own path,
+ * not `liveQuery`: `liveQuery` is reachable only from `runForRequest`'s
+ * server-function funnel, and a direct handler in `serveDownload` never
+ * passes through that. */
+export async function liveShellCap(): Promise<number> {
+  return (await getShellConfig()).behavior.maxExportRows
+}
 
 /** Re-exported for the test that asserts the response handling degrades
  * rather than throwing on a body the endpoints really send. */
