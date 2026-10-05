@@ -43,6 +43,15 @@ import {
   sourceHealth,
   topology,
 } from './adapters/operations'
+import {
+  baitCredential,
+  canarytokenList,
+  canarytokenStorePage,
+  canaryTokenTypes,
+  canaryTriggers,
+  createdCanarytoken,
+  credentialList,
+} from './adapters/tools'
 import { DEFAULT_PREFERENCES_WIRE, capturedMail, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
@@ -74,6 +83,15 @@ import type { ApiErrorKind } from './errors'
 import type { EventPageWire, EventsQueryWire, FilterValuesWire, RecordingsPageWire, ReplayWire, SearchResultWire, SessionDetailWire } from './contracts/explorer'
 import type { EventRow, EventsPage as EventsPageWire } from './contracts/events'
 import type { ChartName, Charts, FlowGraph } from './contracts/charts'
+import type {
+  CanaryFiredPageWire,
+  CanaryTokenTypeWire,
+  CanarytokenListWire,
+  CanarytokenStorePageWire,
+  CreatedCanarytokenWire,
+  CredentialListWire,
+  CredentialRecordWire,
+} from './contracts/tools'
 import type { ReportTemplatesWire } from './contracts/reports'
 import type {
   AckAlertWire,
@@ -425,6 +443,139 @@ function pageEvent(row: EventRow): HoneypotEvent {
   // ones cannot be expressed. `organization` is the seventh gap field and
   // is left off: absent, not empty, as toHoneypotEvent does throughout.
   return { ...toHoneypotEvent(row), ...gap } as HoneypotEvent
+}
+
+// ---- the tools slice: canarytokens and bait credentials --------------------
+
+/** GET /api/v1/canarytokens/types, GET /api/v1/store/canarytokens and
+ * GET /api/v1/events?sensor=canarytokens — the three documents the page's
+ * one loader hands back as `{ types, tokens, triggers }`.
+ *
+ * The page does not page the token list, so the store page asks for the
+ * handler's default page (`size=25`) at offset 0 rather than inventing a
+ * bigger one. `total` is the wire's own, so a fleet holding 300 tokens reads
+ * as "300, showing 25" instead of as 25 tokens. */
+const getCanarytokens: Backend['getCanarytokens'] = async () => {
+  const [types, page, fired] = await Promise.all([
+    get<CanaryTokenTypeWire[]>('getCanarytokens', '/api/v1/canarytokens/types'),
+    get<CanarytokenStorePageWire>('getCanarytokens', '/api/v1/store/canarytokens', { offset: 0, size: 25 }),
+    get<CanaryFiredPageWire>('getCanarytokens', '/api/v1/events', { sensor: 'canarytokens', size: 50, since: '365d' }),
+  ])
+  // `types` is code, not data: canarytokens.rs `types` answers a static table
+  // (L96-107), never 404s and never carries a bodyless 200, so the `?? []`
+  // is unreachable through any endpoint the Rust tier really has. It is here
+  // for the same reason every other `??` in this file is: a fixture or a
+  // proxy that swapped the body must not become a crash.
+  return { types: canaryTokenTypes(types ?? []), tokens: canarytokenStorePage(page ?? { total: 0, rows: [] }).tokens, triggers: canaryTriggers(fired ?? { total: 0, offset: 0, rows: [] }) }
+}
+
+/** POST /api/v1/canarytokens (canarytokens.rs `create`, L154).
+ *
+ * `created_by` is the signed-in operator's name, read off `caller` exactly as
+ * the mounted mutations below take their actor: the Rust tier has no session
+ * concept, so `canarytokens.rs CreateBody.created_by` is a field this tier
+ * fills from the session it already resolved — never from client input.
+ *
+ * GAP (documented, not invented): the page's dialog carries a web image as
+ * its FILENAME only (`imageName`), while `create` requires `file_base64` for a
+ * `requires_upload` type and 400s without it (canarytokens.rs:178-180). There
+ * is no upload channel from the browser through this tier's contract, so
+ * `file_name` is sent when the dialog has one and no bytes are claimed. A
+ * `web_image` therefore fails live with the backend's own 400 rather than
+ * minting a token that serves nothing. Wiring the bytes would mean changing
+ * `createCanarytoken`'s page signature, which is generated (queries.impl.ts). */
+const createCanarytoken: Backend['createCanarytoken'] = async (input) => {
+  await guardReadOnly('createCanarytoken')
+  const wire = await post<CreatedCanarytokenWire>('createCanarytoken', '/api/v1/canarytokens', {
+    token_type: input.type,
+    memo: input.memo,
+    created_by: caller?.name ?? '',
+    ...(input.snippet ? { include_text_snippet: true, text_snippet: input.snippet } : {}),
+    ...(input.imageName ? { file_name: input.imageName } : {}),
+  })
+  return createdCanarytoken(wire)
+}
+
+/** GET /api/v1/credentials joined with GET /api/v1/canarytokens — the record
+ * list, and the tokens a credential may be linked to.
+ *
+ * `targets` is NOT read: `create` accepts exactly one implant target,
+ * `cowrie_honeyfs`, and refuses anything else with a 400 (credentials.rs:157).
+ * There is no listing endpoint, so the fixed target is returned rather than
+ * invented from the sensors the page would otherwise list — a picker offering
+ * a target the backend rejects is worse than a picker offering one.
+ *
+ * The endpoint's failure signal is a 200, not a status: an Elasticsearch
+ * outage comes back `{"available": false, "error": …, "credentials": []}`
+ * (credentials.rs:99-116). `get()` hands that body back as a success, so
+ * without the check below the page renders "no credentials" for an outage —
+ * and an empty list reads as "we have none", which is how an outage stays
+ * invisible. So `available: false` throws, and the page's existing
+ * error-with-retry state renders instead. An empty `credentials` WITH
+ * `available: true` is the real answer and still returns []. */
+const getCredentials: Backend['getCredentials'] = async () => {
+  const [list, tokens] = await Promise.all([
+    get<CredentialListWire>('getCredentials', '/api/v1/credentials'),
+    get<CanarytokenListWire>('getCredentials', '/api/v1/canarytokens'),
+  ])
+  if (list && !list.available) throw new ApiError('unavailable', 'getCredentials', { detail: list.error || 'credentials are unavailable' })
+  return { credentials: credentialList(list ?? { available: true, credentials: [] }), tokens: canarytokenList(tokens ?? { tokens: [] }), targets: [CREDENTIAL_TARGET] }
+}
+
+/** The one implant target `credentials.rs` implements (L157, and the
+ * `target` default at L176). Not a page setting: the backend refuses
+ * anything else, so the picker offers this or nothing. */
+const CREDENTIAL_TARGET = 'cowrie_honeyfs'
+
+/** POST /api/v1/credentials (credentials.rs `create`, L150). The actor rides
+ * in the BODY, not a header: `CreateBody` takes `actor_subject` /
+ * `actor_username` (L126-127) and stamps them into `created_by` and the audit
+ * record. Admin-only, enforced by `ADMIN_QUERIES` before this runs.
+ *
+ * An empty `template` is left empty so the backend applies its own
+ * `DEFAULT_CONTENT_TEMPLATE` (credentials.rs:191) rather than this tier
+ * hard-coding a second copy of the same string. */
+const provisionCredential: Backend['provisionCredential'] = async (input) => {
+  await guardReadOnly('provisionCredential')
+  const { subject, username } = await sessionOf()
+  const wire = await post<CredentialRecordWire>('provisionCredential', '/api/v1/credentials', {
+    path: input.path,
+    username: input.username,
+    password: input.password,
+    memo: input.memo,
+    target: input.target || CREDENTIAL_TARGET,
+    ...(input.template ? { content_template: input.template } : {}),
+    actor_subject: subject,
+    actor_username: username,
+  })
+  return baitCredential(wire)
+}
+
+/** POST /api/v1/credentials/{id}/rotate and .../link-token.
+ *
+ * GAP: both handlers answer the full record (credentials.rs `rotate` L322,
+ * `link_token` L373) while the page's seam returns `void` for both — so the
+ * returned password and `linked_token_id` are dropped here, and the page
+ * re-reads the credential after the write, as it does on the mock. A
+ * generated password (empty `password` in, generated by the backend) is
+ * therefore visible on the page only after that re-read.
+ *
+ * `rotate` takes an OPTIONAL body (credentials.rs L270 `Option<Json<RotateBody>>`),
+ * so an empty password is sent as a body with an empty field rather than as
+ * no body at all — both spell the same thing to the handler, and the body
+ * keeps `content-type` honest. */
+const rotateCredential: Backend['rotateCredential'] = async (id, password) => {
+  await guardReadOnly('rotateCredential')
+  const { subject, username } = await sessionOf()
+  await post<CredentialRecordWire>('rotateCredential', `/api/v1/credentials/${encodeURIComponent(id)}/rotate`, { ...(password ? { password } : {}), actor_subject: subject, actor_username: username })
+}
+
+const linkCredentialToken: Backend['linkCredentialToken'] = async (id, tokenId) => {
+  await guardReadOnly('linkCredentialToken')
+  const { subject, username } = await sessionOf()
+  // "" is how the handler unlinks (credentials.rs L353-360): it trims the
+  // field, and an empty token_id skips the existence check and stores "".
+  await post<CredentialRecordWire>('linkCredentialToken', `/api/v1/credentials/${encodeURIComponent(id)}/link-token`, { token_id: tokenId ?? '', actor_subject: subject, actor_username: username })
 }
 
 // ---- the settings slice -----------------------------------------------------
@@ -1316,6 +1467,13 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   getTopology,
   getDeadLetters,
   purgeDeadLetters,
+  // Tools (#80)
+  getCanarytokens,
+  createCanarytoken,
+  getCredentials,
+  provisionCredential,
+  rotateCredential,
+  linkCredentialToken,
 }
 
 /** The guarded live implementation of `name`, or undefined when this slice

@@ -156,6 +156,13 @@ describe('which queries the real backend answers', () => {
         'getTopology',
         'purgeDeadLetters',
         'setAlertsAcknowledged',
+        // tools (#80)
+        'createCanarytoken',
+        'getCanarytokens',
+        'getCredentials',
+        'linkCredentialToken',
+        'provisionCredential',
+        'rotateCredential',
       ].sort(),
     )
   })
@@ -1291,5 +1298,184 @@ describe('the operations slice fails as an error, never as an empty panel', () =
     const out = await live('getSensorCatalog')().catch((error: unknown) => error)
     expect(out).toBeInstanceOf(ApiError)
     expect((out as ApiError).kind).toBe('unavailable')
+  })
+})
+
+// ---- tools (#80): canarytokens and bait credentials ------------------------
+
+const tokenRecord = { id: 'a1b2c3d4e5f6a7b8c9d0e1f2a', token_type: 'ms_word', memo: 'finance share bait', token_url: 'http://canary.example.test/tags/a1b2/index.html', hostname: 'a1b2.canary.example.test', filename_hint: 'payroll.docx', created_by: 'analyst', created_at: '2026-10-04T09:00:00Z' }
+const credentialRecord = { id: 'cred_0011223344556677', target: 'cowrie_honeyfs', path: 'home/admin/.aws/credentials', username: 'deploy', password: 'xK7pQ2mN9rT4vW8yZ3bC', content_template: 'username={{username}}\npassword={{password}}\n', memo: 'aws bait', created_by: 'analyst', created_at: '2026-10-04T08:00:00Z' }
+const toolsFixtures = (over: Record<string, unknown> = {}) => ({
+  '/api/v1/canarytokens/types': [{ token_type: 'ms_word', label: 'Word document', description: 'A decoy .docx that fires when opened.', requires_upload: false, supports_snippet: true }, { token_type: 'web_image', label: 'Custom web image', description: 'A web bug behind your own image.', requires_upload: true, supports_snippet: false }],
+  '/api/v1/canarytokens': { tokens: [tokenRecord] },
+  '/api/v1/store/canarytokens': { total: 1, rows: [{ ...tokenRecord, _doc_id: tokenRecord.id }] },
+  '/api/v1/events': { total: 1, offset: 0, rows: [{ id: 'ev-f1', time: '2026-10-04T20:41:03Z', sensor: 'canarytokens', src_ip: '203.0.113.42', country: 'NL', detail: 'callback', record: { honeypot: { token_type: 'ms_word', channel: 'http', manage_url: 'https://canary.example.test/manage?token=x', memo: 'file opened' } } }] },
+  '/api/v1/credentials': { available: true, credentials: [credentialRecord] },
+  '/api/v1/config': configWire,
+  ...over,
+})
+
+/** The POST bodies the stub was asked to send, by path. `stub` records URLs
+ * only, so a body assertion goes through the recorded request directly. */
+const bodiesOf = (): Array<{ path: string; body: unknown }> =>
+  (globalThis.fetch as unknown as { mock: { calls: Array<[string, { body: string } | undefined]> } }).mock.calls
+    .map(([url, init]) => ({ path: new URL(url).pathname, body: init?.body ? JSON.parse(init.body) : undefined }))
+    // The read-only guard reads /api/v1/config before every write; that GET
+    // carries no body and is not what these assertions are about.
+    .filter((call) => call.body !== undefined)
+
+describe('the tools slice reads the endpoints the Rust tier actually serves', () => {
+  it('builds the canarytokens page from types, the store page and the fired events', async () => {
+    const calls = stub(toolsFixtures())
+    const out = await live('getCanarytokens')()
+    expect(calls.map((url) => `${new URL(url).pathname}${new URL(url).search}`).sort()).toEqual([
+      '/api/v1/canarytokens/types',
+      // A year of fired tokens: the page shows every trigger it can.
+      '/api/v1/events?sensor=canarytokens&size=50&since=365d',
+      // The store page, at the handler's own default size — the page does
+      // not page the token list, so no bigger one is invented.
+      '/api/v1/store/canarytokens?offset=0&size=25',
+    ])
+    expect(out.types.map((t) => t.type)).toEqual(['ms_word', 'web_image'])
+    expect(out.tokens).toEqual([{ id: 'a1b2c3d4e5f6a7b8c9d0e1f2a', type: 'ms_word', memo: 'finance share bait', url: 'http://canary.example.test/tags/a1b2/index.html', hostname: 'a1b2.canary.example.test', createdAt: '2026-10-04T09:00:00Z', createdBy: 'analyst', artifact: 'payroll.docx' }])
+    expect(out.triggers).toEqual([{ id: 'ev-f1', tokenId: '', memo: 'file opened', type: 'ms_word', triggeredAt: '2026-10-04T20:41:03Z', srcIp: '203.0.113.42', userAgent: '', location: 'NL', manageUrl: 'https://canary.example.test/manage?token=x' }])
+  })
+
+  it('leaves the two event-row gaps empty rather than inventing them', async () => {
+    // Gaps #1 and #2. An events.rs row carries no canarytoken id and no user
+    // agent, so the adapter leaves both `''`. A guess would put a token id
+    // next to a wrong token's trigger.
+    stub(toolsFixtures())
+    const [trigger] = (await live('getCanarytokens')()).triggers
+    expect(trigger.tokenId).toBe('')
+    expect(trigger.userAgent).toBe('')
+  })
+
+  it('falls back to the row detail when the record carries no honeypot memo', async () => {
+    // Gap #3: `record.honeypot.memo` where there is one, `detail` otherwise.
+    stub(toolsFixtures({ '/api/v1/events': { total: 1, offset: 0, rows: [{ id: 'ev-f2', time: '2026-10-04T21:00:00Z', sensor: 'canarytokens', src_ip: '198.51.100.7', country: '', detail: 'dns lookup', record: {} }] } }))
+    const [trigger] = (await live('getCanarytokens')()).triggers
+    expect(trigger.memo).toBe('dns lookup')
+  })
+
+  it('mints a token through POST /api/v1/canarytokens, with the actor as created_by', async () => {
+    stub(toolsFixtures({ '/api/v1/canarytokens': tokenRecord }))
+    process.env.BACKEND_URL = 'http://backend.test'
+    const analyst = { id: 'u', name: 'A', email: 'a@example.test', roles: ['viewer' as const] }
+    // A freshly minted token carries no filename_hint — the backend stamps
+    // the file name onto the STORED record, not the created one (canarytokens.rs:246).
+    const token = await (liveQuery('createCanarytoken', analyst) as Backend['createCanarytoken'])({ type: 'ms_word', memo: 'payroll', snippet: 'Q3 adjustments' })
+    expect(bodiesOf()).toEqual([{ path: '/api/v1/canarytokens', body: { token_type: 'ms_word', memo: 'payroll', created_by: 'A', include_text_snippet: true, text_snippet: 'Q3 adjustments' } }])
+    expect(token).toMatchObject({ id: 'a1b2c3d4e5f6a7b8c9d0e1f2a', type: 'ms_word', memo: 'finance share bait' })
+  })
+
+  it('sends no snippet and no file fields the dialog left blank', async () => {
+    stub(toolsFixtures({ '/api/v1/canarytokens': tokenRecord }))
+    await live('createCanarytoken')({ type: 'ms_word', memo: 'payroll' })
+    expect(bodiesOf()[0].body).toEqual({ token_type: 'ms_word', memo: 'payroll', created_by: '' })
+  })
+
+  it('refuses a web_image live rather than minting a token with no bytes', async () => {
+    // The page's dialog carries the image as its NAME only, while
+    // canarytokens.rs:178-180 decodes `file_base64` and 400s without it.
+    // Sending the name alone lets the backend refuse it in its own words
+    // instead of this tier pretending the upload happened.
+    stub(toolsFixtures({ '/api/v1/canarytokens': fail(400, 'a file upload is required for this token type') }))
+    await expect(live('createCanarytoken')({ type: 'web_image', memo: 'badge', imageName: 'badge.png' })).rejects.toThrow(ApiError)
+  })
+
+  it('reads the credentials and the linkable tokens from the two list endpoints', async () => {
+    const calls = stub(toolsFixtures())
+    const out = await live('getCredentials')()
+    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/canarytokens', '/api/v1/credentials'])
+    expect(out.credentials).toEqual([{ id: 'cred_0011223344556677', target: 'cowrie_honeyfs', path: 'home/admin/.aws/credentials', username: 'deploy', password: 'xK7pQ2mN9rT4vW8yZ3bC', memo: 'aws bait', template: 'username={{username}}\npassword={{password}}\n', createdAt: '2026-10-04T08:00:00Z', createdBy: 'analyst' }])
+    expect(out.tokens).toHaveLength(1)
+  })
+
+  it('offers only the one target credentials.rs implements', async () => {
+    // Gap #5: `create` refuses any target but cowrie_honeyfs with a 400
+    // (credentials.rs:157) and there is no listing endpoint, so the picker
+    // offers that one rather than the sensor list the mock derives.
+    stub(toolsFixtures())
+    expect((await live('getCredentials')()).targets).toEqual(['cowrie_honeyfs'])
+  })
+
+  it('throws on available:false — an ES outage comes back as a 200', async () => {
+    // Gap #7, and the one this slice most exists to get right. credentials.rs
+    // answers a dead store with HTTP 200 and an empty list, which the seam
+    // hands back as a success. Returning [] renders "no credentials" for an
+    // outage, and an operator reads an empty list as "we have none" and
+    // never looks for the Elasticsearch fault.
+    stub(toolsFixtures({ '/api/v1/credentials': { available: false, error: 'index_not_found_exception', credentials: [] } }))
+    const out = await live('getCredentials')().catch((error: unknown) => error)
+    expect(out).toBeInstanceOf(ApiError)
+    expect((out as ApiError).kind).toBe('unavailable')
+    expect((out as ApiError).detail).toBe('index_not_found_exception')
+  })
+
+  it('still answers [] for an AVAILABLE store that holds none', async () => {
+    // The other side of the same gap: `available: true` with no records is a
+    // real empty list, and must not be turned into an error.
+    stub(toolsFixtures({ '/api/v1/credentials': { available: true, credentials: [] } }))
+    expect((await live('getCredentials')()).credentials).toEqual([])
+  })
+
+  it('plants a credential with the actor in the body, where CreateBody reads it', async () => {
+    stub(toolsFixtures({ '/api/v1/credentials': credentialRecord }))
+    await live('provisionCredential')({ path: 'home/deploy/.aws/credentials', target: 'cowrie_honeyfs', username: 'deploy', password: 'pw', memo: 'aws bait', template: '' })
+    // An empty template is left empty so the backend applies its own
+    // DEFAULT_CONTENT_TEMPLATE rather than this tier hard-coding a copy.
+    expect(bodiesOf()[0]).toEqual({ path: '/api/v1/credentials', body: { path: 'home/deploy/.aws/credentials', username: 'deploy', password: 'pw', memo: 'aws bait', target: 'cowrie_honeyfs', actor_subject: '', actor_username: '' } })
+  })
+
+  it('rotates and links through the record-returning POSTs, dropping the record', async () => {
+    // Gap #6: both handlers answer the full record and the page's seam
+    // returns void, so the new password and the link id are dropped here and
+    // the page re-reads the credential — as it does on the mock.
+    stub(toolsFixtures({ '/api/v1/credentials/cred_0011223344556677/rotate': { ...credentialRecord, password: 'newSecret' }, '/api/v1/credentials/cred_0011223344556677/link-token': { ...credentialRecord, linked_token_id: 'a1b2' } }))
+    expect(await live('rotateCredential')('cred_0011223344556677')).toBeUndefined()
+    expect(await live('linkCredentialToken')('cred_0011223344556677', 'a1b2')).toBeUndefined()
+    expect(bodiesOf()).toEqual([
+      { path: '/api/v1/credentials/cred_0011223344556677/rotate', body: { actor_subject: '', actor_username: '' } },
+      { path: '/api/v1/credentials/cred_0011223344556677/link-token', body: { token_id: 'a1b2', actor_subject: '', actor_username: '' } },
+    ])
+  })
+
+  it('unlinks with an empty token_id, which is how the handler reads it', async () => {
+    stub(toolsFixtures({ '/api/v1/credentials/cred_0011223344556677/link-token': credentialRecord }))
+    await live('linkCredentialToken')('cred_0011223344556677')
+    expect(bodiesOf()[0].body).toEqual({ token_id: '', actor_subject: '', actor_username: '' })
+  })
+
+  it('keeps the three credential writes admin-only on the live path', async () => {
+    const analyst = { id: 'u', name: 'A', email: 'a@example.test', roles: ['viewer' as const] }
+    for (const name of ['provisionCredential', 'rotateCredential', 'linkCredentialToken'] as const) {
+      // Refused before any fetch — the seam applies the same decision
+      // `backend()` does, so a role is refused identically on either tier.
+      const refused = await (liveQuery(name, analyst) as (...a: never[]) => Promise<unknown>)(...(name === 'provisionCredential' ? [{ path: 'p', target: '', username: 'u', password: 'p', memo: 'm', template: '' }] : ['cred-1', undefined]) as never[]).catch((error: unknown) => error)
+      expect(refused, name).toBeInstanceOf(ApiError)
+      expect((refused as ApiError).kind, name).toBe('forbidden')
+    }
+  })
+
+  it('honours read-only before minting or planting', async () => {
+    stub(toolsFixtures({ '/api/v1/config': { ...configWire, payload: { behavior: { read_only: true } } } }))
+    await expect(live('createCanarytoken')({ type: 'ms_word', memo: 'payroll' })).rejects.toThrow(ApiError)
+    await expect(live('provisionCredential')({ path: 'p', target: '', username: 'u', password: 'p', memo: 'm', template: '' })).rejects.toThrow(ApiError)
+  })
+
+  it('maps a failed tools fetch to an error, never to an empty panel', async () => {
+    const cases: Array<[string, () => Promise<unknown>, Record<string, unknown>]> = [
+      ['getCanarytokens', () => live('getCanarytokens')(), { '/api/v1/canarytokens/types': fail(502) }],
+      ['getCredentials', () => live('getCredentials')(), { '/api/v1/credentials': fail(502) }],
+      ['createCanarytoken', () => live('createCanarytoken')({ type: 'ms_word', memo: 'm' }), { '/api/v1/canarytokens': fail(502) }],
+      ['provisionCredential', () => live('provisionCredential')({ path: 'p', target: '', username: 'u', password: 'p', memo: 'm', template: '' }), { '/api/v1/credentials': fail(502) }],
+      ['rotateCredential', () => live('rotateCredential')('cred-1'), { '/api/v1/credentials/cred-1/rotate': fail(502) }],
+      ['linkCredentialToken', () => live('linkCredentialToken')('cred-1', 'tok'), { '/api/v1/credentials/cred-1/link-token': fail(502) }],
+    ]
+    for (const [name, call, fixtures] of cases) {
+      stub(toolsFixtures(fixtures))
+      await expect(call(), name).rejects.toThrow(ApiError)
+    }
   })
 })
