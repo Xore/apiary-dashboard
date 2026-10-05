@@ -539,6 +539,83 @@ describe('the actor the Rust tier trusts', () => {
     await expect(liveQuery('abortGpuJob', { name: 'V', email: 'v@example.test', roles: ['viewer'] })!('gj-1')).rejects.toThrow(ApiError)
     expect(fetch).not.toHaveBeenCalled()
   })
+
+  // #196: the actor used to be one module-level binding assigned per request,
+  // and every write below reads it AFTER guardReadOnly's config read has
+  // suspended the request. Two requests in flight therefore read each other's
+  // operator. The gate below is what makes the interleave real: the config
+  // read answers only once BOTH requests have reached it, so the swap happens
+  // inside the await rather than between two of this test's own ticks.
+  const alice = { id: 'u1', name: 'alice', email: 'a@example.test', roles: ['admin' as const] }
+  const bob = { id: 'u2', name: 'bob', email: 'b@example.test', roles: ['admin' as const] }
+
+  /** A stub whose config read holds every request until two of them have
+   * reached it, so the read-after-await is a real interleave rather than an
+   * artifact of this test's own awaits. Every other path answers at once and
+   * records the actor header it was sent, keyed by path (or by `q`, which is
+   * what tells the two purges apart), so each assertion names one request's
+   * own argument. */
+  function overlappingStub() {
+    const actors = new Map<string, string>()
+    const createdBy = new Map<string, string>()
+    let waiting = 0
+    let release: () => void = () => {}
+    const bothInFlight = new Promise<void>((resolve) => (release = resolve))
+    const json = (value: unknown) => new Response(JSON.stringify(value), { status: 200, headers: { 'content-type': 'application/json' } })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit) => {
+        const parsed = new URL(url)
+        const path = parsed.pathname
+        if (path === '/api/v1/config') {
+          if (++waiting === 2) release()
+          await bothInFlight
+          return json(configWire)
+        }
+        const headers = init.headers as Record<string, string>
+        const key = path === '/api/v1/store/dead-letters' ? String(parsed.searchParams.get('q')) : path
+        actors.set(key, headers['x-actor-username'])
+        if (path === '/api/v1/canarytokens') {
+          const body = JSON.parse(init.body as string)
+          createdBy.set(body.memo, body.created_by)
+          return json(tokenRecord)
+        }
+        if (path === '/api/v1/store/dead-letters') return json({ deleted: 1 })
+        return json({ ok: true, abort_requested: true })
+      }),
+    )
+    return { actors, createdBy }
+  }
+
+  it('keeps each of two overlapping writes on its own operator', async () => {
+    const { actors, createdBy } = overlappingStub()
+    await Promise.all([
+      liveQuery('setAlertsAcknowledged', alice)!(['yara:aaa'], true),
+      liveQuery('setAlertsAcknowledged', bob)!(['yara:bbb'], true),
+      // The same read-after-await hole, with the operator in the body rather
+      // than a header: on a canarytoken the wrong name is written into
+      // `created_by` on the artifact an analyst later attributes an
+      // intrusion to.
+      liveQuery('createCanarytoken', alice)!({ type: 'ms_word', memo: 'from-alice' }),
+      liveQuery('createCanarytoken', bob)!({ type: 'ms_word', memo: 'from-bob' }),
+    ])
+    expect(Object.fromEntries(actors)).toEqual({ '/api/v1/alerts/yara%3Aaaa/ack': 'alice', '/api/v1/alerts/yara%3Abbb/ack': 'bob' })
+    expect(Object.fromEntries(createdBy)).toEqual({ 'from-alice': 'alice', 'from-bob': 'bob' })
+  })
+
+  it('keeps the third post-await read, the admin-only purge, on its own operator', async () => {
+    const { actors } = overlappingStub()
+    await Promise.all([liveQuery('purgeDeadLetters', alice)!('mapper_parsing'), liveQuery('purgeDeadLetters', bob)!('index_out_of_bounds')])
+    expect(Object.fromEntries(actors)).toEqual({ mapper_parsing: 'alice', index_out_of_bounds: 'bob' })
+  })
+
+  it('leaves the sites that read the actor in the same tick still on theirs', async () => {
+    // The five mounted mutations that read before their first await were
+    // already correct; the scope has to keep them that way.
+    const { actors } = overlappingStub()
+    await Promise.all([liveQuery('abortGpuJob', alice)!('gj-a'), liveQuery('abortGpuJob', bob)!('gj-b')])
+    expect(Object.fromEntries(actors)).toEqual({ '/api/v1/gpu-queue/gj-a/abort': 'alice', '/api/v1/gpu-queue/gj-b/abort': 'bob' })
+  })
 })
 
 describe('the Evidence queries against a fixture per endpoint', () => {

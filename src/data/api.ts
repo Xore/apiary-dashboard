@@ -15,6 +15,7 @@
 // BACKEND_URL is also the opt-in: unset means "this tier talks to nobody",
 // which is the default. The token is never logged, never in a URL, and
 // never in an error message — it only ever rides as a request header.
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { ApiError } from './errors'
 import {
   commandsQuery,
@@ -542,7 +543,7 @@ const getCanarytokens: Backend['getCanarytokens'] = async () => {
 
 /** POST /api/v1/canarytokens (canarytokens.rs `create`, L154).
  *
- * `created_by` is the signed-in operator's name, read off `caller` exactly as
+ * `created_by` is the signed-in operator's name, read off `callerOf()` exactly as
  * the mounted mutations below take their actor: the Rust tier has no session
  * concept, so `canarytokens.rs CreateBody.created_by` is a field this tier
  * fills from the session it already resolved — never from client input.
@@ -560,7 +561,7 @@ const createCanarytoken: Backend['createCanarytoken'] = async (input) => {
   const wire = await post<CreatedCanarytokenWire>('createCanarytoken', '/api/v1/canarytokens', {
     token_type: input.type,
     memo: input.memo,
-    created_by: caller?.name ?? '',
+    created_by: callerOf()?.name ?? '',
     ...(input.snippet ? { include_text_snippet: true, text_snippet: input.snippet } : {}),
     ...(input.imageName ? { file_name: input.imageName } : {}),
   })
@@ -1294,7 +1295,7 @@ const setAlertsAcknowledged: Backend['setAlertsAcknowledged'] = async (keys, ack
   await guardReadOnly('setAlertsAcknowledged')
   let changed = 0
   for (const key of keys) {
-    await request<AckAlertWire>('setAlertsAcknowledged', `/api/v1/alerts/${encodeURIComponent(key)}/ack`, { method: 'POST', body: alertAckBody(acknowledged), user: caller })
+    await request<AckAlertWire>('setAlertsAcknowledged', `/api/v1/alerts/${encodeURIComponent(key)}/ack`, { method: 'POST', body: alertAckBody(acknowledged), user: callerOf() })
     changed += 1
   }
   return changed
@@ -1380,7 +1381,7 @@ const getDeadLetters: Backend['getDeadLetters'] = async (query) => deadLetters((
  * fetch by `liveQuery`, the same decision the mock tier makes. */
 const purgeDeadLetters: Backend['purgeDeadLetters'] = async (query) => {
   await guardReadOnly('purgeDeadLetters')
-  const wire = await request<PurgeDeadLettersWire>('purgeDeadLetters', '/api/v1/store/dead-letters', { method: 'DELETE', search: { q: query.trim() || undefined }, user: caller })
+  const wire = await request<PurgeDeadLettersWire>('purgeDeadLetters', '/api/v1/store/dead-letters', { method: 'DELETE', search: { q: query.trim() || undefined }, user: callerOf() })
   return purgedDeadLetters(wire ?? { deleted: 0 })
 }
 
@@ -1617,11 +1618,22 @@ const searchAll: Backend['searchAll'] = async (query) => {
 }
 
 /** The session user of the request currently being served, for the mounted
- * mutations below. `liveQuery` sets it around each call rather than widening
- * the mock's signatures (which `queries.ts` is generated from, and pages are
- * typed against). Never client input: it comes from `runForRequest`'s
- * `resolveUser`, the same source canonical forwards the actor headers from. */
-let caller: Caller
+ * mutations below. `liveQuery` runs each dispatch inside this scope rather
+ * than widening the mock's signatures (which `queries.ts` is generated from,
+ * and pages are typed against). Never client input: it comes from
+ * `runForRequest`'s `resolveUser`, the same source canonical forwards the
+ * actor headers from.
+ *
+ * A scope, not a module binding (#196): a binding assigned per request is one
+ * slot for the whole process, and every write below reads it AFTER
+ * `guardReadOnly`'s config read has already suspended the request — long
+ * enough for another request's assignment to land. A save/restore on exit
+ * does not help; the interleave is inside the await, not at the boundary. */
+const callerScope = new AsyncLocalStorage<Caller>()
+
+/** The operator of the request being served — undefined for the trusted
+ * internal caller, which is what `actorHeaders` omits headers for. */
+const callerOf = (): Caller => callerScope.getStore()
 
 /** POST /api/v1/workbench/runs. Mounted, and it forwards the session's
  * actor: workbench_api.rs's `require_actor` rejects a missing or blank
@@ -1632,17 +1644,17 @@ let caller: Caller
  * narrows each block to the three numbers the backend validates. */
 const startAnalysisRun: Backend['startAnalysisRun'] = async (config) => {
   const options = Object.fromEntries(config.analyzers.map((id) => [id, config[id]])) as Record<string, Record<string, string | number | boolean | string[]>>
-  const wire = await post<CreateWorkbenchRunWire>('startAnalysisRun', '/api/v1/workbench/runs', createWorkbenchRunBody(config.hash, config.analyzers, options), { mounted: true, user: caller })
+  const wire = await post<CreateWorkbenchRunWire>('startAnalysisRun', '/api/v1/workbench/runs', createWorkbenchRunBody(config.hash, config.analyzers, options), { mounted: true, user: callerOf() })
   return { run: workbenchRun(wire.run), reused: wire.reused }
 }
 
 const setRunChild: Backend['setRunChild'] = async (runId, analyzerId, action) => {
-  const wire = await post<WorkbenchRunEnvelopeWire>('setRunChild', `/api/v1/workbench/runs/${encodeURIComponent(runId)}/children/${encodeURIComponent(analyzerId)}/${action}`, {}, { mounted: true, user: caller })
+  const wire = await post<WorkbenchRunEnvelopeWire>('setRunChild', `/api/v1/workbench/runs/${encodeURIComponent(runId)}/children/${encodeURIComponent(analyzerId)}/${action}`, {}, { mounted: true, user: callerOf() })
   return workbenchRun(wire.run)
 }
 
 const abortGpuJob: Backend['abortGpuJob'] = async (jobId) => {
-  const wire = await post<GpuAbortWire>('abortGpuJob', `/api/v1/gpu-queue/${encodeURIComponent(jobId)}/abort`, {}, { mounted: true, user: caller })
+  const wire = await post<GpuAbortWire>('abortGpuJob', `/api/v1/gpu-queue/${encodeURIComponent(jobId)}/abort`, {}, { mounted: true, user: callerOf() })
   return wire.abort_requested
 }
 
@@ -1741,7 +1753,7 @@ const getAnalyzerCatalog: Backend['getAnalyzerCatalog'] = async (hash) => {
  * nothing. */
 const queuePayloadAction: Backend['queuePayloadAction'] = async (hash, action) => {
   if (action === 'pdf') return 'PDF report generation started'
-  const mounted = { mounted: true, user: caller }
+  const mounted = { mounted: true, user: callerOf() }
   if (action === 'sandbox') await post<SandboxSubmitWire>('queuePayloadAction', '/api/v1/sandbox/submit', { hash }, mounted)
   else if (action === 'ghidra') await post<GhidraSubmitWire>('queuePayloadAction', '/api/v1/ghidra/submit', { hash }, mounted)
   else await post<GithubAnalysisSubmitWire>('queuePayloadAction', '/api/v1/github-analysis/submit', { hash, confirm: 'publish' }, mounted)
@@ -1767,7 +1779,7 @@ const getAnalysisResults: Backend['getAnalysisResults'] = async () => {
   // workbench_api.rs #3110 removed the `owner` query field as the access
   // check ("it isn't deserialized at all, so no handler can make an access
   // decision out of request data"), so no owner is sent here.
-  const mounted = { mounted: true, user: caller }
+  const mounted = { mounted: true, user: callerOf() }
   const [queue, catalog, runs, recipes] = await Promise.all([
     get<GpuQueueWire>('getAnalysisResults', '/api/v1/gpu-queue'),
     get<AnalyzerCatalogWire[]>('getAnalysisResults', '/api/v1/workbench/analyzers', {}, mounted),
@@ -2295,11 +2307,11 @@ export function liveQuery(name: string, user: Caller): ((...args: unknown[]) => 
       if (decision === 'sign-in') throw new ApiError('expired', name)
       if (decision === 'admin-only') throw new ApiError('forbidden', name)
     }
-    // The mounted mutations read the actor off this module rather than
-    // taking it as a parameter: the mock's signatures are the contract and
-    // none of them carry a caller.
-    caller = user
-    return query(...args)
+    // The mounted mutations read the actor off the request's scope rather
+    // than taking it as a parameter: the mock's signatures are the contract
+    // and none of them carry a caller. run(), not an assignment — see
+    // callerScope.
+    return callerScope.run(user, () => query(...args))
   }
 }
 
