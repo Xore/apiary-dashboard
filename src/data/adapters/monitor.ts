@@ -23,7 +23,6 @@ import type {
   MlModelHealth,
   MlStatus,
   OverviewKpis,
-  PayloadsPage,
   StorePage,
 } from '../contracts/monitor'
 import type {
@@ -146,8 +145,14 @@ export function toCampaignSummary(row: CampaignRow): Pick<NetworkCampaign, 'cidr
 /** GET /api/v1/payloads?size=15 → the captured-payload count, which is all
  * the overview's tile shows (the row type is an untyped inventory
  * document). `sources` needs `?aggs=sources`, which this tile does not ask
- * for; `source_buckets`/`source_other` are therefore unused. */
-export const toPayloadCount = (page: PayloadsPage): number => page.total
+ * for; `source_buckets`/`source_other` are therefore unused.
+ *
+ * Takes the `total` rather than the page, so the evidence slice's own
+ * `PayloadPageWire` (contracts/evidence.ts) is accepted as well as this
+ * slice's deliberately untyped `PayloadsPage` — the two describe the same
+ * endpoint and differ only in how much of the row is typed, which this
+ * function does not read. */
+export const toPayloadCount = (page: { total: number }): number => page.total
 
 /** GET /api/v1/config → the five presentation fields the overview and the
  * shell read. The other eleven presentation keys (`app_name`,
