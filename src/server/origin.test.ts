@@ -8,10 +8,12 @@ describe('same-origin rule', () => {
     expect(isSameOriginRequest(request('GET'))).toBe(true)
   })
 
-  it('needs this origin on a state-changing request', () => {
-    expect(isSameOriginRequest(request('POST', { origin: 'http://localhost:3000' }))).toBe(true)
-    expect(isSameOriginRequest(request('POST', { referer: 'http://localhost:3000/events' }))).toBe(true)
-    expect(isSameOriginRequest(request('POST', { origin: 'https://evil.example.test' }))).toBe(false)
+  it('needs this origin and the CSRF header on a state-changing request', () => {
+    const csrf = { 'x-csrf-token': '1' }
+    expect(isSameOriginRequest(request('POST', { origin: 'http://localhost:3000', ...csrf }))).toBe(true)
+    expect(isSameOriginRequest(request('POST', { referer: 'http://localhost:3000/events', ...csrf }))).toBe(true)
+    expect(isSameOriginRequest(request('POST', { origin: 'http://localhost:3000' }))).toBe(false)
+    expect(isSameOriginRequest(request('POST', { origin: 'https://evil.example.test', ...csrf }))).toBe(false)
     expect(isSameOriginRequest(request('POST'))).toBe(false)
   })
 
