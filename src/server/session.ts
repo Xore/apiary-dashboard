@@ -1,10 +1,11 @@
 // Sessions: an opaque id in an HttpOnly cookie, the identity behind it in a
-// store. Production keeps the store in Redis (#5); until then it is kept in
-// this process's memory behind the same interface, so the sign-in flow,
-// the navigation guard and every role check run for real. Server-only.
+// store. Keycloak sign-in keeps the store in Redis, shared by every
+// instance; the mock identity provider (a local instance) keeps it in this
+// process's memory unless OIDC_SESSION_REDIS_URL names a Redis. Server-only.
 import { randomBytes } from 'node:crypto'
-import { Unavailable, faulty } from './faults'
-import { DEV_HTTP_COOKIE_ENV } from './policy'
+import { Redis } from 'ioredis'
+import { Unavailable, faulty, warnThrottled } from './faults'
+import { DEV_HTTP_COOKIE_ENV, mockIdentityProvider } from './policy'
 
 export type Role = 'admin' | 'viewer'
 
@@ -15,9 +16,11 @@ export type Session = {
   email: string
   role: Role
   createdAt: number
+  /** Keycloak's id token, the hint its end-session endpoint wants. */
+  idToken?: string
 }
 
-/** What production's Redis store and this in-memory one both do. */
+/** What the Redis store and the in-memory one both do. */
 export interface SessionStore {
   create: (data: Omit<Session, 'createdAt'>) => Promise<string>
   get: (sid: string | undefined) => Promise<Session | null>
@@ -58,11 +61,79 @@ export class MemorySessionStore implements SessionStore {
   }
 }
 
-/** The process's store. Swapped for the Redis one with the real sign-in.
- * Kept on the process, not the module: in development a code reload
- * re-evaluates this module, and a fresh store would sign everyone out. */
+/** The commands the Redis store needs, so a test can stand in for Redis. */
+export type RedisLike = Pick<Redis, 'set' | 'get' | 'getdel' | 'del'>
+
+const SESSION_PREFIX = 'bff:session:'
+
+export class RedisSessionStore implements SessionStore {
+  constructor(
+    private readonly redis: RedisLike,
+    private readonly now: () => number = Date.now,
+  ) {}
+
+  async create(data: Omit<Session, 'createdAt'>): Promise<string> {
+    const sid = randomBytes(32).toString('base64url')
+    await this.redis.set(SESSION_PREFIX + sid, JSON.stringify({ ...data, createdAt: this.now() }), 'EX', SESSION_TTL_SECONDS)
+    return sid
+  }
+
+  async get(sid: string | undefined): Promise<Session | null> {
+    if (!sid || sid.length > 128) return null
+    const raw = await this.redis.get(SESSION_PREFIX + sid)
+    return raw ? (JSON.parse(raw) as Session) : null
+  }
+
+  async destroy(sid: string | undefined): Promise<void> {
+    if (sid) await this.redis.del(SESSION_PREFIX + sid)
+  }
+}
+
+/** One connection per process, for sessions and pending sign-ins. */
+export function redis(): Redis {
+  const holder = globalThis as typeof globalThis & { __apiaryRedis?: Redis }
+  if (!holder.__apiaryRedis) {
+    const client = new Redis(process.env.OIDC_SESSION_REDIS_URL ?? 'redis://127.0.0.1:6379/0', {
+      maxRetriesPerRequest: 2,
+      // On, unlike a cache client: with it off a command issued before the
+      // socket is ready throws instead of waiting, and right after a deploy
+      // every sign-in answered 500 against a healthy Redis (canonical).
+      // Bounded by the retries above and the connect timeout below.
+      enableOfflineQueue: true,
+      connectTimeout: 5000,
+      // Connects on the first command, not on import.
+      lazyConnect: true,
+    })
+    // Never crash on a Redis flap, never swallow it either.
+    client.on('error', (error: Error) => warnThrottled('[session] redis error:', error))
+    holder.__apiaryRedis = client
+  }
+  return holder.__apiaryRedis
+}
+
+/** The process's store. Kept on the process, not the module: in
+ * development a code reload re-evaluates this module, and a fresh store
+ * would sign everyone out. */
 const holder = globalThis as typeof globalThis & { __apiarySessions?: SessionStore }
-export const sessions: SessionStore = (holder.__apiarySessions ??= new MemorySessionStore())
+export const sessions: SessionStore = (holder.__apiarySessions ??= !mockIdentityProvider()
+  ? new RedisSessionStore(redis())
+  : process.env.OIDC_SESSION_REDIS_URL
+    ? withMemoryFallback(new RedisSessionStore(redis()), new MemorySessionStore())
+    : new MemorySessionStore())
+
+/** A local instance keeps working while its Redis is down: sessions fall
+ * back to this process's memory. Never with Keycloak, where every instance
+ * must see the same sessions. */
+export function withMemoryFallback(primary: SessionStore, fallback: SessionStore): SessionStore {
+  const either =
+    <TArgs extends unknown[], TResult>(op: (store: SessionStore) => (...args: TArgs) => Promise<TResult>) =>
+    (...args: TArgs) =>
+      op(primary)(...args).catch((error: unknown) => {
+        warnThrottled('[session] redis unavailable, using memory:', error)
+        return op(fallback)(...args)
+      })
+  return { create: either((s) => s.create.bind(s)), get: either((s) => s.get.bind(s)), destroy: either((s) => s.destroy.bind(s)) }
+}
 
 /** Development over plain HTTP from another machine: browsers refuse a
  * Secure (and so a `__Host-`) cookie there, and sign-in would loop. With

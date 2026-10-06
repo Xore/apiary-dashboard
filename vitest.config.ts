@@ -10,5 +10,8 @@ export default defineConfig({
     // Component tests opt into a DOM per file with a
     // `// @vitest-environment jsdom` pragma.
     setupFiles: ['src/test/setup.ts'],
+    // A local instance, as `bun dev` is: the mock identity provider and
+    // in-memory sessions, never a Redis the machine happens to run.
+    env: { APIARY_ALLOW_UNAUTH_DEV: '1', OIDC_SESSION_REDIS_URL: '' },
   },
 })
