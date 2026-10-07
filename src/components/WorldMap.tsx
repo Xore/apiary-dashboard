@@ -80,7 +80,7 @@ export function WorldMap({ points }: { points: MapPoint[] }) {
         <a
           key={m.key}
           href={`/events?country=${m.countries.join(',')}`}
-          aria-label={`${m.countries.join(', ')}: ${formatNumber(m.events)} events`}
+          aria-label={`${m.countries.length > 1 ? `${m.countries.length} countries: ` : ''}${m.countries.join(', ')}: ${formatNumber(m.events)} events`}
           onClick={(event) => {
             // Plain clicks route in the app; modified ones open a tab.
             if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
