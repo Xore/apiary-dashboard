@@ -190,9 +190,12 @@ describe('which queries the real backend answers', () => {
         // monitor (#74)
         'acknowledgeAllAnomalies',
         'acknowledgeAnomalies',
+        'getAgentCampaign',
         'getAgentCampaigns',
         'getAuthEvents',
+        'getLlmAnalysis',
         'getLlmAnalyses',
+        'getAnomaly',
         'getMlAnomalies',
         'getOverview',
         'getOverviewViews',
@@ -2293,6 +2296,64 @@ describe('the Monitor slice reads the endpoints the Rust tier actually serves', 
     expect(campaign.events[0].matchedRules).toMatchObject([{ rule: 'base64-pipe-shell', trustBoundary: 'trust-boundary-3', decodeChain: [{ transform: 'base64', outputLen: 128 }] }])
   })
 
+  it('reads a campaign detail without inventing the absent campaign-events endpoint', async () => {
+    const calls = stub(monitorFixtures({
+      '/api/v1/store/agent-campaigns/cmp-7712': campaignRow,
+    }))
+    const out = await live('getAgentCampaign')('cmp-7712')
+    expect(calls.map((url) => new URL(url).pathname)).toEqual(['/api/v1/store/agent-campaigns/cmp-7712'])
+    expect(out).toMatchObject({ campaign: { id: 'cmp-7712' }, events: [] })
+    expect(out?.campaign.events[0].eventId).toBe('ev_9f2c1a')
+  })
+
+  it('reads an LLM analysis detail and its session evidence from the live backend', async () => {
+    const calls = stub(monitorFixtures({
+      '/api/v1/store/llm-analysis/an-88': llmRow,
+      '/api/v1/sessions/sess-77a1': sessionWire,
+    }))
+    const out = await live('getLlmAnalysis')('an-88')
+    expect(calls.map((url) => new URL(url).pathname)).toEqual(['/api/v1/store/llm-analysis/an-88', '/api/v1/sessions/sess-77a1'])
+    expect(out).toMatchObject({ analysis: { id: 'an-88' }, events: [{ id: 'ev_9f2c1a' }] })
+  })
+
+  it('reads payload and source evidence for non-session LLM analyses', async () => {
+    for (const [detail, param, value] of [
+      [{ ...llmRow, session_id: '', payload_sha256: 'sha-1' }, 'shasum', 'sha-1'],
+      [{ ...llmRow, session_id: '', payload_sha256: '' }, 'ip', '203.0.113.42'],
+    ] as const) {
+      const calls = stub(monitorFixtures({ '/api/v1/store/llm-analysis/an-88': detail, '/api/v1/events': page }))
+      expect(await live('getLlmAnalysis')('an-88')).toMatchObject({ events: [{ id: 'ev_9f2c1a' }] })
+      expect(new URL(calls[1]).searchParams.get(param)).toBe(value)
+    }
+  })
+
+  it('reads an anomaly detail, its acknowledgement and its source event from the live backend', async () => {
+    const calls = stub(monitorFixtures({
+      '/api/v1/store/ml-anomalies/anom-1': mlRow,
+      '/api/v1/ml-anomalies/acks': { 'anom-1': { Key: 'anom-1', Acknowledged: true, AckedBy: 'A', AckedAt: '2026-10-05T00:00:00Z' } },
+      '/api/v1/event/ev_9f2c1a': eventPageWire,
+    }))
+    const out = await live('getAnomaly')('anom-1')
+    expect(calls.map((url) => new URL(url).pathname)).toEqual([
+      '/api/v1/store/ml-anomalies/anom-1',
+      '/api/v1/ml-anomalies/acks',
+      '/api/v1/event/ev_9f2c1a',
+    ])
+    expect(out).toMatchObject({ anomaly: { id: 'anom-1', status: 'acknowledged', folded: 1 }, event: { id: 'ev_9f2c1a' } })
+  })
+
+  it('maps a missing Monitor detail to null without querying related data', async () => {
+    for (const [name, path] of [
+      ['getAgentCampaign', '/api/v1/store/agent-campaigns/missing'],
+      ['getLlmAnalysis', '/api/v1/store/llm-analysis/missing'],
+      ['getAnomaly', '/api/v1/store/ml-anomalies/missing'],
+    ] as const) {
+      const calls = stub({ [path]: fail(404) })
+      expect(await live(name)('missing'), name).toBeNull()
+      expect(calls.map((url) => new URL(url).pathname)).toEqual([path])
+    }
+  })
+
   it('reads the auth-events list and counts its own 24-hour window', async () => {
     // The window counts against the wall clock: pin it an hour past the fixture.
     vi.useFakeTimers({ now: new Date('2026-10-04T20:00:00Z'), toFake: ['Date'] })
@@ -2325,6 +2386,9 @@ describe('the Monitor slice reads the endpoints the Rust tier actually serves', 
       ['semanticSearch', () => live('semanticSearch')('beacon'), { '/api/v1/llm-search': fail(502) }],
       ['getAgentCampaigns', () => live('getAgentCampaigns')(), { '/api/v1/store/agent-campaigns': fail(502) }],
       ['getAuthEvents', () => live('getAuthEvents')(), { '/api/v1/store/auth-events': fail(502) }],
+      ['getAgentCampaign', () => live('getAgentCampaign')('cmp-7712'), { '/api/v1/store/agent-campaigns/cmp-7712': fail(502) }],
+      ['getLlmAnalysis', () => live('getLlmAnalysis')('an-88'), { '/api/v1/store/llm-analysis/an-88': fail(502) }],
+      ['getAnomaly', () => live('getAnomaly')('anom-1'), { '/api/v1/store/ml-anomalies/anom-1': fail(502) }],
     ]
     for (const [name, call, fixtures] of cases) {
       stub(monitorFixtures(fixtures))
@@ -2703,7 +2767,7 @@ describe('the Monitor slice keeps the mock path untouched', () => {
     // The default: an unconfigured deployment talks to nobody, and the ten
     // scenarios the smoke gate depends on keep working.
     delete process.env.BACKEND_URL
-    for (const name of ['getOverview', 'getOverviewViews', 'getMlAnomalies', 'acknowledgeAllAnomalies', 'acknowledgeAnomalies', 'setAnomalyDisposition', 'getLlmAnalyses', 'semanticSearch', 'getAgentCampaigns', 'getAuthEvents'] as const) {
+    for (const name of ['getOverview', 'getOverviewViews', 'getMlAnomalies', 'acknowledgeAllAnomalies', 'acknowledgeAnomalies', 'setAnomalyDisposition', 'getLlmAnalyses', 'semanticSearch', 'getAgentCampaigns', 'getAuthEvents', 'getAgentCampaign', 'getLlmAnalysis', 'getAnomaly'] as const) {
       expect(liveQuery(name, undefined), name).toBeUndefined()
     }
     const { backend } = await import('./backend')

@@ -2169,6 +2169,40 @@ const semanticSearch: Backend['semanticSearch'] = async (query) => {
  * mock's and clamped to the handler's own 100. */
 const getAgentCampaigns: Backend['getAgentCampaigns'] = async () => ((await get<StorePage<AgentCampaignRow>>('getAgentCampaigns', '/api/v1/store/agent-campaigns', { offset: 0, size: 100 })) ?? { total: 0, rows: [] }).rows.map(toAgentCampaign)
 
+/** GET /api/v1/store/agent-campaigns/{id}. PR #3535 did not add the brief's
+ * `/campaigns/{id}/events`; the nested evidence stays on `campaign.events`,
+ * while the full-event tab remains empty rather than making one call per id. */
+const getAgentCampaign: Backend['getAgentCampaign'] = async (id) => {
+  const row = await get<AgentCampaignRow>('getAgentCampaign', `/api/v1/store/agent-campaigns/${encodeURIComponent(id)}`)
+  if (!row) return null
+  return { campaign: toAgentCampaign(row), events: [] }
+}
+
+/** GET /api/v1/store/llm-analysis/{id}. Related evidence keeps using the
+ * existing session/events endpoints according to the analysis scope. */
+const getLlmAnalysis: Backend['getLlmAnalysis'] = async (id) => {
+  const row = await get<LlmAnalysisRow>('getLlmAnalysis', `/api/v1/store/llm-analysis/${encodeURIComponent(id)}`)
+  if (!row) return null
+  const analysis = toLlmAnalysis({ ...row, _doc_id: id })
+  if (analysis.sessionId) return { analysis, events: (await getSessionDetail(analysis.sessionId))?.events ?? [] }
+  const search = analysis.payloadSha256 ? { shasum: analysis.payloadSha256 } : analysis.srcIp ? { ip: analysis.srcIp } : null
+  const events = search ? paged((await get<EventsPageWire>('getLlmAnalysis', '/api/v1/events', { offset: 0, size: 100, ...search })) ?? EMPTY_PAGE).rows : []
+  return { analysis, events }
+}
+
+/** GET /api/v1/store/ml-anomalies/{id}. The acknowledgement remains in its
+ * sidecar, and the source event remains on the existing event endpoint. */
+const getAnomaly: Backend['getAnomaly'] = async (id) => {
+  const row = await get<MlAnomalyRow>('getAnomaly', `/api/v1/store/ml-anomalies/${encodeURIComponent(id)}`)
+  if (!row) return null
+  const [acks, detail] = await Promise.all([
+    get<MlAcks>('getAnomaly', '/api/v1/ml-anomalies/acks'),
+    row.source_event_id ? getEventDetail(row.source_event_id) : null,
+  ])
+  const [anomaly] = toMlAnomalies({ total: 1, rows: [{ ...row, _doc_id: id }] }, acks ?? {})
+  return { anomaly: { ...anomaly, folded: 1 } as MlAnomaly, event: detail?.event ?? null }
+}
+
 /** GET /api/v1/store/auth-events — the page's own list AND its 24-hour stats,
  * off ONE read.
  *
@@ -2324,12 +2358,15 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   getOverview,
   getOverviewViews,
   getMlAnomalies,
+  getAnomaly,
   acknowledgeAnomalies,
   acknowledgeAllAnomalies,
   setAnomalyDisposition,
   getLlmAnalyses,
+  getLlmAnalysis,
   semanticSearch,
   getAgentCampaigns,
+  getAgentCampaign,
   getAuthEvents,
 }
 
