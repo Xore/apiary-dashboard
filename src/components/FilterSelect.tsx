@@ -134,6 +134,8 @@ function FilterList({ options, value, onChange, close, mode, allowCustom, initia
 
 export function FilterSelect({ label, options, value, onChange, mode = 'multiple', placeholder, description, isLabelHidden, size = 'md', width, allowCustom = false, status }: FilterSelectProps) {
   const handle = useRef<ComplexSelectorHandle>(null)
+  const triggerLabel = summary(options, value)
+  const triggerText = triggerLabel ?? placeholder ?? (mode === 'single' ? 'Pick one' : 'Any')
   // A ref, not state: the popup mounts in the same tick as the key press and
   // must read the key then, not after a re-render.
   const seed = useRef('')
@@ -149,7 +151,7 @@ export function FilterSelect({ label, options, value, onChange, mode = 'multiple
   return (
     <div onKeyDown={onKeyDown} style={{ width }}>
       <ComplexSelector
-        label={label}
+        label={isLabelHidden ? `${label}: ${triggerText}` : label}
         isLabelHidden={isLabelHidden}
         description={description}
         value={value}
@@ -163,8 +165,8 @@ export function FilterSelect({ label, options, value, onChange, mode = 'multiple
         onOpenChange={(open) => {
           if (!open) seed.current = ''
         }}
-        triggerLabel={summary(options, value)}
-        placeholder={placeholder ?? (mode === 'single' ? 'Pick one' : 'Any')}
+        triggerLabel={triggerLabel}
+        placeholder={triggerText}
       >
         {(current, commit, close, state) =>
           // Only while open: the list can be long, and each opening starts a

@@ -6,14 +6,13 @@ import { Icon } from '@astryxdesign/core/Icon'
 import { Kbd } from '@astryxdesign/core/Kbd'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { Divider } from '@astryxdesign/core/Divider'
-import { Text } from '@astryxdesign/core/Text'
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { TOP_NAV_END_ID, ViewTabsBar, ViewTabsMenu, useViewTabs } from './ViewTabs'
 import { useAppShellMobile } from '@astryxdesign/core/AppShell'
 import { Selector } from '@astryxdesign/core/Selector'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { DEFAULT_RANGE, RANGES, isRange } from '#/lib/range'
+import { DEFAULT_RANGE, RANGES, isRange, rangeLabel } from '#/lib/range'
 import type { RangeId } from '#/lib/range'
 import type { ShellConfig } from '#/data/types'
 import { usePreferences } from '#/lib/prefs'
@@ -30,7 +29,7 @@ export function RangePicker({ compact = false }: { compact?: boolean }) {
   const range: RangeId = isRange(raw) ? raw : DEFAULT_RANGE
   return (
     <Selector
-      label="Time range"
+      label={`Time range: ${compact ? range : rangeLabel(range)}`}
       isLabelHidden
       size={compact ? 'md' : 'sm'}
       value={range}
@@ -110,12 +109,10 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
           {isMobile ? (
             <Button label="Search" variant="secondary" size="md" isIconOnly tooltip="Search" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette} />
           ) : (
-            <Button label="Search" variant="secondary" size="sm" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette}>
-              <HStack gap={2} vAlign="center">
-                <Text>Search</Text>
-                <Kbd keys="mod+k" />
-              </HStack>
-            </Button>
+            <HStack gap={1.5} vAlign="center">
+              <Button label="Search" variant="secondary" size="sm" icon={<Icon icon={MagnifyingGlassIcon} size="sm" />} onClick={onOpenPalette} />
+              <Kbd keys="mod+k" />
+            </HStack>
           )}
           <MockScenarioMenu compact={isMobile} />
           <AlertBell compact={isMobile} />
