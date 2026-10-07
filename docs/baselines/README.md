@@ -1,6 +1,6 @@
 # Baselines
 
-Measured on mock data, ahead of Phase 2 (#7). `scripts/smoke.sh` checks both on every run against the production build; each script exits 2, and smoke skips it, when no browser is available.
+Measured on deterministic mock data so regressions are comparable. `scripts/smoke.sh` checks both on every run against the production build; each script exits 2, and smoke skips it, when no browser is available. The cutover gate repeats both against live data on the soak host.
 
 ## Accessibility (`accessibility.json`, `scripts/a11y.ts`)
 

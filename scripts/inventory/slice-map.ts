@@ -48,3 +48,26 @@ export const sliceRef = (key: string | undefined) => {
   const number = key ? issueNumbers()[key] : undefined
   return number ? `#${number}` : '—'
 }
+
+/** The rewrite modules that own a canonical server function after the
+ * route-level functions were consolidated behind one data seam. */
+export const rewriteOwners = (key: string, fn?: ServerFn): string[] => {
+  const adapters: Record<string, string> = {
+    monitor: 'src/data/adapters/monitor.ts',
+    events: 'src/data/adapters/explorer.ts',
+    sources: 'src/data/adapters/sources.ts',
+    operations: 'src/data/adapters/operations.ts',
+    evidence: 'src/data/adapters/evidence.ts',
+    reports: 'src/data/adapters/reports.ts',
+    tools: 'src/data/adapters/tools.ts',
+    shell: 'src/data/adapters/settings.ts',
+  }
+  if (key === 'security') return ['src/server/session.ts', 'src/server/oidc.server.ts', 'src/server/authorize.ts']
+  let adapter = adapters[key]
+  if (key === 'shell') {
+    if (fn?.file === 'src/components/CommandPalette.tsx' || fn?.file === 'src/components/EsHistoryConsole.tsx') adapter = 'src/data/adapters/explorer.ts'
+    else if (fn?.file === 'src/components/LiveToasts.tsx' || fn?.file === 'src/components/Topbar.tsx') adapter = 'src/data/adapters/operations.ts'
+    else if (fn?.file === 'src/components/OverviewPanels.tsx') adapter = 'src/data/adapters/monitor.ts'
+  }
+  return adapter ? ['src/data/queries.ts', 'src/data/api.ts', adapter] : []
+}

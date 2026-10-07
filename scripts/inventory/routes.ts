@@ -64,7 +64,7 @@ function importsOf(rel: string, text: string, known: Set<string>): string[] {
 
 export function routeInventory(dir: string, fns: ServerFn[]): RouteInventory[] {
   const list = (sub: string): string[] =>
-    readdirSync(join(dir, sub), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? list(`${sub}/${e.name}`) : /\.tsx?$/.test(e.name) && !/\.test\./.test(e.name) ? [`${sub}/${e.name}`] : []))
+    readdirSync(join(dir, sub), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap((e) => (e.isDirectory() ? list(`${sub}/${e.name}`) : /\.tsx?$/.test(e.name) && !/\.test\./.test(e.name) ? [`${sub}/${e.name}`] : []))
   const all = list('src')
   const known = new Set(all)
   const text = new Map(all.map((f) => [f, readFileSync(join(dir, f), 'utf8')]))

@@ -17,6 +17,9 @@ export type Row = {
   source: string
   /** Where it lives now: rewrite route paths (the first is the main one). */
   destination: string[]
+  /** Rewrite code owner when a canonical transport route was removed rather
+   * than exposed as another public route. */
+  owners?: string[]
   status: Status
   note: string
   /** Who enforces the canonical boundary, for a direct handler or auth
@@ -24,8 +27,6 @@ export type Row = {
    * middleware. */
   security?: string
 }
-
-const P2 = 'Phase 2'
 
 export const ROWS: Row[] = [
   // ---- Pages ----------------------------------------------------------------
@@ -76,9 +77,9 @@ export const ROWS: Row[] = [
   { source: 'tty-replay.$shasum.tsx', destination: ['/tty-replay/$shasum', '/recordings/$shasum'], status: 'replaced', note: 'Redirects to the recording entity page.' },
 
   // ---- Sign-in ----------------------------------------------------------------
-  { source: 'auth/login.ts', destination: ['/auth/login'], status: 'implemented', note: `Mock identity provider (real sessions) and the unavailable page; Keycloak PKCE in ${P2} (#5).` , security: 'public; PKCE state and verifier kept one-time in Redis; safe `return_to`; the dev bypass only with `OIDC_DISABLED`' },
-  { source: 'auth/callback.ts', destination: ['/auth/callback'], status: 'implemented', note: `Creates the session for the mock provider's answer; renders the three failures production tells apart. The code exchange and the Redis store in ${P2} (#5).` , security: 'public; completes the PKCE exchange against the one-time state; provider errors render as pages' },
-  { source: 'auth/logout.ts', destination: ['/auth/logout'], status: 'implemented', note: `Destroys the session and clears the cookie, 403 cross-site; Keycloak RP-initiated logout in ${P2} (#5).` , security: 'same-origin `Origin`/`Referer` required (cross-origin 403, #3153); destroys the Redis session, then Keycloak end-session' },
+  { source: 'auth/login.ts', destination: ['/auth/login'], status: 'implemented', note: 'Keycloak authorization-code flow with PKCE; the local-only mock provider exercises the same pages.' , security: 'public; PKCE state and verifier kept one-time in Redis; safe `return_to`; the mock provider is refused outside development' },
+  { source: 'auth/callback.ts', destination: ['/auth/callback'], status: 'implemented', note: 'Exchanges the Keycloak code, consumes one-time state, creates the Redis session, and renders provider, state, and exchange failures.' , security: 'public; completes the PKCE exchange against the one-time state; provider errors render as pages' },
+  { source: 'auth/logout.ts', destination: ['/auth/logout'], status: 'implemented', note: 'Destroys the Redis session, clears the cookie, and performs Keycloak RP-initiated logout; cross-site requests get 403.' , security: 'same-origin `Origin`/`Referer` required (cross-origin 403, #3153); destroys the Redis session, then Keycloak end-session' },
 
   // ---- Direct handlers ----------------------------------------------------------
   { source: 'api/artifact.$kind.$key.$filename.ts', destination: ['/api/artifact/$kind/$key/$filename'], status: 'implemented', note: 'Mock files built from the run.' , security: 'handler\'s own session check; artifact admission gate' },
@@ -95,14 +96,14 @@ export const ROWS: Row[] = [
   // ---- Infrastructure -------------------------------------------------------------
   { source: 'healthz.ts', destination: ['/healthz'], status: 'implemented', note: 'Unauthenticated, always 200: the Traefik and Docker probe.' , security: 'public by design: the infrastructure probe' },
   { source: 'export.portbridge-manual-blackhole[.]txt.ts', destination: ['/export/portbridge-manual-blackhole.txt'], status: 'implemented', note: 'The firewall puller\'s list, byte for byte; no session, 5xx on outage.' , security: 'no session by design: the WireGuard tunnel is the trust boundary; the backend call carries the service token' },
-  { source: 'metrics.ts', destination: ['/metrics'], status: 'implemented', note: 'Same series and names; backend-call and payload-cache series join with the real backend (#6).' , security: 'inbound service token (`x-service-token`); refuses when none is configured' },
-  { source: 'bff.$.ts', destination: [], status: 'pending', note: `The tier boundary for a split frontend host: ${P2} (#5).` , security: '`proxyToRust`: serve-mode gate and inbound service token' },
-  { source: 'bff-mounted.$.ts', destination: [], status: 'pending', note: `The same seam to backend-service-mounted: ${P2} (#5).` , security: '`proxyToRust`: serve-mode gate and inbound service token' },
+  { source: 'metrics.ts', destination: ['/metrics'], status: 'implemented', note: 'Same operational series, including backend calls, admission sheds, request timing, and authentication outcomes.' , security: 'inbound service token (`x-service-token`); refuses when none is configured' },
+  { source: 'bff.$.ts', destination: [], owners: ['src/data/api.ts'], status: 'replaced', note: 'No public catch-all proxy: server functions call BACKEND_URL through the bounded, timed backend adapter.' , security: 'server-side adapter sends the service token; browser requests cannot select an upstream path' },
+  { source: 'bff-mounted.$.ts', destination: [], owners: ['src/data/api.ts'], status: 'replaced', note: 'No public mounted catch-all: mounted downloads use BACKEND_MOUNTED_URL through the same allowlisted adapter.' , security: 'server-side adapter sends the service token; only fixed download operations select the mounted upstream' },
 ]
 
 const LEGEND: Record<Status, string> = {
-  implemented: 'the behavior lives at the destination (on mock data; real data per slice in #6)',
-  replaced: 'the old path redirects to its new home in the rewrite',
+  implemented: 'the behavior lives at the destination; backend deviations are explicit in `backend-coverage.md`',
+  replaced: 'the old path redirects to its new home, or its transport is owned by the named server module',
   pending: 'not in the rewrite yet; the note says what stands in and where it is tracked',
 }
 
@@ -119,7 +120,7 @@ export function renderMatrix(rows: Row[] = ROWS): string {
     '',
     'Every route module of the canonical dashboard (`Xore/APIARY@62ee45d`, listed in `canonical-routes.txt`) and where its behavior lives in the rewrite. Generated by `bun scripts/route-matrix.ts`; `src/test/route-matrix.test.ts` keeps it complete and current.',
     '',
-    `**${rows.length} routes**: ${count('implemented')} implemented, ${count('replaced')} replaced by a redirect, ${count('pending')} pending.`,
+    `**${rows.length} routes**: ${count('implemented')} implemented, ${count('replaced')} replaced, ${count('pending')} pending.`,
     '',
     ...(['implemented', 'replaced', 'pending'] as const).map((s) => `- **${s}**: ${LEGEND[s]}`),
     '',
@@ -127,9 +128,9 @@ export function renderMatrix(rows: Row[] = ROWS): string {
     '',
     '| Canonical module | Rewrite | Status | Note | Security owner | Slice |',
     '|---|---|---|---|---|---|',
-    ...rows.map((r) => `| \`${cell(r.source)}\` | ${r.destination.map((d) => `\`${cell(d)}\``).join('<br>') || '—'} | ${r.status} | ${cell(r.note)} | ${cell(r.security ?? PAGE_SECURITY)} | ${sliceRef(sliceOfRoute(r.source))} |`),
+    ...rows.map((r) => `| \`${cell(r.source)}\` | ${[...r.destination.map((d) => `\`${cell(d)}\``), ...(r.owners ?? []).map((o) => `owner: \`${cell(o)}\``)].join('<br>') || '—'} | ${r.status} | ${cell(r.note)} | ${cell(r.security ?? PAGE_SECURITY)} | ${sliceRef(sliceOfRoute(r.source))} |`),
     '',
-    'Each row links its Phase 2 slice (`slices.md`). Server functions with their permissions and data fields: `server-functions.md`; per-route data, mutations and states: `routes.md`; the shell: `shell.md`.',
+    'Each row links its migration slice (`slices.md`). Server functions with their permissions, rewrite owners, and data fields: `server-functions.md`; per-route data, mutations and states: `routes.md`; components: `components.md`; the shell: `shell.md`.',
     '',
   ]
   return lines.join('\n')

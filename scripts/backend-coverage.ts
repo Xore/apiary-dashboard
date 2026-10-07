@@ -1,0 +1,182 @@
+// Which rewrite queries use the real backend when BACKEND_URL is set. Any
+// missing live implementation must be named and explained: an unlisted mock
+// fallback is a parity regression, not a harmless default.
+import { writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { liveQueryNames } from '../src/data/api'
+import { queryNames } from '../src/data/backend'
+
+export type Exception = {
+  status: 'local' | 'mock-only' | 'unused'
+  reason: string
+}
+
+export const BACKEND_EXCEPTIONS: Record<string, Exception> = {
+  getAgentCampaign: {
+    status: 'mock-only',
+    reason:
+      'The backend exposes the campaign list, not the detail aggregation used by the entity page.',
+  },
+  getAnomaly: {
+    status: 'mock-only',
+    reason:
+      'The anomaly list is live; the detail composition has no matching endpoint.',
+  },
+  getAsn: {
+    status: 'mock-only',
+    reason:
+      'The correlation endpoints do not expose the address member set this page shape requires.',
+  },
+  getBlockedIps: {
+    status: 'local',
+    reason:
+      'Production blocklist downloads use the raw ip-block-export handler directly; this query is only the mock fallback.',
+  },
+  getCampaign: {
+    status: 'mock-only',
+    reason:
+      'The campaign list is live; the detail member set has no matching endpoint.',
+  },
+  getEntityTimeline: {
+    status: 'mock-only',
+    reason: 'No unified entity-timeline endpoint exists for all entity kinds.',
+  },
+  getFacets: {
+    status: 'mock-only',
+    reason:
+      'filter-values returns keys without the counts required by this shape.',
+  },
+  getIdentity: {
+    status: 'mock-only',
+    reason:
+      'The correlation endpoints do not expose the identity member set this page shape requires.',
+  },
+  getIoc: {
+    status: 'mock-only',
+    reason: 'No generic IOC detail endpoint serves every kind.',
+  },
+  getIocCatalog: {
+    status: 'mock-only',
+    reason: 'No IOC catalog endpoint serves the combined page shape.',
+  },
+  getLlmAnalysis: {
+    status: 'mock-only',
+    reason:
+      'The analysis list is live; the detail payload has no matching endpoint.',
+  },
+  getPayloadDelivery: {
+    status: 'mock-only',
+    reason: 'No payload-delivery aggregation endpoint exists.',
+  },
+  getPreferences: {
+    status: 'mock-only',
+    reason:
+      'The read runs before sign-in, but the backend requires a subject; wiring it would deadlock sign-in.',
+  },
+  getRelated: {
+    status: 'mock-only',
+    reason: 'No cross-entity related-record endpoint exists.',
+  },
+  getReplay: {
+    status: 'local',
+    reason:
+      'Production replay pages and downloads use getReplayDetail and raw download handlers; this is the no-backend mock fallback.',
+  },
+  getSessionSummary: {
+    status: 'unused',
+    reason: 'No rewrite route or component calls this legacy query.',
+  },
+  getSessionUser: {
+    status: 'local',
+    reason:
+      'The Redis-backed dashboard session is the identity authority, not backend-service.',
+  },
+  getSourceEvents: {
+    status: 'mock-only',
+    reason:
+      'The source child view has no live adapter for its filtered event shape.',
+  },
+  getSourceIdentity: {
+    status: 'mock-only',
+    reason:
+      'The backend does not expose the identity membership required by this view.',
+  },
+  getSourceNetwork: {
+    status: 'mock-only',
+    reason:
+      'The backend does not expose the network membership required by this view.',
+  },
+  getSourceSessions: {
+    status: 'mock-only',
+    reason: 'The source child view has no live adapter for its session shape.',
+  },
+  getSourceTimeline: {
+    status: 'mock-only',
+    reason: 'The source child view has no live adapter for its timeline shape.',
+  },
+  previewReport: {
+    status: 'mock-only',
+    reason: 'The backend generates reports but has no draft-preview endpoint.',
+  },
+  resolveIncidents: {
+    status: 'local',
+    reason:
+      'Mock-scenario control; it is not part of the production backend contract.',
+  },
+  savePreferences: {
+    status: 'mock-only',
+    reason:
+      'Kept with getPreferences so reads and writes do not use different stores.',
+  },
+  simulateIncident: {
+    status: 'local',
+    reason:
+      'Mock-scenario control; it is not part of the production backend contract.',
+  },
+}
+
+export function renderBackendCoverage(
+  all = queryNames(),
+  live = liveQueryNames(),
+): string {
+  const liveNames = new Set(live)
+  const rows = [...all]
+    .sort()
+    .map((name) => ({
+      name,
+      ...(liveNames.has(name)
+        ? {
+            status: 'live' as const,
+            reason: 'Implemented by `src/data/api.ts`.',
+          }
+        : BACKEND_EXCEPTIONS[name]),
+    }))
+  const count = (status: string) =>
+    rows.filter((row) => row.status === status).length
+  return [
+    '# Backend query coverage',
+    '',
+    'Every query in the rewrite data facade and what answers it when `BACKEND_URL` is set. Generated by `bun scripts/backend-coverage.ts`; `src/test/backend-coverage.test.ts` fails on an unexplained fallback.',
+    '',
+    `**${rows.length} queries**: ${count('live')} live, ${count('local')} intentionally local, ${count('unused')} unused, ${count('mock-only')} mock-only.`,
+    '',
+    '> Cutover gate: every **mock-only** row used by a production route needs a real adapter or an explicitly accepted product deviation. Until then the proof is complete but the traffic switch is **NO-GO**.',
+    '',
+    '| Query | Production answer | Reason |',
+    '|---|---|---|',
+    ...rows.map((row) => `| \`${row.name}\` | ${row.status} | ${row.reason} |`),
+    '',
+  ].join('\n')
+}
+
+if (import.meta.main) {
+  const path = join(
+    import.meta.dirname,
+    '..',
+    'docs/migration/backend-coverage.md',
+  )
+  writeFileSync(path, renderBackendCoverage())
+  console.log(
+    `docs/migration/backend-coverage.md: ${queryNames().length} queries`,
+  )
+}

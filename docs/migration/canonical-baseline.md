@@ -61,10 +61,12 @@ The destination baseline must prove:
 - [x] Confirm route and server-function scale.
 - [x] Confirm root, shell, and navigation ownership.
 - [x] Confirm global and direct-route security layers.
-- [x] Record every route and direct handler: [route-matrix.md](route-matrix.md) (63 routes: 42 implemented, 15 replaced by a redirect, 6 pending for Phase 2).
+- [x] Record every route and direct handler: [route-matrix.md](route-matrix.md) (63 routes: 46 implemented, 17 replaced, 0 pending).
 - [x] Record every server function, caller, input/output, backend dependency, and permission: [server-functions.md](server-functions.md) (153 functions: 106 behind the global session gate only, 15 that re-check the session, 30 admin-only, 2 pre-authentication).
-- [x] Record every shell behavior and destination owner: [shell.md](shell.md) (27 behaviors: 15 implemented, 4 replaced, 5 gaps in #73, 3 for Phase 2).
+- [x] Record every shell behavior and destination owner: [shell.md](shell.md) (27 behaviors: 22 implemented, 5 replaced, 0 unmapped).
 - [x] Record route data fields, mutations, and user-visible states: [routes.md](routes.md) (45 page routes).
 - [x] Link each inventory row to a bounded migration issue: [slices.md](slices.md) (#74–#83, and #5 for security).
+- [x] Map every production component and every server function to an existing rewrite owner: [traceability.md](traceability.md).
+- [x] Classify every rewrite query that does not use the live backend: [backend-coverage.md](backend-coverage.md).
 
 The inventory is generated from the pinned tree by `bun scripts/inventory/all.ts <frontend-next dir>`; `src/test/route-matrix.test.ts` keeps it complete.

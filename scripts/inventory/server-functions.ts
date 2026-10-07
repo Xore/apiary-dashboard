@@ -40,7 +40,7 @@ if (import.meta.main && !root) {
 }
 
 function sources(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
+  return readdirSync(dir).sort().flatMap((name) => {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) return sources(path)
     return /\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name) && !name.endsWith('.d.ts') && name !== 'routeTree.gen.ts' ? [path] : []
@@ -266,7 +266,7 @@ const PERMISSION: Record<ServerFn['permission'], string> = {
   admin: 'admin: the global middleware, and the handler refuses anyone but an admin',
 }
 
-export function renderInventory(fns: ServerFn[], sliceOf: (fn: ServerFn) => string = () => '—'): string {
+export function renderInventory(fns: ServerFn[], sliceOf: (fn: ServerFn) => string = () => '—', ownersOf: (fn: ServerFn) => string[] = () => []): string {
   const cell = (text: string) => text.replace(/\|/g, '\\|').replace(/</g, '&lt;')
   const byFile = new Map<string, ServerFn[]>()
   for (const f of fns) byFile.set(f.file, [...(byFile.get(f.file) ?? []), f])
@@ -274,7 +274,7 @@ export function renderInventory(fns: ServerFn[], sliceOf: (fn: ServerFn) => stri
   const lines = [
     '# Server functions',
     '',
-    `Every \`createServerFn\` of the canonical dashboard (\`Xore/APIARY@62ee45d\`), read from the source by \`scripts/inventory/server-functions.ts\`. Data: \`server-functions.json\`.`,
+    `Every \`createServerFn\` of the canonical dashboard (\`Xore/APIARY@62ee45d\`), read from the source by \`scripts/inventory/server-functions.ts\`. Data: \`server-functions.json\`. The rewrite deliberately consolidates route-local functions behind \`src/data/queries.ts\`; **Rewrite owner** names the destination seam and type mapper. Production exceptions are explicit in \`backend-coverage.md\`.`,
     '',
     `**${fns.length} functions** in ${byFile.size} files: ${fns.filter((f) => f.method === 'GET').length} GET, ${fns.filter((f) => f.method === 'POST').length} POST; ${fns.filter((f) => f.loader).length} called from a route loader.`,
     '',
@@ -288,10 +288,10 @@ export function renderInventory(fns: ServerFn[], sliceOf: (fn: ServerFn) => stri
     lines.push('## Findings', '', 'Declared but called from nowhere in the source, so not carried over unless a caller turns up:', '', ...uncalled.map((f) => `- \`${f.file}#${f.name}\` (L${f.line})`), '')
   }
   for (const [file, list] of byFile) {
-    lines.push(`## \`${file}\``, '', '| Function | Method | Input → output | Backend | Permission | Called from | Slice |', '|---|---|---|---|---|---|---|')
+    lines.push(`## \`${file}\``, '', '| Function | Method | Input → output | Backend | Permission | Called from | Rewrite owner | Slice |', '|---|---|---|---|---|---|---|---|')
     for (const f of list) {
       const callers = f.callers.map((c) => `${c.file === f.file ? '' : `\`${c.file.replace(/^src\//, '')}\` `}${c.in}`).join('; ')
-      lines.push(`| \`${cell(f.name)}\` (L${f.line}) | ${f.method} | ${cell(f.input)} → ${cell(f.output)} | ${f.backend.map((b) => `\`${cell(b)}\``).join('<br>') || '—'} | ${f.permission} | ${cell(callers) || '—'}${f.loader ? ' **(loader)**' : ''} | ${sliceOf(f)} |`)
+      lines.push(`| \`${cell(f.name)}\` (L${f.line}) | ${f.method} | ${cell(f.input)} → ${cell(f.output)} | ${f.backend.map((b) => `\`${cell(b)}\``).join('<br>') || '—'} | ${f.permission} | ${cell(callers) || '—'}${f.loader ? ' **(loader)**' : ''} | ${ownersOf(f).map((owner) => `\`${owner}\``).join('<br>') || '—'} | ${sliceOf(f)} |`)
     }
     lines.push('')
   }

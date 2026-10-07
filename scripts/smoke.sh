@@ -11,9 +11,11 @@ REF="${2:-$(git rev-parse --abbrev-ref HEAD)}"
 PORT="${SMOKE_PORT:-3199}"
 WORK="$(mktemp -d)"
 SERVER_PID=""
+BACKEND_PID=""
 
 cleanup() {
   [[ -n "$SERVER_PID" ]] && kill "$SERVER_PID" 2>/dev/null || true
+  [[ -n "$BACKEND_PID" ]] && kill "$BACKEND_PID" 2>/dev/null || true
   rm -rf "$WORK"
 }
 trap cleanup EXIT
@@ -209,6 +211,18 @@ for fault in session-store identity-provider; do
   check "sign-out still lets the operator out" "$(code /auth/logout -b "$COOKIE" -H "Referer: http://localhost:$FAULT_PORT/")" 303
   kill "$FAULT_PID" 2>/dev/null; wait "$FAULT_PID" 2>/dev/null || true
 done
+
+step "when the configured live backend does not answer"
+BACKEND_PORT=$((PORT + 2))
+APIARY_ALLOW_UNAUTH_DEV=1 SERVICE_TOKEN=smoke-token BACKEND_URL=http://127.0.0.1:1 BACKEND_TIMEOUT_MS=200 PORT="$BACKEND_PORT" bun run start >"$WORK/backend-fault.log" 2>&1 &
+BACKEND_PID=$!
+for _ in $(seq 1 50); do curl -s -o /dev/null "http://localhost:$BACKEND_PORT/healthz" && break; sleep 0.2; done
+BACKEND_COOKIE="$(curl -s -o /dev/null -D - "http://localhost:$BACKEND_PORT/auth/callback?code=mock&role=admin" | tr -d '\r' | sed -n 's/^[Ss]et-[Cc]ookie: \([^;]*\).*/\1/p')"
+[[ -n "$BACKEND_COOKIE" ]] || { echo "live-backend failure sign-in failed"; exit 1; }
+check "a chart reports the upstream outage" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 -b "$BACKEND_COOKIE" "http://localhost:$BACKEND_PORT/api/chart/os-distribution")" 502
+check "the live stream reports the upstream outage" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 -b "$BACKEND_COOKIE" "http://localhost:$BACKEND_PORT/api/live")" 502
+kill "$BACKEND_PID" 2>/dev/null; wait "$BACKEND_PID" 2>/dev/null || true
+BACKEND_PID=""
 
 step "SSR link crawl, every entity tab"
 bun scripts/crawl.ts "http://localhost:$PORT" 2 --samples-out "$WORK/samples.json" || failed=1
