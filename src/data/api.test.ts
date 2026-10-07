@@ -2093,10 +2093,11 @@ describe('the Monitor slice reads the endpoints the Rust tier actually serves', 
   })
 
   it('buckets the recent events into the 24 hours the timeline chart draws', async () => {
-    const now = Date.now()
-    const at = (minutesAgo: number) => new Date(now - minutesAgo * 60_000).toISOString()
+    vi.useFakeTimers({ now: new Date('2026-10-05T00:00:00Z'), toFake: ['Date'] })
+    const at = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60_000).toISOString()
     stub(monitorFixtures({ '/api/v1/events': { total: 3, offset: 0, rows: [row, { ...row, id: 'ev_2', time: at(2), proto: 'http' }, { ...row, id: 'ev_3', time: at(30), proto: 'ssh' }] } }))
     const { timeline } = await live('getOverview')()
+    vi.useRealTimers()
     expect(timeline).toHaveLength(24)
     expect(timeline.at(-1)?.total).toBe(2)
     expect(timeline.at(-1)?.byProtocol).toEqual({ ssh: 1, http: 1 })
