@@ -3,6 +3,7 @@
 import { setResponseHeader } from '@tanstack/react-start/server'
 import { failIf, faulty } from './faults'
 import { recordNamedEvent } from './obs'
+import { mockIdentityProvider } from './policy'
 import { sessionCookie, sessions } from './session'
 import type { Role, Session } from './session'
 
@@ -15,6 +16,8 @@ const ACCOUNTS: Record<Role, Omit<Session, 'createdAt'>> = {
 export const signInAvailable = () => !faulty('identity-provider') && !faulty('session-store')
 
 export async function signInMock(role: Role): Promise<void> {
+  // Anyone may sign in as anyone here: never with Keycloak configured.
+  if (!mockIdentityProvider()) throw new Error('The mock identity provider is off: Keycloak signs people in.')
   // The token exchange, then the session write: either can fail. Both
   // outcomes are named events on /metrics and in the durable log.
   try {

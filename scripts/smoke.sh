@@ -43,9 +43,10 @@ refuses() {
 }
 refuses E-SERVICE-TOKEN env
 refuses E-OIDC-DISABLED env SERVICE_TOKEN=smoke OIDC_DISABLED=1 NODE_ENV=production
+refuses E-OIDC-ISSUER env SERVICE_TOKEN=smoke NODE_ENV=production
 
 step "start production server on :$PORT"
-SERVICE_TOKEN=smoke-token PORT="$PORT" bun run start >"$WORK/server.log" 2>&1 &
+APIARY_ALLOW_UNAUTH_DEV=1 SERVICE_TOKEN=smoke-token PORT="$PORT" bun run start >"$WORK/server.log" 2>&1 &
 SERVER_PID=$!
 for _ in $(seq 1 50); do
   curl -s -o /dev/null "http://localhost:$PORT/healthz" && break
@@ -195,7 +196,7 @@ body() { curl -s --max-time 5 "${@:2}" "http://localhost:$FAULT_PORT$1" | tr -d 
 code() { curl -s -o /dev/null -w '%{http_code}' --max-time 5 "${@:2}" "http://localhost:$FAULT_PORT$1"; }
 contains() { if grep -q "$3" <<<"$2"; then printf '  ok   %s\n' "$1"; else printf '  FAIL %s (no "%s")\n' "$1" "$3"; failed=1; fi; }
 for fault in session-store identity-provider; do
-  APIARY_MOCK_FAULTS="$fault" SERVICE_TOKEN=smoke-token PORT="$FAULT_PORT" bun run start >"$WORK/fault.log" 2>&1 &
+  APIARY_MOCK_FAULTS="$fault" APIARY_ALLOW_UNAUTH_DEV=1 SERVICE_TOKEN=smoke-token PORT="$FAULT_PORT" bun run start >"$WORK/fault.log" 2>&1 &
   FAULT_PID=$!
   for _ in $(seq 1 50); do curl -s -o /dev/null "http://localhost:$FAULT_PORT/healthz" && break; sleep 0.2; done
   echo "  -- $fault down"

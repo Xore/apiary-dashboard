@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assertBootPolicies, devHttpCookiePolicy, oidcDisabledPolicy, serviceTokenPolicy } from './policy'
+import { assertBootPolicies, devHttpCookiePolicy, identityProviderPolicy, oidcDisabledPolicy, serviceTokenPolicy } from './policy'
 
 describe('boot policies', () => {
   it('needs a service token, or the explicit development override', () => {
@@ -25,6 +25,14 @@ describe('boot policies', () => {
   it('refuses to boot with the canonical codes', () => {
     expect(() => assertBootPolicies({})).toThrow('[E-SERVICE-TOKEN]')
     expect(() => assertBootPolicies({ SERVICE_TOKEN: 's', OIDC_DISABLED: '1', NODE_ENV: 'production' })).toThrow('[E-OIDC-DISABLED]')
-    expect(() => assertBootPolicies({ SERVICE_TOKEN: 's' })).not.toThrow()
+    expect(() => assertBootPolicies({ SERVICE_TOKEN: 's' })).toThrow('[E-OIDC-ISSUER]')
+    expect(() => assertBootPolicies({ SERVICE_TOKEN: 's', OIDC_ISSUER_URL: 'https://kc.example.test/realms/apiary' })).not.toThrow()
+  })
+
+  it('allows the mock identity provider only on a local instance', () => {
+    expect(identityProviderPolicy({ OIDC_ISSUER_URL: 'https://kc.example.test/realms/apiary', NODE_ENV: 'development' }).kind).toBe('oidc')
+    expect(identityProviderPolicy({ NODE_ENV: 'development' }).kind).toBe('mock')
+    expect(identityProviderPolicy({ APIARY_ALLOW_UNAUTH_DEV: '1' }).kind).toBe('mock')
+    expect(identityProviderPolicy({ NODE_ENV: 'production' }).kind).toBe('refuse')
   })
 })

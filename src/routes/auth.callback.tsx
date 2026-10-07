@@ -4,9 +4,10 @@
 // - the provider refused the attempt (`?error=`, 400),
 // - the attempt expired or was already used (400),
 // - the token exchange failed (502).
-// The mock reads which one from `?code=expired|failed`, or fails for real
-// under APIARY_MOCK_FAULTS (src/server/faults.ts), and answers 200:
-// the router renders only 200, 404 and 500.
+// With Keycloak the server handler completes the flow and sends a failure
+// here as `?code=expired|failed`; the mock reads the same, or fails for
+// real under APIARY_MOCK_FAULTS (src/server/faults.ts). Answers 200: the
+// router renders only 200, 404 and 500.
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AuthProblem } from '#/components/auth/AuthFrame'
 import { signInMock } from '#/data/auth'
@@ -24,6 +25,39 @@ export const Route = createFileRoute('/auth/callback')({
     error: text(search.error),
     error_description: text(search.error_description),
   }),
+  server: {
+    handlers: {
+      GET: async ({ request, next }) => {
+        const [{ mockIdentityProvider }, { recordNamedEvent }] = await Promise.all([import('#/server/policy'), import('#/server/obs')])
+        const params = new URL(request.url).searchParams
+        if (mockIdentityProvider()) return next()
+        if (params.has('error')) {
+          console.warn(`[auth] the identity provider refused a sign-in: ${params.get('error')}`, params.get('error_description') ?? '')
+          recordNamedEvent('auth_callback_failed', { reason: `provider_${params.get('error')}` })
+        }
+        // No state: one of the failure pages below, rendered by the router.
+        if (!params.has('state')) return next()
+        const fail = (reason: string) => {
+          recordNamedEvent('auth_callback_failed', { reason })
+          return new Response(null, { status: 303, headers: { location: `/auth/callback?code=${reason}` } })
+        }
+        const [{ completeLogin }, { sessionCookie }, { returnAfterSignIn: serverReturnAfterSignIn }] = await Promise.all([
+          import('#/server/oidc.server'),
+          import('#/server/session'),
+          import('#/lib/returnTo'),
+        ])
+        try {
+          const done = await completeLogin(request)
+          if (!done) return fail('expired')
+          recordNamedEvent('auth_callback_completed', {})
+          return new Response(null, { status: 303, headers: { location: serverReturnAfterSignIn(done.returnTo), 'set-cookie': sessionCookie(done.sid) } })
+        } catch (error) {
+          console.warn('[auth] sign-in could not be completed:', error instanceof Error ? error.message : error)
+          return fail('failed')
+        }
+      },
+    },
+  },
   beforeLoad: async ({ search }) => {
     if (search.error || !search.code || search.code === 'expired' || search.code === 'failed') return
     // The mock provider's answer: a session for the chosen account. When

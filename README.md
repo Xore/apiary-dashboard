@@ -60,12 +60,14 @@ docker run -p 3000:3000 -e SERVICE_TOKEN=… apiary-dashboard
 
 ### Signing in and security
 
-Every page needs a session. Signing in goes through the mock identity provider at `/auth/login`: pick **Operator** (admin) or **Analyst** (viewer). Production puts Keycloak with PKCE in its place (#5). The session is real:
+Every page needs a session. With `OIDC_ISSUER_URL` set, `/auth/login` sends the browser to Keycloak (authorization code with PKCE; the one-time state waits in Redis under `bff:oidc:pending:` for 10 minutes), `/auth/callback` creates the session, and `/auth/logout` also ends the Keycloak session. The `admin` role of the dashboard client (`resource_access.<client>.roles`) makes an admin, anyone else is a viewer. On a local instance without `OIDC_ISSUER_URL` the mock identity provider stands in: pick **Operator** (admin) or **Analyst** (viewer). The session is real:
 - an opaque id in the `__Host-apiary_bff` cookie (HttpOnly, Secure, SameSite=Lax, 12 h);
-- the identity behind it in a session store, kept in the server's memory until Redis takes over, so a restart or a code reload in dev signs everyone out.
+- the identity behind it in Redis under `bff:session:`, shared by every instance. A local instance keeps it in memory unless `OIDC_SESSION_REDIS_URL` is set, and falls back to memory while that Redis is down.
+
+A server function call whose session has gone (401) sends the browser to sign in once, then back to the same page (`src/lib/reauth.ts`).
 
 On the server:
-- every server function passes a **same-origin check** (a cross-site state-changing call gets 403);
+- every server function passes a **same-origin check** (a cross-site state-changing call gets 403), and a state-changing one must carry the `x-csrf-token` header the dashboard's own fetch adds;
 - every query is **authorized for the caller**: no session → 401; a viewer calling an admin-only write → 403; the canonical permissions are in `src/server/authorize.ts`;
 - direct handlers (`/api/*`) check the session themselves; `/healthz` and the firewall's blocklist export are deliberately public; `/metrics` needs the service token in `x-service-token`;
 - `/auth/logout` needs a same-origin Origin or Referer, then destroys the session.
@@ -79,7 +81,12 @@ The server refuses to boot in an environment that would open it:
 | `APIARY_ALLOW_UNAUTH_DEV` | Exactly `1`: a local development instance. `bun run dev` sets it. |
 | `OIDC_DISABLED` | `1` skips sign-in: everyone is a fixture admin. Only with `NODE_ENV=development` or `APIARY_ALLOW_UNAUTH_DEV=1` (`E-OIDC-DISABLED`). |
 | `APIARY_DEV_HTTP_COOKIE` | Exactly `1`: the session cookie works over plain HTTP (`apiary_bff_dev`, not Secure), so a dev server can be used from another machine by its LAN address. Only with `NODE_ENV=development` or `APIARY_ALLOW_UNAUTH_DEV=1` (`E-DEV-HTTP-COOKIE`). `bun run dev` sets it and listens on 0.0.0.0. |
-| `EXTERNAL_URL` | The public origin, when a proxy in front changes the Host the server sees (same-origin check). |
+| `OIDC_ISSUER_URL` | The Keycloak realm, e.g. `https://sso.example.test/realms/apiary`. Required unless this is a local instance, which then uses the mock identity provider (`E-OIDC-ISSUER`). |
+| `OIDC_CLIENT_ID` | The dashboard's Keycloak client. Default `apiary-dashboard`. |
+| `OIDC_CLIENT_SECRET` / `OIDC_CLIENT_SECRET_FILE` | Its secret, or a file holding it (the file wins). |
+| `OIDC_ALLOW_INSECURE` | Exactly `1`: a plain-HTTP issuer, for a local Keycloak only. |
+| `OIDC_SESSION_REDIS_URL` | Redis for sessions and pending sign-ins. Default `redis://127.0.0.1:6379/0`. |
+| `EXTERNAL_URL` | The public origin, when a proxy in front changes the Host the server sees (same-origin check, Keycloak redirect URIs). |
 | `APIARY_MOCK_FAULTS` | Mock only: `session-store` and/or `identity-provider` (comma-separated) stop answering, to exercise the outage paths. Pages then go to sign-in, direct handlers answer 401, and the sign-in pages say sign-in is unavailable or failed; smoke checks both. |
 
 See `.env.example`.

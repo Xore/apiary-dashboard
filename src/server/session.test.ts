@@ -1,9 +1,36 @@
 import { describe, expect, it, vi } from 'vitest'
-import { DEV_SESSION_COOKIE, MemorySessionStore, SESSION_COOKIE, clearSessionCookie, sessionCookie, sidFrom } from './session'
+import { fakeRedis } from './fakeRedis.test-util'
+import { DEV_SESSION_COOKIE, MemorySessionStore, RedisSessionStore, SESSION_COOKIE, withMemoryFallback, SESSION_TTL_SECONDS, clearSessionCookie, sessionCookie, sidFrom } from './session'
 
 const account = { sub: 's', username: 'u', displayName: 'U', email: 'u@example.test', role: 'viewer' as const }
 
 describe('sessions', () => {
+  it('keeps a session in Redis under bff:session: with the 12-hour TTL', async () => {
+    const redis = fakeRedis()
+    const set = vi.spyOn(redis, 'set')
+    const store = new RedisSessionStore(redis, () => 5)
+    const sid = await store.create(account)
+    expect(sid).toMatch(/^[\w-]{43}$/)
+    expect(set).toHaveBeenCalledWith(`bff:session:${sid}`, expect.any(String), 'EX', SESSION_TTL_SECONDS)
+    expect(SESSION_TTL_SECONDS).toBe(12 * 3600)
+    expect(await store.get(sid)).toEqual({ ...account, createdAt: 5 })
+    expect(await store.get('nope')).toBeNull()
+    expect(await store.get(undefined)).toBeNull()
+    await store.destroy(sid)
+    expect(await store.get(sid)).toBeNull()
+    expect(redis.keys.size).toBe(0)
+  })
+
+  it('falls back to memory on a local instance while Redis is down', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const down = { set: () => Promise.reject(new Error('ECONNREFUSED')), get: () => Promise.reject(new Error('ECONNREFUSED')), del: () => Promise.reject(new Error('ECONNREFUSED')) }
+    const store = withMemoryFallback(new RedisSessionStore(down as never), new MemorySessionStore())
+    const sid = await store.create(account)
+    expect(await store.get(sid)).toMatchObject(account)
+    await store.destroy(sid)
+    expect(await store.get(sid)).toBeNull()
+  })
+
   it('keeps a session behind an opaque id until it expires', async () => {
     let now = 1_000_000
     const store = new MemorySessionStore(() => now)

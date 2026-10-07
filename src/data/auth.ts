@@ -1,7 +1,7 @@
 // Sign-in against the mock identity provider: the page's end of it. The
 // session itself is created on the server (src/server/signIn.ts) and lives
-// only in an HttpOnly cookie. The real flow (Keycloak with PKCE) replaces
-// the mock provider in #5; the session, cookie and guard stay.
+// only in an HttpOnly cookie. With Keycloak configured the /auth/* server
+// handlers run the real flow (src/server/oidc.server.ts) and these refuse.
 import { createServerFn } from '@tanstack/react-start'
 import type { Role } from '#/server/session'
 

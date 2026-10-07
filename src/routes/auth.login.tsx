@@ -1,7 +1,8 @@
 // /auth/login: where every sign-in starts. In production it redirects to
 // Keycloak straight away, and this page never renders; when Keycloak or the
 // session store does not answer, it renders "temporarily unavailable" (503).
-// The mock stands in for the Keycloak form: pick who to sign in as.
+// Without OIDC_ISSUER_URL (a local instance) the mock stands in for the
+// Keycloak form: pick who to sign in as.
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { VStack } from '@astryxdesign/core/Stack'
@@ -19,6 +20,23 @@ export const Route = createFileRoute('/auth/login')({
     signed_out: search.signed_out === true || search.signed_out === 1 || search.signed_out === '1' || undefined,
     fail: search.fail === 'unavailable' ? 'unavailable' : undefined,
   }),
+  server: {
+    handlers: {
+      GET: async ({ request, next }) => {
+        const [{ mockIdentityProvider }, { recordNamedEvent }] = await Promise.all([import('#/server/policy'), import('#/server/obs')])
+        if (mockIdentityProvider() || new URL(request.url).searchParams.has('fail')) return next()
+        try {
+          const { beginLogin } = await import('#/server/oidc.server')
+          return new Response(null, { status: 303, headers: { location: await beginLogin(request) } })
+        } catch (error) {
+          // Keycloak or Redis did not answer: say so, never a bare 500.
+          console.warn('[auth] sign-in could not start:', error instanceof Error ? error.message : error)
+          recordNamedEvent('auth_callback_failed', { reason: 'login_unavailable' })
+          return new Response(null, { status: 303, headers: { location: '/auth/login?fail=unavailable' } })
+        }
+      },
+    },
+  },
   loader: async () => ({ available: await getSignInAvailable() }),
   head: () => ({ meta: [{ title: 'Sign in · APIARY' }] }),
   component: Login,

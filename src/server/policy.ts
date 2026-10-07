@@ -9,6 +9,7 @@ export const DEV_UNAUTH_OVERRIDE_ENV = 'APIARY_ALLOW_UNAUTH_DEV'
 export const SERVICE_TOKEN_GATE_CODE = 'E-SERVICE-TOKEN'
 export const OIDC_DISABLED_GATE_CODE = 'E-OIDC-DISABLED'
 export const DEV_HTTP_COOKIE_GATE_CODE = 'E-DEV-HTTP-COOKIE'
+export const OIDC_ISSUER_GATE_CODE = 'E-OIDC-ISSUER'
 /** "1": the session cookie works over plain HTTP (a dev server reached by
  * its LAN address). Never on a deployed instance. */
 export const DEV_HTTP_COOKIE_ENV = 'APIARY_DEV_HTTP_COOKIE'
@@ -47,11 +48,27 @@ export function devHttpCookiePolicy(env: Env = process.env): Policy<'secure' | '
   }
 }
 
+/** Who signs people in: Keycloak when OIDC_ISSUER_URL is set; otherwise
+ * the mock identity provider, which signs anyone in as anyone, so only on
+ * a local instance (or with OIDC_DISABLED=1, itself development only). */
+export function identityProviderPolicy(env: Env = process.env): Policy<'oidc' | 'mock'> {
+  if (env.OIDC_ISSUER_URL) return { kind: 'oidc' }
+  if (env.OIDC_DISABLED === '1' || env.NODE_ENV === 'development' || env[DEV_UNAUTH_OVERRIDE_ENV] === '1') return { kind: 'mock' }
+  return {
+    kind: 'refuse',
+    message: `[${OIDC_ISSUER_GATE_CODE}] refusing to start: OIDC_ISSUER_URL is unset (NODE_ENV=${env.NODE_ENV ?? 'unset'}), which would leave only the mock identity provider, where anyone signs in as an admin. Set OIDC_ISSUER_URL to the Keycloak realm, or set NODE_ENV=development or ${DEV_UNAUTH_OVERRIDE_ENV}=1 to confirm this is a local instance.`,
+  }
+}
+
 /** Throws the first refusal; silent when the environment is sound. */
 export function assertBootPolicies(env: Env = process.env): void {
-  for (const policy of [serviceTokenPolicy(env), oidcDisabledPolicy(env), devHttpCookiePolicy(env)]) {
+  for (const policy of [serviceTokenPolicy(env), oidcDisabledPolicy(env), devHttpCookiePolicy(env), identityProviderPolicy(env)]) {
     if (policy.kind === 'refuse') throw new Error(policy.message)
   }
 }
 
 export const oidcDisabled = (env: Env = process.env) => env.OIDC_DISABLED === '1'
+
+/** The mock sign-in may run: decided per call too, so a process that
+ * skipped the boot check still fails closed. */
+export const mockIdentityProvider = (env: Env = process.env) => identityProviderPolicy(env).kind === 'mock'
