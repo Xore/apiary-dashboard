@@ -68,24 +68,24 @@ const SESSION_PREFIX = 'bff:session:'
 
 export class RedisSessionStore implements SessionStore {
   constructor(
-    private readonly redis: RedisLike,
+    private readonly client: RedisLike,
     private readonly now: () => number = Date.now,
   ) {}
 
   async create(data: Omit<Session, 'createdAt'>): Promise<string> {
     const sid = randomBytes(32).toString('base64url')
-    await this.redis.set(SESSION_PREFIX + sid, JSON.stringify({ ...data, createdAt: this.now() }), 'EX', SESSION_TTL_SECONDS)
+    await this.client.set(SESSION_PREFIX + sid, JSON.stringify({ ...data, createdAt: this.now() }), 'EX', SESSION_TTL_SECONDS)
     return sid
   }
 
   async get(sid: string | undefined): Promise<Session | null> {
     if (!sid || sid.length > 128) return null
-    const raw = await this.redis.get(SESSION_PREFIX + sid)
+    const raw = await this.client.get(SESSION_PREFIX + sid)
     return raw ? (JSON.parse(raw) as Session) : null
   }
 
   async destroy(sid: string | undefined): Promise<void> {
-    if (sid) await this.redis.del(SESSION_PREFIX + sid)
+    if (sid) await this.client.del(SESSION_PREFIX + sid)
   }
 }
 

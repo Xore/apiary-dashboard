@@ -41,12 +41,16 @@ export const Route = createFileRoute('/auth/callback')({
           recordNamedEvent('auth_callback_failed', { reason })
           return new Response(null, { status: 303, headers: { location: `/auth/callback?code=${reason}` } })
         }
-        const [{ completeLogin }, { sessionCookie }, { returnAfterSignIn }] = await Promise.all([import('#/server/oidc.server'), import('#/server/session'), import('#/lib/returnTo')])
+        const [{ completeLogin }, { sessionCookie }, { returnAfterSignIn: serverReturnAfterSignIn }] = await Promise.all([
+          import('#/server/oidc.server'),
+          import('#/server/session'),
+          import('#/lib/returnTo'),
+        ])
         try {
           const done = await completeLogin(request)
           if (!done) return fail('expired')
           recordNamedEvent('auth_callback_completed', {})
-          return new Response(null, { status: 303, headers: { location: returnAfterSignIn(done.returnTo), 'set-cookie': sessionCookie(done.sid) } })
+          return new Response(null, { status: 303, headers: { location: serverReturnAfterSignIn(done.returnTo), 'set-cookie': sessionCookie(done.sid) } })
         } catch (error) {
           console.warn('[auth] sign-in could not be completed:', error instanceof Error ? error.message : error)
           return fail('failed')
