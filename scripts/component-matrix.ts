@@ -185,7 +185,8 @@ export const COMPONENT_ROWS: ComponentRow[] = [
 export function renderComponentMatrix(
   rows: ComponentRow[] = COMPONENT_ROWS,
 ): string {
-  const cell = (value: string) => value.replace(/\|/g, '\\|')
+  const cell = (value: string) =>
+    value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|')
   const implemented = rows.filter((row) => row.status === 'implemented').length
   return [
     '# Component matrix',

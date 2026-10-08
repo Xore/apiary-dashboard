@@ -85,4 +85,17 @@ describe('component matrix', () => {
   it('is written down as generated', () => {
     expect(readFileSync(join(root, 'docs/migration/components.md'), 'utf8')).toBe(renderComponentMatrix())
   })
+
+  it('escapes existing backslashes before Markdown table delimiters', () => {
+    const document = renderComponentMatrix([
+      {
+        source: 'source\\|value',
+        destination: ['destination'],
+        status: 'implemented',
+        note: 'note',
+      },
+    ])
+
+    expect(document).toContain(`source${'\\'.repeat(3)}|value`)
+  })
 })
