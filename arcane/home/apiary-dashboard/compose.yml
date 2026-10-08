@@ -88,9 +88,12 @@ services:
       - BFF_EVENT_LOOP_SHED_MS=${BFF_EVENT_LOOP_SHED_MS:-}
       - TZ=Europe/Berlin
     # Staging port only. 19090 stays with honeypot-dashboard until the
-    # seven-day rollback window closes.
+    # seven-day rollback window closes. HP_BIND has a loopback default, not
+    # :?, because Arcane validates this file before the host .env exists and
+    # substitutes a placeholder for unset required values, which is no IP.
+    # Unset therefore binds where the VPS bridge cannot reach: unexposed.
     ports:
-      - '${HP_BIND:?set HP_BIND}:19092:3000'
+      - '${HP_BIND:-127.0.0.1}:19092:3000'
     volumes:
       - ${DASHBOARD_SECRETS_DIR:-/var/dockge/stacks/apiary-dashboard/secrets}:/run/dashboard-secrets:ro
       # Read-write: the image runs as bun (uid 1000), the owner
