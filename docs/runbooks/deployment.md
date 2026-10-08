@@ -12,7 +12,7 @@ Owner: deployment operator. This expands the system; it does not change canonica
 ## Deploy
 
 1. Verify provenance: `gh attestation verify oci://ghcr.io/xore/apiary-dashboard@sha256:<digest> --owner Xore`.
-2. Pin the rewrite Arcane project to that digest. Give it its own Redis and the reviewed environment.
+2. Pin the rewrite Arcane project to that digest. The project is [`arcane/home/apiary-dashboard/compose.yml`](../../arcane/home/apiary-dashboard/compose.yml), with its own Valkey; its host-local `.env` follows the [`.env.example`](../../arcane/home/apiary-dashboard/.env.example) beside it. Registration and the first sync are in the [cutover plan](../cutover-plan.md), section 2.
 3. Pull and redeploy through the normal Arcane operation. Do not edit the canonical project.
 4. Wait for the container health check, then run:
 
