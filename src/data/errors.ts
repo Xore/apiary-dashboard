@@ -15,8 +15,9 @@ export class ApiError extends Error {
   readonly retryAfter?: number
   /** Why the backend refused the input (400), in words for the operator. */
   readonly detail?: string
+  readonly backendUnreachable: boolean
 
-  constructor(kind: ApiErrorKind, endpoint: string, options: { retryAfter?: number; detail?: string } = {}) {
+  constructor(kind: ApiErrorKind, endpoint: string, options: { retryAfter?: number; detail?: string; backendUnreachable?: boolean } = {}) {
     // The message carries everything, so the error survives serialization
     // from a server-side loader, where only name and message make it across.
     super(`${endpoint}: ${STATUS[kind]} ${kind}${options.retryAfter ? ` retry-after=${options.retryAfter}` : ''}${options.detail ? ` — ${options.detail}` : ''}`)
@@ -26,6 +27,7 @@ export class ApiError extends Error {
     this.endpoint = endpoint
     this.retryAfter = options.retryAfter
     this.detail = options.detail
+    this.backendUnreachable = options.backendUnreachable ?? false
   }
 }
 

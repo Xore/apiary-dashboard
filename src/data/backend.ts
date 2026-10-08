@@ -6,7 +6,7 @@
 import { ApiError } from './errors'
 import { MOCK_USER } from './mock/fixtures'
 import * as impl from './queries.impl'
-import { runScenario } from './scenario'
+import { isRead, runScenario } from './scenario'
 import { isScenario } from './scenarios'
 import type { MockScenario } from './scenarios'
 import type { SessionUser } from './types'
@@ -54,15 +54,23 @@ export function backend(scenario: MockScenario = 'normal', caller?: Caller): Bac
  * BACKEND_URL, or a query this slice has not wired all fall through to the
  * mock; anything else answers from the API. Both paths set the refusal as
  * the response status and reach the pages in the same states. */
+export const shouldFallbackToMock = (name: string, error: unknown): boolean => error instanceof ApiError && error.backendUnreachable && isRead(name)
+
 export async function runForRequest(name: string, args: unknown[], scenario: unknown): Promise<unknown> {
   const [{ getRequest, setResponseStatus }, { resolveUser }] = await Promise.all([import('@tanstack/react-start/server'), import('#/server/identity')])
   const request = getRequest()
   const user = await resolveUser(request)
   const live = isScenario(scenario) ? undefined : (await import('./api')).liveQuery(name, user, request.headers.get('x-request-id') || undefined)
-  const query = (live ?? backend(isScenario(scenario) ? scenario : 'normal', user)[name as QueryName]) as ((...a: unknown[]) => Promise<unknown>) | undefined
-  if (!query) throw new Error(`unknown query ${name}`)
+  const mock = backend(isScenario(scenario) ? scenario : 'normal', user)[name as QueryName] as ((...a: unknown[]) => Promise<unknown>) | undefined
+  if (!live && !mock) throw new Error(`unknown query ${name}`)
   try {
-    return await query(...args)
+    if (!live) return await mock!(...args)
+    try {
+      return await live(...args)
+    } catch (error) {
+      if (shouldFallbackToMock(name, error)) return await mock!(...args)
+      throw error
+    }
   } catch (error) {
     // The refusal is the response's status too (401, 403, 502, …), as the
     // real backend answers it, not only a message in the payload.

@@ -374,12 +374,11 @@ function pageOf<T>(rows: T[], { offset = 0, limit }: PageRequest = {}): Paged<T>
 }
 
 /** Events matching the filters, newest first, one page at a time. */
-export async function getEvents(filters: EventFilters & PageRequest): Promise<EventsPage> {
-  await mockDelay()
+function filteredEvents(filters: EventFilters): HoneypotEvent[] {
   const window = sinceMs(filters.since)
   const anyOf = (list: string | number | undefined, value: string) => list === undefined || String(list).split(',').includes(value)
   const kinds = filters.kind?.split(',').filter((k): k is EventKind => k in KIND_TYPES)
-  const rows = EVENTS.filter(
+  return EVENTS.filter(
     (e) =>
       anyOf(filters.ip, e.srcIp) &&
       anyOf(filters.sensor, e.sensor) &&
@@ -392,11 +391,15 @@ export async function getEvents(filters: EventFilters & PageRequest): Promise<Ev
       anyOf(filters.org, e.org) &&
       anyOf(filters.provider, e.provider) &&
       anyOf(filters.city, e.city) &&
-      // A fingerprint can contain commas (a User-Agent does), so it matches whole.
       (filters.fingerprint === undefined || e.fingerprint === filters.fingerprint) &&
       (!kinds?.length || kinds.some((kind) => KIND_TYPES[kind].includes(e.type))) &&
       (window === undefined || MOCK_NOW - Date.parse(e.timestamp) <= window),
   )
+}
+
+export async function getEvents(filters: EventFilters & PageRequest): Promise<EventsPage> {
+  await mockDelay()
+  const rows = filteredEvents(filters)
   return {
     ...pageOf(rows, filters),
     values: {
@@ -677,19 +680,20 @@ const facet = (values: Array<string | undefined>, limit = 500): FacetValue[] => 
 
 /** Every value each filter can take, busiest first, for pickers that list
  * them all under the field. */
-export async function getFacets(): Promise<Facets> {
+export async function getFacets(_kind = 'events', filters: EventFilters = {}): Promise<Facets> {
   await mockDelay()
+  const events = filteredEvents(filters)
   return {
-    sensors: facet(EVENTS.map((e) => e.sensor)),
-    sources: facet(EVENTS.map((e) => e.srcIp)),
-    countries: facet(EVENTS.map((e) => e.country)),
-    protocols: facet(EVENTS.map((e) => e.protocol)),
-    ports: facet(EVENTS.map((e) => String(e.dstPort))),
-    signatures: facet(EVENTS.filter((e) => e.type === 'ids.alert').map((e) => e.summary)),
-    kinds: (Object.keys(KIND_TYPES) as EventKind[]).map((kind) => ({ value: kind, ...(kind === 'login-success' ? { label: 'login (successful)' } : {}), count: EVENTS.filter((e) => KIND_TYPES[kind].includes(e.type)).length })),
-    personas: facet(EVENTS.flatMap((e) => (e.persona ? [e.persona] : []))),
-    providers: facet(EVENTS.map((e) => e.provider)),
-    cities: facet(EVENTS.flatMap((e) => (e.city ? [e.city] : []))),
+    sensors: facet(events.map((e) => e.sensor)),
+    sources: facet(events.map((e) => e.srcIp)),
+    countries: facet(events.map((e) => e.country)),
+    protocols: facet(events.map((e) => e.protocol)),
+    ports: facet(events.map((e) => String(e.dstPort))),
+    signatures: facet(events.filter((e) => e.type === 'ids.alert').map((e) => e.summary)),
+    kinds: (Object.keys(KIND_TYPES) as EventKind[]).map((kind) => ({ value: kind, ...(kind === 'login-success' ? { label: 'login (successful)' } : {}), count: events.filter((e) => KIND_TYPES[kind].includes(e.type)).length })),
+    personas: facet(events.flatMap((e) => (e.persona ? [e.persona] : []))),
+    providers: facet(events.map((e) => e.provider)),
+    cities: facet(events.flatMap((e) => (e.city ? [e.city] : []))),
   }
 }
 
@@ -1542,6 +1546,11 @@ export async function getSourceIdentity(ip: string): Promise<AttackerEntity | nu
 export async function getSessionSummary(id: string): Promise<SessionSummary | null> {
   await mockDelay()
   return summarizeSessions(EVENTS.filter((e) => e.sessionId === id))[0] ?? null
+}
+
+export async function getSessionEvents(id: string): Promise<HoneypotEvent[]> {
+  await mockDelay()
+  return EVENTS.filter((e) => e.sessionId === id)
 }
 
 /** Who delivered a payload: the download events that fetched it, their
