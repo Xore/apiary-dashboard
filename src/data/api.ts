@@ -2409,6 +2409,12 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   getAgentCampaigns,
   getAgentCampaign,
   getAuthEvents,
+  // Public queries that run before sign-in: the session user is already
+  // resolved by runForRequest and stored in the request scope, so this
+  // returns the caller (or null for unauthenticated) without calling the
+  // backend — letting the auth redirect in _layout.tsx fire before any
+  // backend-dependent query runs.
+  getSessionUser: async () => callerOf() ?? null,
 }
 
 /** The guarded live implementation of `name`, or undefined when this slice
