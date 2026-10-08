@@ -12,70 +12,10 @@ export type Exception = {
 }
 
 export const BACKEND_EXCEPTIONS: Record<string, Exception> = {
-  getAgentCampaign: {
-    status: 'mock-only',
-    reason:
-      'The backend exposes the campaign list, not the detail aggregation used by the entity page.',
-  },
-  getAnomaly: {
-    status: 'mock-only',
-    reason:
-      'The anomaly list is live; the detail composition has no matching endpoint.',
-  },
-  getAsn: {
-    status: 'mock-only',
-    reason:
-      'The correlation endpoints do not expose the address member set this page shape requires.',
-  },
-  getBlockedIps: {
-    status: 'local',
-    reason:
-      'Production blocklist downloads use the raw ip-block-export handler directly; this query is only the mock fallback.',
-  },
-  getCampaign: {
-    status: 'mock-only',
-    reason:
-      'The campaign list is live; the detail member set has no matching endpoint.',
-  },
-  getEntityTimeline: {
-    status: 'mock-only',
-    reason: 'No unified entity-timeline endpoint exists for all entity kinds.',
-  },
-  getFacets: {
-    status: 'mock-only',
-    reason:
-      'filter-values returns keys without the counts required by this shape.',
-  },
-  getIdentity: {
-    status: 'mock-only',
-    reason:
-      'The correlation endpoints do not expose the identity member set this page shape requires.',
-  },
-  getIoc: {
-    status: 'mock-only',
-    reason: 'No generic IOC detail endpoint serves every kind.',
-  },
-  getIocCatalog: {
-    status: 'mock-only',
-    reason: 'No IOC catalog endpoint serves the combined page shape.',
-  },
-  getLlmAnalysis: {
-    status: 'mock-only',
-    reason:
-      'The analysis list is live; the detail payload has no matching endpoint.',
-  },
-  getPayloadDelivery: {
-    status: 'mock-only',
-    reason: 'No payload-delivery aggregation endpoint exists.',
-  },
   getPreferences: {
     status: 'mock-only',
     reason:
       'The read runs before sign-in, but the backend requires a subject; wiring it would deadlock sign-in.',
-  },
-  getRelated: {
-    status: 'mock-only',
-    reason: 'No cross-entity related-record endpoint exists.',
   },
   getReplay: {
     status: 'local',
@@ -90,29 +30,6 @@ export const BACKEND_EXCEPTIONS: Record<string, Exception> = {
     status: 'local',
     reason:
       'The Redis-backed dashboard session is the identity authority, not backend-service.',
-  },
-  getSourceEvents: {
-    status: 'mock-only',
-    reason:
-      'The source child view has no live adapter for its filtered event shape.',
-  },
-  getSourceIdentity: {
-    status: 'mock-only',
-    reason:
-      'The backend does not expose the identity membership required by this view.',
-  },
-  getSourceNetwork: {
-    status: 'mock-only',
-    reason:
-      'The backend does not expose the network membership required by this view.',
-  },
-  getSourceSessions: {
-    status: 'mock-only',
-    reason: 'The source child view has no live adapter for its session shape.',
-  },
-  getSourceTimeline: {
-    status: 'mock-only',
-    reason: 'The source child view has no live adapter for its timeline shape.',
   },
   previewReport: {
     status: 'mock-only',
