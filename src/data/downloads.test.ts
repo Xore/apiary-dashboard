@@ -58,12 +58,14 @@ const asUser = (build: Builder, user: Parameters<typeof backend>[1]): Promise<Re
 beforeEach(() => {
   process.env.SERVICE_TOKEN = 'test-token'
   process.env.BACKEND_URL = 'http://backend.test'
+  process.env.APIARY_ALLOW_UNAUTH_DEV = '1'
 })
 
 afterEach(() => {
   vi.unstubAllGlobals()
   delete process.env.BACKEND_URL
   delete process.env.SERVICE_TOKEN
+  process.env.APIARY_ALLOW_UNAUTH_DEV = '1'
 })
 
 describe('the file routes reach the backend when it is configured', () => {
@@ -150,6 +152,15 @@ describe('each route falls back to the mock unchanged', () => {
     // The mock's own refusal, from the query the CSV is built from — not a
     // file. `serveDownload` renders it as `<endpoint>: <kind>`.
     expect(await response.text()).toBe('getCommands: unavailable')
+  })
+
+  it('ignores a mock scenario on a live backend without the development override', async () => {
+    delete process.env.APIARY_ALLOW_UNAUTH_DEV
+    const calls = stub({ '/api/v1/config': config(5000), '/api/v1/export/events.csv': bytes(CSV, 'text/csv') })
+    const response = await serve('http://dashboard.test/api/export/events.csv?mock=unavailable', exportFile('events.csv'))
+    expect(response.status).toBe(200)
+    expect(await response.text()).toContain('2026-10-04T20:41:03Z')
+    expect(calls.map((url) => new URL(url).searchParams.has('mock'))).toEqual([false, false])
   })
 
   it('serves the mock artifact bytes when the backend is not configured', async () => {
@@ -328,7 +339,7 @@ describe('the reports, canarytokens and raw reports', () => {
     expect(await response.text()).toBe('report unavailable')
   })
 
-  it('leaves a payload report on the mock: its id is generated, never stored', async () => {
+  it('refuses a payload report with no live endpoint instead of rendering a mock PDF', async () => {
     // `rpt-payload-<sha256>-<n>` names a report the reporter builds on
     // demand; reports.rs reads stored `pdf_base64` only. Asking for it would
     // be asking a route about a document that does not exist.
@@ -336,8 +347,8 @@ describe('the reports, canarytokens and raw reports', () => {
     const hash = (await q.getPayloads()).payloads[0].hash
     const calls = stub({})
     const response = await serve(`http://dashboard.test/api/report/rpt-payload-${hash}-1/pdf`, reportPdf(`rpt-payload-${hash}-1`))
-    expect(response.status).toBe(200)
-    expect(response.headers.get('content-type')).toBe('application/pdf')
+    expect(response.status).toBe(502)
+    expect(await response.text()).toBe('report not available on live backend')
     expect(calls).toEqual([])
   })
 

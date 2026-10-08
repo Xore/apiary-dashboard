@@ -6,11 +6,12 @@
 import { ApiError } from './errors'
 import { MOCK_USER } from './mock/fixtures'
 import * as impl from './queries.impl'
-import { isRead, runScenario } from './scenario'
+import { runScenario } from './scenario'
 import { isScenario } from './scenarios'
 import type { MockScenario } from './scenarios'
 import type { SessionUser } from './types'
 import { authorize } from '#/server/authorize'
+import { mockScenariosAllowed } from '#/server/policy'
 
 type Impl = typeof impl
 /** The queries: every async export of the implementation. */
@@ -50,27 +51,25 @@ export function backend(scenario: MockScenario = 'normal', caller?: Caller): Bac
  * page's scenario, for the request's signed-in user.
  *
  * There is exactly one funnel, so this is where the real backend sits
- * alongside the mock (src/data/api.ts). A `?mock=` scenario, an unconfigured
- * BACKEND_URL, or a query this slice has not wired all fall through to the
- * mock; anything else answers from the API. Both paths set the refusal as
- * the response status and reach the pages in the same states. */
-export const shouldFallbackToMock = (name: string, error: unknown): boolean => error instanceof ApiError && error.backendUnreachable && isRead(name)
+ * alongside the mock (src/data/api.ts). Without BACKEND_URL the mock answers;
+ * with it, every request must use a live adapter or return an error. The
+ * explicit development override is the only exception. */
 
 export async function runForRequest(name: string, args: unknown[], scenario: unknown): Promise<unknown> {
   const [{ getRequest, setResponseStatus }, { resolveUser }] = await Promise.all([import('@tanstack/react-start/server'), import('#/server/identity')])
   const request = getRequest()
   const user = await resolveUser(request)
-  const live = isScenario(scenario) ? undefined : (await import('./api')).liveQuery(name, user, request.headers.get('x-request-id') || undefined)
-  const mock = backend(isScenario(scenario) ? scenario : 'normal', user)[name as QueryName] as ((...a: unknown[]) => Promise<unknown>) | undefined
+  const mockScenario = mockScenariosAllowed() && isScenario(scenario) && scenario !== 'normal' ? scenario : undefined
+  const api = mockScenario ? undefined : await import('./api')
+  const live = api?.liveQuery(name, user, request.headers.get('x-request-id') || undefined)
+  const mock = backend(mockScenario ?? 'normal', user)[name as QueryName] as ((...a: unknown[]) => Promise<unknown>) | undefined
   if (!live && !mock) throw new Error(`unknown query ${name}`)
   try {
-    if (!live) return await mock!(...args)
-    try {
-      return await live(...args)
-    } catch (error) {
-      if (shouldFallbackToMock(name, error)) return await mock!(...args)
-      throw error
+    if (!live) {
+      if (api?.isLiveBackend()) throw new ApiError('unavailable', name, { detail: 'not available on live backend' })
+      return await mock!(...args)
     }
+    return await live(...args)
   } catch (error) {
     // The refusal is the response's status too (401, 403, 502, …), as the
     // real backend answers it, not only a message in the payload.

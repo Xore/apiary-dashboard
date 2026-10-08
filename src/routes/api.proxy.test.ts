@@ -82,6 +82,7 @@ const row: EventRow = {
 beforeEach(async () => {
   process.env.SERVICE_TOKEN = 'test-token'
   process.env.BACKEND_URL = 'http://backend.test'
+  process.env.APIARY_ALLOW_UNAUTH_DEV = '1'
   sid = await sessions.create(account)
 })
 
@@ -89,6 +90,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
   delete process.env.BACKEND_URL
   delete process.env.SERVICE_TOKEN
+  process.env.APIARY_ALLOW_UNAUTH_DEV = '1'
 })
 
 describe('/api/chart/$name — the allowlist is the contract', () => {
@@ -173,6 +175,15 @@ describe('/api/chart/$name — the allowlist is the contract', () => {
     backend({})
     const response = await get({ request: asUser('/api/chart/os-distribution?mock=unavailable'), params: { name: 'os-distribution' } })
     expect(response.status).toBe(502)
+  })
+
+  it('ignores a mock scenario on a live backend without the development override', async () => {
+    delete process.env.APIARY_ALLOW_UNAUTH_DEV
+    const calls = backend({ '/api/v1/charts/os-distribution': json([{ name: 'Live', value: 7 }]) })
+    const response = await get({ request: asUser('/api/chart/os-distribution?mock=unavailable'), params: { name: 'os-distribution' } })
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual([{ name: 'Live', value: 7 }])
+    expect(calls).toEqual(['http://backend.test/api/v1/charts/os-distribution'])
   })
 
   it('falls back to the mock when no backend is configured at all', async () => {
@@ -270,6 +281,16 @@ describe('/api/topology/flow — one slice of the tier\'s document', () => {
     delete process.env.BACKEND_URL
     expect((await get({ request: asUser('/api/topology/flow') })).status).toBe(200)
     expect(calls).toEqual([])
+  })
+
+  it('ignores a mock scenario on a live backend without the development override', async () => {
+    delete process.env.APIARY_ALLOW_UNAUTH_DEV
+    const flow = { nodes: [{ name: 'Live', layer: 0 }], links: [] }
+    const calls = backend({ '/api/v1/topology': json({ flow }) })
+    const response = await get({ request: asUser('/api/topology/flow?mock=unavailable') })
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual(flow)
+    expect(calls).toEqual(['http://backend.test/api/v1/topology'])
   })
 
   it('treats an unrecognised ?mock= as no scenario, exactly as the funnel does', async () => {
@@ -435,6 +456,15 @@ describe('/api/live — the gate covers the real stream', () => {
     expect(response.headers.get('content-type')).toBe('text/event-stream')
     expect(calls).toEqual([])
     await response.body?.cancel()
+  })
+
+  it('ignores a mock scenario on a live backend without the development override', async () => {
+    delete process.env.APIARY_ALLOW_UNAUTH_DEV
+    const calls = backend({ '/api/v1/live': upstream([': live\n\n']) })
+    const response = await get({ request: asUser('/api/live?mock=unavailable') })
+    expect(response.status).toBe(200)
+    expect(await read(response)).toBe(': live\n\n')
+    expect(calls).toEqual(['http://backend.test/api/v1/live'])
   })
 
   it('falls back to the mock when the link names no scenario and no backend is configured', async () => {

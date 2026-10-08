@@ -17,6 +17,9 @@ export const DEV_HTTP_COOKIE_ENV = 'APIARY_DEV_HTTP_COOKIE'
 type Env = Record<string, string | undefined>
 type Policy<T extends string> = { kind: T } | { kind: 'refuse'; message: string }
 
+/** Mock scenarios are local-only once this process has a live backend. */
+export const mockScenariosAllowed = (env: Env = process.env): boolean => !env.BACKEND_URL?.trim() || env[DEV_UNAUTH_OVERRIDE_ENV] === '1'
+
 export function serviceTokenPolicy(env: Env = process.env): Policy<'token' | 'dev-override'> {
   if (env.SERVICE_TOKEN) return { kind: 'token' }
   if (env[DEV_UNAUTH_OVERRIDE_ENV] === '1') return { kind: 'dev-override' }

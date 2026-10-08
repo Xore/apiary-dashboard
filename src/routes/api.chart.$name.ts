@@ -13,7 +13,6 @@ import { isChartName } from '#/data/contracts/charts'
 import { serveDownload } from '#/data/downloads'
 import { chartPayload } from '#/data/mock/charts'
 import { ApiError } from '#/data/errors'
-import { isScenario } from '#/data/scenarios'
 import { isLiveBackend, liveChart } from '#/data/api'
 
 const plain = (status: number, message: string) => new Response(message, { status, headers: { 'content-type': 'text/plain; charset=utf-8' } })
@@ -22,17 +21,11 @@ export const Route = createFileRoute('/api/chart/$name')({
   server: {
     handlers: {
       GET: ({ request, params }) =>
-        serveDownload(request, async (search, q) => {
+        serveDownload(request, async (search, q, reach) => {
           if (!isChartName(params.name)) return plain(404, 'unknown chart')
-          // The mock scenario named in `?mock=` always wins: that is what
-          // keeps the ten scenarios and the browser checks working. Only an
-          // unscoped request in a process with a BACKEND_URL reaches the
-          // Rust tier, exactly as the server-function funnel decides
-          // (src/data/backend.ts `runForRequest`, which tests
-          // `isScenario(mock)` and not mere presence — the ten are the whole
-          // contract, and a value outside them is an ordinary unscoped
-          // request, so both tiers answer it the same way).
-          if (isLiveBackend() && !isScenario(search.get('mock'))) {
+          // Only the explicit development override lets `serveDownload`
+          // leave a mock scenario in `reach` beside a live backend.
+          if (isLiveBackend() && !reach.mock) {
             try {
               const data = await liveChart(params.name, search)
               if (data === null) return plain(502, 'chart unavailable')

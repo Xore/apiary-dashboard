@@ -14,7 +14,6 @@ import { commandsQuery, eventsQuery, recordingSourceIpQuery } from './adapters/e
 import type { EventPageWire, FilterValuesWire, RecordingsPageWire, ReplayWire, SearchResultWire, SessionDetailWire } from './contracts/explorer'
 import type { EventRow } from './contracts/events'
 import type { CorrelationWire, IpProfileWire, SourcesPageWire } from './contracts/sources'
-import { shouldFallbackToMock } from './backend'
 import type { Backend } from './backend'
 
 /** One wire row, as events.rs's `row_from_hit` builds it. */
@@ -512,13 +511,6 @@ describe('a degraded body degrades, and a failed call errors', () => {
     expect((out as ApiError).kind).toBe('unavailable')
     expect((out as ApiError).status).toBe(502)
     expect((out as ApiError).backendUnreachable).toBe(true)
-  })
-
-  it('falls back to the mock only for unreachable reads', () => {
-    const unreachable = new ApiError('unavailable', 'getEvents', { backendUnreachable: true })
-    expect(shouldFallbackToMock('getEvents', unreachable)).toBe(true)
-    expect(shouldFallbackToMock('setIpBlocked', unreachable)).toBe(false)
-    expect(shouldFallbackToMock('getEvents', new ApiError('unavailable', 'getEvents'))).toBe(false)
   })
 
   it('throws rather than returning null when the detail call cannot connect', async () => {
