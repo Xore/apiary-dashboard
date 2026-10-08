@@ -128,9 +128,12 @@ compose file should contain:
    - `EXTERNAL_URL=${EXTERNAL_URL:?set EXTERNAL_URL}`
    - `DASHBOARD_BFF_LOG_FILE=/logs/dashboard-bff/rewrite.jsonl`
    - Optional tool-link variables already supported by the application.
-5. The staging binding
-   `${HP_BIND:?set HP_BIND}:19092:3000`. Do not bind `19090`; keeping the old
-   project on `19090` is what makes rollback a route-only operation.
+5. The staging binding `${HP_BIND:-10.8.0.2}:19092:3000`. Do not bind
+   `19090`; keeping the old project on `19090` is what makes rollback a
+   route-only operation. The bind address keeps a default, as in every APIARY
+   stack: Arcane validates the compose file before the host-local `.env`
+   exists and substitutes a placeholder for unset required values, and a
+   placeholder is not an IP address.
 6. The existing host log directory mounted read-write at
    `/logs/dashboard-bff`, and the new project's secret directory mounted
    read-only at `/run/dashboard-secrets`.
@@ -289,7 +292,6 @@ Populate it from the deployment `.env.example`, including:
 ```dotenv
 APIARY_DASHBOARD_VERSION=vX.Y.Z
 APIARY_DASHBOARD_DIGEST=sha256:<manifest-digest>
-HP_BIND=<homeserver-bind-address>
 SERVICE_TOKEN=<backend-shared-secret>
 OIDC_ISSUER_URL=https://auth.example.test/realms/apiary
 OIDC_CLIENT_ID=apiary-dashboard-rewrite
@@ -550,7 +552,7 @@ it into the traffic switch.
 | Wrong repository ID materializes the APIARY monorepo        | Resolve by repository name and verify URL/ID before creating the sync; add the manifest/importer regression test.                                                                                          |
 | Old and new projects both bind `19092`                      | Remove only the old staging binding first, verify production, then prove the port is free before new-project creation.                                                                                     |
 | Mutable or unverifiable image                               | Deploy a version tag pinned to its digest, verify GitHub provenance, record the digest/source commit, and compare it with the running container.                                                           |
-| Missing/weak runtime configuration opens the app            | Compose requires `SERVICE_TOKEN`, OIDC issuer, external URL, image version, and bind address; production dev-bypass variables remain unset; boot policy must fail closed.                                  |
+| Missing/weak runtime configuration opens the app            | Compose requires `SERVICE_TOKEN`, OIDC issuer, external URL, and image version; production dev-bypass variables remain unset; boot policy must fail closed.                                                |
 | Secret unreadable by the unprivileged image                 | Preserve the existing deploy-runner-group pattern, discover the actual host GID, check directory traversal permissions, and test sign-in before routing traffic.                                           |
 | Shared log file rotation corrupts overlap logs              | Keep the host directory but write separate `app.jsonl` and `rewrite.jsonl` files; make Filebeat tail both.                                                                                                 |
 | OIDC callback/origin mismatch at route switch               | Register both origins before soak; redeploy the rewrite with the production `EXTERNAL_URL` before changing the production router; reverse it on rollback.                                                  |
