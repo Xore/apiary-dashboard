@@ -10,7 +10,7 @@ Planning and progress:
 
 The canonical implementation is a behavioral reference, not a component source to copy mechanically. Every migration slice must trace its routes, data, actions, security, and states before being rebuilt with current TanStack and Astryx conventions.
 
-Current stage: the dashboard runs on its real architecture against a **mock backend**. Every page reads and writes through server functions, behind the same session and security layer production will use. Wiring the real backend replaces what answers behind the server functions, per route slice (#6); the pages don't change.
+Current stage: every migration slice has a real-backend adapter behind the same server-function seam used by mock scenarios. The [backend coverage matrix](docs/migration/backend-coverage.md) records the remaining query shapes with no production endpoint or adapter; those rows block cutover instead of silently passing as parity.
 
 ## Development
 
@@ -77,7 +77,7 @@ The server refuses to boot in an environment that would open it:
 | Variable | |
 |---|---|
 | `SERVICE_TOKEN` | Shared secret with the backend. Required, unless `APIARY_ALLOW_UNAUTH_DEV=1` says this is a local instance (`E-SERVICE-TOKEN`). |
-| `BACKEND_URL` | Base URL of the backend tier, the canonical BFF's own variable, so one deployment configures both. Unset — the default — leaves the events & sessions slice answering from the mock. |
+| `BACKEND_URL` | Base URL of the backend tier. Unset — the development default — leaves queries answering from the mock. Production requires it. |
 | `APIARY_ALLOW_UNAUTH_DEV` | Exactly `1`: a local development instance. `bun run dev` sets it. |
 | `OIDC_DISABLED` | `1` skips sign-in: everyone is a fixture admin. Only with `NODE_ENV=development` or `APIARY_ALLOW_UNAUTH_DEV=1` (`E-OIDC-DISABLED`). |
 | `APIARY_DEV_HTTP_COOKIE` | Exactly `1`: the session cookie works over plain HTTP (`apiary_bff_dev`, not Secure), so a dev server can be used from another machine by its LAN address. Only with `NODE_ENV=development` or `APIARY_ALLOW_UNAUTH_DEV=1` (`E-DEV-HTTP-COOKIE`). `bun run dev` sets it and listens on 0.0.0.0. |

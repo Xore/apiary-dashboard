@@ -8,9 +8,10 @@
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { renderMatrix } from '../route-matrix'
+import { renderComponentMatrix } from '../component-matrix'
 import { renderRoutes, routeInventory } from './routes'
 import { inventory, renderInventory } from './server-functions'
-import { sliceOfFn, sliceOfRoute, sliceRef } from './slice-map'
+import { rewriteOwners, sliceOfFn, sliceOfRoute, sliceRef } from './slice-map'
 import { renderSlices } from './slices'
 
 const root = process.argv[2]
@@ -25,8 +26,9 @@ const fns = inventory(root)
 const routes = routeInventory(root, fns)
 write('server-functions.json', `${JSON.stringify(fns, null, 2)}\n`)
 write('routes.json', `${JSON.stringify(routes, null, 2)}\n`)
-write('server-functions.md', renderInventory(fns, (fn) => sliceRef(sliceOfFn(fn, routes))))
+write('server-functions.md', renderInventory(fns, (fn) => sliceRef(sliceOfFn(fn, routes)), (fn) => rewriteOwners(sliceOfFn(fn, routes), fn)))
 write('routes.md', renderRoutes(routes, (route) => sliceRef(sliceOfRoute(route))))
 write('slices.md', renderSlices(fns, routes))
 write('route-matrix.md', renderMatrix())
+write('components.md', renderComponentMatrix())
 console.log(`${fns.length} server functions, ${routes.length} page routes, inventory written`)
