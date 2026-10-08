@@ -128,12 +128,12 @@ compose file should contain:
    - `EXTERNAL_URL=${EXTERNAL_URL:?set EXTERNAL_URL}`
    - `DASHBOARD_BFF_LOG_FILE=/logs/dashboard-bff/rewrite.jsonl`
    - Optional tool-link variables already supported by the application.
-5. The staging binding `${HP_BIND:-10.8.0.2}:19092:3000`. Do not bind
+5. The staging binding `${HP_BIND:-127.0.0.1}:19092:3000`. Do not bind
    `19090`; keeping the old project on `19090` is what makes rollback a
-   route-only operation. The bind address keeps a default, as in every APIARY
-   stack: Arcane validates the compose file before the host-local `.env`
-   exists and substitutes a placeholder for unset required values, and a
-   placeholder is not an IP address.
+   route-only operation. The bind address has a loopback default rather than
+   `:?`: Arcane validates the compose file before the host-local `.env` exists
+   and substitutes a placeholder for unset required values, which is not an
+   IP address. Unset therefore leaves the port unreachable from the VPS.
 6. The existing host log directory mounted read-write at
    `/logs/dashboard-bff`, and the new project's secret directory mounted
    read-only at `/run/dashboard-secrets`.
@@ -292,6 +292,7 @@ Populate it from the deployment `.env.example`, including:
 ```dotenv
 APIARY_DASHBOARD_VERSION=vX.Y.Z
 APIARY_DASHBOARD_DIGEST=sha256:<manifest-digest>
+HP_BIND=<homeserver-wireguard-address>
 SERVICE_TOKEN=<backend-shared-secret>
 OIDC_ISSUER_URL=https://auth.example.test/realms/apiary
 OIDC_CLIENT_ID=apiary-dashboard-rewrite
