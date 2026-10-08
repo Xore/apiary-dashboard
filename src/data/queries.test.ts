@@ -100,7 +100,11 @@ describe('link integrity', () => {
 
   it('sessions, events, and recordings referenced elsewhere resolve', async () => {
     const [llm, ml, recordings] = await Promise.all([q.getLlmAnalyses(), q.getMlAnomalies(), q.getRecordings()])
-    for (const a of llm.filter((x) => x.sessionId)) expect(await q.getSessionDetail(a.sessionId!), a.sessionId).not.toBeNull()
+    for (const a of llm.filter((x) => x.sessionId)) {
+      const detail = await q.getSessionDetail(a.sessionId!)
+      expect(detail, a.sessionId).not.toBeNull()
+      expect(await q.getSessionEvents(a.sessionId!)).toEqual(detail?.events)
+    }
     for (const a of ml.anomalies.slice(0, 20)) expect(await q.getEventDetail(a.sourceEventId), a.sourceEventId).not.toBeNull()
     for (const r of recordings.slice(0, 20)) expect(await q.getReplayDetail(r.shasum), r.shasum).not.toBeNull()
   })
@@ -355,6 +359,12 @@ describe('sensor fleet', () => {
 })
 
 describe('event fields', () => {
+  it('facet counts honor the requested event filters', async () => {
+    const [{ total }, facets] = await Promise.all([q.getEvents({ country: 'NL' }), q.getFacets('events', { country: 'NL' })])
+    expect(facets.countries).toEqual([{ value: 'NL', count: total }])
+    expect(facets.sources.reduce((sum, row) => sum + row.count, 0)).toBe(total)
+  })
+
   it('a persona filter returns what its facet count says, all on the sensor that wears it', async () => {
     const facets = await q.getFacets()
     expect(facets.personas.length).toBeGreaterThan(10)

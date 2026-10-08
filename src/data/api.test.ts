@@ -14,6 +14,7 @@ import { commandsQuery, eventsQuery, recordingSourceIpQuery } from './adapters/e
 import type { EventPageWire, FilterValuesWire, RecordingsPageWire, ReplayWire, SearchResultWire, SessionDetailWire } from './contracts/explorer'
 import type { EventRow } from './contracts/events'
 import type { CorrelationWire, IpProfileWire, SourcesPageWire } from './contracts/sources'
+import { shouldFallbackToMock } from './backend'
 import type { Backend } from './backend'
 
 /** One wire row, as events.rs's `row_from_hit` builds it. */
@@ -115,6 +116,7 @@ describe('which queries the real backend answers', () => {
         'getRecordings',
         'getReplayDetail',
         'getSessionDetail',
+        'getSessionEvents',
         'searchAll',
         'searchHistory',
         // settings, preferences and shell (#81)
@@ -150,14 +152,29 @@ describe('which queries the real backend answers', () => {
         'startAnalysisRun',
         // sources & correlation (#76)
         'getAttackers',
+        'getAsn',
+        'getBlockedIps',
+        'getCampaign',
         'getCluster',
+        'getEntityTimeline',
+        'getFacets',
+        'getIdentity',
         'getIdentityFusion',
         'getInfraClusters',
+        'getIoc',
+        'getIocCatalog',
         'getIpProfile',
         'getKillChain',
         'getNetwork',
         'getNetworkCampaigns',
+        'getPayloadDelivery',
+        'getRelated',
+        'getSourceEvents',
+        'getSourceIdentity',
+        'getSourceNetwork',
         'getSourceProfiles',
+        'getSourceSessions',
+        'getSourceTimeline',
         'resolveHash',
         'setIpBlocked',
         // operations (#77)
@@ -213,17 +230,8 @@ describe('which queries the real backend answers', () => {
     expect(isLiveBackend()).toBe(false)
   })
 
-  it('answers nothing for a query this slice has not wired', () => {
-    // Still mock-only across every slice wired so far. No endpoint serves the
-    // overview KPIs, and no endpoint serves a facet COUNT (filter-values gives
-    // keys only). #74 wired `getOverview` and #76 wired `getAttackers`, so
-    // neither is listed here any more.
-    expect(liveQuery('getFacets', undefined)).toBeUndefined()
-    // The entity pages whose membership needs an address list nothing
-    // serves: investigate/cidr returns no members, and investigate/cluster
-    // 404s a cluster of fewer than two.
-    expect(liveQuery('getAsn', undefined)).toBeUndefined()
-    expect(liveQuery('getIdentity', undefined)).toBeUndefined()
+  it('answers nothing for a query the backend still cannot serve', () => {
+    expect(liveQuery('previewReport', undefined)).toBeUndefined()
   })
 
   it('leaves getPreferences and savePreferences on the mock — the public-query deadlock', () => {
@@ -245,6 +253,59 @@ describe('which queries the real backend answers', () => {
     // Nobody signed in is refused the same way the mock refuses them, before
     // any fetch — the live path is not a way around the guard.
     await expect(liveQuery('getEvents', null)!({})).rejects.toThrow(ApiError)
+  })
+})
+
+describe('the remaining live query adapters', () => {
+  const emptyFacets = {
+    sensors: [], sources: [], countries: [], protocols: [], ports: [],
+    signatures: [], kinds: [], personas: [], providers: [], cities: [],
+  }
+  const emptyCatalog = {
+    hash: [], domain: [], url: [], credential: [], command: [], fingerprint: [],
+    cve: [], signature: [], username: [], password: [],
+  }
+
+  async function expectGet(name: string, args: unknown[], path: string, response: unknown) {
+    const calls = stub({ [path]: response })
+    expect(await liveQuery(name, undefined)!(...args), name).toEqual(response)
+    expect(new URL(calls[0]).pathname, name).toBe(path)
+  }
+
+  it('routes entity, IOC, payload, blocklist, and session reads to their endpoints', async () => {
+    await expectGet('getAsn', ['AS64496'], '/api/v1/correlations/asn/AS64496', null)
+    await expectGet('getIdentity', ['att/1'], '/api/v1/correlations/identity/att%2F1', null)
+    await expectGet('getCampaign', ['203.0.113.0/24'], '/api/v1/campaigns/203.0.113.0%2F24', null)
+    await expectGet('getEntityTimeline', ['asn', 'AS64496'], '/api/v1/store/asn/AS64496/timeline', [])
+    await expectGet('getRelated', ['identity', 'att/1'], '/api/v1/store/identity/att%2F1/related', [])
+    await expectGet('getIoc', ['url', 'https://bad.test/a b'], '/api/v1/ioc/url/https%3A%2F%2Fbad.test%2Fa%20b', null)
+    await expectGet('getIocCatalog', [], '/api/v1/ioc-catalog', emptyCatalog)
+    await expectGet('getPayloadDelivery', ['sha/1'], '/api/v1/payloads/sha%2F1/delivery', { events: [], sessions: [], sources: [] })
+    await expectGet('getBlockedIps', [], '/api/v1/store/blocked-ips', [])
+    await expectGet('getSessionEvents', ['sess/1'], '/api/v1/sessions/sess%2F1/events', [])
+  })
+
+  it('routes every source child view and preserves its time window', async () => {
+    const paths = [
+      ['getSourceEvents', '/api/v1/sources/203.0.113.42/events'],
+      ['getSourceSessions', '/api/v1/sources/203.0.113.42/sessions'],
+      ['getSourceTimeline', '/api/v1/sources/203.0.113.42/timeline'],
+    ] as const
+    for (const [name, path] of paths) {
+      const calls = stub({ [path]: [] })
+      expect(await liveQuery(name, undefined)!('203.0.113.42', '6h'), name).toEqual([])
+      expect(Object.fromEntries(new URL(calls[0]).searchParams), name).toEqual({ from: 'now-6h', to: 'now' })
+    }
+    await expectGet('getSourceNetwork', ['203.0.113.42'], '/api/v1/sources/203.0.113.42/network', null)
+    await expectGet('getSourceIdentity', ['203.0.113.42'], '/api/v1/sources/203.0.113.42/identity', null)
+  })
+
+  it('passes facet filters through the facet endpoint', async () => {
+    const calls = stub({ '/api/v1/facets/events': emptyFacets })
+    expect(await liveQuery('getFacets', undefined)!('events', { country: 'NL', port: 22 })).toEqual(emptyFacets)
+    const url = new URL(calls[0])
+    expect(url.pathname).toBe('/api/v1/facets/events')
+    expect(Object.fromEntries(url.searchParams)).toEqual({ country: 'NL', port: '22' })
   })
 })
 
@@ -450,6 +511,14 @@ describe('a degraded body degrades, and a failed call errors', () => {
     expect(out).toBeInstanceOf(ApiError)
     expect((out as ApiError).kind).toBe('unavailable')
     expect((out as ApiError).status).toBe(502)
+    expect((out as ApiError).backendUnreachable).toBe(true)
+  })
+
+  it('falls back to the mock only for unreachable reads', () => {
+    const unreachable = new ApiError('unavailable', 'getEvents', { backendUnreachable: true })
+    expect(shouldFallbackToMock('getEvents', unreachable)).toBe(true)
+    expect(shouldFallbackToMock('setIpBlocked', unreachable)).toBe(false)
+    expect(shouldFallbackToMock('getEvents', new ApiError('unavailable', 'getEvents'))).toBe(false)
   })
 
   it('throws rather than returning null when the detail call cannot connect', async () => {
@@ -1811,16 +1880,12 @@ describe('the reports slice gaps, each one where it belongs', () => {
     expect(made).toMatchObject({ id: 'gr_a', title: 'Payload aaa', definitionId: '' })
   })
 
-  it('GAP 6: previewReport and getFacets have no endpoint, so they stay on the mock', async () => {
+  it('GAP 6: previewReport has no endpoint, so it stays on the mock', async () => {
     // Verified in the Rust router: lib.rs registers templates, the three
     // definition routes, generate, delete_generated and generate_payload_report,
-    // and nothing else under /api/v1/reports. There is no preview route and
-    // no facet route; /api/v1/filter-values serves keys with no counts, which
-    // is why getFacets cannot be built from it either.
+    // and nothing else under /api/v1/reports. There is no preview route.
     expect(liveQueryNames()).not.toContain('previewReport')
-    expect(liveQueryNames()).not.toContain('getFacets')
     expect(liveQuery('previewReport', undefined)).toBeUndefined()
-    expect(liveQuery('getFacets', undefined)).toBeUndefined()
   })
 
   it('GAP 7: both deletes answer { deleted: id } and the page type is void, so nothing adapts', async () => {

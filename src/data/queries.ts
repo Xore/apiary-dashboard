@@ -442,6 +442,12 @@ const getSessionDetailFn = createServerFn({ method: 'GET' })
   .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSessionDetail', data, context.mock)) as Json)
 export const getSessionDetail = announced('getSessionDetail', getSessionDetailFn) as Rpc<typeof impl.getSessionDetail>
 
+const getSessionEventsFn = createServerFn({ method: 'GET' })
+  .middleware([mockScenarioMiddleware])
+  .validator((args: unknown[]) => args)
+  .handler(async ({ data, context }) => (await (await import('./backend')).runForRequest('getSessionEvents', data, context.mock)) as Json)
+export const getSessionEvents = announced('getSessionEvents', getSessionEventsFn) as Rpc<typeof impl.getSessionEvents>
+
 const getSessionSummaryFn = createServerFn({ method: 'GET' })
   .middleware([mockScenarioMiddleware])
   .validator((args: unknown[]) => args)

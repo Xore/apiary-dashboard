@@ -397,7 +397,7 @@ async function request<T>(endpoint: string, path: string, opts: { method: 'GET' 
     if (error instanceof ApiError) throw error
     // Unreachable, refused, or past TIMEOUT_MS. The backend's own words are
     // not available and ours would carry nothing an operator can act on.
-    throw new ApiError('unavailable', endpoint)
+    throw new ApiError('unavailable', endpoint, { backendUnreachable: true })
   }
   if (response.status === 404) return null
   if (!response.ok) {
@@ -2227,6 +2227,52 @@ const getAuthEvents: Backend['getAuthEvents'] = async () => {
 
 const DAY_MS = 86_400_000
 
+type QueryResult<TKey extends keyof Backend> = Awaited<ReturnType<Backend[TKey]>>
+
+const EMPTY_FACETS: QueryResult<'getFacets'> = {
+  sensors: [], sources: [], countries: [], protocols: [], ports: [],
+  signatures: [], kinds: [], personas: [], providers: [], cities: [],
+}
+const EMPTY_IOC_CATALOG: QueryResult<'getIocCatalog'> = {
+  hash: [], domain: [], url: [], credential: [], command: [], fingerprint: [],
+  cve: [], signature: [], username: [], password: [],
+}
+const WINDOWS = new Set(['1h', '6h', '24h', '7d', '30d'])
+const windowQuery = (range?: string): Record<string, string> => range === 'all' ? {} : { from: `now-${WINDOWS.has(range ?? '') ? range : '24h'}`, to: 'now' }
+
+const getAsn: Backend['getAsn'] = (asn) => get<QueryResult<'getAsn'>>('getAsn', `/api/v1/correlations/asn/${encodeURIComponent(asn)}`)
+const getIdentity: Backend['getIdentity'] = (ip) => get<QueryResult<'getIdentity'>>('getIdentity', `/api/v1/correlations/identity/${encodeURIComponent(ip)}`)
+const getCampaign: Backend['getCampaign'] = (id) => get<QueryResult<'getCampaign'>>('getCampaign', `/api/v1/campaigns/${encodeURIComponent(id)}`)
+
+const getEntityTimeline: Backend['getEntityTimeline'] = async (kind, id, range) =>
+  (await get<QueryResult<'getEntityTimeline'>>('getEntityTimeline', `/api/v1/store/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/timeline`, windowQuery(range))) ?? []
+const getRelated: Backend['getRelated'] = async (kind, id) =>
+  (await get<QueryResult<'getRelated'>>('getRelated', `/api/v1/store/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/related`)) ?? []
+
+const getIoc: Backend['getIoc'] = (kind, value) => get<QueryResult<'getIoc'>>('getIoc', `/api/v1/ioc/${encodeURIComponent(kind)}/${encodeURIComponent(value)}`)
+const getIocCatalog: Backend['getIocCatalog'] = async () => (await get<QueryResult<'getIocCatalog'>>('getIocCatalog', '/api/v1/ioc-catalog')) ?? EMPTY_IOC_CATALOG
+
+const getSourceEvents: Backend['getSourceEvents'] = async (ip, range) =>
+  (await get<QueryResult<'getSourceEvents'>>('getSourceEvents', `/api/v1/sources/${encodeURIComponent(ip)}/events`, windowQuery(range))) ?? []
+const getSourceSessions: Backend['getSourceSessions'] = async (ip, range) =>
+  (await get<QueryResult<'getSourceSessions'>>('getSourceSessions', `/api/v1/sources/${encodeURIComponent(ip)}/sessions`, windowQuery(range))) ?? []
+const getSourceTimeline: Backend['getSourceTimeline'] = async (ip, range) =>
+  (await get<QueryResult<'getSourceTimeline'>>('getSourceTimeline', `/api/v1/sources/${encodeURIComponent(ip)}/timeline`, windowQuery(range))) ?? []
+const getSourceNetwork: Backend['getSourceNetwork'] = (ip) => get<QueryResult<'getSourceNetwork'>>('getSourceNetwork', `/api/v1/sources/${encodeURIComponent(ip)}/network`)
+const getSourceIdentity: Backend['getSourceIdentity'] = (ip) => get<QueryResult<'getSourceIdentity'>>('getSourceIdentity', `/api/v1/sources/${encodeURIComponent(ip)}/identity`)
+
+const getPayloadDelivery: Backend['getPayloadDelivery'] = async (hash) =>
+  (await get<QueryResult<'getPayloadDelivery'>>('getPayloadDelivery', `/api/v1/payloads/${encodeURIComponent(hash)}/delivery`)) ?? { events: [], sessions: [], sources: [] }
+
+const getFacets: Backend['getFacets'] = async (kind = 'events', filters = {}) => {
+  const search = Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined && value !== '')) as Record<string, string | number>
+  return (await get<QueryResult<'getFacets'>>('getFacets', `/api/v1/facets/${encodeURIComponent(kind)}`, search)) ?? EMPTY_FACETS
+}
+
+const getBlockedIps: Backend['getBlockedIps'] = async () => (await get<QueryResult<'getBlockedIps'>>('getBlockedIps', '/api/v1/store/blocked-ips')) ?? []
+const getSessionEvents: Backend['getSessionEvents'] = async (sessionId) =>
+  (await get<QueryResult<'getSessionEvents'>>('getSessionEvents', `/api/v1/sessions/${encodeURIComponent(sessionId)}/events`)) ?? []
+
 /** This slice's queries, and nothing else. Each keeps the mock
  * implementation's signature exactly — `queries.ts` is generated from it and
  * pages are typed against it.
@@ -2251,8 +2297,6 @@ const DAY_MS = 86_400_000
  *   wired without the read; it is not, because it would then write the wire
  *   while `getPreferences` renders the mock.
  *
- * - `getAttackers` / `getSourceHealth` — other slices' work.
- *
  * - `previewReport` — reports' own gap: the backend renders a report, it does
  *   not preview a draft, and there is no `/reports/preview` route. The
  *   wizard's review step therefore stays mock-derived while the live tier is
@@ -2260,18 +2304,6 @@ const DAY_MS = 86_400_000
  *   of the reports gap list (`sandbox-runs` / payload search for the artifact
  *   pickers) is in contracts/reports.ts, typed and deliberately unadapted: no
  *   page type exists to adapt them to.
- *
- * - `getFacets` — no endpoint at all: filter-values serves keys only, with
- *   no counts, and the events slice's read of it is why the counts are gone.
- *
- * - `getSourceIdentity` / `getSourceNetwork` / `getAsn` / `getIdentity` /
- *   `getCampaign` / `getBlockedIps` — page types whose membership the
- *   endpoints above answer but whose shape needs a member set nothing
- *   serves: `investigate/cluster` 404s a cluster of fewer than two members
- *   and `investigate/cidr` returns no address list at all (its group is
- *   folded from the records it does return, as `getNetwork`'s comment says).
- *   `getBlockedIps` is the export route's own job (`ip-block-export`), not
- *   a list endpoint — see downloads.ts.
  *
  * Gaps that are wired anyway, and why, are in the slice's own tests: the
  * lossy scope filters, the scope keys with no page field, `schedule.enabled`
@@ -2283,6 +2315,7 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   searchHistory,
   getEventDetail,
   getSessionDetail,
+  getSessionEvents,
   getRecordings,
   getReplayDetail,
   searchAll,
@@ -2297,6 +2330,7 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   submitProblemReport,
   setProblemStatus,
   getPayloads,
+  getPayloadDelivery,
   getPayloadAnalysis,
   getAnalysisResults,
   getAnalyzerCatalog,
@@ -2329,6 +2363,11 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   purgeDeadLetters,
   // Sources and correlation (#76)
   getSourceProfiles,
+  getSourceEvents,
+  getSourceSessions,
+  getSourceTimeline,
+  getSourceNetwork,
+  getSourceIdentity,
   getAttackers,
   getNetworkCampaigns,
   getInfraClusters,
@@ -2336,8 +2375,17 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   getIpProfile,
   setIpBlocked,
   getNetwork,
+  getAsn,
+  getCampaign,
+  getIdentity,
   getCluster,
   getIdentityFusion,
+  getEntityTimeline,
+  getRelated,
+  getIoc,
+  getIocCatalog,
+  getFacets,
+  getBlockedIps,
   resolveHash,
   // Tools (#80)
   getCanarytokens,
