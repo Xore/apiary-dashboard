@@ -8,7 +8,6 @@ import { createFileRoute } from '@tanstack/react-router'
 import { serveDownload } from '#/data/downloads'
 import { topologyFlow } from '#/data/mock/charts'
 import { ApiError } from '#/data/errors'
-import { isScenario } from '#/data/scenarios'
 import { isLiveBackend, liveTopologyFlow } from '#/data/api'
 
 const plain = (status: number, message: string) => new Response(message, { status, headers: { 'content-type': 'text/plain; charset=utf-8' } })
@@ -17,11 +16,10 @@ export const Route = createFileRoute('/api/topology/flow')({
   server: {
     handlers: {
       GET: ({ request }) =>
-        serveDownload(request, async (search, q) => {
-          // As on the chart route: a `?mock=` scenario always keeps the mock,
-          // and only an unscoped request in a process with a BACKEND_URL
-          // reaches the Rust tier.
-          if (isLiveBackend() && !isScenario(search.get('mock'))) {
+        serveDownload(request, async (_search, q, reach) => {
+          // As on the chart route, only an explicitly allowed development
+          // scenario keeps the mock beside a configured live backend.
+          if (isLiveBackend() && !reach.mock) {
             try {
               const flow = await liveTopologyFlow()
               if (flow === null) return plain(502, 'topology unavailable')

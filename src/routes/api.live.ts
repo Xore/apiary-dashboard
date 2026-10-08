@@ -24,6 +24,7 @@ import { listen } from '#/data/mock/liveFeed'
 import { isScenario } from '#/data/scenarios'
 import { admissionGate, envInt } from '#/server/admission'
 import { resolveUser } from '#/server/identity'
+import { mockScenariosAllowed } from '#/server/policy'
 import { asApiError } from '#/data/errors'
 import { isLiveBackend, liveRow, openLiveStream } from '#/data/api'
 import type { EventRow } from '#/data/contracts/events'
@@ -47,18 +48,17 @@ export const Route = createFileRoute('/api/live')({
         // A direct handler: it checks the session itself.
         if (!(await resolveUser(request))) return new Response('unauthorized', { status: 401 })
         const mock = new URL(request.url).searchParams.get('mock')
-        const scenario = isScenario(mock) ? mock : 'normal'
-        const outage = OUTAGE[scenario] as (typeof OUTAGE)[string] | undefined
-        if (outage) return new Response(`live stream: ${scenario}`, { status: outage.status, headers: outage.headers })
+        const mockScenario = mockScenariosAllowed() && isScenario(mock) ? mock : undefined
+        const scenario = mockScenario ?? 'normal'
+        const outage = mockScenario ? (OUTAGE[mockScenario] as (typeof OUTAGE)[string] | undefined) : undefined
+        if (outage) return new Response(`live stream: ${mockScenario}`, { status: outage.status, headers: outage.headers })
         // The gate, in front of both arms. See the note above.
         const release = streams.admit()
         if (release instanceof Response) return release
 
-        // No scenario named, and a backend configured: the Rust tier's own
-        // stream. `!isScenario(mock)` is the same test the server-function
-        // funnel uses (src/data/backend.ts `runForRequest`), so a request
-        // decides which tier answers it on one rule, not two.
-        if (isLiveBackend() && !isScenario(mock)) {
+        // No allowed development scenario, and a backend configured: the
+        // Rust tier's own stream.
+        if (isLiveBackend() && !mockScenario) {
           try {
             const upstream = await openLiveStream(request.signal)
             return new Response(relay(upstream.body!, release), { headers: SSE })

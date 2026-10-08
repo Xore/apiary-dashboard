@@ -1536,10 +1536,8 @@ const generatePayloadReport: Backend['generatePayloadReport'] = async (hash) => 
  * `/api/v1/config` twice more, which is one config document and not a
  * correctness question.
  *
- * `previewReport` has no endpoint at all, so the page's row counts and its
- * page-count estimate stay mock-derived while the live tier is set. The
- * report the operator gets is a real PDF, and `sizeBytes` comes off the wire
- * rather than from that estimate. */
+ * `previewReport` has no endpoint at all, so a live deployment returns the
+ * explicit not-available error until that endpoint exists. */
 const generateReportFrom: Backend['generateReportFrom'] = async (definition, keep) => {
   // A one-off is created, so it carries no id: `create_definition` 400s one.
   const saved = await saveReportDefinition(keep ? definition : { ...definition, id: '' })
@@ -1562,9 +1560,8 @@ const getEvents: Backend['getEvents'] = async (filters) => {
   // Built here rather than with `eventsPage`, which maps the rows straight
   // through `toHoneypotEvent` and would leave the seven gap fields — the
   // explorer's Severity column among them — undefined on every live row.
-  // `values` are the filter pickers' vocabularies: the endpoint serves keys
-  // only (no counts), and has no aggregation at all for sources, personas,
-  // providers or signatures, which is why `getFacets` stays mock-only.
+  // `values` are this page's filter-picker vocabularies: this endpoint serves
+  // keys only. Counted facets use the live `/api/v1/facets/:kind` adapter.
   return { ...paged(rows ?? EMPTY_PAGE), values: filterValues(values ?? EMPTY_VALUES) }
 }
 
@@ -2286,21 +2283,17 @@ const getSessionEvents: Backend['getSessionEvents'] = async (sessionId) =>
  *   service token AND a subject: an empty subject is a 400 (preferences.rs
  *   `subject` validation). A pre-sign-in call has no subject, so wiring it
  *   turns the sign-in page into a 400 on every load — the deadlock the task
- *   brief names. Canonical does not reach the backend here either: it builds
- *   the pre-session values from its own process environment. So this leaves
- *   it, and both `savePreferences` with it, on the mock. Wiring one half of
- *   the pair is worse than wiring neither — the pane would save to one store
- *   and render from another.
+ *   brief names. It remains unwired, so a live deployment gets the explicit
+ *   not-available error until the read can move after sign-in.
  *
  * - `savePreferences` — same document, same reason. `PUT
  *   /api/v1/preferences` merges a `deny_unknown_fields` patch, so it can be
  *   wired without the read; it is not, because it would then write the wire
- *   while `getPreferences` renders the mock.
+ *   while `getPreferences` cannot read it.
  *
  * - `previewReport` — reports' own gap: the backend renders a report, it does
- *   not preview a draft, and there is no `/reports/preview` route. The
- *   wizard's review step therefore stays mock-derived while the live tier is
- *   set — real counts and a real PDF, but the two disagree. The other half
+ *   not preview a draft, and there is no `/reports/preview` route. A live
+ *   deployment gets an explicit not-available error. The other half
  *   of the reports gap list (`sandbox-runs` / payload search for the artifact
  *   pickers) is in contracts/reports.ts, typed and deliberately unadapted: no
  *   page type exists to adapt them to.
@@ -2419,8 +2412,7 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
 }
 
 /** The guarded live implementation of `name`, or undefined when this slice
- * does not implement it, when a mock scenario is in force, or when no
- * BACKEND_URL is configured — the three cases the mock keeps answering.
+ * does not implement it or when no BACKEND_URL is configured.
  *
  * The authorization decision is the same one `backend()` applies, so a role
  * is refused identically whichever tier answers. */

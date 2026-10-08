@@ -7,15 +7,15 @@
 // A captured payload is live malware in production; here it is a small text
 // file saying so. Nothing that downloads from the mock is executable.
 //
-// #83: a builder asks `live()` first. With BACKEND_URL set and no `?mock=`
-// the answer comes from the real backend behind the same service token the
-// query layer presents, through `getRaw` (src/data/api.ts) — the one place
-// this tier makes a call. Every other caller, and every mock scenario, still
-// answers from the mock, which is what keeps the ten scenarios and the
-// browser checks working.
+// #83: a builder asks `live()` first. With BACKEND_URL set and no allowed
+// development scenario, the answer comes from the real backend behind the
+// same service token the query layer presents, through `getRaw`
+// (src/data/api.ts). An unconfigured backend or an allowed development
+// scenario still answers from the mock.
 import { asApiError } from './errors'
 import { backend } from './backend'
 import { resolveUser } from '#/server/identity'
+import { mockScenariosAllowed } from '#/server/policy'
 import type { Backend, Caller } from './backend'
 import { isScenario } from './scenarios'
 import type { MockScenario } from './scenarios'
@@ -51,15 +51,18 @@ const text = (status: number, message: string) => new Response(message, { status
 export async function serveDownload(request: Request, build: Builder, { session = true }: { session?: boolean } = {}): Promise<Response> {
   const search = new URL(request.url).searchParams
   const mock = search.get('mock')
+  const allowMock = mockScenariosAllowed()
+  const scenario = allowMock && isScenario(mock) ? mock : undefined
+  if (!allowMock) search.delete('mock')
   // Direct handlers pass neither the navigation guard nor the function
   // middleware: each checks the session itself, as canonical's do.
   const user = session ? await resolveUser(request) : undefined
   if (session && !user) return text(401, 'unauthorized')
   // The mock backend in the scenario the link carries, for this request's
   // user (the unguarded ones answer as the trusted internal caller).
-  const q = backend(isScenario(mock) ? mock : 'normal', user)
+  const q = backend(scenario ?? 'normal', user)
   try {
-    return await build(search, q, { mock: isScenario(mock) ? mock : undefined, user })
+    return await build(search, q, { mock: scenario, user })
   } catch (error) {
     const api = asApiError(error)
     if (api) return text(api.status, `${api.endpoint}: ${api.kind}`)
@@ -78,8 +81,8 @@ type Reach = { mock: MockScenario | undefined; user: Caller }
 /** The real backend's call seam, or null when this request answers from the
  * mock.
  *
- * Null in exactly the cases the query layer's `runForRequest` falls through
- * on (#75, src/data/backend.ts:57): a `?mock=` scenario, or no BACKEND_URL.
+ * Null in exactly the cases the query layer's `runForRequest` uses the mock:
+ * an allowed development scenario, or no BACKEND_URL.
  * It is asked per call rather than read at module load, so `?mock=` decides
  * here where the request is and never in shared module state. Imported
  * dynamically because `src/data/api.ts` is server-only and this module is
@@ -326,13 +329,13 @@ async function payloadReportPdf(q: Backend, hash: string): Promise<Response> {
 export const reportPdf = (id: string) => async (_search: URLSearchParams, q: Backend, reach: Reach) => {
   // reports.rs::pdf serves the stored `pdf_base64` and answers INLINE, so
   // the browser shows the report instead of downloading it (reports.rs:51).
-  // A payload report's id (`rpt-payload-<sha256>-…`, `reportPdf.ts`) is
-  // generated on demand and never stored, which is why only the generated
-  // half has an upstream route at all; the payload half stays on the mock.
-  const upstream = payloadOfReport(id) ? null : await live(reach, `/api/v1/reports/${encodeURIComponent(id)}/pdf`)
-  if (upstream) return upstream.found ? file(upstream.body, upstream.contentType, `${id}.pdf`, 'inline') : text(404, 'report unavailable')
+  // A payload report's id (`rpt-payload-<sha256>-…`, `reportPdf.ts`) names a
+  // document with no live endpoint. Production must say so rather than build
+  // one from fixtures.
   const payload = payloadOfReport(id)
-  if (payload) return payloadReportPdf(q, payload)
+  if (payload) return (await seam(reach)) ? text(502, 'report not available on live backend') : payloadReportPdf(q, payload)
+  const upstream = await live(reach, `/api/v1/reports/${encodeURIComponent(id)}/pdf`)
+  if (upstream) return upstream.found ? file(upstream.body, upstream.contentType, `${id}.pdf`, 'inline') : text(404, 'report unavailable')
   const data = await q.getReports()
   const report = data.generated.find((g) => g.id === id)
   if (!report) return text(404, 'report unavailable')

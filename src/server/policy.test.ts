@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { assertBootPolicies, devHttpCookiePolicy, identityProviderPolicy, oidcDisabledPolicy, serviceTokenPolicy } from './policy'
+import { assertBootPolicies, devHttpCookiePolicy, identityProviderPolicy, mockScenariosAllowed, oidcDisabledPolicy, serviceTokenPolicy } from './policy'
 
 describe('boot policies', () => {
   it('needs a service token, or the explicit development override', () => {
     expect(serviceTokenPolicy({ SERVICE_TOKEN: 's3cret' }).kind).toBe('token')
     expect(serviceTokenPolicy({ APIARY_ALLOW_UNAUTH_DEV: '1' }).kind).toBe('dev-override')
     for (const env of [{}, { SERVICE_TOKEN: '' }, { APIARY_ALLOW_UNAUTH_DEV: 'true' }, { APIARY_ALLOW_UNAUTH_DEV: '0' }]) expect(serviceTokenPolicy(env).kind).toBe('refuse')
+  })
+
+  it('allows mock scenarios beside a live backend only with the explicit development override', () => {
+    expect(mockScenariosAllowed({})).toBe(true)
+    expect(mockScenariosAllowed({ BACKEND_URL: 'http://backend.test' })).toBe(false)
+    expect(mockScenariosAllowed({ BACKEND_URL: 'http://backend.test', APIARY_ALLOW_UNAUTH_DEV: '1' })).toBe(true)
   })
 
   it('allows OIDC_DISABLED only in development', () => {

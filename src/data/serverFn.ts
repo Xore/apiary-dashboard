@@ -6,6 +6,7 @@ import { getRequestUrl } from '@tanstack/react-start/server'
 import { ApiError, asApiError } from './errors'
 import { API_CALL, isScenario } from './scenarios'
 import type { ApiCallRecord, MockScenario } from './scenarios'
+import { mockScenariosAllowed } from '#/server/policy'
 
 // The browser's scenario for the navigation in progress: the layout sets it
 // before any loader runs, because the address bar only changes once the
@@ -46,7 +47,7 @@ export function pageScenario(): MockScenario {
  * `context.mock`. A mock-only concern: the real backend has no scenarios. */
 export const mockScenarioMiddleware = createMiddleware({ type: 'function' })
   .client(({ next }) => next({ sendContext: { mock: pageScenario() } }))
-  .server(({ next, context }) => next({ context: { mock: isScenario(context.mock) ? context.mock : 'normal' } }))
+  .server(({ next, context }) => next({ context: { mock: mockScenariosAllowed() && isScenario(context.mock) ? context.mock : 'normal' } }))
 
 /** What crosses the wire, as Start's serializer can prove: JSON. The
  * exports keep each query's own types; this is only the handler's side. */

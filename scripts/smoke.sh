@@ -221,6 +221,15 @@ BACKEND_COOKIE="$(curl -s -o /dev/null -D - "http://localhost:$BACKEND_PORT/auth
 [[ -n "$BACKEND_COOKIE" ]] || { echo "live-backend failure sign-in failed"; exit 1; }
 check "a chart reports the upstream outage" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 -b "$BACKEND_COOKIE" "http://localhost:$BACKEND_PORT/api/chart/os-distribution")" 502
 check "the live stream reports the upstream outage" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 -b "$BACKEND_COOKIE" "http://localhost:$BACKEND_PORT/api/live")" 502
+# The first seeded fixture event renders on /events only when mock data leaked.
+FIXTURE_MARKER="$(bun -e "import { EVENTS } from './src/data/mock/fixtures.ts'; process.stdout.write(EVENTS[0].id)")"
+if ! BACKEND_PAGE="$(curl -sS --max-time 5 -b "$BACKEND_COOKIE" "http://localhost:$BACKEND_PORT/events" | tr -d '\0')"; then
+  printf '  FAIL the live-backend error page did not answer\n'; failed=1
+elif grep -Fq "$FIXTURE_MARKER" <<<"$BACKEND_PAGE"; then
+  printf '  FAIL the live-backend error page rendered a fixture identifier\n'; failed=1
+else
+  printf '  ok   the live-backend error page renders no fixture identifier\n'
+fi
 kill "$BACKEND_PID" 2>/dev/null; wait "$BACKEND_PID" 2>/dev/null || true
 BACKEND_PID=""
 
