@@ -45,6 +45,8 @@ import { useRouter } from '@tanstack/react-router'
 import { generateReportFrom, previewReport } from '#/data/queries'
 import type { Facets, GeneratedReport, ReportDefinition, ReportFrequency, ReportPreview, ReportsData } from '#/data/types'
 import { formatNumber } from '#/lib/format'
+import { isBackendGap } from '#/lib/backendGap'
+import type { BackendGap } from '#/lib/backendGap'
 import { FilterSelect } from '../FilterSelect'
 import { WEEKDAYS, WINDOWS, describeSchedule } from '../details/Report'
 import { ReportPreviewPages } from './ReportPreviewPages'
@@ -148,7 +150,11 @@ export function automaticChecks(
   }
 }
 
-export function ReportWizard({ data, facets, initial, onRestart }: { data: ReportsData; facets: Facets; initial: ReportDefinition; onRestart: () => void }) {
+/** A counted facet list, or none while the facets read is unavailable (#3524).
+ * The pickers that take a typed value still accept one. */
+const facetOptions = (facets: Facets | BackendGap, key: keyof Facets): Facets[keyof Facets] => (isBackendGap(facets) ? [] : facets[key])
+
+export function ReportWizard({ data, facets, initial, onRestart }: { data: ReportsData; facets: Facets | BackendGap; initial: ReportDefinition; onRestart: () => void }) {
   const router = useRouter()
   // Generating (and keeping the definition) is an admin's; a viewer can
   // still compose and preview.
@@ -479,10 +485,10 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
                   {index === 2 && (
                     <FormLayout defaultOptionality="optional">
                       <Selector label="Observation window" value={draft.scope.window} onChange={(window) => setScope({ window })} options={WINDOWS} description="Scheduled runs always cover the window that just ended." />
-                      <FilterSelect label="Source IP" options={facets.sources} value={draft.scope.ip} onChange={(ip) => setScope({ ip })} placeholder="Any address" allowCustom status={fieldStatus('ip')} description="Every address seen, busiest first. You can also type one that is not listed." />
-                      <FilterSelect label="Sensor" options={facets.sensors} value={draft.scope.sensor} onChange={(sensor) => setScope({ sensor })} placeholder="Every sensor" />
-                      <FilterSelect label="Port" options={facets.ports} value={draft.scope.port} onChange={(port) => setScope({ port })} placeholder="Any port" allowCustom status={fieldStatus('port')} />
-                      <FilterSelect label="IDS signature" options={facets.signatures} value={draft.scope.signature} onChange={(signature) => setScope({ signature })} placeholder="Any signature" allowCustom description="Pick signatures, or type part of one, e.g. ET SCAN." />
+                      <FilterSelect label="Source IP" options={facetOptions(facets, 'sources')} value={draft.scope.ip} onChange={(ip) => setScope({ ip })} placeholder="Any address" allowCustom status={fieldStatus('ip')} description="Every address seen, busiest first. You can also type one that is not listed." />
+                      <FilterSelect label="Sensor" options={facetOptions(facets, 'sensors')} value={draft.scope.sensor} onChange={(sensor) => setScope({ sensor })} placeholder="Every sensor" />
+                      <FilterSelect label="Port" options={facetOptions(facets, 'ports')} value={draft.scope.port} onChange={(port) => setScope({ port })} placeholder="Any port" allowCustom status={fieldStatus('port')} />
+                      <FilterSelect label="IDS signature" options={facetOptions(facets, 'signatures')} value={draft.scope.signature} onChange={(signature) => setScope({ signature })} placeholder="Any signature" allowCustom description="Pick signatures, or type part of one, e.g. ET SCAN." />
                       {stepActions('Continue', index)}
                     </FormLayout>
                   )}

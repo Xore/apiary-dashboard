@@ -14,18 +14,7 @@ vi.mock('#/server/identity', () => ({
   resolveUser: vi.fn(async () => undefined),
 }))
 
-const facets = {
-  sensors: [],
-  sources: [{ value: 'live-source.example', count: 1 }],
-  countries: [],
-  protocols: [],
-  ports: [],
-  signatures: [],
-  kinds: [],
-  personas: [],
-  providers: [],
-  cities: [],
-}
+const blocked = { total: 1, rows: [{ IP: 'live-source.example', Blocked: true }] }
 
 beforeEach(() => {
   process.env.BACKEND_URL = 'http://backend.test'
@@ -42,20 +31,20 @@ afterEach(() => {
 })
 
 describe('production request routing', () => {
-  it('ignores a mock scenario and returns the live getFacets response', async () => {
+  it('ignores a mock scenario and returns the live getBlockedIps response', async () => {
     const calls: string[] = []
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
         calls.push(url)
-        return Response.json(facets)
+        return Response.json(blocked)
       }),
     )
 
-    const result = await runForRequest('getFacets', ['events', {}], 'empty')
+    const result = await runForRequest('getBlockedIps', [], 'empty')
 
-    expect(result).toEqual(facets)
-    expect(new URL(calls[0]).pathname).toBe('/api/v1/facets/events')
+    expect(result).toEqual(['live-source.example'])
+    expect(new URL(calls[0]).pathname).toBe('/api/v1/investigate/blocked-ips')
     expect(JSON.stringify(result)).not.toContain(SOURCES[0].ip)
   })
 
@@ -66,11 +55,11 @@ describe('production request routing', () => {
       'fetch',
       vi.fn(async (url: string) => {
         calls.push(url)
-        return Response.json(facets)
+        return Response.json(blocked)
       }),
     )
 
-    expect(await runForRequest('getFacets', ['events', {}], 'normal')).toEqual(facets)
+    expect(await runForRequest('getBlockedIps', [], 'normal')).toEqual(['live-source.example'])
     expect(calls).toHaveLength(1)
   })
 
@@ -82,7 +71,7 @@ describe('production request routing', () => {
       }),
     )
 
-    const error = await runForRequest('getFacets', [], undefined).catch((caught: unknown) => caught)
+    const error = await runForRequest('getBlockedIps', [], undefined).catch((caught: unknown) => caught)
 
     expect(error).toBeInstanceOf(ApiError)
     expect(error).toMatchObject({ kind: 'unavailable', status: 502, backendUnreachable: true })

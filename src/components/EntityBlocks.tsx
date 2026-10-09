@@ -17,9 +17,12 @@ import { inRange } from '#/data/queries'
 import type { HoneypotEvent, SessionSummary, SharedSignal, SourceGroup, SourceProfile, TimelineItem, TimelineKind } from '#/data/types'
 import { rangeLabel } from '#/lib/range'
 import { formatClock, formatDateTime, formatDay, formatNumber, now } from '#/lib/format'
+import { isBackendGap } from '#/lib/backendGap'
+import type { BackendGap } from '#/lib/backendGap'
 import { MiniTable, Panel, StatTile } from './DashboardBlocks'
 import { EventsPanel } from './DetailBlocks'
 import { EntityLink } from './EntityLink'
+import { PanelBackendGap } from './PanelBackendGap'
 import { SeverityToken } from './SeverityToken'
 
 const KIND_LABEL: Record<TimelineKind, string> = {
@@ -34,8 +37,9 @@ const KIND_LABEL: Record<TimelineKind, string> = {
 
 /** Everything that happened, newest first, grouped by hour; filter by kind.
  * Each item links to its own page. */
-export function Timeline({ items: loaded, empty = 'Nothing happened in this time range.' }: { items: TimelineItem[] | undefined; empty?: string }) {
+export function Timeline({ items: loaded, empty = 'Nothing happened in this time range.' }: { items: TimelineItem[] | BackendGap | undefined; empty?: string }) {
   const [kind, setKind] = useState<'all' | TimelineKind>('all')
+  if (isBackendGap(loaded)) return <PanelBackendGap detail={loaded.gap} />
   // Still loading: a few hours of entries as skeletons.
   if (!loaded)
     return (
