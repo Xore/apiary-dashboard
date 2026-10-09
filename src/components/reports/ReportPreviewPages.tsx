@@ -4,16 +4,22 @@
  * with its header, footer and classification marking. Section pages carry
  * the rows the scope actually matched, so a wrong filter or a missing section
  * shows here, not in the PDF.
+ *
+ * With no preview (the live tier, APIARY#3524) it shows the document's
+ * structure from the draft alone: no counts, samples or page numbers.
  */
+import { Banner } from '@astryxdesign/core/Banner'
+import { Card } from '@astryxdesign/core/Card'
+import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { Theme } from '@astryxdesign/core/theme'
-import { Text } from '@astryxdesign/core/Text'
+import { Heading, Text } from '@astryxdesign/core/Text'
 import { HStack, StackItem, VStack } from '@astryxdesign/core/Stack'
 import { useRef } from 'react'
 import type { ReactNode } from 'react'
 import { IconButton } from '@astryxdesign/core/IconButton'
 import { Icon } from '@astryxdesign/core/Icon'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
-import type { ReportDefinition, ReportPreview } from '#/data/types'
+import type { ReportDefinition, ReportPreview, ReportsData } from '#/data/types'
 import { formatDateTime } from '#/lib/format'
 import { neutralTheme } from '#/themes/neutral/neutral-family'
 
@@ -80,7 +86,48 @@ function Fact({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function ReportPreviewPages({ draft, preview, templateName }: { draft: ReportDefinition; preview: ReportPreview; templateName: string }) {
+type PreviewProps = { draft: ReportDefinition; templateName: string; elements: ReportsData['elements'] }
+
+export function ReportPreviewPages({ preview, ...props }: PreviewProps & { preview: ReportPreview | null }) {
+  if (!preview) return <DraftOutline {...props} />
+  return <DocumentPages {...props} preview={preview} />
+}
+
+/** The document as the draft sets it up: the cover's facts and the sections
+ * in print order. The one note says where the counts are. */
+function DraftOutline({ draft, templateName, elements }: PreviewProps) {
+  const { branding, scope } = draft
+  const filters = [
+    scope.ip.length ? `Sources ${scope.ip.join(', ')}` : '',
+    scope.sensor.length ? `Sensors ${scope.sensor.join(', ')}` : '',
+    scope.port.length ? `Ports ${scope.port.join(', ')}` : '',
+    scope.signature.length ? `Signatures ${scope.signature.join(', ')}` : '',
+  ].filter(Boolean)
+  const sections = draft.elements.map((id) => elements.find((e) => e.id === id)?.label ?? id)
+  return (
+    <VStack gap={3}>
+      <Banner status="info" title="Row counts and samples appear in the generated report." />
+      <Card variant="muted" padding={4}>
+        <VStack gap={3}>
+          <VStack gap={1}>
+            <Text type="supporting" color="secondary">{templateName}</Text>
+            <Heading level={3}>{branding.title || 'Untitled report'}</Heading>
+            {branding.author && <Text type="supporting" color="secondary">{branding.author}</Text>}
+          </VStack>
+          <MetadataList orientation="vertical">
+            <MetadataListItem label="Header">{[branding.headerLeft, branding.headerRight].filter(Boolean).join(' · ') || 'None'}</MetadataListItem>
+            <MetadataListItem label="Footer">{branding.footerLeft || 'None'}</MetadataListItem>
+            <MetadataListItem label="Marking">{`${branding.classification} · ${draft.theme} theme`}</MetadataListItem>
+            <MetadataListItem label="Scope">{filters.length ? filters.join(' · ') : 'Every sensor and source'}</MetadataListItem>
+            <MetadataListItem label="Sections">{sections.join(', ') || 'No sections'}</MetadataListItem>
+          </MetadataList>
+        </VStack>
+      </Card>
+    </VStack>
+  )
+}
+
+function DocumentPages({ draft, preview, templateName }: PreviewProps & { preview: ReportPreview }) {
   const total = preview.pages
   const { scope } = draft
   const filters = [

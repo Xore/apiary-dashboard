@@ -205,6 +205,7 @@ describe('which queries the real backend answers', () => {
         'generateReport',
         'generateReportFrom',
         'getReports',
+        'previewReport',
         'saveReportDefinition',
         // monitor (#74)
         'acknowledgeAllAnomalies',
@@ -230,10 +231,6 @@ describe('which queries the real backend answers', () => {
     expect(liveQuery('getEvents', undefined)).toBeUndefined()
     process.env.BACKEND_URL = '   '
     expect(isLiveBackend()).toBe(false)
-  })
-
-  it('answers nothing for a query the backend still cannot serve', () => {
-    expect(liveQuery('previewReport', undefined)).toBeUndefined()
   })
 
   it('answers savePreferences live: the write diffs the stored document', () => {
@@ -1868,12 +1865,16 @@ describe('the reports slice gaps, each one where it belongs', () => {
     expect(made).toMatchObject({ id: 'gr_a', title: 'Payload aaa', definitionId: '' })
   })
 
-  it('GAP 6: previewReport has no endpoint, so it stays on the mock', async () => {
+  it('GAP 6: previewReport has no endpoint, so it answers null without a request', async () => {
     // Verified in the Rust router: lib.rs registers templates, the three
     // definition routes, generate, delete_generated and generate_payload_report,
-    // and nothing else under /api/v1/reports. There is no preview route.
-    expect(liveQueryNames()).not.toContain('previewReport')
-    expect(liveQuery('previewReport', undefined)).toBeUndefined()
+    // and nothing else under /api/v1/reports. There is no preview route, so the
+    // live tier answers null (APIARY#3524) and must not reach the backend.
+    const calls = stub(reportsFixtures())
+    expect(liveQueryNames()).toContain('previewReport')
+    const preview = await live('previewReport')({ ...savedDefinition, id: '' })
+    expect(preview).toBeNull()
+    expect(calls).toEqual([])
   })
 
   it('GAP 7: both deletes answer { deleted: id } and the page type is void, so nothing adapts', async () => {

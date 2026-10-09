@@ -112,6 +112,44 @@ export const REPORT_WIDE = '(min-width: 1600px)'
 /** The steps' column beside the preview: a form's width. */
 const STEPS_WIDTH = 720
 
+/** The checks each automatic step ticks through. With no preview (the live
+ * tier has none, APIARY#3524) the data check cannot count, so it runs only
+ * the checks that need no counts, and the render step names its sections
+ * without rows. */
+export function automaticChecks(
+  draft: ReportDefinition,
+  preview: ReportPreview | null | undefined,
+  elements: ReportsData['elements'],
+): Record<number, Array<{ id: string; label: string }>> {
+  if (!preview) {
+    return {
+      [CHECK_STEP]: [
+        { id: 'scope', label: 'Checking the scope settings' },
+        { id: 'sections', label: `Checking ${plural(draft.elements.length, 'section')} are selected` },
+      ],
+      [RENDER_STEP]: [
+        ...draft.elements.map((id) => ({ id, label: `Rendering ${(elements.find((e) => e.id === id)?.label ?? id).toLowerCase()}` })),
+        { id: 'pdf', label: `Assembling the ${draft.theme} PDF with the ${draft.branding.classification} marking` },
+      ],
+    }
+  }
+  const scopeChecks = [
+    { id: 'window', label: `Counting events in the last ${WINDOWS.find((w) => w.value === draft.scope.window)?.label ?? draft.scope.window}` },
+    ...(draft.scope.ip.length ? [{ id: 'ip', label: `Filtering to ${draft.scope.ip.join(', ')}` }] : []),
+    ...(draft.scope.sensor.length ? [{ id: 'sensor', label: `Filtering to ${draft.scope.sensor.length === 1 ? 'sensor' : 'sensors'} ${draft.scope.sensor.join(', ')}` }] : []),
+    ...(draft.scope.port.length ? [{ id: 'port', label: `Filtering to ${draft.scope.port.length === 1 ? 'port' : 'ports'} ${draft.scope.port.join(', ')}` }] : []),
+    ...(draft.scope.signature.length ? [{ id: 'signature', label: `Matching IDS ${draft.scope.signature.length === 1 ? 'signature' : 'signatures'} ${draft.scope.signature.map((x) => `“${x}”`).join(', ')}` }] : []),
+    { id: 'sections', label: `Sizing ${plural(draft.elements.length, 'section')}` },
+  ]
+  return {
+    [CHECK_STEP]: scopeChecks,
+    [RENDER_STEP]: [
+      ...preview.sections.map((s) => ({ id: s.id, label: `Rendering ${s.label.toLowerCase()} · ${plural(s.rows, 'row')}` })),
+      { id: 'pdf', label: `Assembling the ${draft.theme} PDF with the ${draft.branding.classification} marking` },
+    ],
+  }
+}
+
 /** A counted facet list, or none while the facets read is unavailable (#3524).
  * The pickers that take a typed value still accept one. */
 const facetOptions = (facets: Facets | BackendGap, key: keyof Facets): Facets[keyof Facets] => (isBackendGap(facets) ? [] : facets[key])
@@ -124,7 +162,8 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
   const [draft, setDraft] = useState<ReportDefinition>(initial)
   const [active, setActive] = useState(0)
   const [auto, setAuto] = useState<Record<number, AutoState>>({ [CHECK_STEP]: IDLE, [RENDER_STEP]: IDLE })
-  const [preview, setPreview] = useState<ReportPreview | null>(null)
+  // undefined until fetched; null when the backend has no preview (live tier).
+  const [preview, setPreview] = useState<ReportPreview | null | undefined>(undefined)
   const [keep, setKeep] = useState(true)
   const [generating, setGenerating] = useState(false)
   const { error, guard } = useGuardedAction()
@@ -133,7 +172,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
   // first paint: the preview never jumps in beside the steps.
   const wide = useMediaQuery(REPORT_WIDE)
   // Beside the steps, the preview follows the draft as it changes.
-  const [livePreview, setLivePreview] = useState<ReportPreview | null>(null)
+  const [livePreview, setLivePreview] = useState<ReportPreview | null | undefined>(undefined)
 
   const update = (patch: Partial<ReportDefinition>) => setDraft((d) => ({ ...d, ...patch }))
   const setScope = (patch: Partial<ReportDefinition['scope']>) => update({ scope: { ...draft.scope, ...patch } })
@@ -144,7 +183,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
 
   // The data check needs the preview; fetch it when the chain reaches it.
   useEffect(() => {
-    if (active !== CHECK_STEP || preview) return
+    if (active !== CHECK_STEP || preview !== undefined) return
     let live = true
     void previewReport(draft).then((p) => live && setPreview(p))
     return () => {
@@ -170,23 +209,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
   }, [wide, draft])
 
   // What each automatic step does, as the checks its body ticks through.
-  const checksFor = useMemo<Record<number, Array<{ id: string; label: string }>>>(() => {
-    const scopeChecks = [
-      { id: 'window', label: `Counting events in the last ${WINDOWS.find((w) => w.value === draft.scope.window)?.label ?? draft.scope.window}` },
-      ...(draft.scope.ip.length ? [{ id: 'ip', label: `Filtering to ${draft.scope.ip.join(', ')}` }] : []),
-      ...(draft.scope.sensor.length ? [{ id: 'sensor', label: `Filtering to ${draft.scope.sensor.length === 1 ? 'sensor' : 'sensors'} ${draft.scope.sensor.join(', ')}` }] : []),
-      ...(draft.scope.port.length ? [{ id: 'port', label: `Filtering to ${draft.scope.port.length === 1 ? 'port' : 'ports'} ${draft.scope.port.join(', ')}` }] : []),
-      ...(draft.scope.signature.length ? [{ id: 'signature', label: `Matching IDS ${draft.scope.signature.length === 1 ? 'signature' : 'signatures'} ${draft.scope.signature.map((x) => `“${x}”`).join(', ')}` }] : []),
-      { id: 'sections', label: `Sizing ${plural(draft.elements.length, 'section')}` },
-    ]
-    return {
-      [CHECK_STEP]: scopeChecks,
-      [RENDER_STEP]: [
-        ...(preview?.sections ?? []).map((s) => ({ id: s.id, label: `Rendering ${s.label.toLowerCase()} · ${plural(s.rows, 'row')}` })),
-        { id: 'pdf', label: `Assembling the ${draft.theme} PDF with the ${draft.branding.classification} marking` },
-      ],
-    }
-  }, [draft, preview])
+  const checksFor = useMemo(() => automaticChecks(draft, preview, data.elements), [draft, preview, data.elements])
 
   // The auto-advance chain, one timer at a time. A failing check settles its
   // step as failed and schedules nothing, which is what stops the chain.
@@ -194,7 +217,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
     if (!AUTO_STEPS.includes(active)) return undefined
     const state = auto[active]
     if (state.status !== 'idle') return undefined
-    if (active === CHECK_STEP && !preview) return undefined
+    if (active === CHECK_STEP && preview === undefined) return undefined
     const checks = checksFor[active]
     if (state.done >= checks.length) {
       const timer = setTimeout(() => {
@@ -215,7 +238,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
   const goToStep = (index: number) => {
     if (result) return
     setActive(index)
-    setPreview(null)
+    setPreview(undefined)
     setAuto((s) => Object.fromEntries(Object.entries(s).map(([step, state]) => [step, Number(step) >= index ? IDLE : state])))
   }
 
@@ -275,9 +298,11 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
       case 4:
         return describeSchedule(draft.schedule)
       case 5:
-        return preview ? `${plural(preview.events, 'event')} from ${plural(preview.sources, 'source')} on ${plural(preview.sensors, 'sensor')}` : undefined
+        return preview
+          ? `${plural(preview.events, 'event')} from ${plural(preview.sources, 'source')} on ${plural(preview.sensors, 'sensor')}`
+          : `${template.name} · ${plural(draft.elements.length, 'section')} · last ${WINDOWS.find((w) => w.value === draft.scope.window)?.label ?? draft.scope.window}`
       case 6:
-        return preview ? `${plural(preview.pages, 'page')} · ${plural(preview.sections.length, 'section')}` : undefined
+        return preview ? `${plural(preview.pages, 'page')} · ${plural(preview.sections.length, 'section')}` : `${plural(draft.elements.length, 'section')} · ${draft.theme} theme`
       case 7:
         return result ? `Generated “${result.report.title}” · ${Math.round(result.report.sizeBytes / 1024)} KB` : undefined
       default:
@@ -295,18 +320,22 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
 
   const fieldStatus = (key: string) => (currentErrors[key] ? { type: 'error' as const, message: currentErrors[key] } : undefined)
 
-  /** What the report is, as the preview counts it. */
-  const draftSummary = (counted: ReportPreview) => (
+  /** What the report is: as the preview counts it, or from the draft alone. */
+  const draftSummary = (counted: ReportPreview | null) => (
       <Card variant="muted" padding={4}>
         <MetadataList orientation="vertical">
           <MetadataListItem label="Report" icon={<Icon icon={DocumentTextIcon} size="sm" />}>
             {[draft.name.trim(), template.name].filter(Boolean).join(' · ')}
           </MetadataListItem>
           <MetadataListItem label="Content" icon={<Icon icon={Squares2X2Icon} size="sm" />}>
-            {`${counted.sections.map((s) => s.label).join(', ')} · ${plural(counted.pages, 'page')}`}
+            {counted
+              ? `${counted.sections.map((s) => s.label).join(', ')} · ${plural(counted.pages, 'page')}`
+              : draft.elements.map((id) => data.elements.find((e) => e.id === id)?.label ?? id).join(', ') || 'No sections'}
           </MetadataListItem>
           <MetadataListItem label="Scope" icon={<Icon icon={FunnelIcon} size="sm" />}>
-            {`${plural(counted.events, 'event')}, ${plural(counted.sources, 'source')}, ${plural(counted.sessions, 'session')}`}
+            {counted
+              ? `${plural(counted.events, 'event')}, ${plural(counted.sources, 'source')}, ${plural(counted.sessions, 'session')}`
+              : `Last ${WINDOWS.find((w) => w.value === draft.scope.window)?.label ?? draft.scope.window} · ${scopeSummary.length ? scopeSummary.join(', ') : 'all captured activity'}`}
           </MetadataListItem>
           <MetadataListItem label="Branding" icon={<Icon icon={PaintBrushIcon} size="sm" />}>
             {`“${draft.branding.title}” · ${draft.branding.classification} · ${draft.theme}`}
@@ -339,7 +368,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
     const failed = state.status === 'failed'
     return (
       <VStack gap={4}>
-        {index === CHECK_STEP && !preview ? (
+        {index === CHECK_STEP && preview === undefined ? (
           <HStack gap={2} vAlign="center">
             <Spinner size="sm" />
             <Text type="supporting">Querying the captured data…</Text>
@@ -368,6 +397,7 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
             })}
           </Stepper>
         )}
+        {index === CHECK_STEP && preview === null && <Text type="supporting" color="secondary">Counts are not available before the report is generated.</Text>}
         {failed && preview?.emptyFilter && (
           <Banner
             status="error"
@@ -520,9 +550,9 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
                     </FormLayout>
                   )}
 
-                  {index === 7 && preview && (
+                  {index === 7 && preview !== undefined && (
                     <FormLayout defaultOptionality="optional">
-                      {!wide && <ReportPreviewPages draft={draft} preview={preview} templateName={template.name} />}
+                      {!wide && <ReportPreviewPages draft={draft} preview={preview} templateName={template.name} elements={data.elements} />}
                       {!wide && draftSummary(preview)}
                       <Switch
                         label={editing ? 'Save these changes to the Library definition' : 'Keep as a reusable definition in the Library'}
@@ -572,11 +602,15 @@ export function ReportWizard({ data, facets, initial, onRestart }: { data: Repor
         <VStack gap={4} as="section" aria-label="Preview">
           <VStack gap={1}>
             <Heading level={2}>Preview</Heading>
-            <Text color="secondary">The cover and the first page of each section, with the rows this scope matches. It follows every change.</Text>
+            <Text color="secondary">
+              {livePreview === null
+                ? 'The cover and each section in the order they will print. It follows every change.'
+                : 'The cover and the first page of each section, with the rows this scope matches. It follows every change.'}
+            </Text>
           </VStack>
-          {livePreview ? (
+          {livePreview !== undefined ? (
             <>
-              <ReportPreviewPages draft={draft} preview={livePreview} templateName={template.name} />
+              <ReportPreviewPages draft={draft} preview={livePreview} templateName={template.name} elements={data.elements} />
               {draftSummary(livePreview)}
             </>
           ) : (
