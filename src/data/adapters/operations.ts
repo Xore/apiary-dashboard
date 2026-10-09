@@ -174,7 +174,12 @@ const measure = (m: SensorMeasureWire) => ({ label: m.label, value: m.total * (U
 /** GET /api/v1/sensors/{sensor}/events?limit=200. Not the shared event row:
  * these are sensors.rs SensorEvent — the sensor's own fields, no pivots, no
  * country, no session — so this maps to HoneypotEvent with only the fields the
- * endpoint can actually answer and leaves the rest empty (see gaps). */
+ * endpoint can actually answer and leaves the rest absent (see gaps). It
+ * sets no `protocol`: the endpoint does not say which protocol a row is.
+ *
+ * `type`, `eventName` and `techniques` are filled at the api seam (sensorPageEvents)
+ * because they are page types or derive from the event name. `severity`
+ * is never set here: the endpoint carries no ICS severity. */
 export type SensorEventGap = 'type' | 'severity' | 'eventName' | 'summary' | 'asn' | 'org' | 'techniques' | 'provider' | 'city' | 'country' | 'sessionId'
 
 export function sensorEvents(wire: SensorEventsWire): Array<Omit<HoneypotEvent, SensorEventGap>> {
@@ -182,7 +187,6 @@ export function sensorEvents(wire: SensorEventsWire): Array<Omit<HoneypotEvent, 
     id: row.id,
     timestamp: row.when,
     sensor: wire.sensor,
-    protocol: 'other',
     srcIp: row.src_ip,
     dstPort: row.dst_port,
     srcPort: row.src_port,

@@ -15,10 +15,6 @@ import { posix } from 'node:path'
 const MOCK_DIR = 'src/data/mock/'
 const MOCK_TIER_FILES = new Set(['src/data/queries.impl.ts', 'src/data/backend.ts', 'src/data/scenario.ts'])
 
-// TODO(#228): remove this exemption once #229 lands; shared.ts still imports
-// MOCK_NOW until then. until #229 merges
-const TEMPORARY_EXEMPT = new Set(['src/data/shared.ts'])
-
 /** Whether a repo-relative path belongs to the mock tier (and is not checked). */
 export function isMockTier(file: string): boolean {
   return file.startsWith(MOCK_DIR) || file.startsWith('src/test/') || file.startsWith('scripts/') || MOCK_TIER_FILES.has(file) || /\.test\.tsx?$/.test(file)
@@ -58,7 +54,7 @@ export function findStaticMockImports(file: string, text: string): Array<{ line:
 function main(): void {
   const files = execFileSync('git', ['ls-files', '-co', '--exclude-standard', 'src'], { encoding: 'utf8' })
     .split('\n')
-    .filter((f) => /\.(ts|tsx|mts|mjs|js|jsx)$/.test(f) && !isMockTier(f) && !TEMPORARY_EXEMPT.has(f))
+    .filter((f) => /\.(ts|tsx|mts|mjs|js|jsx)$/.test(f) && !isMockTier(f))
   const findings: string[] = []
   for (const file of files) {
     let text: string

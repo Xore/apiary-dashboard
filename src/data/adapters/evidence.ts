@@ -11,6 +11,7 @@ import type {
   AnalyzerCatalog,
   AnalyzerId,
   AnalyzerInfo,
+  AnalyzerOptions,
   AnalysisResult,
   GpuJob,
   CapeRun,
@@ -51,6 +52,7 @@ import type {
   SandboxRunPageWire,
   SaveWorkbenchRecipeBody,
   WorkbenchAnalyzerWire,
+  WorkbenchOptionsWire,
   WorkbenchRunEnvelopeWire,
   WorkbenchRunListWire,
   WorkbenchRecipeWire,
@@ -391,6 +393,7 @@ export function capeRun(wire: CapeRunWire): CapeRun {
     totalCalls: summary?.total_calls ?? 0,
     sections: summary?.summary_keys ?? [],
     debugErrors: lines((summary?.debug_errors as string[] | undefined) ?? undefined),
+    ...(summary?.package ? { package: summary.package } : {}),
   }
 }
 
@@ -511,6 +514,14 @@ function analyzerInfo(wire: WorkbenchAnalyzerWire): AnalyzerInfo {
     ...(wire.confirmation !== 'none' ? { confirmation: wire.confirmation } : {}),
     localOnly: !wire.externally_publishing,
     requiresOptIn: wire.requires_opt_in,
+    defaultOptions: analyzerOptions(wire.default_options),
+    optionSchema: {
+      timeoutMinSeconds: wire.option_schema.timeout_min_seconds,
+      timeoutMaxSeconds: wire.option_schema.timeout_max_seconds,
+      queueAgeMinSeconds: wire.option_schema.queue_age_min_seconds,
+      queueAgeMaxSeconds: wire.option_schema.queue_age_max_seconds,
+      retryLimitMax: wire.option_schema.retry_limit_max,
+    },
   }
 }
 
@@ -586,36 +597,42 @@ export function workbenchRunStorePage(wire: { total: number; rows: Array<{ _doc_
   }
 }
 
-/** workbench_domain.rs `WorkbenchOptions` -- the three numbers the backend
- * validates. The page's per-analyzer options are a different, much wider
- * set; see `workbenchSelection` for what survives. */
-const wireOptions = (options: Record<string, string | number | boolean | string[]> | undefined): { timeout_seconds: number; max_queue_age_seconds: number; retry_limit: number } => ({
-  timeout_seconds: Number(options?.timeoutSeconds ?? options?.durationSeconds ?? 300),
-  max_queue_age_seconds: Number(options?.maxQueueAgeSeconds ?? 3600),
-  retry_limit: Number(options?.retryLimit ?? 0),
+/** workbench_domain.rs `WorkbenchOptions`: the three numbers the backend
+ * validates, per analyzer. The page and the wire carry the same set. */
+const analyzerOptions = (wire: WorkbenchOptionsWire): AnalyzerOptions => ({
+  timeoutSeconds: wire.timeout_seconds,
+  maxQueueAgeSeconds: wire.max_queue_age_seconds,
+  retryLimit: wire.retry_limit,
+})
+
+const wireOptions = (options: AnalyzerOptions): WorkbenchOptionsWire => ({
+  timeout_seconds: options.timeoutSeconds,
+  max_queue_age_seconds: options.maxQueueAgeSeconds,
+  retry_limit: options.retryLimit,
 })
 
 const wireAnalyzerId = (id: AnalyzerId): string => (id === 'static' ? 'deterministic' : id === 'sandbox' ? 'linux-sandbox' : id)
 
-/** POST /api/v1/workbench/runs. The page's `analyzers` and every
- * analyzer's option block reduce to the wire's selection list; the run-level
- * options (priority, label, notify, force) have no wire field and are lost
- * on save. */
-export function createWorkbenchRunBody(hash: string, analyzers: AnalyzerId[], options: Record<string, Record<string, string | number | boolean | string[]>>, recipe?: { id: string; name: string; revision: number }): CreateWorkbenchRunBody {
+/** POST /api/v1/workbench/runs. Each chosen analyzer goes out with its three
+ * numbers; a chosen analyzer without options is a caller bug, not a default. */
+export function createWorkbenchRunBody(hash: string, analyzers: AnalyzerId[], options: Partial<Record<AnalyzerId, AnalyzerOptions>>, recipe?: { id: string; name: string; revision: number }): CreateWorkbenchRunBody {
   return {
     payload_sha256: hash,
     ...(recipe ? { recipe_id: recipe.id, recipe_revision: recipe.revision, recipe_name: recipe.name } : {}),
-    analyzers: analyzers.map((id): WorkbenchSelectionWire => ({ analyzer_id: wireAnalyzerId(id), options: wireOptions(options[id]) })),
+    analyzers: analyzers.map((id): WorkbenchSelectionWire => {
+      const own = options[id]
+      if (!own) throw new Error(`No options set for analyzer ${id}`)
+      return { analyzer_id: wireAnalyzerId(id), options: wireOptions(own) }
+    }),
   }
 }
 
 const recipeAnalyzerId = (wire: string): AnalyzerId => analyzerId(wire)
 
-/** POST /api/v1/workbench/recipes. The page's options record is carried
- * through as the wire's flat three-number set; the scope is `personal` on
- * the wire for anything the page calls `personal`, and the backend takes
- * owner from the forwarded actor header, so a saved recipe's `owner` is not
- * sent. */
+/** POST /api/v1/workbench/recipes. Each analyzer's three numbers go out as
+ * they are; the scope is `personal` on the wire for anything the page calls
+ * `personal`, and the backend takes owner from the forwarded actor header,
+ * so a saved recipe's `owner` is not sent. */
 export function saveWorkbenchRecipeBody(recipe: WorkbenchRecipe, baseRevision = recipe.revision): SaveWorkbenchRecipeBody {
   return {
     ...(recipe.id ? { id: recipe.id } : {}),
@@ -644,7 +661,7 @@ export function savedWorkbenchRecipes(wire: { recipes: WorkbenchRecipeWire[] }):
     owner: recipe.owner,
     scope: recipe.scope === 'shared' ? 'shared' : 'personal',
     createdAt: recipe.created_at,
-    analyzers: recipe.analyzers.map((a) => ({ analyzerId: recipeAnalyzerId(a.analyzer_id), options: a.options as unknown as Record<string, string | number | boolean | string[]> })),
+    analyzers: recipe.analyzers.map((a) => ({ analyzerId: recipeAnalyzerId(a.analyzer_id), options: analyzerOptions(a.options) })),
   }))
 }
 

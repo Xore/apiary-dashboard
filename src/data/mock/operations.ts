@@ -17,6 +17,8 @@ import type {
   SourceHealth,
   Topology,
   AnalyzerId,
+  AnalyzerOptionSchema,
+  AnalyzerOptions,
   AnalyzerInfo,
   PayloadClassification,
   RunState,
@@ -349,13 +351,18 @@ const DETONATES = 'Runs live malware in an isolated guest with its network sinkh
 
 /** The analyzers the workbench offers, with what running each one means
  * (canonical's analyzer catalogue). */
+/** The backend's defaults and bounds for every analyzer (mirrors the
+ * `default_options` and `option_schema` the workbench serves). */
+const MOCK_DEFAULT_OPTIONS: AnalyzerOptions = { timeoutSeconds: 300, maxQueueAgeSeconds: 3600, retryLimit: 0 }
+const MOCK_OPTION_SCHEMA: AnalyzerOptionSchema = { timeoutMinSeconds: 30, timeoutMaxSeconds: 3600, queueAgeMinSeconds: 60, queueAgeMaxSeconds: 86400, retryLimitMax: 3 }
+
 export const ANALYZERS: AnalyzerInfo[] = [
-  { id: 'static', label: 'Static analysis', description: 'File type, strings, imports, entropy.', gpu: false, acceptedKinds: ['ELF', 'PE32', 'shell script', 'Mach-O'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false },
-  { id: 'yara', label: 'YARA', description: 'Match against the deployed rule set.', gpu: false, acceptedKinds: ['ELF', 'PE32', 'shell script', 'Mach-O'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false },
-  { id: 'sandbox', label: 'Sandbox detonation', description: 'Run in an isolated VM and record behavior.', gpu: false, acceptedKinds: ['ELF'], availability: 'available', requiredRole: 'admin', detonates: true, confirmation: DETONATES, localOnly: true, requiresOptIn: false },
-  { id: 'cape', label: 'CAPE (Windows)', description: 'Detonate a Windows PE under a debugger-instrumented guest.', gpu: false, acceptedKinds: ['PE32'], availability: 'degraded', availabilityNote: 'One of two guests is rebuilding; runs queue behind the other.', requiredRole: 'admin', detonates: true, confirmation: DETONATES, localOnly: true, requiresOptIn: false },
-  { id: 'ghidra', label: 'Ghidra decompilation', description: 'Decompile and summarise with a local model.', gpu: true, acceptedKinds: ['ELF', 'PE32', 'Mach-O'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false },
-  { id: 'revdeck', label: 'RevDeck', description: 'Model-driven reverse engineering that cites its tool output.', gpu: true, acceptedKinds: ['ELF', 'PE32'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false },
+  { id: 'static', label: 'Static analysis', description: 'File type, strings, imports, entropy.', gpu: false, acceptedKinds: ['ELF', 'PE32', 'shell script', 'Mach-O'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false, defaultOptions: MOCK_DEFAULT_OPTIONS, optionSchema: MOCK_OPTION_SCHEMA },
+  { id: 'yara', label: 'YARA', description: 'Match against the deployed rule set.', gpu: false, acceptedKinds: ['ELF', 'PE32', 'shell script', 'Mach-O'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false, defaultOptions: MOCK_DEFAULT_OPTIONS, optionSchema: MOCK_OPTION_SCHEMA },
+  { id: 'sandbox', label: 'Sandbox detonation', description: 'Run in an isolated VM and record behavior.', gpu: false, acceptedKinds: ['ELF'], availability: 'available', requiredRole: 'admin', detonates: true, confirmation: DETONATES, localOnly: true, requiresOptIn: false, defaultOptions: MOCK_DEFAULT_OPTIONS, optionSchema: MOCK_OPTION_SCHEMA },
+  { id: 'cape', label: 'CAPE (Windows)', description: 'Detonate a Windows PE under a debugger-instrumented guest.', gpu: false, acceptedKinds: ['PE32'], availability: 'degraded', availabilityNote: 'One of two guests is rebuilding; runs queue behind the other.', requiredRole: 'admin', detonates: true, confirmation: DETONATES, localOnly: true, requiresOptIn: false, defaultOptions: MOCK_DEFAULT_OPTIONS, optionSchema: MOCK_OPTION_SCHEMA },
+  { id: 'ghidra', label: 'Ghidra decompilation', description: 'Decompile and summarise with a local model.', gpu: true, acceptedKinds: ['ELF', 'PE32', 'Mach-O'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false, defaultOptions: MOCK_DEFAULT_OPTIONS, optionSchema: MOCK_OPTION_SCHEMA },
+  { id: 'revdeck', label: 'RevDeck', description: 'Model-driven reverse engineering that cites its tool output.', gpu: true, acceptedKinds: ['ELF', 'PE32'], availability: 'available', requiredRole: 'viewer', detonates: false, localOnly: true, requiresOptIn: false, defaultOptions: MOCK_DEFAULT_OPTIONS, optionSchema: MOCK_OPTION_SCHEMA },
   {
     id: 'github',
     label: 'GitHub scanners',
@@ -367,7 +374,7 @@ export const ANALYZERS: AnalyzerInfo[] = [
     detonates: false,
     confirmation: 'Publishes the sample to a public repository: anyone, including its author, can then see that we caught it. Samples on the denylist are refused.',
     localOnly: false,
-    requiresOptIn: true,
+    requiresOptIn: true, defaultOptions: MOCK_DEFAULT_OPTIONS, optionSchema: MOCK_OPTION_SCHEMA,
   },
 ]
 
@@ -434,9 +441,9 @@ export const GPU_QUEUE: GpuJob[] = [
 ]
 
 export const WORKBENCH_RECIPES: WorkbenchRecipe[] = [
-  { id: 'rcp-triage', revision: 3, name: 'Quick triage', description: 'Static analysis and YARA: seconds, no GPU, nothing runs.', owner: 'Operator', scope: 'shared', createdAt: isoMinutesAgo(60 * 24 * 30), analyzers: [{ analyzerId: 'static', options: { minStringLength: 6 } }, { analyzerId: 'yara', options: { stopAtFirstMatch: true } }] },
-  { id: 'rcp-linux-full', revision: 5, name: 'Linux bot, full', description: 'Static, YARA, a sandbox detonation with simulated internet, and a Ghidra summary.', owner: 'Operator', scope: 'shared', createdAt: isoMinutesAgo(60 * 24 * 21), analyzers: [{ analyzerId: 'static', options: {} }, { analyzerId: 'yara', options: {} }, { analyzerId: 'sandbox', options: { network: 'simulated', durationSeconds: 180 } }, { analyzerId: 'ghidra', options: { depth: 'standard' } }] },
-  { id: 'rcp-windows', revision: 1, name: 'Windows dropper', description: 'Static, YARA and CAPE with human interaction.', owner: 'Analyst', scope: 'personal', createdAt: isoMinutesAgo(60 * 24 * 6), analyzers: [{ analyzerId: 'static', options: {} }, { analyzerId: 'yara', options: {} }, { analyzerId: 'cape', options: { humanInteraction: true } }] },
+  { id: 'rcp-triage', revision: 3, name: 'Quick triage', description: 'Static analysis and YARA: seconds, no GPU, nothing runs.', owner: 'Operator', scope: 'shared', createdAt: isoMinutesAgo(60 * 24 * 30), analyzers: [{ analyzerId: 'static', options: MOCK_DEFAULT_OPTIONS }, { analyzerId: 'yara', options: MOCK_DEFAULT_OPTIONS }] },
+  { id: 'rcp-linux-full', revision: 5, name: 'Linux bot, full', description: 'Static, YARA, a sandbox detonation with simulated internet, and a Ghidra summary.', owner: 'Operator', scope: 'shared', createdAt: isoMinutesAgo(60 * 24 * 21), analyzers: [{ analyzerId: 'static', options: MOCK_DEFAULT_OPTIONS }, { analyzerId: 'yara', options: MOCK_DEFAULT_OPTIONS }, { analyzerId: 'sandbox', options: MOCK_DEFAULT_OPTIONS }, { analyzerId: 'ghidra', options: MOCK_DEFAULT_OPTIONS }] },
+  { id: 'rcp-windows', revision: 1, name: 'Windows dropper', description: 'Static, YARA and CAPE with human interaction.', owner: 'Analyst', scope: 'personal', createdAt: isoMinutesAgo(60 * 24 * 6), analyzers: [{ analyzerId: 'static', options: MOCK_DEFAULT_OPTIONS }, { analyzerId: 'yara', options: MOCK_DEFAULT_OPTIONS }, { analyzerId: 'cape', options: MOCK_DEFAULT_OPTIONS }] },
 ]
 
 const RESULT_TAB: Record<AnalyzerId, string> = { static: 'static', yara: 'indicators', sandbox: 'sandbox', cape: 'cape', ghidra: 'ghidra', revdeck: 'revdeck', github: 'github' }

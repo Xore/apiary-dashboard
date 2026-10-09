@@ -6,7 +6,8 @@ import { LinkProvider } from '@astryxdesign/core/Link'
 import { Theme } from '@astryxdesign/core/theme'
 import { RouterLink } from '../components/RouterLink'
 import { appTheme } from '#/themes/appTheme'
-import { getPreferences, mockNow } from '#/data/queries'
+import { getPreferences } from '#/data/queries'
+import { getMockClock } from '#/data/serverFn'
 import type { Preferences } from '#/data/types'
 import { browserTimeZone, rememberBrowserZone } from '#/lib/browserZone'
 import { configureTime } from '#/lib/format'
@@ -46,9 +47,9 @@ export const Route = createRootRoute({
   // palette, contrast, motion, evidence text, and how times read.
   // A "browser" time zone is resolved here, so the server renders it too.
   loader: async () => {
-    const prefs = await getPreferences()
+    const [prefs, mockClock] = await Promise.all([getPreferences(), getMockClock()])
     const followsBrowser = prefs.timezone === 'browser'
-    return { ...prefs, timezone: followsBrowser ? browserTimeZone() : prefs.timezone, followsBrowser }
+    return { ...prefs, timezone: followsBrowser ? browserTimeZone() : prefs.timezone, followsBrowser, mockClock }
   },
   shellComponent: RootDocument,
 })
@@ -67,7 +68,7 @@ function rootAttributes(prefs: Preferences | undefined): Record<string, string |
  * a router refresh, so every page re-renders with it. On a first visit the
  * server cannot know the browser's zone and renders UTC; once mounted the
  * zone is left in a cookie and the router refreshes once, when idle. */
-function useTimePreferences(prefs: (Preferences & { followsBrowser: boolean }) | undefined) {
+function useTimePreferences(prefs: (Preferences & { followsBrowser: boolean; mockClock: number | null }) | undefined) {
   const router = useRouter()
   const rendered = prefs?.followsBrowser ? prefs.timezone : undefined
   useEffect(() => {
@@ -78,7 +79,8 @@ function useTimePreferences(prefs: (Preferences & { followsBrowser: boolean }) |
     return () => cancelIdleCallback(idle)
   }, [rendered, router])
   if (!prefs) return
-  configureTime({ timeZone: prefs.timezone, hour12: prefs.clock === 'h12', relative: prefs.timestamps === 'relative', now: mockNow })
+  const { mockClock } = prefs
+  configureTime({ timeZone: prefs.timezone, hour12: prefs.clock === 'h12', relative: prefs.timestamps === 'relative', now: mockClock === null ? () => Date.now() : () => mockClock })
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {

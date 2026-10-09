@@ -34,13 +34,15 @@ function NetworkLayout() {
       title={<Pending width={320}>{n && n.cidr}</Pending>}
       basePath={`/networks/${encodeURIComponent(cidr)}`}
       tokens={n && (<>
-          <EntityLink kind="country" id={n.country}>
-            <Token size="sm" color="blue" label={n.country} />
-          </EntityLink>
+          {n.country && (
+            <EntityLink kind="country" id={n.country}>
+              <Token size="sm" color="blue" label={n.country} />
+            </EntityLink>
+          )}
           {n.campaign && <Token size="sm" color="orange" label={`campaign · score ${n.campaign.score}`} />}
         </>)}
       facts={[
-        { label: 'Autonomous system', value: n && (<EntityLink kind="asn" id={n.asn}>{`${n.asn} · ${n.org}`}</EntityLink>)},
+        { label: 'Autonomous system', value: n && (n.asn ? <EntityLink kind="asn" id={n.asn}>{n.org ? `${n.asn} · ${n.org}` : n.asn}</EntityLink> : '—')},
         { label: 'Source IPs', value: n && (formatNumber(n.group.members.length))},
         { label: 'Events', value: n && (formatNumber(n.group.events.length))},
         { label: 'First seen', value: n && (n.group.first ? formatDateTime(n.group.first) : '—')},
