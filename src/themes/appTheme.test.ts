@@ -4,6 +4,7 @@ import { resolveThemeTokens } from '@astryxdesign/core/theme/tokens'
 import { ASTRYX_THEMES, appTheme } from './appTheme'
 import { APIARY_PALETTES } from './neutral/apiaryPalettes.generated'
 import type { ApiaryPalette } from './neutral/apiaryPalettes.generated'
+import type { Palette } from '#/data/types'
 
 const PALETTES = Object.keys(APIARY_PALETTES) as ApiaryPalette[]
 
@@ -11,6 +12,13 @@ describe('appTheme', () => {
   it('defaults to Claude, as APIARY does', () => {
     expect(appTheme(undefined)).toBe(appTheme('claude'))
     expect(PALETTES).toEqual(['claude', 'slate', 'sage', 'lavender', 'lime', 'amber', 'ocean', 'rose', 'neon'])
+  })
+
+  it('renders the default for a stored palette it has no theme for', () => {
+    // The wire keeps any well-shaped name; the old dashboard stored 'default'.
+    const stored = 'default' as Palette
+    expect(appTheme(stored)).toBe(appTheme('claude'))
+    expect(appTheme(stored, true)).toBe(appTheme('claude', true))
   })
 
   it('takes a whole theme from the palette, not only its accent', () => {
