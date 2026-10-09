@@ -128,6 +128,7 @@ describe('which queries the real backend answers', () => {
         'rollbackConfig',
         'runServiceAction',
         'saveConfigSection',
+        'savePreferences',
         'setProblemStatus',
         'submitProblemReport',
         'validateConfig',
@@ -235,8 +236,8 @@ describe('which queries the real backend answers', () => {
     expect(liveQuery('previewReport', undefined)).toBeUndefined()
   })
 
-  it('leaves savePreferences on the mock until the write diffs the stored document', () => {
-    expect(liveQuery('savePreferences', undefined)).toBeUndefined()
+  it('answers savePreferences live: the write diffs the stored document', () => {
+    expect(liveQuery('savePreferences', undefined)).toBeTypeOf('function')
   })
 
   it('applies the same authorization decision the mock does', async () => {
@@ -894,10 +895,10 @@ describe('the settings page, fanned out over its eight documents', () => {
     expect(out.services[0]).toMatchObject({ name: 'hp-tanner', state: 'running' })
     expect(out.storage).toMatchObject({ clusterStatus: 'green', indexCount: 42 })
     expect(out.reportTemplates).toHaveLength(1)
-    // NOT the wire's per-subject document — that is getPreferences' read.
-    // The backend's own default_preferences render instead.
+    // No signed-in operator in this file, so the stored document is the
+    // backend's default_preferences. The operator's own document is covered
+    // in api.preferences.test.ts.
     expect(out.preferences).toMatchObject({ theme: 'system', rowsPerPage: 50, notifyCanary: false })
-    // getSettings itself never calls the preferences endpoint.
     expect(calls.some((url) => url.includes('/api/v1/preferences'))).toBe(false)
   })
 

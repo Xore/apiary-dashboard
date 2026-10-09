@@ -85,7 +85,7 @@ import {
   createdCanarytoken,
   credentialList,
 } from './adapters/tools'
-import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesDocument, preferencesQuery, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
+import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesPatch, preferencesQuery, preferencesWriteBody, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
 import { envInt } from '#/server/admission'
@@ -147,7 +147,7 @@ import type {
   TopologySensorWire,
   TopologyWire,
 } from './contracts/operations'
-import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, PreferencesWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
+import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, PreferencesDocWire, PreferencesWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
 import type {
   AgentCampaignRow,
   AuthEventRow,
@@ -206,7 +206,7 @@ import type {
   SourcesPageWire,
 } from './contracts/sources'
 import type { Backend, Caller } from './backend'
-import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Protocol, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig, TimeBucket } from './types'
+import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Preferences, Protocol, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig, TimeBucket } from './types'
 
 /** A dashboard that hangs forever is worse than one that errors. */
 const TIMEOUT_MS = envInt('BACKEND_TIMEOUT_MS', 30_000)
@@ -733,10 +733,12 @@ async function sessionOf(): Promise<{ user: SessionUser | null; subject: string;
  * this is `Promise.all` and the rejection is the `ApiError` the page's error
  * boundary already tells apart.
  *
- * `/api/v1/preferences` is NOT among the nine: it is per-subject, and
- * `getPreferences` reads it. */
+ * `/api/v1/preferences` is not among the nine: it is per-subject, and it is
+ * the eighth leg here only through `storedPreferencesWire`, the read
+ * `getPreferences` and `savePreferences` share. */
 const getSettings: Backend['getSettings'] = async () => {
-  const [config, users, history, audit, services, reporter, storage, templates, session] = await Promise.all([
+  const session = await sessionOf()
+  const [config, users, history, audit, services, reporter, storage, templates, stored] = await Promise.all([
     get<ConfigWire>('getSettings', '/api/v1/config'),
     get<UsersWire>('getSettings', '/api/v1/users'),
     get<ConfigHistoryWire>('getSettings', '/api/v1/config/history'),
@@ -745,7 +747,7 @@ const getSettings: Backend['getSettings'] = async () => {
     get<ReporterStatsWire>('getSettings', '/api/v1/reporter-stats'),
     get<StorageWire>('getSettings', '/api/v1/settings/storage'),
     get<ReportTemplatesWire>('getSettings', '/api/v1/reports/templates'),
-    sessionOf(),
+    storedPreferencesWire(session, 'getSettings'),
   ])
   return settingsData({
     // The signed-in operator. The wire has no session, so it comes from the
@@ -755,10 +757,10 @@ const getSettings: Backend['getSettings'] = async () => {
     config: config ?? { revision: 0, payload: {} },
     templates: reportTemplates(templates ?? { templates: [], elements: [] }).templates,
     users: users ?? { users: [] },
-    // The backend's own `default_preferences`, NOT the wire's per-subject
-    // document: that is `getPreferences`'s read, and `savePreferences` is
-    // still unwired (see LIVE below), so the appearance pane edits defaults.
-    preferences: DEFAULT_PREFERENCES_WIRE,
+    // The signed-in operator's stored document, the same read `getPreferences`
+    // makes. The dialog seeds its form from this, and `savePreferences` diffs
+    // against it, so a save after this read sends only the changed keys.
+    preferences: stored,
     services: services ?? { available: false, services: [] },
     history: history ?? { entries: [] },
     audit: audit ?? { events: [] },
@@ -776,11 +778,46 @@ const getSettings: Backend['getSettings'] = async () => {
  * and the sign-in page renders exactly as a fresh operator's would. Once
  * signed in, the subject comes from the session record (`sessionOf`), and
  * the first read projects the operator into the preferences store. */
-const getPreferences: Backend['getPreferences'] = async () => {
-  const { user, subject, username } = await sessionOf()
-  if (!subject) return preferences(DEFAULT_PREFERENCES_WIRE)
-  const wire = await get<PreferencesWire>('getPreferences', '/api/v1/preferences', { ...preferencesQuery(subject, { username, role: user?.roles[0] }) })
-  return wire ? preferencesDocument(wire) : preferences(DEFAULT_PREFERENCES_WIRE)
+const getPreferences: Backend['getPreferences'] = async () => preferences(await storedPreferencesWire(await sessionOf(), 'getPreferences'))
+
+/** The signed-in operator's stored preferences document, as the wire has it:
+ * the one baseline `getPreferences`, `getSettings` and `savePreferences` all
+ * read, so they cannot disagree about what is stored.
+ *
+ * No subject answers the backend defaults without a call (the wire 400s an
+ * empty subject). A stored document the wire does not have (null) answers
+ * the same defaults, as a first-time operator's would. Any other failure
+ * throws, through `get`. */
+async function storedPreferencesWire(session: Awaited<ReturnType<typeof sessionOf>>, endpoint: string): Promise<PreferencesDocWire> {
+  if (!session.subject) return DEFAULT_PREFERENCES_WIRE
+  const wire = await get<PreferencesWire>(endpoint, '/api/v1/preferences', { ...preferencesQuery(session.subject, { username: session.username, role: session.user?.roles[0] }) })
+  return wire ? wire.preferences : DEFAULT_PREFERENCES_WIRE
+}
+
+/** The page fields that differ from the stored document's page form. The
+ * page hands over its whole `Preferences`, so the diff is what says which
+ * fields the operator changed; `preferencesPatch` then drops the page-only
+ * fields (`notifyCanary`, `mapBasemap`) so they never reach the wire. */
+const changedPreferences = (next: Preferences, stored: Preferences): Partial<Preferences> => {
+  const changed: Partial<Preferences> = {}
+  for (const key of Object.keys(next) as Array<keyof Preferences>) if (next[key] !== stored[key]) Object.assign(changed, { [key]: next[key] })
+  return changed
+}
+
+/** PUT /api/v1/preferences for the signed-in operator, carrying only the
+ * fields that changed against the stored document.
+ *
+ * The stored document is read first, because the PUT merges a
+ * `deny_unknown_fields` patch: a full-page send would overwrite every field
+ * the operator did not touch with whatever the page holds, and would 400 on
+ * `notifyCanary`. An unchanged save makes no PUT. No session is `expired`,
+ * the same as the sign-in flow expects of a write it cannot attribute. */
+const savePreferences: Backend['savePreferences'] = async (next) => {
+  const session = await sessionOf()
+  if (!session.subject) throw new ApiError('expired', 'savePreferences')
+  const patch = preferencesPatch(changedPreferences(next, preferences(await storedPreferencesWire(session, 'savePreferences'))))
+  if (Object.keys(patch).length === 0) return
+  await request<PreferencesWire>('savePreferences', '/api/v1/preferences', { method: 'PUT', body: preferencesWriteBody(session.subject, patch, session.username) })
 }
 
 /** What the identity panel shows for a caller no session resolved. The mock
@@ -2291,11 +2328,6 @@ const getSessionEvents: Backend['getSessionEvents'] = async (sessionId) =>
  * DELIBERATELY ABSENT, and the reason is the one thing in this slice worth
  * reading before changing anything:
  *
- * - `savePreferences` — `PUT /api/v1/preferences` merges a
- *   `deny_unknown_fields` patch from the page's whole `Preferences`, which
- *   needs a diff against the stored document (`preferencesPatch` carries
- *   only what changed). Not wired yet; `getPreferences` is.
- *
  * - `previewReport` — reports' own gap: the backend renders a report, it does
  *   not preview a draft, and there is no `/reports/preview` route. A live
  *   deployment gets an explicit not-available error. The other half
@@ -2319,6 +2351,7 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   searchAll,
   getSettings,
   getPreferences,
+  savePreferences,
   getShellConfig,
   validateConfig,
   saveConfigSection,

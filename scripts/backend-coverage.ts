@@ -30,11 +30,6 @@ export const BACKEND_EXCEPTIONS: Record<string, Exception> = {
     reason:
       'Mock-scenario control; it is not part of the production backend contract.',
   },
-  savePreferences: {
-    status: 'mock-only',
-    reason:
-      'The page saves a whole Preferences; the backend merges a deny_unknown_fields patch, so the write needs a diff that is not wired yet.',
-  },
   simulateIncident: {
     status: 'local',
     reason:
