@@ -59,10 +59,12 @@ const THEMES: Record<Exclude<Palette, AstryxTheme>, { standard: DefinedTheme; hi
   rose: { standard: neutralRoseTheme, high: neutralRoseHcTheme },
 }
 
-/** The theme for a palette and contrast preference; no palette is the
- * default. */
+/** The theme for a palette and contrast preference; no palette, or one this
+ * build has no theme for, is the default. The wire keeps any well-shaped
+ * name (preferences.rs `theme_name`), so a stored palette can be one the
+ * page never offered — the old dashboard's 'default' is. */
 export function appTheme(palette: Palette | undefined, highContrast = false): DefinedTheme {
-  if (palette && palette in ASTRYX_THEMES) return ASTRYX_THEMES[palette as AstryxTheme]
-  const pair = THEMES[(palette ?? 'claude') as Exclude<Palette, AstryxTheme>]
+  if (palette && Object.hasOwn(ASTRYX_THEMES, palette)) return ASTRYX_THEMES[palette as AstryxTheme]
+  const pair = (palette && Object.hasOwn(THEMES, palette) ? THEMES[palette as Exclude<Palette, AstryxTheme>] : undefined) ?? THEMES.claude
   return highContrast ? pair.high : pair.standard
 }
