@@ -16,7 +16,9 @@ export type EventType =
   | 'file.download'
   | 'http.request'
   | 'ids.alert'
-  /** A non-HTTP application request: ICS, SIP, DNS, DICOM, SMTP, IKE. */
+  /** A non-HTTP application request: ICS, SIP, DNS, DICOM, SMTP, IKE. Not the
+   * fallback for an unrecognised live event: it claims a protocol the row does
+   * not show. The live seam falls to `connection` instead. */
   | 'protocol.request'
 
 /** One value in a sensor's own fields: JSON, as the sensor wrote it. */
@@ -54,9 +56,12 @@ export interface HoneypotEvent extends Record<string, unknown> {
   id: string
   timestamp: string
   sensor: string
-  protocol: Protocol
+  /** Absent on sensor-endpoint rows, which do not say which protocol they are. */
+  protocol?: Protocol
   type: EventType
-  severity: Severity
+  /** Absent when the backend does not classify the row. Never defaulted to
+   * `info`: that would claim "nothing known" as a classification. */
+  severity?: Severity
   srcIp: string
   /** What the request itself claimed as its source (X-Forwarded-For), when
    * it disagrees with the address portbridge recorded for the connection.
@@ -64,15 +69,16 @@ export interface HoneypotEvent extends Record<string, unknown> {
    * this is most likely forged, and is kept because hiding it would hide
    * the attempt. */
   srcIpClaimed?: string
-  srcPort: number
+  /** Absent when the row does not carry the source port. */
+  srcPort?: number
   dstPort: number
-  country: string
-  asn: string
-  sessionId: string
+  country?: string
+  asn?: string
+  sessionId?: string
   username?: string
   password?: string
   command?: string
-  summary: string
+  summary?: string
   /** The sensor's own event name: `cowrie.login.failed`, `handshake`, `NEW_CONNECTION`, … */
   eventName: string
   /** The sensor's own `honeypot.*` object, as that sensor writes it. */
@@ -90,9 +96,9 @@ export interface HoneypotEvent extends Record<string, unknown> {
   /** ATT&CK techniques the pipeline mapped this event to. */
   techniques: string[]
   /** The source network: organization, provider class, city. */
-  org: string
-  provider: ProviderClass
-  city: string
+  org?: string
+  provider?: ProviderClass
+  city?: string
   /** What an HTTP request carried (php-code, path-traversal, …). */
   payloadClass?: string
   /** DNP3 control-function severity: an unconfirmed operate is critical. */
@@ -1557,9 +1563,9 @@ export interface SharedSignal extends Record<string, unknown> {
 
 export interface NetworkEntity {
   cidr: string
-  asn: string
-  org: string
-  country: string
+  asn?: string
+  org?: string
+  country?: string
   group: SourceGroup
   campaign?: NetworkCampaign
 }

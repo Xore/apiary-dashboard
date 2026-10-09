@@ -441,7 +441,7 @@ describe('problem reports', () => {
 
 describe('captured mail', () => {
   it('a session with a body has its message; an envelope-only session has none', async () => {
-    const sessions = [...new Set((await q.getEvents({ sensor: 'mailoney' })).rows.map((e) => e.sessionId))]
+    const sessions = [...new Set((await q.getEvents({ sensor: 'mailoney' })).rows.flatMap((e) => (e.sessionId ? [e.sessionId] : [])))]
     const mails = await Promise.all(sessions.map((id) => q.getMail(id)))
     const found = mails.filter((m) => m !== null)
     expect(found.length).toBeGreaterThan(0)

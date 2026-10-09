@@ -85,7 +85,10 @@ function SensorEvents() {
 
 /** A mail sensor's point: the messages, one session each, opened on demand. */
 function MailSessions({ events }: { events: HoneypotEvent[] }) {
-  const sessions = [...new Map(events.map((e) => [e.sessionId, e])).values()]
+  // A row with no session has no message to open, so it is not listed; keying
+  // on an absent id would fold every such row into one.
+  const withSession = events.filter((e): e is HoneypotEvent & { sessionId: string } => Boolean(e.sessionId))
+  const sessions = [...new Map(withSession.map((e) => [e.sessionId, e])).values()]
   return (
     <Panel title="Messages">
       <Text type="supporting">One per session. A session that stopped after the envelope has no body to show.</Text>

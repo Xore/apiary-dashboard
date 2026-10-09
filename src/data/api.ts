@@ -480,8 +480,8 @@ const paged = (wire: { total: number; offset: number; rows: EventRow[] }): Paged
  * sensor specs classify. The values are the literals the backend's own
  * canonicalizer fixtures and its DISCONNECT filter use; `pivots.alert`
  * (a Suricata signature, read off the wire) makes a row an IDS alert.
- * Everything else falls to `protocol.request`, the page's own catch-all for
- * a non-HTTP application request. */
+ * Everything else falls to `connection`, the least specific kind a honeypot
+ * row can be certain of (see `pageEvent`). */
 const TYPE_OF_EVENT: Record<string, EventType> = {
   'cowrie.login.failed': 'login.failed',
   'cowrie.login.success': 'login.success',
@@ -516,37 +516,29 @@ function eventNameOf(row: EventRow): string {
  * because the row carries no value for them. They are filled here, at the
  * seam, because the seam's signatures are the page types:
  *
- * - `type` — classified off the sensor's own event name above.
- * - `severity` — always `info`. The wire classifies no severity for a
- *   generic event: the Go tier's `classify.go` severity did not survive the
- *   Rust port, and the canonical frontend consequently renders no severity
- *   column at all. `info` says "nothing known" rather than "nothing wrong" —
- *   the same reading the repo already gives an uncounted facet. Only a DNP3
- *   control function carries one, and that is `icsSeverity`, mapped already.
+ * - `type` — classified off the sensor's own event name above, or `ids.alert`
+ *   when the row carries a Suricata alert. A name outside `TYPE_OF_EVENT`
+ *   falls to `connection`: every row is a connection to a sensor, and that
+ *   is the one kind it is certain of. `protocol.request` would claim a
+ *   non-HTTP application request, and `http.request` a web one, neither of
+ *   which the row shows.
  * - `eventName` — the sensor's own event name, verbatim.
- * - `srcPort` — 0. The row carries only the destination port.
- * - `techniques` — empty. The ATT&CK mapping is a pipeline result, not a
- *   field of the row.
- * - `organization` — omitted. `pivots.org` is the ATTACKER's network
- *   organization and is already on `org`; the decoy organization is a
- *   sensor field the row does not carry.
- * - `city` — "". The row carries `source.geo.country_iso_code` only.
+ * - `techniques` — empty, meaning none assigned. The ATT&CK mapping is a
+ *   pipeline result, not a field of the row.
+ * - `srcPort`, `city`, `organization` — not on the row, so not set. Absent,
+ *   never `0` or `''`.
  *
- * A GAP, not a conversion: the explorer's Severity column and the event
- * page's kind token show "info" and a best-effort kind against real data,
- * where they show a real classification against the mock.
+ * `severity` is not set here. `toHoneypotEvent` sets it from
+ * `ics_severity` when the row carries one, and leaves it absent otherwise.
  */
 function pageEvent(row: EventRow): HoneypotEvent {
   const name = eventNameOf(row)
   // Typed as exactly the gap the row cannot fill, so a renamed page field
   // fails the compiler here rather than reaching a page undefined.
   const gap: Pick<HoneypotEvent, EventRowGap> = {
-    type: row.pivots.alert ? 'ids.alert' : (TYPE_OF_EVENT[name] ?? 'protocol.request'),
-    severity: 'info',
-    srcPort: 0,
+    type: row.pivots.alert ? 'ids.alert' : (TYPE_OF_EVENT[name] ?? 'connection'),
     eventName: name,
     techniques: [],
-    city: '',
   }
   // The one cast in this module, and the compiler forces it:
   // `Omit<HoneypotEvent, EventRowGap>` is structurally vacuous, because
@@ -1152,7 +1144,15 @@ const getNetwork: Backend['getNetwork'] = async (cidr) => {
   // `events` is non-empty here: a group with no member is the page's
   // not-found, returned above.
   const first = events.find((row) => row.asn || row.org) ?? events[0]
-  return { cidr, asn: first.asn, org: first.org, country: first.country, group, ...(campaign ? { campaign } : {}) }
+  // Absent attributes are left out of the entity, not carried as `undefined`.
+  return {
+    cidr,
+    ...(first.asn ? { asn: first.asn } : {}),
+    ...(first.org ? { org: first.org } : {}),
+    ...(first.country ? { country: first.country } : {}),
+    group,
+    ...(campaign ? { campaign } : {}),
+  }
 }
 
 /** GET /api/v1/investigate/cluster?kind=&value= — the same endpoint
@@ -1251,17 +1251,17 @@ const getSensorDetail: Backend['getSensorDetail'] = async (id) => {
  * the sensor's own fields, no pivots and no enrichment, so every one of the
  * eleven is genuinely absent upstream and none is inferred:
  *
- * - `type` / `eventName` / `summary` / `severity` — nothing upstream
- *   classifies. `eventName` is the sensor's own event name verbatim and
- *   `type` is read off it the same way `TYPE_OF_EVENT` does for a real row,
- *   falling to the page's own `protocol.request` catch-all; `severity` is
- *   `info` for the same reason as #75 ("nothing known", not "nothing
- *   wrong").
- * - `asn` / `org` / `city` / `country` — network enrichment, computed on the
- *   events slice's pipeline and not part of this endpoint.
- * - `techniques` — an ATT&CK mapping, also a pipeline result.
- * - `provider` — the `source.as.type` class, same place.
- * - `sessionId` — sessions are correlated by the events slice's endpoint.
+ * - `type` / `eventName` — `eventName` is the sensor's own event name verbatim
+ *   and `type` is read off it the same way `TYPE_OF_EVENT` does for a real
+ *   row, falling to `connection` (see `pageEvent` for why not
+ *   `protocol.request`).
+ * - `techniques` — empty, meaning none assigned. An ATT&CK mapping is a
+ *   pipeline result, not part of this endpoint.
+ * - `severity`, `summary`, `asn` / `org` / `city` / `country` / `provider`,
+ *   `sessionId` — not upstream: nothing classifies the row (the endpoint has
+ *   no ICS severity), and the network enrichment and session correlation are
+ *   on the events slice's pipeline, not this endpoint. Left absent, never
+ *   `info`, `''` or `network`.
  *
  * `srcIpClaimed`, `persona`, `site`, `asset`, `fingerprint` and friends stay
  * absent rather than blank: `sensorEvents` already omits them and the page
@@ -1272,22 +1272,14 @@ const sensorPageEvents = (wire: SensorEventsWire): HoneypotEvent[] =>
     // extends `Record<string, unknown>`, so `Omit<HoneypotEvent, …>` has
     // `keyof` = `string | number` and omits nothing. The adapter's field
     // selection is still what runs; the Pick is only the type it earned,
-    // and `sensorEvents` is the one place that lists which eight fields
+    // and `sensorEvents` is the one place that lists which fields
     // the endpoint really fills.
-    const filled = row as Pick<HoneypotEvent, 'id' | 'timestamp' | 'sensor' | 'protocol' | 'srcIp' | 'srcPort' | 'dstPort' | 'fields'>
+    const filled = row as Pick<HoneypotEvent, 'id' | 'timestamp' | 'sensor' | 'srcIp' | 'srcPort' | 'dstPort' | 'fields'>
     const name = sensorEventName(filled.fields)
     const gap: Pick<HoneypotEvent, SensorEventGap> = {
-      type: TYPE_OF_EVENT[name] ?? 'protocol.request',
-      severity: 'info',
+      type: TYPE_OF_EVENT[name] ?? 'connection',
       eventName: name,
-      summary: '',
-      asn: '',
-      org: '',
       techniques: [],
-      provider: 'network',
-      city: '',
-      country: '',
-      sessionId: '',
     }
     return { ...filled, ...gap }
   })

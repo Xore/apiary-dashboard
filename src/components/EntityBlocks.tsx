@@ -166,8 +166,8 @@ export const eventTimeline = (events: HoneypotEvent[]): TimelineItem[] =>
     id: e.id,
     at: e.timestamp,
     kind: 'event',
-    title: e.summary,
-    detail: `${e.srcIp} · ${e.sensor} · ${e.protocol.toUpperCase()} ${e.dstPort}`,
+    title: e.summary ?? '—',
+    detail: [e.srcIp, e.sensor, e.protocol && `${e.protocol.toUpperCase()} ${e.dstPort}`].filter(Boolean).join(' · '),
     severity: e.severity,
     href: `/events/${e.id}`,
   }))
