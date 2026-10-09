@@ -131,8 +131,10 @@ describe('link integrity', () => {
     // A URL indicator is the request target alone, never 'POST /path'.
     expect(links.filter(([k, v]) => k === 'url' && /^[A-Z]+ /.test(v))).toEqual([])
     for (const kind of ['url', 'credential', 'fingerprint']) expect(links.some(([k]) => k === kind), kind).toBe(true)
-    for (const [kind, value] of links) expect(await q.getIoc(kind, value), `${kind}:${value}`).not.toBeNull()
-  })
+    // Many pages link the same indicator; resolve each distinct one once.
+    const distinct = [...new Map(links.map(([kind, value]) => [`${kind}\0${value}`, [kind, value]])).values()]
+    for (const [kind, value] of distinct) expect(await q.getIoc(kind, value), `${kind}:${value}`).not.toBeNull()
+  }, 20_000) // Crawl takes ~2 s alone and several times that under parallel load; the 5 s default is too tight.
 
   it('related entities and timeline links resolve', async () => {
     const { sources } = await q.getSourceProfiles()
