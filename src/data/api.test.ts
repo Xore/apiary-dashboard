@@ -128,6 +128,7 @@ describe('which queries the real backend answers', () => {
         'rollbackConfig',
         'runServiceAction',
         'saveConfigSection',
+        'savePreferences',
         'setProblemStatus',
         'submitProblemReport',
         'validateConfig',
@@ -235,8 +236,8 @@ describe('which queries the real backend answers', () => {
     expect(liveQuery('previewReport', undefined)).toBeUndefined()
   })
 
-  it('leaves savePreferences on the mock until the write diffs the stored document', () => {
-    expect(liveQuery('savePreferences', undefined)).toBeUndefined()
+  it('answers savePreferences live: the write diffs the stored document', () => {
+    expect(liveQuery('savePreferences', undefined)).toBeTypeOf('function')
   })
 
   it('applies the same authorization decision the mock does', async () => {

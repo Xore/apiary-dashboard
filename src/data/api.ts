@@ -85,7 +85,7 @@ import {
   createdCanarytoken,
   credentialList,
 } from './adapters/tools'
-import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesDocument, preferencesQuery, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
+import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesDocument, preferencesPatch, preferencesQuery, preferencesWriteBody, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
 import { envInt } from '#/server/admission'
@@ -206,7 +206,7 @@ import type {
   SourcesPageWire,
 } from './contracts/sources'
 import type { Backend, Caller } from './backend'
-import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Protocol, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig, TimeBucket } from './types'
+import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Preferences, Protocol, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig, TimeBucket } from './types'
 
 /** A dashboard that hangs forever is worse than one that errors. */
 const TIMEOUT_MS = envInt('BACKEND_TIMEOUT_MS', 30_000)
@@ -781,6 +781,33 @@ const getPreferences: Backend['getPreferences'] = async () => {
   if (!subject) return preferences(DEFAULT_PREFERENCES_WIRE)
   const wire = await get<PreferencesWire>('getPreferences', '/api/v1/preferences', { ...preferencesQuery(subject, { username, role: user?.roles[0] }) })
   return wire ? preferencesDocument(wire) : preferences(DEFAULT_PREFERENCES_WIRE)
+}
+
+/** The page fields that differ from the stored document's page form. The
+ * page hands over its whole `Preferences`, so the diff is what says which
+ * fields the operator changed; `preferencesPatch` then drops the page-only
+ * fields (`notifyCanary`, `mapBasemap`) so they never reach the wire. */
+const changedPreferences = (next: Preferences, stored: Preferences): Partial<Preferences> => {
+  const changed: Partial<Preferences> = {}
+  for (const key of Object.keys(next) as Array<keyof Preferences>) if (next[key] !== stored[key]) Object.assign(changed, { [key]: next[key] })
+  return changed
+}
+
+/** PUT /api/v1/preferences for the signed-in operator, carrying only the
+ * fields that changed against the stored document.
+ *
+ * The stored document is read first, because the PUT merges a
+ * `deny_unknown_fields` patch: a full-page send would overwrite every field
+ * the operator did not touch with whatever the page holds, and would 400 on
+ * `notifyCanary`. An unchanged save makes no PUT. No session is `expired`,
+ * the same as the sign-in flow expects of a write it cannot attribute. */
+const savePreferences: Backend['savePreferences'] = async (next) => {
+  const { user, subject, username } = await sessionOf()
+  if (!subject) throw new ApiError('expired', 'savePreferences')
+  const stored = await get<PreferencesWire>('savePreferences', '/api/v1/preferences', { ...preferencesQuery(subject, { username, role: user?.roles[0] }) })
+  const patch = preferencesPatch(changedPreferences(next, stored ? preferencesDocument(stored) : preferences(DEFAULT_PREFERENCES_WIRE)))
+  if (Object.keys(patch).length === 0) return
+  await request<PreferencesWire>('savePreferences', '/api/v1/preferences', { method: 'PUT', body: preferencesWriteBody(subject, patch, username) })
 }
 
 /** What the identity panel shows for a caller no session resolved. The mock
@@ -2291,11 +2318,6 @@ const getSessionEvents: Backend['getSessionEvents'] = async (sessionId) =>
  * DELIBERATELY ABSENT, and the reason is the one thing in this slice worth
  * reading before changing anything:
  *
- * - `savePreferences` — `PUT /api/v1/preferences` merges a
- *   `deny_unknown_fields` patch from the page's whole `Preferences`, which
- *   needs a diff against the stored document (`preferencesPatch` carries
- *   only what changed). Not wired yet; `getPreferences` is.
- *
  * - `previewReport` — reports' own gap: the backend renders a report, it does
  *   not preview a draft, and there is no `/reports/preview` route. A live
  *   deployment gets an explicit not-available error. The other half
@@ -2319,6 +2341,7 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   searchAll,
   getSettings,
   getPreferences,
+  savePreferences,
   getShellConfig,
   validateConfig,
   saveConfigSection,
