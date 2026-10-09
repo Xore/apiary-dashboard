@@ -12,8 +12,19 @@ export interface CanaryTokenTypeWire {
   supports_snippet: boolean
 }
 
+/** The upload the Rust tier accepts for a `requires_upload` token
+ * (canarytokens.rs MAX_UPLOAD_BYTES, L25). The decoded bytes are capped there,
+ * so a larger file answers 400 after the whole body has already travelled. */
+export const CANARY_IMAGE_MAX_BYTES = 8 * 1024 * 1024
+
+/** The image types the dashboard lets an operator upload. canarytokens.rs
+ * forwards `file_content_type` as the multipart MIME label and checks nothing
+ * else, so this list is the dashboard tier's own rule, not the backend's. */
+export const CANARY_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif'] as const
+
 /** POST /api/v1/canarytokens body (CreateBody). The file_* fields carry the
- * custom web image; actor fields are added by the dashboard's server fn. */
+ * custom web image as base64 (`file_base64`, decoded by the handler); actor
+ * fields are added by the dashboard's server fn. */
 export interface CreateCanarytokenBody {
   token_type: string
   memo: string

@@ -347,7 +347,8 @@ describe('/api/live — the gate covers the real stream', () => {
     // the fields EventNotifications reads, and none of them exist on the row.
     expect(frame.srcIp).toBe('203.0.113.42')
     expect(typeof frame.summary).toBe('string')
-    expect(frame.severity).toBe('info')
+    // The row carries no ICS severity, so the page event has none: not `info`.
+    expect(frame.severity).toBeUndefined()
     expect(frame.type).toBe('command.input')
   })
 

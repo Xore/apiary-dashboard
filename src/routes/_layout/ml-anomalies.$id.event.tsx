@@ -33,14 +33,14 @@ function AnomalyEvent() {
         </EntityLink>
       }
     >
-      <Text type="code">{event.summary}</Text>
+      <Text type="code">{event.summary ?? '—'}</Text>
       <MetadataList label={{ position: 'start', width: 112 }}>
         <MetadataListItem label="Time">
           {formatDateTime(event.timestamp)}
         </MetadataListItem>
         <MetadataListItem label="Type">{event.type}</MetadataListItem>
         <MetadataListItem label="Session">
-          <EntityLink kind="session" id={event.sessionId} />
+          {event.sessionId ? <EntityLink kind="session" id={event.sessionId} /> : <Text type="supporting">—</Text>}
         </MetadataListItem>
         <MetadataListItem label="Index">
           <Text type="code">{a?.sourceIndex}</Text>

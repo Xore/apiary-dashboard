@@ -18,8 +18,8 @@ function EventIocs() {
   return (
     <Grid columns={{ minWidth: 280, repeat: 'fit' }} gap={4}>
       <ValueList title="Source IP" kind="source" values={[event.srcIp]} />
-      <ValueList title="Autonomous system" kind="asn" values={[event.asn]} />
-      <ValueList title="Country" kind="country" values={[event.country]} />
+      <ValueList title="Autonomous system" kind="asn" values={opt(event.asn)} />
+      <ValueList title="Country" kind="country" values={opt(event.country)} />
       <ValueList title="Username" kind="username" values={opt(event.username)} />
       <ValueList title="Password" kind="password" values={opt(event.password)} />
       <ValueList title="Command" kind="command" values={opt(event.command)} />

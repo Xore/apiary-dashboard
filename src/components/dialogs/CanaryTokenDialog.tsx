@@ -11,10 +11,22 @@ import { FormLayout } from '@astryxdesign/core/FormLayout'
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList'
 import { RadioList, RadioListItem } from '@astryxdesign/core/RadioList'
 import { TextInput } from '@astryxdesign/core/TextInput'
+import { canaryImageProblem } from '#/data/adapters/tools'
 import { createCanarytoken } from '#/data/queries'
 import type { CanaryToken, CanaryTokenType } from '#/data/types'
 import { WizardDialog, statusOf } from '../WizardDialog'
 
+/** The picked file as the live adapter expects it: base64 of its bytes. The
+ * chunked loop keeps the argument list of String.fromCharCode short. */
+async function base64Of(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+  return btoa(binary)
+}
+
+/** A size for the operator: KiB under a MiB, MiB above. */
+const sizeOf = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KiB` : `${(bytes / (1024 * 1024)).toFixed(1)} MiB`)
 
 export function CanaryTokenDialog({ types, isOpen, onOpenChange, onCreated }: { types: CanaryTokenType[]; isOpen: boolean; onOpenChange: (open: boolean) => void; onCreated: (token: CanaryToken) => void }) {
   const [type, setType] = useState(types[0].type)
@@ -22,6 +34,7 @@ export function CanaryTokenDialog({ types, isOpen, onOpenChange, onCreated }: { 
   const [snippet, setSnippet] = useState('')
   const [image, setImage] = useState<File | null>(null)
   const selected = types.find((t) => t.type === type) ?? types[0]
+  const imageProblem = !image ? 'Choose the image the token serves.' : canaryImageProblem(image)
 
   const reset = (open: boolean) => {
     if (!open) {
@@ -45,8 +58,7 @@ export function CanaryTokenDialog({ types, isOpen, onOpenChange, onCreated }: { 
             type,
             memo: memo.trim(),
             ...(selected.supportsSnippet && snippet.trim() ? { snippet: snippet.trim() } : {}),
-            // Mock: the platform would receive the file; only its name is sent.
-            ...(selected.requiresUpload && image ? { imageName: image.name } : {}),
+            ...(selected.requiresUpload && image ? { image: { name: image.name, contentType: image.type, base64: await base64Of(image) } } : {}),
           }),
         )
       }
@@ -66,7 +78,7 @@ export function CanaryTokenDialog({ types, isOpen, onOpenChange, onCreated }: { 
           label: 'Details',
           errors: {
             ...(memo.trim() ? {} : { memo: 'Say where you will plant it; the alert shows this.' }),
-            ...(selected.requiresUpload && !image ? { image: 'Choose the image the token serves.' } : {}),
+            ...(selected.requiresUpload && imageProblem ? { image: imageProblem } : {}),
           },
           render: (shown) => (
             <FormLayout defaultOptionality="optional">
@@ -89,7 +101,7 @@ export function CanaryTokenDialog({ types, isOpen, onOpenChange, onCreated }: { 
                 <MetadataList orientation="vertical">
                   <MetadataListItem label="Type">{selected.label}</MetadataListItem>
                   <MetadataListItem label="Memo">{memo.trim()}</MetadataListItem>
-                  {selected.requiresUpload && image && <MetadataListItem label="Image">{image.name}</MetadataListItem>}
+                  {selected.requiresUpload && image && <MetadataListItem label="Image">{`${image.name} (${sizeOf(image.size)})`}</MetadataListItem>}
                   {selected.supportsSnippet && snippet.trim() && <MetadataListItem label="Text snippet">{snippet.trim()}</MetadataListItem>}
                 </MetadataList>
               </Card>

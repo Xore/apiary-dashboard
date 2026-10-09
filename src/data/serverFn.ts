@@ -53,6 +53,19 @@ export const mockScenarioMiddleware = createMiddleware({ type: 'function' })
  * server knows whether a live backend is configured. */
 export const getMockScenariosAllowed = createServerFn({ method: 'GET' }).handler(() => mockScenariosAllowed())
 
+/** The clock the pages count times from: the mock tier's fixed clock when no
+ * live backend answers (its fixtures are relative to it), else null, the
+ * wall clock. Pure: the handler supplies both inputs. */
+export const clockFor = (live: boolean, mockNow: number): number | null => (live ? null : mockNow)
+
+/** The mock clock, decided by whether a live backend is configured (not by
+ * the dev scenario override: a live backend always runs on the real clock).
+ * The mock and live modules load only inside the handler, on the server. */
+export const getMockClock = createServerFn({ method: 'GET' }).handler(async () => {
+  const [{ isLiveBackend }, { MOCK_NOW }] = await Promise.all([import('./api'), import('./mock/random')])
+  return clockFor(isLiveBackend(), MOCK_NOW)
+})
+
 /** What crosses the wire, as Start's serializer can prove: JSON. The
  * exports keep each query's own types; this is only the handler's side. */
 export type Json = string | number | boolean | null | undefined | Json[] | { [key: string]: Json }
