@@ -186,32 +186,28 @@ describe('link integrity', () => {
     const config: Parameters<typeof q.startAnalysisRun>[0] = {
       hash,
       analyzers: ['static', 'ghidra'],
-      static: { minStringLength: 8, extractIocs: true, decodeCandidates: false, sectionEntropy: true },
-      yara: { rulesets: [], stopAtFirstMatch: false, timeoutSeconds: 60 },
-      sandbox: { image: 'ubuntu-22.04-x86_64', durationSeconds: 120, network: 'none', capturePcap: false, memoryDump: false, liveView: false },
-      cape: { image: 'win10-22h2', durationSeconds: 120, package: 'auto', network: 'none', humanInteraction: false },
-      ghidra: { depth: 'aggressive', maxFunctions: 50, model: 'llama3.1:8b', capa: true, floss: false },
-      revdeck: { model: 'llama3.1:8b', maxSteps: 10, requireCitations: true },
-      github: { dryRun: true },
-      run: { priority: 'high', label: 'Test run', notify: false, force: true },
+      options: {
+        static: { timeoutSeconds: 120, maxQueueAgeSeconds: 900, retryLimit: 1 },
+        ghidra: { timeoutSeconds: 1200, maxQueueAgeSeconds: 7200, retryLimit: 0 },
+      },
     }
     const queued = await q.startAnalysisRun(config)
-    expect(queued).toMatchObject({ reused: false, run: { label: 'Test run', state: 'queued', owner: 'Operator' } })
+    expect(queued).toMatchObject({ reused: false, run: { label: 'Workbench run', state: 'queued', owner: 'Operator' } })
     expect(queued!.run.children.map((c) => [c.analyzerId, c.state, c.cancelable])).toEqual([['static', 'queued', true], ['ghidra', 'queued', true]])
     // The options travel with the run's record in Analysis results.
     const record = (await q.getAnalysisResults()).results.find((r) => r.id === queued!.run.id)!
-    expect(record.detail).toMatchObject({ priority: 'high', options: { static: { minStringLength: 8 }, ghidra: { depth: 'aggressive', model: 'llama3.1:8b' } } })
+    expect(record.detail).toMatchObject({ options: { static: { timeoutSeconds: 120, maxQueueAgeSeconds: 900, retryLimit: 1 }, ghidra: { timeoutSeconds: 1200, maxQueueAgeSeconds: 7200, retryLimit: 0 } } })
     expect(Object.keys(record.detail.options as object)).toEqual(['static', 'ghidra'])
     const after = (await q.getAnalysisResults()).gpuQueue
     expect(after.length).toBe(before + 1)
-    expect(after[0]).toMatchObject({ jobType: 'ghidra-summary', model: 'llama3.1:8b', status: 'queued' })
+    expect(after[0]).toMatchObject({ jobType: 'ghidra-summary', model: 'qwen2.5-coder:14b', status: 'queued' })
     expect(await q.startAnalysisRun({ ...config, hash: 'deadbeef' })).toBeNull()
 
-    // The same run again while it is in flight is reused, unless forced.
-    const again = await q.startAnalysisRun({ ...config, run: { ...config.run, force: false } })
+    // The same run again while it is in flight is reused.
+    const again = await q.startAnalysisRun(config)
     expect(again).toMatchObject({ reused: true, run: { id: queued!.run.id } })
     // What the sample cannot take is refused, with the reason.
-    await expect(q.startAnalysisRun({ ...config, analyzers: ['cape'] })).rejects.toMatchObject({ status: 400, detail: expect.stringMatching(/^CAPE \(Windows\): Takes PE32/) })
+    await expect(q.startAnalysisRun({ ...config, analyzers: ['cape'], options: { cape: { timeoutSeconds: 300, maxQueueAgeSeconds: 3600, retryLimit: 0 } } })).rejects.toMatchObject({ status: 400, detail: expect.stringMatching(/^CAPE \(Windows\): Takes PE32/) })
   })
 
   it('says which analyzers apply to a sample, and why not', async () => {

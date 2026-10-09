@@ -828,7 +828,7 @@ describe('the mutations', () => {
   it('POSTs the workbench run body to the mounted base', async () => {
     process.env.BACKEND_MOUNTED_URL = 'http://mounted.test'
     const calls = stub({ '/api/v1/workbench/runs': { run: { id: 'wr-1', payload_sha256: 'a'.repeat(64), payload_kind: 'PE32', owner: 'alice', state: 'queued', created_at: '', updated_at: '', children: [] }, reused: false } })
-    const run = await liveQuery('startAnalysisRun', admin)!({ hash: 'a'.repeat(64), analyzers: ['static'], static: { minStringLength: 4 } })
+    const run = await liveQuery('startAnalysisRun', admin)!({ hash: 'a'.repeat(64), analyzers: ['static'], options: { static: { timeoutSeconds: 300, maxQueueAgeSeconds: 3600, retryLimit: 0 } } })
     expect(run).toMatchObject({ reused: false, run: { id: 'wr-1', hash: 'a'.repeat(64) } })
     expect(calls[0]).toMatch(/^http:\/\/mounted\.test\/api\/v1\/workbench\/runs$/)
     const body = JSON.parse((vi.mocked(fetch).mock.calls.at(-1)?.[1] as RequestInit).body as string)

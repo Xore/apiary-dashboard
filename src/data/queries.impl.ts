@@ -924,7 +924,7 @@ export async function getAnalyzerCatalog(hash: string): Promise<AnalyzerCatalog 
 
 /** Mock write: queues an analysis run of a captured payload with every
  * option the operator set; GPU analyzers also land on the GPU queue. An
- * identical run still in flight is reused instead, unless `force`. */
+ * identical run still in flight is reused instead. */
 export async function startAnalysisRun(config: AnalysisRunConfig): Promise<{ run: WorkbenchRun; reused: boolean } | null> {
   await mockDelay()
   const payload = PAYLOADS.find((p) => p.hash === config.hash.toLowerCase())
@@ -936,8 +936,8 @@ export async function startAnalysisRun(config: AnalysisRunConfig): Promise<{ run
   }
   const same = (r: WorkbenchRun) => r.hash === payload.hash && (r.state === 'queued' || r.state === 'running') && r.children.map((c) => c.analyzerId).sort().join() === [...config.analyzers].sort().join()
   const inFlight = WORKBENCH_RUNS.find(same)
-  if (inFlight && !config.run.force) return { run: structuredClone(inFlight), reused: true }
-  const options = Object.fromEntries(config.analyzers.map((id) => [id, config[id]]))
+  if (inFlight) return { run: structuredClone(inFlight), reused: true }
+  const options = Object.fromEntries(config.analyzers.map((id) => [id, config.options[id]]))
   const run: AnalysisResult = {
     id: `wb-${Date.now().toString(36)}`,
     analyzer: 'workbench',
@@ -947,8 +947,8 @@ export async function startAnalysisRun(config: AnalysisRunConfig): Promise<{ run
     owner: MOCK_USER.name,
     recipe: config.analyzers.join('+'),
     state: 'queued',
-    summary: config.run.label || 'Workbench run',
-    detail: { analyzers: config.analyzers, options, priority: config.run.priority, notify: config.run.notify, force: config.run.force },
+    summary: 'Workbench run',
+    detail: { analyzers: config.analyzers, options },
   }
   ANALYSIS_RESULTS.unshift(run)
   const now = new Date(MOCK_NOW).toISOString()
@@ -961,7 +961,7 @@ export async function startAnalysisRun(config: AnalysisRunConfig): Promise<{ run
       jobId: `gpu-${Date.now().toString(36).slice(-4)}${id[0]}`,
       requestedAt: new Date(MOCK_NOW).toISOString(),
       jobType: id === 'ghidra' ? 'ghidra-summary' : 'revdeck',
-      model: config[id].model,
+      model: 'qwen2.5-coder:14b',
       status: 'queued',
       attempts: 0,
       abortRequested: false,
