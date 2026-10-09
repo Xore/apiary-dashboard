@@ -5,6 +5,8 @@
 // of the return type (Omit/Pick) rather than invented, so wiring cannot
 // forget it — each such omission is a documented gap below.
 
+import type { Bar, PiePoint, Series } from '../contracts/charts'
+import type { SourcesPageWire } from '../contracts/sources'
 import type {
   AgentCampaignRow,
   AuthEventRow,
@@ -38,8 +40,10 @@ import type {
   MlAnomaly,
   ModelHealth,
   NetworkCampaign,
+  OverviewSource,
   OverviewViews,
   SemanticSearchResult,
+  SeriesPoint,
   Severity,
 } from '../types'
 
@@ -49,6 +53,9 @@ const SEVERITIES: readonly string[] = ['critical', 'high', 'medium', 'low', 'inf
 export const toSeverity = (s: string | undefined): Severity => (SEVERITIES.includes(s ?? '') ? (s as Severity) : 'info')
 
 const toCount = (kv: DashboardKv): CountRow => ({ id: kv.key, label: kv.key, count: kv.count })
+
+/** A dashboard key/count list as the page's `CountRow`s, in the wire's order. */
+export const toCountRows = (kvs: DashboardKv[]): CountRow[] => kvs.map(toCount)
 
 /** "" on the wire (a Python None, or an empty string the writer defaulted)
  * means absent. */
@@ -86,25 +93,25 @@ const FEED_STATE: Record<Dashboard['sensors'][number]['state'], FeedState> = {
  * kind/platform/size/verdict where the part carries shasum + count only;
  * campaigns come from /campaigns. `logins` is a bare number on the wire
  * and `OverviewViews` has no home for it. */
-export type DashboardViews = Pick<
-  OverviewViews,
-  | 'heatmap'
-  | 'mapPoints'
-  | 'feeds'
-  | 'protocols'
-  | 'topIps'
-  | 'topPorts'
-  | 'countries'
-  | 'asns'
-  | 'providers'
-  | 'credentials'
-  | 'commands'
-  | 'clients'
-  | 'fingerprints'
-  | 'paths'
-  | 'alerts'
-  | 'alertCategories'
->
+export type DashboardViews = {
+  [K in
+    | 'heatmap'
+    | 'mapPoints'
+    | 'feeds'
+    | 'protocols'
+    | 'topIps'
+    | 'topPorts'
+    | 'countries'
+    | 'asns'
+    | 'providers'
+    | 'credentials'
+    | 'commands'
+    | 'clients'
+    | 'fingerprints'
+    | 'paths'
+    | 'alerts'
+    | 'alertCategories']: NonNullable<OverviewViews[K]>
+}
 
 /** GET /api/v1/overview/dashboard. `pct` and `label` on a heat cell are
  * dropped: `HeatmapRow.cells` is the bare count series and the backend
@@ -129,6 +136,42 @@ export function toOverviewViews(d: Dashboard): DashboardViews {
     alerts: d.alerts.map(toCount),
     alertCategories: d.alert_cats.map(toCount),
   }
+}
+
+/** GET /api/v1/sources?size=N → the overview's top attackers. The wire lists
+ * rows by event count, highest first (aggregates.rs, `_count` desc) over the
+ * last 10 days, so the first `limit` ARE the top sources of that window. Only the fields the wire carries: no ASN, org, risk score,
+ * tags, provider or city. An empty country on the wire is absent, not ''. */
+export const overviewSources = (wire: SourcesPageWire, limit: number): OverviewSource[] =>
+  wire.rows.slice(0, limit).map((row) => ({
+    ip: row.ip,
+    ...(row.country ? { country: row.country } : {}),
+    events: row.events,
+    firstSeen: row.first,
+    lastSeen: row.last,
+  }))
+
+/** GET /api/v1/charts/{bar chart} (`categories` and `values` in step) → one
+ * `CountRow` per category. An empty category is a real key, kept as is. */
+export const barRows = (bar: Bar): CountRow[] => bar.categories.map((label, i) => ({ id: label, label, count: bar.values[i] ?? 0 }))
+
+/** GET /api/v1/charts/{pie chart} → one `CountRow` per slice. */
+export const pieRows = (points: PiePoint[]): CountRow[] => points.map((p) => ({ id: p.name, label: p.name, count: p.value }))
+
+/** GET /api/v1/charts/{series chart} (one `Series` per source or direction)
+ * → the page's `SeriesPoint`s: one row per instant, with one key per series
+ * name, so a new series shows up with no page change. Instants are sorted. */
+export const seriesPoints = (series: Series[]): SeriesPoint[] => {
+  const byName = new Map(series.map((s) => [s.name, new Map(s.points.map((p) => [p.time, p.value]))]))
+  const times = [...new Set(series.flatMap((s) => s.points.map((p) => p.time)))].sort()
+  return times.map((time) => {
+    const point: SeriesPoint = { time }
+    for (const [name, values] of byName) {
+      const value = values.get(time)
+      if (value !== undefined) point[name] = value
+    }
+    return point
+  })
 }
 
 /** GET /api/v1/campaigns → the campaign summary the overview's card reads.

@@ -8,7 +8,7 @@ import type { TableColumn } from '@astryxdesign/core/Table'
 import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute } from '@tanstack/react-router'
-import { CountTable, Panel, StatTile } from '#/components/DashboardBlocks'
+import { CountTable, Panel, StatTile, windowTitle } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { getAuthEvents } from '#/data/queries'
 import type { AuthFailure } from '#/data/types'
@@ -44,10 +44,10 @@ function AuthEventsPage() {
             <StatTile label="Failed logins, 24h" value={data?.failed24h} />
           </Grid>
           <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
-            <Panel title="Failures by client, 24h">
+            <Panel title={windowTitle('Failures by client, 24h', data?.breakdownRows)}>
               <CountTable header="Client" rows={data?.byClient} countHeader="Failures" />
             </Panel>
-            <Panel title="Top source IPs, 24h">
+            <Panel title={windowTitle('Top source IPs, 24h', data?.breakdownRows)}>
               <CountTable header="Source IP" rows={data?.topSources} countHeader="Failures" />
             </Panel>
           </Grid>

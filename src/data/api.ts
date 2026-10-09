@@ -35,7 +35,12 @@ import {
   toAckAllCount,
   toAckedCount,
   toAgentCampaign,
+  barRows,
+  overviewSources,
+  pieRows,
+  seriesPoints,
   toAuthFailure,
+  toCountRows,
   toLlmAnalysis,
   toMlAnomalies,
   toModelHealth,
@@ -44,6 +49,7 @@ import {
   toOverviewViews,
   toPayloadCount,
   toSemanticSearch,
+  toSeverity,
 } from './adapters/monitor'
 import type { EventRowGap } from './adapters/events'
 import type { SensorEventGap } from './adapters/operations'
@@ -86,6 +92,7 @@ import {
   credentialList,
 } from './adapters/tools'
 import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesDocument, preferencesQuery, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
+import type { DashboardViews } from './adapters/monitor'
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
 import { envInt } from '#/server/admission'
@@ -206,7 +213,7 @@ import type {
   SourcesPageWire,
 } from './contracts/sources'
 import type { Backend, Caller } from './backend'
-import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Protocol, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig, TimeBucket } from './types'
+import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig } from './types'
 
 /** A dashboard that hangs forever is worse than one that errors. */
 const TIMEOUT_MS = envInt('BACKEND_TIMEOUT_MS', 30_000)
@@ -962,8 +969,8 @@ async function guardReadOnly(name: string): Promise<void> {
  *
  * `null` means the tier had no answer: 404 (no such route or attacker) and
  * any 5xx both land here, and the route turns both into its 502. */
-export async function liveChart(name: ChartName, search: URLSearchParams): Promise<Charts[ChartName] | null> {
-  return get<Charts[ChartName]>(`chart/${name}`, `/api/v1/charts/${name}`, Object.fromEntries(search))
+export async function liveChart<TChart extends ChartName>(name: TChart, search: URLSearchParams): Promise<Charts[TChart] | null> {
+  return get<Charts[TChart]>(`chart/${name}`, `/api/v1/charts/${name}`, Object.fromEntries(search))
 }
 
 /** GET /api/v1/topology — the one slice the browser sees: `flow`.
@@ -1870,50 +1877,46 @@ const getAnalysisResults: Backend['getAnalysisResults'] = async () => {
  * has not covered the window) are dropped by the adapter: `Kpi` has no field
  * for either. `ready: false` therefore renders as a real reading rather than
  * an error — the KPIs are live-aggregated, not wrong, when it is false. */
+/** The overview's top attackers, the sources list's first rows. */
+const TOP_SOURCES = 10
+
 const getOverview: Backend['getOverview'] = async () => {
-  const [kpis, payloads, recent] = await Promise.all([
+  const [kpis, payloads, recent, sources, catalog, countries] = await Promise.all([
     get<OverviewKpis>('getOverview', '/api/v1/overview/kpis'),
     get<PayloadPageWire>('getOverview', '/api/v1/payloads', { offset: 0, size: 15 }),
     get<EventsPageWire>('getOverview', '/api/v1/events', { offset: 0, size: 18 }),
+    get<SourcesPageWire>('getOverview', '/api/v1/sources', { offset: 0, size: TOP_SOURCES }),
+    get<SensorCatalogWire>('getOverview', '/api/v1/sensors/catalog'),
+    // `parts` narrows the search, but the body still carries every key; only
+    // `countries` is read here.
+    get<Pick<Dashboard, 'countries'>>('getOverview', '/api/v1/overview/dashboard', { parts: 'countries' }),
   ])
-  const rows = recent?.rows ?? []
   return {
     // No server-side "generated at": every endpoint answers with its own
     // timestamps, so this is the stamp of the read.
     generatedAt: new Date().toISOString(),
-    kpis: toOverviewKpis(kpis ?? EMPTY_KPIS).concat(kpiTile('payloads', 'Payloads captured', toPayloadCount(payloads ?? EMPTY_PAYLOADS))),
-    // The page's own 24 hourly buckets, computed from the events page the
-    // overview already reads for its recent rows. The wire's `hourly` sparkline
-    // is counts per hour over the KPI window and carries no timestamps, so a
-    // timeline built from it would have to invent them; this one is real, and
-    // it is what ProtocolTimeline draws. A GAP: `/api/v1/events` pages by
-    // offset, not by time, so these are the first 18 events' hours, not a
-    // bucket per hour across the window — a fleet quieter than 18 events in
-    // 24h draws near-empty buckets rather than fabricated ones.
-    timeline: hourBuckets(rows),
-    topProtocols: protocolNames(rows),
-    // GAP, not invented: `AttackSource` needs asn/org/sessions/riskScore/tags/
-    // provider/city per address, and the dashboard endpoint's `top_ips` carries
-    // a key and a count and nothing else — no country, no ASN, no session rollup.
-    // A row of zeros would read as a real source with no context, so the
-    // overview's "top sources" list is left empty against live data; the ASNs,
-    // countries and providers tabs carry the same figures in the shape the wire
-    // does fill.
-    topSources: [],
-    topCountries: [],
+    // A missing leg is a broken endpoint, not an empty fleet: its tiles are
+    // null (not available), and the other legs still fill the overview.
+    kpis: (kpis ? toOverviewKpis(kpis) : KPI_GAPS).concat(payloads ? kpiTile('payloads', 'Payloads captured', toPayloadCount(payloads)) : kpiGap('payloads', 'Payloads captured')),
+    // GAP (APIARY#3556): there is no 24 h hourly rollup on the wire. The
+    // timeline used to be built from the first 18 events, which is not a 24 h
+    // figure, so it is unavailable rather than approximated.
+    timeline: null,
+    // GAP: derived from the same 18 events as the timeline, so not a 24 h figure.
+    topProtocols: null,
+    // `/api/v1/sources` ranks by events (sources.rs), so the first rows are the top sources.
+    topSources: sources ? overviewSources(sources, TOP_SOURCES) : null,
+    topCountries: countries ? toCountRows(countries.countries) : null,
     // GAP: usernames and passwords are only ever paired, as one `top_creds`
-    // key — the wire deliberately never splits them into two lists, and the
-    // credential tab shows the pairs.
-    topUsernames: [],
-    topPasswords: [],
+    // key. The credential tab shows the pairs; no split list is invented.
+    topUsernames: null,
+    topPasswords: null,
     // The same gap the events slice fills at the seam (`pageEvent`): seven
     // fields a row cannot carry, filled here rather than left undefined.
-    recentEvents: rows.map(pageEvent),
-    // GAP: the dashboard endpoint's `sensors` is a feed triple (name, count,
-    // last_seen, state), not the `Sensor` the page's header renders — no kind,
-    // ports, persona or location. The feed rows are on the heatmap tab as
-    // `views.feeds`, which is where they belong.
-    sensors: [],
+    recentEvents: recent ? recent.rows.map(pageEvent) : null,
+    // `null` when the catalog route has no answer; the catalog carries the
+    // sensor name and its events, which is all the page's summary shows.
+    sensors: catalog ? sensorCatalog(catalog) : null,
   }
 }
 
@@ -1923,41 +1926,11 @@ const getOverview: Backend['getOverview'] = async () => {
  * change rather than a fabricated one. */
 const kpiTile = (id: string, label: string, value: number): Kpi => ({ id, label, value, previous: value, trend: [] })
 
-const EMPTY_KPIS: OverviewKpis = { total: 0, last24h: 0, previous24h: 0, change24h: '', unique_ips: 0, hourly: [], logins: 0, ready: false }
-const EMPTY_PAYLOADS: PayloadPageWire = { total: 0, rows: [] }
+/** A tile whose endpoint did not answer: null, rendered as not available. */
+const kpiGap = (id: string, label: string): Kpi => ({ id, label, value: null, previous: null, trend: [] })
 
-/** Twenty-four hourly buckets, oldest first, over the rows the events page
- * returned: the 24 hours ending NOW, so the last bucket is the current hour
- * and the first is 23 hours back. Empty cells stay at 0 and are never
- * back-filled, so the timeline has the shape the chart expects whatever the
- * fleet's volume is. */
-const hourBuckets = (rows: EventRow[]): TimeBucket[] => {
-  const now = Date.now()
-  const start = now - 24 * HOUR_MS
-  const buckets: TimeBucket[] = Array.from({ length: 24 }, (_, i) => ({ time: new Date(start + i * HOUR_MS).toISOString(), total: 0, byProtocol: {} }))
-  for (const row of rows) {
-    const at = Date.parse(row.time)
-    // A row outside the window (the handler does not filter by it) is dropped
-    // rather than folded into the nearest bucket: it would land in a wrong hour.
-    if (!Number.isFinite(at) || at < start || at > now) continue
-    const bucket = buckets[Math.min(23, Math.floor((at - start) / HOUR_MS))]
-    bucket.total += 1
-    bucket.byProtocol[row.proto] = (bucket.byProtocol[row.proto] ?? 0) + 1
-  }
-  return buckets
-}
-
-const HOUR_MS = 3_600_000
-
-/** The overview's `topProtocols`: the five most-seen protocol names on the
- * same events page. `SERIES` in the chart is what stacks the bars, and it
- * falls back to an "other" bucket for anything outside its palette, so the
- * top five is exactly what the chart draws stacked. */
-const protocolNames = (rows: EventRow[]): Protocol[] => {
-  const counts = new Map<string, number>()
-  for (const row of rows) counts.set(row.proto, (counts.get(row.proto) ?? 0) + 1)
-  return [...counts].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([proto]) => proto)
-}
+/** The three tiles `/overview/kpis` fills, when that endpoint is missing. */
+const KPI_GAPS: Kpi[] = [kpiGap('events', 'Events'), kpiGap('sources', 'Unique sources'), kpiGap('logins', 'Successful logins')]
 
 /** GET /api/v1/overview/dashboard — the four of the eighteen views tabs.
  *
@@ -1979,38 +1952,63 @@ const protocolNames = (rows: EventRow[]): Protocol[] => {
  * `/api/v1/campaigns?size=15` — which is the same move the evidence and
  * sources slices already make. */
 const getOverviewViews: Backend['getOverviewViews'] = async () => {
-  const [dashboard, payloads, campaigns] = await Promise.all([
+  const chart = <TChart extends ChartName>(name: TChart) => liveChart(name, new URLSearchParams())
+  const [dashboard, payloads, campaigns, osDistribution, tcpClusters, icsFunctions, decoyRequests, decoyClients, ja4h, ja4l, ja4x, tls, ssh, endlessh, cves, mlBacklog, netflowBytes, netflowPackets] = await Promise.all([
     get<Dashboard>('getOverviewViews', '/api/v1/overview/dashboard'),
     get<PayloadPageWire>('getOverviewViews', '/api/v1/payloads', { offset: 0, size: 15, aggs: 'sources' }),
     get<CampaignPageWire>('getOverviewViews', '/api/v1/campaigns', { offset: 0, size: 15 }),
+    chart('os-distribution'),
+    chart('tcp-stack-clusters'),
+    chart('ics-functions'),
+    chart('decoy-requests'),
+    chart('decoy-client-fingerprints'),
+    chart('ja4h-fingerprints'),
+    chart('ja4l-fingerprints'),
+    chart('ja4x-fingerprints'),
+    chart('tls-fingerprints'),
+    chart('ssh-fingerprints'),
+    chart('endlessh-held-histogram'),
+    chart('dionaea-cves'),
+    chart('ml-backlog'),
+    chart('netflow-bytes'),
+    chart('netflow-packets'),
   ])
-  const live = toOverviewViews(dashboard ?? EMPTY_DASHBOARD)
   return {
-    ...live,
-    payloads: capturedPayloads(payloads ?? EMPTY_PAYLOADS).payloads,
-    campaigns: networkCampaigns(campaigns ?? { total: 0, rows: [] }),
-    vectors: {},
-    mlBacklog: [],
-    netflowBytes: [],
-    netflowPackets: [],
-    conformance: [],
-    cves: [],
-    osDistribution: [],
-    tcpClusters: [],
-    icsFunctions: [],
-    decoyRequests: [],
-    decoyClients: [],
-    ja4h: [],
-    ja4l: [],
-    ja4x: [],
-    tls: [],
-    ssh: [],
-    endlessh: [],
+    // A missing dashboard leaves every field it fills unavailable.
+    ...(dashboard ? toOverviewViews(dashboard) : DASHBOARD_GAPS),
+    payloads: payloads ? capturedPayloads(payloads).payloads : null,
+    campaigns: campaigns ? networkCampaigns(campaigns) : null,
+    // GAP: attack vectors (targeted ports and protocols per sensor) have no
+    // endpoint on the wire.
+    vectors: null,
+    // GAP: protocol-conformance violations have no `/api/v1/charts` route.
+    conformance: null,
+    // A chart route with no answer (`null`) is unavailable, never an empty series.
+    mlBacklog: mapped(mlBacklog, seriesPoints),
+    netflowBytes: mapped(netflowBytes, seriesPoints),
+    netflowPackets: mapped(netflowPackets, seriesPoints),
+    cves: mapped(cves, barRows),
+    osDistribution: mapped(osDistribution, pieRows),
+    tcpClusters: mapped(tcpClusters, pieRows),
+    icsFunctions: mapped(icsFunctions, barRows),
+    decoyRequests: mapped(decoyRequests, barRows),
+    decoyClients: mapped(decoyClients, barRows),
+    ja4h: mapped(ja4h, barRows),
+    ja4l: mapped(ja4l, barRows),
+    ja4x: mapped(ja4x, barRows),
+    tls: mapped(tls, barRows),
+    ssh: mapped(ssh, barRows),
+    endlessh: mapped(endlessh, barRows),
   }
 }
 
-const EMPTY_DASHBOARD: Dashboard = {
-  protocols: [], top_ports: [], countries: [], asns: [], providers: [], top_ips: [], top_paths: [], top_creds: [], top_commands: [], clients: [], fingerprints: [], alerts: [], alert_cats: [], payloads: [], logins: 0, heatmap: [], map_points: [], sensors: [],
+/** Maps a chart the route answered, and passes its `null` (no route) through as unavailable. */
+const mapped = <TWire, TRow>(wire: TWire | null, map: (w: TWire) => TRow): TRow | null => (wire === null ? null : map(wire))
+
+/** The dashboard-endpoint fields, all unavailable when that endpoint has no answer. */
+const DASHBOARD_GAPS: { [K in keyof DashboardViews]: null } = {
+  heatmap: null, mapPoints: null, feeds: null, protocols: null, topIps: null, topPorts: null, countries: null, asns: null, providers: null,
+  credentials: null, commands: null, clients: null, fingerprints: null, paths: null, alerts: null, alertCategories: null,
 }
 
 /** The page's own `CountRow` rollup: group by a key, count, keep the top
@@ -2022,41 +2020,32 @@ const counted = (values: Array<string | undefined>, limit: number): CountRow[] =
   return [...counts].sort((a, b) => b[1] - a[1]).slice(0, limit).map(([label, count]) => ({ id: label, label, count }))
 }
 
-/** GET /api/v1/store/ml-anomalies + the three ML documents the page needs,
- * fanned out as one read.
+/** The Lucene window the old dashboard sent for "last 24 hours". */
+const WINDOW_24H = '@timestamp:[now-24h TO now]'
+/** Rows the windowed reads load. The count is exact (`total`); the breakdowns
+ * are counted over these rows, so a busier window reports `breakdownRows`. */
+const WINDOW_ROWS = 500
+
+/** GET /api/v1/store/ml-anomalies + the ML documents the page needs, fanned out as one read.
  *
  * The ack sidecar and the stats rollup are the two things that cannot be
  * derived from the rows: `status` lives on the anomaly document but
  * `acknowledged` lives only in `/acks`, so the two stores are merged here
  * (the adapter owns the precedence), and `open` in `/stats` is an ALL-TIME
- * backlog — that total minus every dispositioned ∪ acknowledged id — not a
- * 24-hour figure, which is why it feeds its own labelled tile.
+ * backlog, which is why it feeds its own labelled tile.
  *
- * GAP: `total24h` and the three breakdowns the page computes over them
- * (`bySeverity`, `topSources`, `eventTypes`) need a WINDOWED store query.
- * `/api/v1/store/ml-anomalies` accepts only `offset`, `size` and `q` — a
- * Lucene query string, which is how the canonical page asks for the window
- * (two paged reads, `q: @timestamp:[now-24h TO now]`). Those reads are not
- * made here: the window would have to be spelled as a Lucene range in a query
- * string this seam otherwise passes through untouched, and the two reads cost
- * twice what one does. So against live data the "last 24h" tile and the three
- * breakdowns it feeds are zero, while the rows themselves, the backlog and the
- * model health are real. The rows are the page's own list — they are not
- * filtered, and the page's `N of M anomalies` count is honest.
- *
- * `scoreTimeline` needs `/api/v1/charts/ml-anomaly-scores` (charts.rs
- * `ml_anomaly_scores`, L847), a chart the proxy route in #82 already serves
- * to the browser but not through this seam — it is read here rather than left
- * fabricated, because the rows it returns are the same `composite_score` and
- * `model_scores` the anomaly rows already carry and the page's chart is one
- * panel of one view. */
+ * The 24 h figures are a windowed read (`q`, the store's Lucene query).
+ * `total24h` is the exact count in the window. The three breakdowns are
+ * counted over the window's first rows, and `breakdownRows` says how many
+ * when that is fewer than the total. A failed read is unavailable, not zero. */
 const getMlAnomalies: Backend['getMlAnomalies'] = async () => {
-  const [page, acks, stats, health, scores] = await Promise.all([
+  const [page, acks, stats, health, scores, day] = await Promise.all([
     get<StorePage<MlAnomalyRow>>('getMlAnomalies', '/api/v1/store/ml-anomalies', { offset: 0, size: 100 }),
     get<MlAcks>('getMlAnomalies', '/api/v1/ml-anomalies/acks'),
     get<MlAnomalyStats>('getMlAnomalies', '/api/v1/ml-anomalies/stats'),
     get<MlModelHealth[]>('getMlAnomalies', '/api/v1/ml-health'),
     get<SeriesWire[]>('getMlAnomalies', '/api/v1/charts/ml-anomaly-scores'),
+    get<StorePage<MlAnomalyRow>>('getMlAnomalies', '/api/v1/store/ml-anomalies', { offset: 0, size: WINDOW_ROWS, q: WINDOW_24H }),
   ])
   const anomalies = toMlAnomalies(page ?? { total: 0, rows: [] }, acks ?? {})
   return {
@@ -2071,11 +2060,12 @@ const getMlAnomalies: Backend['getMlAnomalies'] = async () => {
     // type cannot carry the field this adds. The fields are all genuinely
     // present; only the omission's promise of which ones is inexpressible.
     anomalies: anomalies.map((a) => ({ ...a, folded: 1 }) as MlAnomaly),
-    total24h: 0,
+    total24h: day ? day.total : null,
     openBacklog: toOpenBacklog(stats ?? { total: 0, open: 0 }),
-    bySeverity: [],
-    topSources: [],
-    eventTypes: [],
+    bySeverity: day && counted(day.rows.map((r) => toSeverity(r.severity)), 5),
+    topSources: day && counted(day.rows.map((r) => r.src_ip ?? undefined), 10),
+    eventTypes: day && counted(day.rows.map((r) => r.event_type ?? undefined), 10).map((row) => row.label),
+    ...(day && day.total > day.rows.length ? { breakdownRows: day.rows.length } : {}),
     scoreTimeline: scorePoints(scores ?? []),
     modelHealth: (health ?? []).map(toModelHealth),
   }
@@ -2214,29 +2204,27 @@ const getAnomaly: Backend['getAnomaly'] = async (id) => {
   return { anomaly: { ...anomaly, folded: 1 } as MlAnomaly, event: detail?.event ?? null }
 }
 
-/** GET /api/v1/store/auth-events — the page's own list AND its 24-hour stats,
- * off ONE read.
- *
- * The canonical page makes two (issue #74's `fetchPage` and
- * `fetchStatsWindow`, the second at `size=200`) because it pages a list and
- * separately wants a window. This page does not page — `RecordList` renders
- * every row it is handed — and its `failed24h` counts the rows in the list it
- * already has, so one read of the handler's own page cap serves both. That is
- * the mock's arithmetic too (it filters its own fixtures), and it is why the
- * "last 24h" figures are a window over the loaded page rather than over the
- * store: a fleet with more than 100 failures shows 24h counts for the first
- * 100. GAP, named in the tests.
- *
- * `byClient` and `topSources` are counted here, not by the backend: neither
- * `/api/v1/store/auth-events` (a raw passthrough) nor anything else exposes a
- * Keycloak-event aggregation. */
+/** GET /api/v1/store/auth-events: the list the page shows, and the 24 h
+ * figures, which are a windowed read (`q`, as the ML slice does) and not a
+ * count over the first rows of the list. `failed24h` is the exact count in the
+ * window. `byClient` and `topSources` are counted here over the window's first
+ * rows, and `breakdownRows` says how many when that is fewer than the total.
+ * Neither `/api/v1/store/auth-events` (a raw passthrough) nor anything else
+ * exposes a Keycloak-event aggregation. */
 const getAuthEvents: Backend['getAuthEvents'] = async () => {
-  const events = ((await get<StorePage<AuthEventRow>>('getAuthEvents', '/api/v1/store/auth-events', { offset: 0, size: 100 })) ?? { total: 0, rows: [] }).rows.map(toAuthFailure)
-  const recent = events.filter((e) => Date.now() - Date.parse(e.timestamp) < DAY_MS)
-  return { events, failed24h: recent.length, byClient: counted(recent.map((e) => e.clientId), 10), topSources: counted(recent.map((e) => e.ip), 10) }
+  const [page, day] = await Promise.all([
+    get<StorePage<AuthEventRow>>('getAuthEvents', '/api/v1/store/auth-events', { offset: 0, size: 100 }),
+    get<StorePage<AuthEventRow>>('getAuthEvents', '/api/v1/store/auth-events', { offset: 0, size: WINDOW_ROWS, q: WINDOW_24H }),
+  ])
+  const inWindow = day ? day.rows.map(toAuthFailure) : null
+  return {
+    events: (page ?? { total: 0, rows: [] }).rows.map(toAuthFailure),
+    failed24h: day ? day.total : null,
+    byClient: inWindow && counted(inWindow.map((e) => e.clientId), 10),
+    topSources: inWindow && counted(inWindow.map((e) => e.ip), 10),
+    ...(day && day.total > day.rows.length ? { breakdownRows: day.rows.length } : {}),
+  }
 }
-
-const DAY_MS = 86_400_000
 
 type QueryResult<TKey extends keyof Backend> = Awaited<ReturnType<Backend[TKey]>>
 

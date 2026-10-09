@@ -20,8 +20,13 @@ import {
   toAckAllCount,
   toAckedCount,
   toAgentCampaign,
+  barRows,
+  overviewSources,
+  pieRows,
+  seriesPoints,
   toAuthFailure,
   toCampaignSummary,
+  toCountRows,
   toDispositionStatus,
   toLlmAnalysis,
   toMlAnomalies,
@@ -143,6 +148,53 @@ const authEvent: AuthEventRow = {
 const ack: MlAckRecord = { Key: 'an_doc_1', Acknowledged: true, AckedBy: 'analyst', AckedAt: '2026-10-04T21:00:00Z' }
 
 describe('monitor adapters', () => {
+  // Bodies as GET /api/v1/sources?size=3 and the chart routes served them on
+  // 2026-10-09 (read-only probes); the source list is trimmed to its first two rows.
+  it('maps GET /sources to the overview top sources, keeping only what the wire carries', () => {
+    const wire = {
+      total_unique: 29303,
+      truncated: true,
+      rows: [
+        { ip: '85.217.149.4', country: 'DE', events: 896629, logins: 0, sessions: 0, sensors: ['zeek', 'suricata'], first: '2026-09-29T14:57:13.871Z', last: '2026-10-09T14:56:22.158Z' },
+        { ip: '85.217.149.16', country: '', events: 896623, logins: 0, sessions: 0, sensors: ['zeek'], first: '2026-09-29T14:57:13.871Z', last: '2026-10-09T14:56:22.158Z' },
+        { ip: '45.156.129.136', country: '', events: 896621, logins: 0, sessions: 0, sensors: ['zeek'], first: '2026-09-29T14:57:13.871Z', last: '2026-10-09T14:56:22.158Z' },
+      ],
+    }
+    expect(overviewSources(wire, 2)).toEqual([
+      { ip: '85.217.149.4', country: 'DE', events: 896629, firstSeen: '2026-09-29T14:57:13.871Z', lastSeen: '2026-10-09T14:56:22.158Z' },
+      { ip: '85.217.149.16', events: 896623, firstSeen: '2026-09-29T14:57:13.871Z', lastSeen: '2026-10-09T14:56:22.158Z' },
+    ])
+  })
+
+  it('maps the os-distribution pie and a bar chart to count rows, in the chart order', () => {
+    expect(pieRows([{ name: 'Linux 2.2.x-3.x', value: 14 }, { name: 'Windows 7 or 8', value: 1 }])).toEqual([
+      { id: 'Linux 2.2.x-3.x', label: 'Linux 2.2.x-3.x', count: 14 },
+      { id: 'Windows 7 or 8', label: 'Windows 7 or 8', count: 1 },
+    ])
+    // The first JA4H category is the empty string on the wire; it stays a row.
+    expect(barRows({ categories: ['', '11312_50'], values: [545613, 73] })).toEqual([
+      { id: '', label: '', count: 545613 },
+      { id: '11312_50', label: '11312_50', count: 73 },
+    ])
+  })
+
+  it('pivots series into one point per instant, keyed by the series name', () => {
+    expect(
+      seriesPoints([
+        { name: 'bytes', points: [{ time: '2026-10-08T20:00:00.000Z', value: 164474703 }, { time: '2026-10-08T21:00:00.000Z', value: 12 }] },
+        { name: 'packets', points: [{ time: '2026-10-08T21:00:00.000Z', value: 4 }] },
+      ]),
+    ).toEqual([
+      { time: '2026-10-08T20:00:00.000Z', bytes: 164474703 },
+      { time: '2026-10-08T21:00:00.000Z', bytes: 12, packets: 4 },
+    ])
+    expect(seriesPoints([])).toEqual([])
+  })
+
+  it('turns a dashboard key/count list into count rows, the key as both id and label', () => {
+    expect(toCountRows([{ key: 'CN', count: 86685, link: '/events?country=CN' }])).toEqual([{ id: 'CN', label: 'CN', count: 86685 }])
+  })
+
   it('maps GET /overview/kpis, previous figures only where the wire has them', () => {
     const [events, sources, logins] = toOverviewKpis(kpis)
     expect(events).toEqual({ id: 'events', label: 'Events', value: 18_402, previous: 15_110, trend: [812, 690, 741, 1204] })

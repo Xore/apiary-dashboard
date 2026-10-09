@@ -13,7 +13,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { TimeLines } from '#/components/charts'
-import { Panel, StatTile, MiniTable } from '#/components/DashboardBlocks'
+import { Panel, StatTile, MiniTable, windowTitle } from '#/components/DashboardBlocks'
 import { RecordList } from '#/components/RecordList'
 import { SeverityToken } from '#/components/SeverityToken'
 import { acknowledgeAllAnomalies, getMlAnomalies } from '#/data/queries'
@@ -147,7 +147,7 @@ function ModelHealthView({ data }: { data: ReturnType<typeof Route.useLoaderData
               ]}
             />
           </Panel>
-          <MiniTable title="Top source IPs by anomalies, 24h" header="Source IP" rows={data?.topSources} entity="source" />
+          <MiniTable title={windowTitle('Top source IPs by anomalies, 24h', data?.breakdownRows)} header="Source IP" rows={data?.topSources} entity="source" />
         </Grid>
       </VStack>
     </PageFrame>
@@ -168,7 +168,7 @@ function MlAnomaliesPage() {
   const counted = (values: readonly string[], of: (row: MlAnomaly) => string, label = (v: string) => v): FilterOption[] =>
     values.map((value) => ({ value, label: label(value), count: data?.anomalies.filter((row) => of(row) === value).length }))
   const setFilter = (patch: Search) => void navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true })
-  const severityCount = (severity: Severity) => (data ? (data.bySeverity.find((row) => row.label === severity)?.count ?? 0) : undefined)
+  const severityCount = (severity: Severity) => (data ? (data.bySeverity === null ? null : (data.bySeverity.find((row) => row.label === severity)?.count ?? 0)) : undefined)
   const isAdmin = useIsAdmin()
 
   if (search.view === 'models') return <ModelHealthView data={data} />
@@ -193,7 +193,7 @@ function MlAnomaliesPage() {
                   key={severity}
                   label={severity}
                   value={severityCount(severity)}
-                  caption="last 24h"
+                  caption={data?.breakdownRows ? `latest ${formatNumber(data.breakdownRows)} of 24h` : 'last 24h'}
                   href={`/ml-anomalies?severity=${severity}`}
                 />
               ))}

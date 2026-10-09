@@ -254,7 +254,7 @@ export async function getOverview(): Promise<OverviewData> {
     topUsernames: countBy(EVENTS.map((e) => e.username), USERNAMES.length).slice(0, 8),
     topPasswords: countBy(EVENTS.map((e) => e.password), PASSWORDS.length).slice(0, 8),
     recentEvents: EVENTS.slice(0, 12),
-    sensors: SENSORS,
+    sensors: countBy(EVENTS.map((e) => e.sensor), SENSORS.length).map((row) => ({ sensor: row.label, events: row.count })),
   }
 }
 

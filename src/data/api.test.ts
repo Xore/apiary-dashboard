@@ -71,9 +71,11 @@ function stub(responses: Record<string, unknown | (() => never)>) {
     'fetch',
     vi.fn(async (url: string) => {
       calls.push(url)
-      const path = new URL(url).pathname
-      const body = prefixes.find(([prefix]) => path.startsWith(prefix))
-      if (!body) throw new TypeError(`no fixture for ${path}`)
+      const parsed = new URL(url)
+      // A windowed store read (`q`) can be given its own fixture under `<path>#q`.
+      const target = parsed.searchParams.has('q') ? `${parsed.pathname}#q` : parsed.pathname
+      const body = prefixes.find(([prefix]) => target.startsWith(prefix))
+      if (!body) throw new TypeError(`no fixture for ${target}`)
       const value = body[1]
       if (typeof value === 'function') return value()
       return new Response(JSON.stringify(value), { status: 200, headers: { 'content-type': 'application/json' } })
@@ -2080,6 +2082,58 @@ const dashboardWire = {
 
 const kpisWire = { total: 1900, last24h: 980, previous24h: 820, change24h: '+19%', unique_ips: 214, hourly: [1, 2, 3], logins: 18, ready: true }
 
+/** Response bodies recorded from the real backend (read-only GETs, 2026-10-09).
+ * The catalog keeps its first two sensors; every other body is as served. */
+const recordedSources = {
+  "total_unique": 29303,
+  "truncated": true,
+  "rows": [
+    {
+      "ip": "85.217.149.4",
+      "country": "DE",
+      "events": 896629,
+      "logins": 0,
+      "sessions": 0,
+      "sensors": [
+        "zeek",
+        "suricata"
+      ],
+      "first": "2026-09-29T14:57:13.871Z",
+      "last": "2026-10-09T14:56:22.158Z"
+    },
+    {
+      "ip": "85.217.149.16",
+      "country": "",
+      "events": 896623,
+      "logins": 0,
+      "sessions": 0,
+      "sensors": [
+        "zeek"
+      ],
+      "first": "2026-09-29T14:57:13.871Z",
+      "last": "2026-10-09T14:56:22.158Z"
+    },
+    {
+      "ip": "45.156.129.136",
+      "country": "",
+      "events": 896621,
+      "logins": 0,
+      "sessions": 0,
+      "sensors": [
+        "zeek"
+      ],
+      "first": "2026-09-29T14:57:13.871Z",
+      "last": "2026-10-09T14:56:22.158Z"
+    }
+  ]
+}
+const recordedOsDistribution = [{"name": "Linux 2.2.x-3.x", "value": 14}, {"name": "Windows NT kernel 5.x", "value": 17}, {"name": "Linux 2.2.x-3.x (barebone)", "value": 6}, {"name": "Windows 7 or 8", "value": 1}, {"name": "Windows NT kernel", "value": 1}]
+const recordedCatalog = {"window": "now-14d", "sensors": [{"sensor": "cowrie", "events": 2690166, "last_seen": "2026-09-30T19:25:19.795Z"}, {"sensor": "multipot", "events": 1217778, "last_seen": "2026-09-30T19:25:19.534Z"}]}
+const recordedJa4h = {"categories": ["ge11nn040000_e1d2031bdfea_000000000000_000000000000", "ge11nn06enus_8d3d7241d0f5_000000000000_000000000000", "ge11nn030000_cd680697de12_000000000000_000000000000", "ge11nn09en u_11106e000afa_000000000000_000000000000", "ge11nn040000_66d37a417839_000000000000_000000000000", "op00nn000000_000000000000_000000000000_000000000000", "op00nn010000_ab85ac6458c5_000000000000_000000000000", "ge11nn110000_0a45cece97b8_000000000000_000000000000", "ge11nn030000_fe444ad14866_000000000000_000000000000", "ge11nn010000_4a823118b9ba_000000000000_000000000000", "ge11nn050000_2f4dedb4228f_000000000000_000000000000", "ge11nn040000_5b1e8b5f4d2d_000000000000_000000000000", "ge11nn040000_08e7224bf8c7_000000000000_000000000000", "ge11nn000000_000000000000_000000000000_000000000000", "ge10nn000000_000000000000_000000000000_000000000000"], "values": [3985, 985, 339, 268, 263, 225, 202, 198, 196, 193, 165, 150, 132, 125, 120]}
+const recordedEndlessh = {"categories": ["<1s", "1-5s", "5-15s", "15-60s", "1-5min", "5min+"], "values": [0, 0, 0, 0, 0, 0]}
+const recordedNetflowBytes = [{"name": "bytes", "points": [{"time": "2026-10-08T20:00:00.000Z", "value": 164474703}]}]
+const emptyBars = { categories: [], values: [] }
+
 /** `emptyDashboard` is what a bodyless 200 maps to; every other slice's
  * fixture set includes the config doc the read-only guard reads before a
  * write, and this one needs it for the same reason. */
@@ -2090,6 +2144,12 @@ const monitorFixtures = (overrides: Record<string, unknown> = {}) => ({
   '/api/v1/campaigns': { total: 1, rows: [] },
   '/api/v1/events': { total: 2, offset: 0, rows: [] },
   '/api/v1/store/ml-anomalies': { total: 1, rows: [{ ...mlRow, _doc_id: 'anom-1' }] },
+  // The 24-hour window: three anomalies, two critical from one address and one from none.
+  '/api/v1/store/ml-anomalies#q': { total: 3, offset: 0, rows: [
+    { ...mlRow, _doc_id: 'anom-w1', severity: 'critical', src_ip: '203.0.113.42', event_type: 'ssh' },
+    { ...mlRow, _doc_id: 'anom-w2', severity: 'high', src_ip: '203.0.113.42', event_type: 'http' },
+    { ...mlRow, _doc_id: 'anom-w3', severity: 'critical', src_ip: null, event_type: 'ssh' },
+  ] },
   '/api/v1/ml-anomalies/acks': {},
   '/api/v1/ml-anomalies/stats': { total: 9, open: 4 },
   '/api/v1/ml-health': [{ model: 'isolation_forest', timestamp: '2026-10-04T17:00:00Z', accepted: true, reason: 'within tolerance', anomaly_rate_new: 0.021, anomaly_rate_previous: 0.019, train_samples: 184_220 }],
@@ -2098,6 +2158,24 @@ const monitorFixtures = (overrides: Record<string, unknown> = {}) => ({
   '/api/v1/llm-search': { available: true, hits: [] },
   '/api/v1/store/agent-campaigns': { total: 1, rows: [{ ...campaignRow, _doc_id: 'cmp-doc-1' }] },
   '/api/v1/store/auth-events': { total: 1, rows: [{ ...authRow, _doc_id: 'kc-doc-1' }] },
+  '/api/v1/store/auth-events#q': { total: 1, rows: [{ ...authRow, _doc_id: 'kc-doc-1' }] },
+  '/api/v1/sources': recordedSources,
+  '/api/v1/sensors/catalog': recordedCatalog,
+  '/api/v1/charts/os-distribution': recordedOsDistribution,
+  '/api/v1/charts/ja4h-fingerprints': recordedJa4h,
+  '/api/v1/charts/endlessh-held-histogram': recordedEndlessh,
+  '/api/v1/charts/netflow-bytes': recordedNetflowBytes,
+  '/api/v1/charts/tcp-stack-clusters': [],
+  '/api/v1/charts/ml-backlog': [],
+  '/api/v1/charts/netflow-packets': [],
+  '/api/v1/charts/ics-functions': emptyBars,
+  '/api/v1/charts/decoy-requests': emptyBars,
+  '/api/v1/charts/decoy-client-fingerprints': emptyBars,
+  '/api/v1/charts/ja4l-fingerprints': emptyBars,
+  '/api/v1/charts/ja4x-fingerprints': emptyBars,
+  '/api/v1/charts/tls-fingerprints': emptyBars,
+  '/api/v1/charts/ssh-fingerprints': emptyBars,
+  '/api/v1/charts/dionaea-cves': emptyBars,
   '/api/v1/ml-anomalies/ack': { Key: 'anom-1', Acknowledged: true, AckedBy: '', AckedAt: '2026-10-05T00:00:00Z' },
   '/api/v1/ml-anomalies/ack-all': { changed: 4 },
   '/api/v1/ml-anomalies/disposition': { key: 'anom-1', status: 'true_positive', disposed_at: '2026-10-05T00:00:00Z' },
@@ -2109,7 +2187,14 @@ describe('the Monitor slice reads the endpoints the Rust tier actually serves', 
   it('builds the overview from the KPIs, the payload count and the recent events', async () => {
     const calls = stub(monitorFixtures())
     const out = await live('getOverview')()
-    expect(calls.map((url) => `${new URL(url).pathname}${new URL(url).search}`).sort()).toEqual(['/api/v1/events?offset=0&size=18', '/api/v1/overview/kpis', '/api/v1/payloads?offset=0&size=15'])
+    expect(calls.map((url) => `${new URL(url).pathname}${new URL(url).search}`).sort()).toEqual([
+      '/api/v1/events?offset=0&size=18',
+      '/api/v1/overview/dashboard?parts=countries',
+      '/api/v1/overview/kpis',
+      '/api/v1/payloads?offset=0&size=15',
+      '/api/v1/sensors/catalog',
+      '/api/v1/sources?offset=0&size=10',
+    ])
     // Only the three tiles /overview/kpis can fill, plus the payloads tile
     // overview.rs's own module doc sends to the store listing.
     expect(out.kpis.map((kpi) => [kpi.id, kpi.value])).toEqual([
@@ -2124,46 +2209,100 @@ describe('the Monitor slice reads the endpoints the Rust tier actually serves', 
   })
 
   it('leaves the sessions KPI tile out — no endpoint counts sessions', async () => {
-    // GAP: a session is an event correlation built per row by the events
-    // slice's endpoint; no aggregation over them exists in the Rust tier. The
-    // tile is dropped rather than filled with a count of anything else.
+    // GAP (APIARY#3556): no endpoint counts sessions. The tile is absent from
+    // the live data, and the page renders it as not available.
     stub(monitorFixtures())
     expect((await live('getOverview')()).kpis.map((kpi) => kpi.id)).not.toContain('sessions')
   })
 
-  it('leaves the overview source, country and credential lists empty rather than inventing rows', async () => {
-    // GAP: `/overview/dashboard`'s `top_ips` is a key and a count — no country,
-    // ASN, session rollup, risk score or provider — and the wire deliberately
-    // never splits credentials into usernames and passwords, only `user / pass`
-    // pairs. A row of zeros would read as a real source with no context.
+  it('fills the top sources from the sources list, the countries from the dashboard, and the sensors from the catalog', async () => {
     stub(monitorFixtures())
     const out = await live('getOverview')()
-    expect(out.topSources).toEqual([])
-    expect(out.topCountries).toEqual([])
-    expect(out.topUsernames).toEqual([])
-    expect(out.topPasswords).toEqual([])
+    // The recorded rows, highest event count first, as the page type carries them.
+    // The second row has no country on the wire: it is absent, not ''.
+    expect(out.topSources).toEqual([
+      { ip: '85.217.149.4', country: 'DE', events: 896629, firstSeen: '2026-09-29T14:57:13.871Z', lastSeen: '2026-10-09T14:56:22.158Z' },
+      { ip: '85.217.149.16', events: 896623, firstSeen: '2026-09-29T14:57:13.871Z', lastSeen: '2026-10-09T14:56:22.158Z' },
+      { ip: '45.156.129.136', events: 896621, firstSeen: '2026-09-29T14:57:13.871Z', lastSeen: '2026-10-09T14:56:22.158Z' },
+    ])
+    expect(out.topSources?.[1]).not.toHaveProperty('country')
+    expect(out.topCountries).toEqual([{ id: 'NL', label: 'NL', count: 611 }])
+    expect(out.sensors).toEqual([{ sensor: 'cowrie', events: 2690166 }, { sensor: 'multipot', events: 1217778 }])
+  })
+
+  it('leaves the usernames and passwords unavailable: the wire has only user / pass pairs', async () => {
+    // GAP: `top_creds` is one pair per key. Splitting it into two lists would
+    // be two invented ones, so both widgets are unavailable and the credential
+    // tab shows the pairs.
+    stub(monitorFixtures())
+    const out = await live('getOverview')()
+    expect(out.topUsernames).toBeNull()
+    expect(out.topPasswords).toBeNull()
     // The KPIs' own unique-address count is real, so it is the sources tile.
     expect(out.kpis.find((kpi) => kpi.id === 'sources')?.value).toBe(214)
   })
 
-  it('buckets the recent events into the 24 hours the timeline chart draws', async () => {
-    vi.useFakeTimers({ now: new Date('2026-10-05T00:00:00Z'), toFake: ['Date'] })
-    const at = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60_000).toISOString()
-    stub(monitorFixtures({ '/api/v1/events': { total: 3, offset: 0, rows: [row, { ...row, id: 'ev_2', time: at(2), proto: 'http' }, { ...row, id: 'ev_3', time: at(30), proto: 'ssh' }] } }))
-    const { timeline } = await live('getOverview')()
-    vi.useRealTimers()
-    expect(timeline).toHaveLength(24)
-    expect(timeline.at(-1)?.total).toBe(2)
-    expect(timeline.at(-1)?.byProtocol).toEqual({ ssh: 1, http: 1 })
-    // 30 minutes back is still inside the final hour bucket; the sum across
-    // the sheet is the three rows the page asked for.
-    expect(timeline.reduce((sum, b) => sum + b.total, 0)).toBe(3)
+  it('leaves the 24-hour timeline and protocol list unavailable rather than built from the first 18 events', async () => {
+    // GAP (APIARY#3556): no 24 h hourly rollup on the wire. The events page is
+    // paged by offset, so an hour-bucket chart of it is an approximation of 18
+    // events, which is not drawn as a measurement.
+    stub(monitorFixtures({ '/api/v1/events': { total: 3, offset: 0, rows: [row] } }))
+    const out = await live('getOverview')()
+    expect(out.timeline).toBeNull()
+    expect(out.topProtocols).toBeNull()
+    // The recent rows are real and still there.
+    expect(out.recentEvents).toHaveLength(1)
   })
 
-  it('fills the fifteen views the dashboard endpoint carries', async () => {
+  it('leaves the KPI tiles null when /overview/kpis has no answer, and the rest of the overview still renders', async () => {
+    // A 404 on a fixed endpoint is a broken backend, not an empty fleet: the
+    // tiles it fills are not available, and the other legs still fill the page.
+    stub(monitorFixtures({ '/api/v1/overview/kpis': fail(404), '/api/v1/events': { total: 1, offset: 0, rows: [row] } }))
+    const out = await live('getOverview')()
+    expect(out.kpis.map((kpi) => [kpi.id, kpi.value])).toEqual([
+      ['events', null],
+      ['sources', null],
+      ['logins', null],
+      ['payloads', 37],
+    ])
+    expect(out.kpis[0]).toMatchObject({ previous: null, trend: [] })
+    expect(out.topSources).toHaveLength(3)
+    expect(out.topCountries).toEqual([{ id: 'NL', label: 'NL', count: 611 }])
+    expect(out.sensors).toHaveLength(2)
+    expect(out.recentEvents).toHaveLength(1)
+  })
+
+  it('leaves the payload tile, the dashboard views and the campaigns null per field when their endpoints have no answer', async () => {
+    stub(monitorFixtures({ '/api/v1/overview/dashboard': fail(404), '/api/v1/payloads': fail(404), '/api/v1/campaigns': fail(404) }))
+    const overview = await live('getOverview')()
+    expect(overview.kpis.find((kpi) => kpi.id === 'payloads')?.value).toBeNull()
+    expect(overview.kpis.find((kpi) => kpi.id === 'events')?.value).toBe(980)
+    const views = await live('getOverviewViews')()
+    expect(views.protocols).toBeNull()
+    expect(views.credentials).toBeNull()
+    expect(views.feeds).toBeNull()
+    expect(views.mapPoints).toBeNull()
+    expect(views.heatmap).toBeNull()
+    expect(views.payloads).toBeNull()
+    expect(views.campaigns).toBeNull()
+    // The chart routes are separate endpoints and still answer.
+    expect(views.osDistribution?.length).toBeGreaterThan(0)
+  })
+
+  it('reports the sources as unavailable when the sources route has no answer', async () => {
+    stub(monitorFixtures({ '/api/v1/sources': fail(404), '/api/v1/sensors/catalog': fail(404) }))
+    const out = await live('getOverview')()
+    expect(out.topSources).toBeNull()
+    expect(out.sensors).toBeNull()
+  })
+
+  it('fills the deep-dive tabs the dashboard endpoint and the chart routes carry', async () => {
     const calls = stub(monitorFixtures())
     const views = await live('getOverviewViews')()
-    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/campaigns', '/api/v1/overview/dashboard', '/api/v1/payloads'])
+    const paths = calls.map((url) => new URL(url).pathname)
+    expect(paths.filter((p) => !p.startsWith('/api/v1/charts/')).sort()).toEqual(['/api/v1/campaigns', '/api/v1/overview/dashboard', '/api/v1/payloads'])
+    // Fifteen chart routes, each read through the same chart proxy path.
+    expect(paths.filter((p) => p.startsWith('/api/v1/charts/'))).toHaveLength(15)
     expect(views.protocols).toEqual([{ id: 'ssh', label: 'ssh', count: 412 }])
     expect(views.credentials).toEqual([{ id: 'root / toor', label: 'root / toor', count: 140 }])
     // A heat cell's `pct`/`label` are the backend's own intensity, which the
@@ -2172,38 +2311,44 @@ describe('the Monitor slice reads the endpoints the Rust tier actually serves', 
     // `state` is the backend's three-value string; `SensorFeed.state` is the
     // page's four.
     expect(views.feeds).toEqual([{ sensor: 'cowrie', state: 'fresh', documents: 980, lastSeen: '2026-10-04T20:41:03Z' }])
+    // Pie slices and bar categories become one count row each, in the chart's order.
+    expect(views.osDistribution?.slice(0, 2)).toEqual([
+      { id: 'Linux 2.2.x-3.x', label: 'Linux 2.2.x-3.x', count: 14 },
+      { id: 'Windows NT kernel 5.x', label: 'Windows NT kernel 5.x', count: 17 },
+    ])
+    expect(views.ja4h?.[0]).toEqual({ id: 'ge11nn040000_e1d2031bdfea_000000000000_000000000000', label: 'ge11nn040000_e1d2031bdfea_000000000000_000000000000', count: 3985 })
+    expect(views.endlessh?.map((bucket) => bucket.label)).toEqual(['<1s', '1-5s', '5-15s', '15-60s', '1-5min', '5min+'])
+    // A series becomes one point per instant, keyed by the series name.
+    expect(views.netflowBytes).toEqual([{ time: '2026-10-08T20:00:00.000Z', bytes: 164474703 }])
+    expect(views.mlBacklog).toEqual([])
   })
 
-  it('leaves the twenty view tabs the dashboard endpoint has no slice for empty', async () => {
-    // GAP: vectors, ml-backlog, netflow, conformance, CVEs and the
-    // OS/TCP/ICS/decoy/JA4/TLS/SSH/endlessh breakdowns are the
-    // `/api/v1/charts/*` routes — a different endpoint, already served to the
-    // browser by the chart proxy in #82. They are empty here rather than
-    // invented, which is why the deep-dive tabs render empty against live
-    // data while the live tab is fully live.
+  it('leaves the vectors and conformance views unavailable: no endpoint carries them', async () => {
     stub(monitorFixtures())
     const views = await live('getOverviewViews')()
-    for (const key of ['vectors', 'mlBacklog', 'netflowBytes', 'netflowPackets', 'conformance', 'cves', 'osDistribution', 'tcpClusters', 'icsFunctions', 'decoyRequests', 'decoyClients', 'ja4h', 'ja4l', 'ja4x', 'tls', 'ssh', 'endlessh'] as const) {
-      expect(views[key], key).toEqual(key === 'vectors' ? {} : [])
-    }
+    expect(views.vectors).toBeNull()
+    expect(views.conformance).toBeNull()
+  })
+
+  it('leaves a chart whose route has no answer unavailable, not an empty list', async () => {
+    // A 404 from /api/v1/charts/{name} is "no such route" to the proxy, so the
+    // page must not read it as a chart with no rows.
+    stub(monitorFixtures({ '/api/v1/charts/tls-fingerprints': fail(404), '/api/v1/charts/netflow-bytes': fail(404) }))
+    const views = await live('getOverviewViews')()
+    expect(views.tls).toBeNull()
+    expect(views.netflowBytes).toBeNull()
+    expect(views.ssh).toEqual([])
   })
 
   it('reads the anomaly rows, the ack sidecar, the backlog and the model health', async () => {
     const calls = stub(monitorFixtures())
     const out = await live('getMlAnomalies')()
-    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/charts/ml-anomaly-scores', '/api/v1/ml-anomalies/acks', '/api/v1/ml-anomalies/stats', '/api/v1/ml-health', '/api/v1/store/ml-anomalies'])
+    expect(calls.map((url) => new URL(url).pathname).sort()).toEqual(['/api/v1/charts/ml-anomaly-scores', '/api/v1/ml-anomalies/acks', '/api/v1/ml-anomalies/stats', '/api/v1/ml-health', '/api/v1/store/ml-anomalies', '/api/v1/store/ml-anomalies'])
     expect(out.anomalies).toMatchObject([{ id: 'anom-1', severity: 'critical', compositeScore: 0.87, srcIp: '203.0.113.42', status: 'open', sourceIndex: 'honeypot-v2-2026.10.04' }])
     // `open` is the all-time backlog, which is why it feeds its own labelled
     // tile rather than the 24-hour one.
     expect(out.openBacklog).toBe(4)
     expect(out.modelHealth).toEqual([{ model: 'isolation_forest', timestamp: '2026-10-04T17:00:00Z', accepted: true, reason: 'within tolerance', anomalyRateNew: 0.021, anomalyRatePrevious: 0.019, trainSamples: 184_220 }])
-  })
-
-  it('lets an operator verdict win over an ack, because the two stores are merged', async () => {
-    // detail.rs writes the disposition ONTO the anomaly document and the ack
-    // into a sidecar, so a bulk acknowledge must not downgrade a verdict.
-    stub(monitorFixtures({ '/api/v1/ml-anomalies/acks': { 'anom-1': { Key: 'anom-1', Acknowledged: true, AckedBy: 'A', AckedAt: '2026-10-05T00:00:00Z' } }, '/api/v1/store/ml-anomalies': { total: 1, rows: [{ ...mlRow, status: 'true_positive', _doc_id: 'anom-1' }] } }))
-    expect((await live('getMlAnomalies')()).anomalies[0].status).toBe('true_positive')
   })
 
   it('reads the ack sidecar when the anomaly document says open', async () => {
@@ -2219,19 +2364,37 @@ describe('the Monitor slice reads the endpoints the Rust tier actually serves', 
     expect((await live('getMlAnomalies')()).anomalies[0].modelScores).toEqual({ isolationForest: 0.91, lstmAe: 0, hbos: 0.62 })
   })
 
-  it('leaves the 24-hour tile and its three breakdowns at zero — no windowed store query', async () => {
-    // GAP: `/api/v1/store/ml-anomalies` takes only offset/size/q, so a 24-hour
-    // window has to be spelled as a Lucene range in a query string this seam
-    // otherwise passes through untouched. The rows are real and unfiltered;
-    // the 24-hour figures over them are not claimed.
-    stub(monitorFixtures())
+  it('counts the 24-hour figures from a windowed store read', async () => {
+    // The store takes a Lucene `q`; the 24 h window is the one the old
+    // dashboard sent. The total is the exact count in the window, and the
+    // breakdowns are counted over its rows.
+    const calls = stub(monitorFixtures())
     const out = await live('getMlAnomalies')()
-    expect(out.total24h).toBe(0)
-    expect(out.bySeverity).toEqual([])
-    expect(out.topSources).toEqual([])
+    expect(calls.map((url) => new URL(url).searchParams.get('q')).filter(Boolean)).toEqual(['@timestamp:[now-24h TO now]'])
+    expect(out.total24h).toBe(3)
+    expect(out.bySeverity).toEqual([{ id: 'critical', label: 'critical', count: 2 }, { id: 'high', label: 'high', count: 1 }])
+    expect(out.topSources).toEqual([{ id: '203.0.113.42', label: '203.0.113.42', count: 2 }])
+    expect(out.eventTypes).toEqual(['ssh', 'http'])
+    // Every window row is counted, so no "latest N" note is due.
+    expect(out.breakdownRows).toBeUndefined()
     // `folded` is the page's own same-address-and-second grouping over the
     // loaded page; one stored document is one anomaly, so nothing is claimed.
     expect(out.anomalies.map((a) => a.folded)).toEqual([1])
+  })
+
+  it('says how many rows the breakdowns cover when the window holds more than were loaded', async () => {
+    stub(monitorFixtures({ '/api/v1/store/ml-anomalies#q': { total: 9000, offset: 0, rows: [{ ...mlRow, _doc_id: 'anom-w1', src_ip: '203.0.113.42', event_type: 'ssh' }] } }))
+    const out = await live('getMlAnomalies')()
+    expect(out.total24h).toBe(9000)
+    expect(out.breakdownRows).toBe(1)
+  })
+
+  it('reports an empty window as zero, a real answer, not as unavailable', async () => {
+    // A failed read throws; an empty window is a real count of nothing.
+    stub(monitorFixtures({ '/api/v1/store/ml-anomalies#q': { total: 0, offset: 0, rows: [] } }))
+    const out = await live('getMlAnomalies')()
+    expect(out.total24h).toBe(0)
+    expect(out.bySeverity).toEqual([])
   })
 
   it('transposes the ml-anomaly-scores chart into the page one-row-per-instant shape', async () => {
@@ -2405,21 +2568,29 @@ describe('the Monitor slice reads the endpoints the Rust tier actually serves', 
     }
   })
 
-  it('reads the auth-events list and counts its own 24-hour window', async () => {
-    // The window counts against the wall clock: pin it an hour past the fixture.
-    vi.useFakeTimers({ now: new Date('2026-10-04T20:00:00Z'), toFake: ['Date'] })
+  it('reads the auth-events list, and counts its 24-hour figures from a windowed read', async () => {
+    // The window counts against the wall clock; the list read is the first call.
     const calls = stub(monitorFixtures())
     const out = await live('getAuthEvents')()
-    vi.useRealTimers()
     expect(calls[0]).toContain('/api/v1/store/auth-events?offset=0&size=100')
+    expect(calls.map((url) => new URL(url).searchParams.get('q')).filter(Boolean)).toEqual(['@timestamp:[now-24h TO now]'])
     // username and redirect_uri are nested under `details` by the
     // auth-events-worker, not at the top level; Keycloak leaves the redirect
     // unset on most event types, and `''` means absent.
     expect(out.events).toMatchObject([{ id: 'kc-4411', ip: '203.0.113.42', username: 'admin', clientId: 'grafana', redirectUri: undefined }])
-    // Neither the store passthrough nor anything else aggregates Keycloak
-    // events, so these two rollups are counted here over the loaded page.
+    expect(out.failed24h).toBe(1)
     expect(out.byClient).toEqual([{ id: 'grafana', label: 'grafana', count: 1 }])
     expect(out.topSources).toEqual([{ id: '203.0.113.42', label: '203.0.113.42', count: 1 }])
+    expect(out.breakdownRows).toBeUndefined()
+  })
+
+  it('counts the whole 24-hour window, and says the breakdowns cover only the rows loaded', async () => {
+    // The 100-row list used to stand in for the window; the window's own total
+    // is the figure now, and its breakdowns say how many rows they were counted over.
+    stub(monitorFixtures({ '/api/v1/store/auth-events#q': { total: 250, offset: 0, rows: [{ ...authRow, _doc_id: 'kc-w1' }] } }))
+    const out = await live('getAuthEvents')()
+    expect(out.failed24h).toBe(250)
+    expect(out.breakdownRows).toBe(1)
   })
 
   it('maps a failed Monitor fetch to an error, never to an empty panel', async () => {

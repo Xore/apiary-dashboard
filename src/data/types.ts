@@ -124,8 +124,9 @@ export interface AttackSource extends Record<string, unknown> {
 export interface Kpi {
   id: string
   label: string
-  value: number
-  previous: number
+  /** Null when the endpoint that fills this tile has no answer. */
+  value: Unavailable<number>
+  previous: Unavailable<number>
   /** Hourly values oldest → newest, for sparklines. */
   trend: number[]
 }
@@ -143,17 +144,45 @@ export interface CountRow extends Record<string, unknown> {
   count: number
 }
 
+/** A Monitor widget's data, or `null` when the backend cannot supply it: no
+ * endpoint carries the figure yet (APIARY#3556 for the sessions count and a
+ * true 24 h timeline), or the chart route the widget reads is missing. A
+ * widget given `null` renders "not available from the backend yet", never an
+ * empty list or a zero that reads like a measurement. An empty array is always
+ * a real answer ("nothing in the window"). */
+export type Unavailable<T> = T | null
+
+/** One top attacker on the overview. `/api/v1/sources` ranks by events over
+ * the last 10 days (not 24 h) and carries no ASN, org, risk score, tags,
+ * provider or city, so none of those is here: a field the wire does not
+ * supply is left out, not set to a placeholder. */
+export interface OverviewSource extends Record<string, unknown> {
+  ip: string
+  /** Absent when the wire has no country for the address. */
+  country?: string
+  events: number
+  firstSeen: string
+  lastSeen: string
+}
+
 export interface OverviewData {
   generatedAt: string
   kpis: Kpi[]
-  timeline: TimeBucket[]
-  topProtocols: Protocol[]
-  topSources: AttackSource[]
-  topCountries: CountRow[]
-  topUsernames: CountRow[]
-  topPasswords: CountRow[]
-  recentEvents: HoneypotEvent[]
-  sensors: Sensor[]
+  /** Unavailable: a 24 h protocol timeline needs a windowed rollup the backend
+   * does not serve yet (APIARY#3556). */
+  timeline: Unavailable<TimeBucket[]>
+  /** Unavailable: derived from the same 18 recent events as the timeline, so
+   * it is not a 24 h figure. */
+  topProtocols: Unavailable<Protocol[]>
+  topSources: Unavailable<OverviewSource[]>
+  topCountries: Unavailable<CountRow[]>
+  /** Unavailable: the wire serves usernames and passwords only as `user / pass`
+   * pairs (`top_creds`), and the credentials tab shows those. */
+  topUsernames: Unavailable<CountRow[]>
+  /** Unavailable: see `topUsernames`. */
+  topPasswords: Unavailable<CountRow[]>
+  recentEvents: Unavailable<HoneypotEvent[]>
+  sensors: Unavailable<SensorSummary[]>
 }
 
 // ---- Monitor: ML anomalies -------------------------------------------------
@@ -204,11 +233,15 @@ export interface ScorePoint extends Record<string, unknown> {
 
 export interface MlAnomaliesData {
   anomalies: MlAnomaly[]
-  total24h: number
+  /** Every anomaly in the last 24 h (a windowed store count). */
+  total24h: Unavailable<number>
   openBacklog: number
-  bySeverity: CountRow[]
-  topSources: CountRow[]
-  eventTypes: string[]
+  /** The three breakdowns below are counted over the window's rows. When
+   * `breakdownRows` is set, that is the latest N of `total24h`, not all of it. */
+  bySeverity: Unavailable<CountRow[]>
+  topSources: Unavailable<CountRow[]>
+  eventTypes: Unavailable<string[]>
+  breakdownRows?: number
   scoreTimeline: ScorePoint[]
   modelHealth: ModelHealth[]
 }
@@ -295,9 +328,13 @@ export interface AuthFailure extends Record<string, unknown> {
 
 export interface AuthEventsData {
   events: AuthFailure[]
-  failed24h: number
-  byClient: CountRow[]
-  topSources: CountRow[]
+  /** Every failure in the last 24 h (a windowed store count). */
+  failed24h: Unavailable<number>
+  /** Counted over the window's rows. When `breakdownRows` is set, over the
+   * latest N of `failed24h`, not all of it. */
+  byClient: Unavailable<CountRow[]>
+  topSources: Unavailable<CountRow[]>
+  breakdownRows?: number
 }
 
 // ---- Investigate -----------------------------------------------------------
@@ -1449,42 +1486,47 @@ export interface AttackVectors {
   protocols: CountRow[]
 }
 
+/** The deep-dive tabs. Every field the dashboard endpoint fills, and the
+ * payloads and campaigns legs, is `Unavailable` when its endpoint has no
+ * answer. The chart-backed fields are `Unavailable` when their
+ * `/api/v1/charts/*` route does not answer; `vectors` and `conformance` have no
+ * backend source at all. */
 export interface OverviewViews {
-  heatmap: HeatmapRow[]
-  vectors: Record<string, AttackVectors>
-  mapPoints: MapPoint[]
-  feeds: SensorFeed[]
-  protocols: CountRow[]
-  mlBacklog: SeriesPoint[]
-  topIps: CountRow[]
-  topPorts: CountRow[]
-  countries: CountRow[]
-  asns: CountRow[]
-  providers: CountRow[]
-  netflowBytes: SeriesPoint[]
-  netflowPackets: SeriesPoint[]
-  conformance: SeriesPoint[]
-  cves: CountRow[]
-  credentials: CountRow[]
-  commands: CountRow[]
-  clients: CountRow[]
-  fingerprints: CountRow[]
-  paths: CountRow[]
-  osDistribution: CountRow[]
-  tcpClusters: CountRow[]
-  icsFunctions: CountRow[]
-  decoyRequests: CountRow[]
-  decoyClients: CountRow[]
-  ja4h: CountRow[]
-  ja4l: CountRow[]
-  ja4x: CountRow[]
-  tls: CountRow[]
-  ssh: CountRow[]
-  endlessh: CountRow[]
-  alerts: CountRow[]
-  alertCategories: CountRow[]
-  payloads: CapturedPayload[]
-  campaigns: NetworkCampaign[]
+  heatmap: Unavailable<HeatmapRow[]>
+  vectors: Unavailable<Record<string, AttackVectors>>
+  mapPoints: Unavailable<MapPoint[]>
+  feeds: Unavailable<SensorFeed[]>
+  protocols: Unavailable<CountRow[]>
+  mlBacklog: Unavailable<SeriesPoint[]>
+  topIps: Unavailable<CountRow[]>
+  topPorts: Unavailable<CountRow[]>
+  countries: Unavailable<CountRow[]>
+  asns: Unavailable<CountRow[]>
+  providers: Unavailable<CountRow[]>
+  netflowBytes: Unavailable<SeriesPoint[]>
+  netflowPackets: Unavailable<SeriesPoint[]>
+  conformance: Unavailable<SeriesPoint[]>
+  cves: Unavailable<CountRow[]>
+  credentials: Unavailable<CountRow[]>
+  commands: Unavailable<CountRow[]>
+  clients: Unavailable<CountRow[]>
+  fingerprints: Unavailable<CountRow[]>
+  paths: Unavailable<CountRow[]>
+  osDistribution: Unavailable<CountRow[]>
+  tcpClusters: Unavailable<CountRow[]>
+  icsFunctions: Unavailable<CountRow[]>
+  decoyRequests: Unavailable<CountRow[]>
+  decoyClients: Unavailable<CountRow[]>
+  ja4h: Unavailable<CountRow[]>
+  ja4l: Unavailable<CountRow[]>
+  ja4x: Unavailable<CountRow[]>
+  tls: Unavailable<CountRow[]>
+  ssh: Unavailable<CountRow[]>
+  endlessh: Unavailable<CountRow[]>
+  alerts: Unavailable<CountRow[]>
+  alertCategories: Unavailable<CountRow[]>
+  payloads: Unavailable<CapturedPayload[]>
+  campaigns: Unavailable<NetworkCampaign[]>
 }
 
 // ---- Entity pages ----------------------------------------------------------
