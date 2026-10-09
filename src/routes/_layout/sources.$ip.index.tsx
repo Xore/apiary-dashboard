@@ -6,7 +6,7 @@ import { VStack } from '@astryxdesign/core/Stack'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
-import { unavailableOf } from '#/lib/unavailable'
+import { backendGapOf } from '#/lib/backendGap'
 import { StatTile } from '#/components/DashboardBlocks'
 import { EventsPanel } from '#/components/DetailBlocks'
 import { osGuessCaption } from '#/components/EntityBlocks'
@@ -15,7 +15,7 @@ const parent = getRouteApi('/_layout/sources/$ip')
 
 export const Route = createFileRoute('/_layout/sources/$ip/')({
   ssr: pageSsr,
-  loader: ({ params }) => unavailableOf(getRelated('source', params.ip)),
+  loader: ({ params }) => backendGapOf(getRelated('source', params.ip)),
   component: SourceOverview,
   pendingComponent: SourceOverview,
 })

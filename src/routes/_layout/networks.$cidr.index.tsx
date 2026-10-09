@@ -5,13 +5,13 @@ import { VStack } from '@astryxdesign/core/Stack'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
-import { unavailableOf } from '#/lib/unavailable'
+import { backendGapOf } from '#/lib/backendGap'
 
 const parent = getRouteApi('/_layout/networks/$cidr')
 
 export const Route = createFileRoute('/_layout/networks/$cidr/')({
   ssr: pageSsr,
-  loader: ({ params }) => unavailableOf(getRelated('network', params.cidr)),
+  loader: ({ params }) => backendGapOf(getRelated('network', params.cidr)),
   component: TabView,
   pendingComponent: TabView,
 })

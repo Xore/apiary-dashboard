@@ -16,13 +16,13 @@ afterEach(cleanup)
 
 describe('a panel whose data is unavailable', () => {
   it('names what is missing in the related panel', () => {
-    render(wrap(<RelatedPanel center="203.0.113.4" groups={{ unavailable: detail }} />))
+    render(wrap(<RelatedPanel center="203.0.113.4" groups={{ gap: detail }} />))
     expect(screen.getByText('Not available from the backend yet')).toBeTruthy()
     expect(screen.getByText(detail)).toBeTruthy()
   })
 
   it('names what is missing in the timeline, not the empty-range message', () => {
-    render(wrap(<Timeline items={{ unavailable: detail }} />))
+    render(wrap(<Timeline items={{ gap: detail }} />))
     expect(screen.getByText('Not available from the backend yet')).toBeTruthy()
     expect(screen.queryByText('Nothing happened in this time range.')).toBeNull()
   })

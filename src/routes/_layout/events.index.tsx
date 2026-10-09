@@ -17,7 +17,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { RecordList } from '#/components/RecordList'
 import { SeverityToken } from '#/components/SeverityToken'
 import { getEvents, getFacets } from '#/data/queries'
-import { isUnavailable, unavailableOf } from '#/lib/unavailable'
+import { isBackendGap, backendGapOf } from '#/lib/backendGap'
 import { FilterSelect, listParam, toNumericParam, toParam } from '#/components/FilterSelect'
 import type { FilterOption } from '#/components/FilterSelect'
 import type { EventFilters, EventKind, EventsPage, Facets, HoneypotEvent } from '#/data/types'
@@ -85,7 +85,7 @@ export const Route = createFileRoute('/_layout/events/')({
   loader: async ({ deps: { page, ...filters } }) => {
     // The counted facets are unavailable until the backend serves them
     // (#3524); the explorer still runs without them, on the vocabulary the rows carry.
-    const [events, facets] = await Promise.all([pageRequest(page).then((request) => getEvents({ ...filters, ...request })), unavailableOf(getFacets())])
+    const [events, facets] = await Promise.all([pageRequest(page).then((request) => getEvents({ ...filters, ...request })), backendGapOf(getFacets())])
     return { ...events, facets }
   },
   component: EventsPage,
@@ -96,10 +96,10 @@ export const Route = createFileRoute('/_layout/events/')({
  * them, the filter-values vocabulary the explorer's own read carries: keys,
  * no counts, for the four filters it covers. The rest offer no list, and the
  * two that take any value still accept a typed one. */
-function optionsOf(key: (typeof FILTERS)[number]['key'], data: (EventsPage & { facets: Facets | { unavailable: string } }) | undefined): FilterOption[] {
+function optionsOf(key: (typeof FILTERS)[number]['key'], data: (EventsPage & { facets: Facets | { gap: string } }) | undefined): FilterOption[] {
   if (!data) return []
   const facets = data.facets
-  if (!isUnavailable(facets)) return FILTERS.find((f) => f.key === key)!.options(facets)
+  if (!isBackendGap(facets)) return FILTERS.find((f) => f.key === key)!.options(facets)
   const { values } = data
   switch (key) {
     case 'sensor':

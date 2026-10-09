@@ -3,12 +3,12 @@ import { orPending } from '#/lib/pending'
 import { createFileRoute } from '@tanstack/react-router'
 import { Timeline } from '#/components/EntityBlocks'
 import { getEntityTimeline } from '#/data/queries'
-import { unavailableOf } from '#/lib/unavailable'
+import { backendGapOf } from '#/lib/backendGap'
 
 export const Route = createFileRoute('/_layout/ioc/$kind/$value/timeline')({
   ssr: pageSsr,
   loaderDeps: ({ search }) => ({ range: search.range }),
-  loader: ({ params, deps }) => unavailableOf(getEntityTimeline('ioc', `${params.kind}:${params.value}`, deps.range)),
+  loader: ({ params, deps }) => backendGapOf(getEntityTimeline('ioc', `${params.kind}:${params.value}`, deps.range)),
   component: TabView,
   pendingComponent: TabView,
 })

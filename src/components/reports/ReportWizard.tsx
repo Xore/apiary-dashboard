@@ -45,8 +45,8 @@ import { useRouter } from '@tanstack/react-router'
 import { generateReportFrom, previewReport } from '#/data/queries'
 import type { Facets, GeneratedReport, ReportDefinition, ReportFrequency, ReportPreview, ReportsData } from '#/data/types'
 import { formatNumber } from '#/lib/format'
-import { isUnavailable } from '#/lib/unavailable'
-import type { Unavailable } from '#/lib/unavailable'
+import { isBackendGap } from '#/lib/backendGap'
+import type { BackendGap } from '#/lib/backendGap'
 import { FilterSelect } from '../FilterSelect'
 import { WEEKDAYS, WINDOWS, describeSchedule } from '../details/Report'
 import { ReportPreviewPages } from './ReportPreviewPages'
@@ -114,9 +114,9 @@ const STEPS_WIDTH = 720
 
 /** A counted facet list, or none while the facets read is unavailable (#3524).
  * The pickers that take a typed value still accept one. */
-const facetOptions = (facets: Facets | Unavailable, key: keyof Facets): Facets[keyof Facets] => (isUnavailable(facets) ? [] : facets[key])
+const facetOptions = (facets: Facets | BackendGap, key: keyof Facets): Facets[keyof Facets] => (isBackendGap(facets) ? [] : facets[key])
 
-export function ReportWizard({ data, facets, initial, onRestart }: { data: ReportsData; facets: Facets | Unavailable; initial: ReportDefinition; onRestart: () => void }) {
+export function ReportWizard({ data, facets, initial, onRestart }: { data: ReportsData; facets: Facets | BackendGap; initial: ReportDefinition; onRestart: () => void }) {
   const router = useRouter()
   // Generating (and keeping the definition) is an admin's; a viewer can
   // still compose and preview.

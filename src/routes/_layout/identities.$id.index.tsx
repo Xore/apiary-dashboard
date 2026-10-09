@@ -10,14 +10,14 @@ import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
-import { unavailableOf } from '#/lib/unavailable'
+import { backendGapOf } from '#/lib/backendGap'
 import { Panel } from '#/components/DashboardBlocks'
 
 const parent = getRouteApi('/_layout/identities/$id')
 
 export const Route = createFileRoute('/_layout/identities/$id/')({
   ssr: pageSsr,
-  loader: ({ params }) => unavailableOf(getRelated('identity', params.id)),
+  loader: ({ params }) => backendGapOf(getRelated('identity', params.id)),
   component: IdentityOverview,
   pendingComponent: IdentityOverview,
 })

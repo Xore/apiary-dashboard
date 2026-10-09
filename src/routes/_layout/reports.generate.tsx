@@ -7,7 +7,7 @@ import { orPending } from '#/lib/pending'
 import { REPORT_WIDE, ReportWizard, emptyDraft } from '#/components/reports/ReportWizard'
 import { useMediaQuery } from '@astryxdesign/core/hooks'
 import { getFacets, getReports } from '#/data/queries'
-import { unavailableOf } from '#/lib/unavailable'
+import { backendGapOf } from '#/lib/backendGap'
 import { reportTabs } from '#/lib/navFamilies'
 
 export const Route = createFileRoute('/_layout/reports/generate')({
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_layout/reports/generate')({
   }),
   loader: async () => {
     // The pickers run without the counted facets until the backend serves them (#3524).
-    const [data, facets] = await Promise.all([getReports(), unavailableOf(getFacets())])
+    const [data, facets] = await Promise.all([getReports(), backendGapOf(getFacets())])
     return { data, facets }
   },
   component: GeneratePage,

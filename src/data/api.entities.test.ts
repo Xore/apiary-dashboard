@@ -131,6 +131,7 @@ describe('the single-entity reads', () => {
     expect(network).toMatchObject({ cidr: '203.0.113.0/24', org: fixtures.ipProfile.asn, country: fixtures.ipProfile.country })
     expect(network!.neighbours.map((n) => n.ip)).toEqual(['203.0.113.5'])
     expect(network).not.toHaveProperty('campaign')
+    expect(network).not.toHaveProperty('asn')
   })
 
   it('answers null for a network whose address has no events', async () => {

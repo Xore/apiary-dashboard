@@ -1516,9 +1516,10 @@ export interface SessionSummary extends Record<string, unknown> {
 
 export interface SourceNetwork {
   cidr: string
-  asn: string
-  org: string
-  country: string
+  /** The AS number, when the backend names one. Absent, not empty. */
+  asn?: string
+  org?: string
+  country?: string
   neighbours: SourceProfile[]
   campaign?: NetworkCampaign
 }
@@ -1557,9 +1558,10 @@ export interface SharedSignal extends Record<string, unknown> {
 
 export interface NetworkEntity {
   cidr: string
-  asn: string
-  org: string
-  country: string
+  /** The AS number, when the backend names one. Absent, not empty. */
+  asn?: string
+  org?: string
+  country?: string
   group: SourceGroup
   campaign?: NetworkCampaign
 }

@@ -5,12 +5,12 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Timeline } from '#/components/EntityBlocks'
 import { RelatedPanel } from '#/components/Related'
 import { getEntityTimeline, getRelated } from '#/data/queries'
-import { unavailableOf } from '#/lib/unavailable'
+import { backendGapOf } from '#/lib/backendGap'
 
 export const Route = createFileRoute('/_layout/sessions/$id/')({
   ssr: pageSsr,
   loader: async ({ params }) => {
-    const [timeline, related] = await Promise.all([unavailableOf(getEntityTimeline('session', params.id, 'all')), unavailableOf(getRelated('session', params.id))])
+    const [timeline, related] = await Promise.all([backendGapOf(getEntityTimeline('session', params.id, 'all')), backendGapOf(getRelated('session', params.id))])
     return { timeline, related }
   },
   component: SessionTimeline,

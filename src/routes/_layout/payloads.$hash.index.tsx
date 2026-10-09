@@ -10,7 +10,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
-import { unavailableOf } from '#/lib/unavailable'
+import { backendGapOf } from '#/lib/backendGap'
 import { Panel, StatTile } from '#/components/DashboardBlocks'
 import { formatDateTime } from '#/lib/format'
 
@@ -18,7 +18,7 @@ const parent = getRouteApi('/_layout/payloads/$hash')
 
 export const Route = createFileRoute('/_layout/payloads/$hash/')({
   ssr: pageSsr,
-  loader: ({ params }) => unavailableOf(getRelated('payload', params.hash)),
+  loader: ({ params }) => backendGapOf(getRelated('payload', params.hash)),
   component: PayloadOverview,
   pendingComponent: PayloadOverview,
 })

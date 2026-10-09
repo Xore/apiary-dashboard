@@ -5,13 +5,13 @@ import { VStack } from '@astryxdesign/core/Stack'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
-import { unavailableOf } from '#/lib/unavailable'
+import { backendGapOf } from '#/lib/backendGap'
 
 const parent = getRouteApi('/_layout/asn/$asn')
 
 export const Route = createFileRoute('/_layout/asn/$asn/')({
   ssr: pageSsr,
-  loader: ({ params }) => unavailableOf(getRelated('asn', params.asn)),
+  loader: ({ params }) => backendGapOf(getRelated('asn', params.asn)),
   component: TabView,
   pendingComponent: TabView,
 })

@@ -30,10 +30,10 @@ function SourceNetworkTab() {
               <EntityLink kind="network" id={net.cidr} />
             </MetadataListItem>
             <MetadataListItem label="Autonomous system">
-              <EntityLink kind="asn" id={net.asn}>{`${net.asn} · ${net.org}`}</EntityLink>
+              {net.asn ? <EntityLink kind="asn" id={net.asn}>{[net.asn, net.org].filter(Boolean).join(' · ')}</EntityLink> : (net.org || '—')}
             </MetadataListItem>
             <MetadataListItem label="Country">
-              <EntityLink kind="country" id={net.country} />
+              {net.country ? <EntityLink kind="country" id={net.country} /> : '—'}
             </MetadataListItem>
           </MetadataList>
         </Panel>

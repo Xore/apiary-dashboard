@@ -2306,8 +2306,8 @@ const cidr24 = (ip: string): string | null => (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1
  * campaign for that /24). Three reads, one page.
  *
  * Two gaps are named here, not hidden. `asn` is the AS number, which the
- * ip profile does not carry (only the organization), so it is left empty for
- * the network page to show as a plain label. The network-v1 document this
+ * ip profile does not carry (only the organization), so it is left absent and
+ * the page shows the organization without a link. The network-v1 document this
  * would otherwise read (`/sources/{ip}/network`) is not served on real data
  * (Xore/APIARY#3554). The neighbours come from the top 1000 addresses by
  * events, so a neighbour outside that list is not shown. */
@@ -2321,7 +2321,9 @@ const getSourceNetwork: Backend['getSourceNetwork'] = async (ip) => {
   if (!profile || !cidr) return null
   const neighbours = sourceProfiles(listOf('getSourceNetwork', sources)).filter((p) => p.ip !== ip && cidr24(p.ip) === cidr)
   const campaign = networkCampaigns(listOf('getSourceNetwork', campaigns)).find((c) => c.cidr === cidr)
-  return { cidr, asn: '', org: profile.asn, country: profile.country, neighbours, ...(campaign ? { campaign } : {}) }
+  // The ip profile names the organization, not the AS number, so `asn` is
+  // absent rather than a placeholder.
+  return { cidr, ...(profile.asn ? { org: profile.asn } : {}), ...(profile.country ? { country: profile.country } : {}), neighbours, ...(campaign ? { campaign } : {}) }
 }
 
 /** GET /api/v1/sources/{ip}/identities — the attacker document the address
