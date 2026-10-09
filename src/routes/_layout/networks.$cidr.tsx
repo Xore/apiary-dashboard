@@ -42,7 +42,8 @@ function NetworkLayout() {
           {n.campaign && <Token size="sm" color="orange" label={`campaign · score ${n.campaign.score}`} />}
         </>)}
       facts={[
-        { label: 'Autonomous system', value: n && (n.asn ? <EntityLink kind="asn" id={n.asn}>{n.org ? `${n.asn} · ${n.org}` : n.asn}</EntityLink> : '—')},
+        // Linked only when the backend names the AS number; otherwise the org alone, unlinked.
+        { label: 'Autonomous system', value: n && (n.asn ? <EntityLink kind="asn" id={n.asn}>{[n.asn, n.org].filter(Boolean).join(' · ')}</EntityLink> : (n.org || '—'))},
         { label: 'Source IPs', value: n && (formatNumber(n.group.members.length))},
         { label: 'Events', value: n && (formatNumber(n.group.events.length))},
         { label: 'First seen', value: n && (n.group.first ? formatDateTime(n.group.first) : '—')},

@@ -16,7 +16,7 @@
 // which is the default. The token is never logged, never in a URL, and
 // never in an error message — it only ever rides as a request header.
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { ApiError } from './errors'
+import { ApiError, NOT_YET } from './errors'
 import {
   commandsQuery,
   eventDetail,
@@ -65,10 +65,15 @@ import {
   ipBlockRecord,
   ipProfile,
   killChainFlow,
+  activeBlockIps,
+  attacker,
   mapPoints,
   networkCampaigns,
+  sessionSummaries,
   setIpBlockBody,
+  sourceCounts,
   sourceProfiles,
+  sourceTimeline,
 } from './adapters/sources'
 import {
   alertAckBody,
@@ -95,11 +100,11 @@ import {
 } from './adapters/tools'
 import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesPatch, preferencesQuery, preferencesWriteBody, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import type { DashboardViews } from './adapters/monitor'
-import { readingOf } from './mock/sensors'
+import { readingOf } from '#/lib/sensorSpecs'
 import { authorize } from '#/server/authorize'
 import { envInt } from '#/server/admission'
 import { recordShed } from '#/server/obs'
-import { isRead, READ_ONLY_EXEMPT } from './scenario'
+import { isRead, READ_ONLY_EXEMPT } from './readOnly'
 import {
   analyzerCatalog,
   analyzerInfos,
@@ -199,8 +204,10 @@ import type {
   YaraRunPageWire,
 } from './contracts/evidence'
 import type {
+  AttackerEntityWire,
   AttackerPageWire,
   AttckGridWire,
+  BlockedIpsWire,
   CampaignPageWire,
   CampaignTimelineWire,
   ClusterCorrelationWire,
@@ -2257,51 +2264,125 @@ const getAuthEvents: Backend['getAuthEvents'] = async () => {
   }
 }
 
-type QueryResult<TKey extends keyof Backend> = Awaited<ReturnType<Backend[TKey]>>
+/** A query no backend route serves yet. It throws rather than answering
+ * empty, so the page's unavailable state names the gap instead of showing a
+ * calm empty list. `gap` is the issue that tracks the missing route. */
+const unavailable = (endpoint: string, gap: string): ApiError => new ApiError('unavailable', endpoint, { detail: `${NOT_YET} (${gap})` })
 
-const EMPTY_FACETS: QueryResult<'getFacets'> = {
-  sensors: [], sources: [], countries: [], protocols: [], ports: [],
-  signatures: [], kinds: [], personas: [], providers: [], cities: [],
-}
-const EMPTY_IOC_CATALOG: QueryResult<'getIocCatalog'> = {
-  hash: [], domain: [], url: [], credential: [], command: [], fingerprint: [],
-  cve: [], signature: [], username: [], password: [],
-}
-const WINDOWS = new Set(['1h', '6h', '24h', '7d', '30d'])
-const windowQuery = (range?: string): Record<string, string> => range === 'all' ? {} : { from: `now-${WINDOWS.has(range ?? '') ? range : '24h'}`, to: 'now' }
-
-const getAsn: Backend['getAsn'] = (asn) => get<QueryResult<'getAsn'>>('getAsn', `/api/v1/correlations/asn/${encodeURIComponent(asn)}`)
-const getIdentity: Backend['getIdentity'] = (ip) => get<QueryResult<'getIdentity'>>('getIdentity', `/api/v1/correlations/identity/${encodeURIComponent(ip)}`)
-const getCampaign: Backend['getCampaign'] = (id) => get<QueryResult<'getCampaign'>>('getCampaign', `/api/v1/campaigns/${encodeURIComponent(id)}`)
-
-const getEntityTimeline: Backend['getEntityTimeline'] = async (kind, id, range) =>
-  (await get<QueryResult<'getEntityTimeline'>>('getEntityTimeline', `/api/v1/store/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/timeline`, windowQuery(range))) ?? []
-const getRelated: Backend['getRelated'] = async (kind, id) =>
-  (await get<QueryResult<'getRelated'>>('getRelated', `/api/v1/store/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/related`)) ?? []
-
-const getIoc: Backend['getIoc'] = (kind, value) => get<QueryResult<'getIoc'>>('getIoc', `/api/v1/ioc/${encodeURIComponent(kind)}/${encodeURIComponent(value)}`)
-const getIocCatalog: Backend['getIocCatalog'] = async () => (await get<QueryResult<'getIocCatalog'>>('getIocCatalog', '/api/v1/ioc-catalog')) ?? EMPTY_IOC_CATALOG
-
-const getSourceEvents: Backend['getSourceEvents'] = async (ip, range) =>
-  (await get<QueryResult<'getSourceEvents'>>('getSourceEvents', `/api/v1/sources/${encodeURIComponent(ip)}/events`, windowQuery(range))) ?? []
-const getSourceSessions: Backend['getSourceSessions'] = async (ip, range) =>
-  (await get<QueryResult<'getSourceSessions'>>('getSourceSessions', `/api/v1/sources/${encodeURIComponent(ip)}/sessions`, windowQuery(range))) ?? []
-const getSourceTimeline: Backend['getSourceTimeline'] = async (ip, range) =>
-  (await get<QueryResult<'getSourceTimeline'>>('getSourceTimeline', `/api/v1/sources/${encodeURIComponent(ip)}/timeline`, windowQuery(range))) ?? []
-const getSourceNetwork: Backend['getSourceNetwork'] = (ip) => get<QueryResult<'getSourceNetwork'>>('getSourceNetwork', `/api/v1/sources/${encodeURIComponent(ip)}/network`)
-const getSourceIdentity: Backend['getSourceIdentity'] = (ip) => get<QueryResult<'getSourceIdentity'>>('getSourceIdentity', `/api/v1/sources/${encodeURIComponent(ip)}/identity`)
-
-const getPayloadDelivery: Backend['getPayloadDelivery'] = async (hash) =>
-  (await get<QueryResult<'getPayloadDelivery'>>('getPayloadDelivery', `/api/v1/payloads/${encodeURIComponent(hash)}/delivery`)) ?? { events: [], sessions: [], sources: [] }
-
-const getFacets: Backend['getFacets'] = async (kind = 'events', filters = {}) => {
-  const search = Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined && value !== '')) as Record<string, string | number>
-  return (await get<QueryResult<'getFacets'>>('getFacets', `/api/v1/facets/${encodeURIComponent(kind)}`, search)) ?? EMPTY_FACETS
+/** A list read's answer, or an error when there is none. A 404 on a list is a
+ * route this tier calls that the backend does not register; it must never
+ * read as an empty list. */
+const listOf = <T>(endpoint: string, wire: T | null): T => {
+  if (wire === null) throw new ApiError('unavailable', endpoint, { detail: 'the list did not answer' })
+  return wire
 }
 
-const getBlockedIps: Backend['getBlockedIps'] = async () => (await get<QueryResult<'getBlockedIps'>>('getBlockedIps', '/api/v1/store/blocked-ips')) ?? []
-const getSessionEvents: Backend['getSessionEvents'] = async (sessionId) =>
-  (await get<QueryResult<'getSessionEvents'>>('getSessionEvents', `/api/v1/sessions/${encodeURIComponent(sessionId)}/events`)) ?? []
+/** The events list, as the source and session reads want it: one page of at
+ * most 100 rows (the handler's own clamp), newest first. */
+const EVENT_LIST_SIZE = 100
+const RANGES = new Set(['1h', '6h', '24h', '7d', '30d'])
+/** The `since` window for a page range. `all` is `365d`, not the handler's
+ * silent default: an omitted or unparseable `since` falls back to 10 days
+ * (events.rs `since_to_range`), which would narrow "all" without saying so. */
+const sinceOf = (range?: string): { since: string } => ({ since: range && RANGES.has(range) ? range : range === 'all' ? '365d' : '24h' })
+
+/** GET /api/v1/events — the wire page the source and session reads derive from. */
+const eventsWire = async (endpoint: string, search: EventsQueryWire): Promise<EventsPageWire> =>
+  listOf(endpoint, await get<EventsPageWire>(endpoint, '/api/v1/events', { offset: 0, size: EVENT_LIST_SIZE, ...search }))
+
+/** GET /api/v1/events?ip=&since= — the source's events. The page's list, and
+ * the most recent 100 of them: the handler's ceiling. */
+const getSourceEvents: Backend['getSourceEvents'] = async (ip, range) => paged(await eventsWire('getSourceEvents', { ip, ...sinceOf(range) })).rows
+
+/** GET /api/v1/events?ip=&since= as the source's timeline (sourceTimeline).
+ * Only this source's events: see the adapter for what the mock adds that the
+ * backend does not serve for a source yet. */
+const getSourceTimeline: Backend['getSourceTimeline'] = async (ip, range) => sourceTimeline((await eventsWire('getSourceTimeline', { ip, ...sinceOf(range) })).rows)
+
+/** The source's sessions, derived from the same events read. A session is
+ * counted only from the events this read returns, so a session whose other
+ * events fall past the 100-row ceiling is under-counted. */
+const getSourceSessions: Backend['getSourceSessions'] = async (ip, range) => sessionSummaries(paged(await eventsWire('getSourceSessions', { ip, ...sinceOf(range) })).rows)
+
+/** GET /api/v1/events?session= — one session's events. */
+const getSessionEvents: Backend['getSessionEvents'] = async (sessionId) => paged(await eventsWire('getSessionEvents', { session: sessionId, since: '365d' })).rows
+
+/** GET /api/v1/events?shasum= — the download events that carried a payload,
+ * and the sessions and addresses behind them. All three are derived from
+ * those download rows: the sessions are the ones that downloaded it, not the
+ * wider sessions they belong to. */
+const getPayloadDelivery: Backend['getPayloadDelivery'] = async (hash) => {
+  const events = paged(await eventsWire('getPayloadDelivery', { shasum: hash, since: '365d' })).rows
+  return { events, sessions: sessionSummaries(events), sources: sourceCounts(events) }
+}
+
+/** The /24 an IPv4 address belongs to, named as the correlator names its
+ * campaigns (correlator.rs `ip_prefix` at 24). Null for anything else. */
+const cidr24 = (ip: string): string | null => (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip) ? `${ip.split('.').slice(0, 3).join('.')}.0/24` : null)
+
+/** GET /api/v1/investigate/ip/{ip} (organization and country), GET /api/v1/sources
+ * (the addresses in the same /24) and GET /api/v1/campaigns (the correlator's
+ * campaign for that /24). Three reads, one page.
+ *
+ * Two gaps are named here, not hidden. `asn` is the AS number, which the
+ * ip profile does not carry (only the organization), so it is left absent and
+ * the page shows the organization without a link. The network-v1 document this
+ * would otherwise read (`/sources/{ip}/network`) is not served on real data
+ * (Xore/APIARY#3554). The neighbours come from the top 1000 addresses by
+ * events, so a neighbour outside that list is not shown. */
+const getSourceNetwork: Backend['getSourceNetwork'] = async (ip) => {
+  const [profile, sources, campaigns] = await Promise.all([
+    get<IpProfileWire>('getSourceNetwork', `/api/v1/investigate/ip/${encodeURIComponent(ip)}`),
+    get<SourcesPageWire>('getSourceNetwork', '/api/v1/sources', { offset: 0, size: 1000 }),
+    get<CampaignPageWire>('getSourceNetwork', '/api/v1/campaigns', { size: 100 }),
+  ])
+  const cidr = cidr24(ip)
+  if (!profile || !cidr) return null
+  const neighbours = sourceProfiles(listOf('getSourceNetwork', sources)).filter((p) => p.ip !== ip && cidr24(p.ip) === cidr)
+  const campaign = networkCampaigns(listOf('getSourceNetwork', campaigns)).find((c) => c.cidr === cidr)
+  // The ip profile names the organization, not the AS number, so `asn` is
+  // absent rather than a placeholder.
+  return { cidr, ...(profile.asn ? { org: profile.asn } : {}), ...(profile.country ? { country: profile.country } : {}), neighbours, ...(campaign ? { campaign } : {}) }
+}
+
+/** GET /api/v1/sources/{ip}/identities — the attacker document the address
+ * belongs to. A 404 is "no identity for this address", which is the answer. */
+const getSourceIdentity: Backend['getSourceIdentity'] = async (ip) => {
+  const row = await get<AttackerEntityWire>('getSourceIdentity', `/api/v1/sources/${encodeURIComponent(ip)}/identities`)
+  return row ? attacker(row) : null
+}
+
+/** GET /api/v1/investigate/blocked-ips → the addresses whose block holds now. */
+const getBlockedIps: Backend['getBlockedIps'] = async () => activeBlockIps(listOf('getBlockedIps', await get<BlockedIpsWire>('getBlockedIps', '/api/v1/investigate/blocked-ips')))
+
+// ---- queries with no backend route yet: they throw, they never answer empty ----
+
+const getAsn: Backend['getAsn'] = async () => {
+  throw unavailable('getAsn', 'Xore/APIARY#3554')
+}
+/** The member group is built from backend reads this tier does not make yet
+ * (see the issue tracking this slice), so the page cannot be filled honestly. */
+const getIdentity: Backend['getIdentity'] = async () => {
+  throw unavailable('getIdentity', 'member group not built yet, Xore/apiary-dashboard#221')
+}
+const getCampaign: Backend['getCampaign'] = async () => {
+  throw unavailable('getCampaign', 'member group not built yet, Xore/apiary-dashboard#221')
+}
+const getEntityTimeline: Backend['getEntityTimeline'] = async () => {
+  throw unavailable('getEntityTimeline', 'Xore/APIARY#3554')
+}
+const getRelated: Backend['getRelated'] = async () => {
+  throw unavailable('getRelated', 'Xore/APIARY#3554')
+}
+const getIoc: Backend['getIoc'] = async () => {
+  throw unavailable('getIoc', 'Xore/APIARY#3554')
+}
+const getIocCatalog: Backend['getIocCatalog'] = async () => {
+  throw unavailable('getIocCatalog', 'Xore/APIARY#3554')
+}
+const getFacets: Backend['getFacets'] = async () => {
+  throw unavailable('getFacets', 'Xore/APIARY#3524')
+}
 
 /** This slice's queries, and nothing else. Each keeps the mock
  * implementation's signature exactly — `queries.ts` is generated from it and

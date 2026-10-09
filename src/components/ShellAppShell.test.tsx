@@ -32,8 +32,8 @@ function TabbedPage() {
 
 const user = { name: 'Test Operator', email: 'op@example.test', roles: ['admin'] }
 
-function renderShell(path: string) {
-  const root = createRootRoute({ component: () => <ShellAppShell user={user} config={{ ...CONFIG, links: DEPLOYMENT_LINKS }} onSettingsPane={() => {}} /> })
+function renderShell(path: string, { mockScenarios = false }: { mockScenarios?: boolean } = {}) {
+  const root = createRootRoute({ component: () => <ShellAppShell user={user} config={{ ...CONFIG, links: DEPLOYMENT_LINKS }} mockScenarios={mockScenarios} onSettingsPane={() => {}} /> })
   const page = (routePath: string, text: string) =>
     createRoute({ getParentRoute: () => root, path: routePath, component: () => <p>{text}</p> })
   const router = createRouter({
@@ -73,6 +73,17 @@ function renderShell(path: string) {
 }
 
 describe('ShellAppShell', () => {
+
+  it('shows the Mock data menu only where mock scenarios are allowed', async () => {
+    renderShell('/alerts')
+    expect(await screen.findByText('alerts content')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Mock data/ })).toBeNull()
+  })
+
+  it('shows the Mock data menu on a local mock instance', async () => {
+    renderShell('/alerts', { mockScenarios: true })
+    expect(await screen.findByRole('button', { name: /Mock data/ })).toBeTruthy()
+  })
 
   it('renders exactly one shell with one content region', async () => {
     renderShell('/alerts')

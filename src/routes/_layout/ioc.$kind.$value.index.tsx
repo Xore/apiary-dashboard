@@ -6,6 +6,7 @@ import { VStack } from '@astryxdesign/core/Stack'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
+import { backendGapOf } from '#/lib/backendGap'
 import { StatTile } from '#/components/DashboardBlocks'
 import { EventsPanel } from '#/components/DetailBlocks'
 
@@ -13,7 +14,7 @@ const parent = getRouteApi('/_layout/ioc/$kind/$value')
 
 export const Route = createFileRoute('/_layout/ioc/$kind/$value/')({
   ssr: pageSsr,
-  loader: ({ params }) => getRelated('ioc', `${params.kind}:${params.value}`),
+  loader: ({ params }) => backendGapOf(getRelated('ioc', `${params.kind}:${params.value}`)),
   component: IocOverview,
   pendingComponent: IocOverview,
 })

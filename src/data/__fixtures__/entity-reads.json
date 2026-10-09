@@ -1,0 +1,715 @@
+{
+ "eventsIp": {
+  "total": 895516,
+  "offset": 0,
+  "rows": [
+   {
+    "id": "wtE0IaEBXGgnD02F2rjA",
+    "time": "2026-10-09T15:07:53.682Z",
+    "sensor": "zeek",
+    "src_ip": "203.0.113.4",
+    "country": "",
+    "port": "502",
+    "proto": "",
+    "detail": "",
+    "session": "",
+    "pivots": {
+     "persona": "",
+     "site": "",
+     "asset": "",
+     "fingerprint": "",
+     "fingerprint_kind": "",
+     "command": "",
+     "user": "",
+     "pass": "",
+     "path": "",
+     "shasum": "",
+     "asn": "",
+     "org": "",
+     "provider": "",
+     "alert": "",
+     "category": "",
+     "payload_class": "",
+     "tty_replay": "",
+     "ics_severity": ""
+    },
+    "record": {
+     "@timestamp": "2026-10-09T15:07:53.682Z",
+     "_zeek_suffix": "log",
+     "destination": {
+      "ip": "198.51.100.10",
+      "port": 502
+     },
+     "event": {
+      "category": "modbus_detailed",
+      "sensor": "zeek"
+     },
+     "host": {
+      "name": "1cad270d6214"
+     },
+     "log": {
+      "file": {
+       "device_id": "64",
+       "inode": "818",
+       "path": "/logs/zeek/modbus_detailed.log"
+      }
+     },
+     "logset": "zeek",
+     "network": {
+      "community_id": "1:NRxRI5aNdT6AHHe3kDrIXrvAw/o=",
+      "session_id": "Cddyki4rZeq7rKvgXe",
+      "transport": "tcp"
+     },
+     "pipeline": "honeypot",
+     "source": {
+      "ip": "203.0.113.4",
+      "port": 51310
+     },
+     "zeek": {
+      "func": "ENCAP_INTERFACE_TRANSPORT",
+      "id.orig_h": "203.0.113.4",
+      "id.orig_p": 51310,
+      "id.resp_h": "198.51.100.10",
+      "id.resp_p": 502,
+      "matched": false,
+      "mei_type": "Read Device Identification",
+      "modbus_detailed_link_id": "lFmkX0mHYLyfyCLl",
+      "tid": 36439,
+      "ts": 1790185847.677632,
+      "uid": "Cddyki4rZeq7rKvgXe",
+      "unit": 0
+     },
+     "zeek_log": "modbus_detailed"
+    }
+   },
+   {
+    "id": "ptE0IaEBXGgnD02F2rjA",
+    "time": "2026-10-09T15:07:53.681Z",
+    "sensor": "zeek",
+    "src_ip": "203.0.113.4",
+    "country": "",
+    "port": "502",
+    "proto": "",
+    "detail": "",
+    "session": "",
+    "pivots": {
+     "persona": "",
+     "site": "",
+     "asset": "",
+     "fingerprint": "",
+     "fingerprint_kind": "",
+     "command": "",
+     "user": "",
+     "pass": "",
+     "path": "",
+     "shasum": "",
+     "asn": "",
+     "org": "",
+     "provider": "",
+     "alert": "",
+     "category": "",
+     "payload_class": "",
+     "tty_replay": "",
+     "ics_severity": ""
+    },
+    "record": {
+     "@timestamp": "2026-10-09T15:07:53.681Z",
+     "_zeek_suffix": "log",
+     "destination": {
+      "ip": "198.51.100.10",
+      "port": 502
+     },
+     "event": {
+      "category": "modbus_detailed",
+      "sensor": "zeek"
+     },
+     "host": {
+      "name": "1cad270d6214"
+     },
+     "log": {
+      "file": {
+       "device_id": "64",
+       "inode": "818",
+       "path": "/logs/zeek/modbus_detailed.log"
+      }
+     },
+     "logset": "zeek",
+     "network": {
+      "community_id": "1:NRxRI5aNdT6AHHe3kDrIXrvAw/o=",
+      "session_id": "Cddyki4rZeq7rKvgXe",
+      "transport": "tcp"
+     },
+     "pipeline": "honeypot",
+     "source": {
+      "ip": "203.0.113.4",
+      "port": 51310
+     },
+     "zeek": {
+      "func": "ENCAP_INTERFACE_TRANSPORT",
+      "id.orig_h": "203.0.113.4",
+      "id.orig_p": 51310,
+      "id.resp_h": "198.51.100.10",
+      "id.resp_p": 502,
+      "matched": false,
+      "mei_type": "Read Device Identification",
+      "modbus_detailed_link_id": "lFmkX0mHYLyfyCLl",
+      "tid": 36439,
+      "ts": 1790185847.677632,
+      "uid": "Cddyki4rZeq7rKvgXe",
+      "unit": 0
+     },
+     "zeek_log": "modbus_detailed"
+    }
+   }
+  ],
+  "fingerprint_ips": null
+ },
+ "eventsSession": {
+  "total": 5,
+  "offset": 0,
+  "rows": [
+   {
+    "id": "JBlFHaEBXGgnD02FW6cM",
+    "time": "2026-09-30T19:25:19.795Z",
+    "sensor": "cowrie",
+    "src_ip": "",
+    "country": "",
+    "port": "2222",
+    "proto": "ssh",
+    "detail": "closed after 1151ms",
+    "session": "ca4616fbf9f0",
+    "pivots": {
+     "persona": "nexusai-gpu01",
+     "site": "nexusai-berlin-ml",
+     "asset": "gpu01",
+     "fingerprint": "",
+     "fingerprint_kind": "",
+     "command": "",
+     "user": "",
+     "pass": "",
+     "path": "",
+     "shasum": "",
+     "asn": "",
+     "org": "",
+     "provider": "",
+     "alert": "",
+     "category": "",
+     "payload_class": "",
+     "tty_replay": "",
+     "ics_severity": ""
+    },
+    "record": {
+     "@timestamp": "2026-09-30T19:25:19.795Z",
+     "destination": {
+      "ip": "172.16.16.2",
+      "port": 2222
+     },
+     "event": {
+      "sensor": "cowrie"
+     },
+     "honeypot": {
+      "asset_id": "gpu01",
+      "dst_ip": "172.16.16.2",
+      "dst_port": 2222,
+      "duration_ms": 1151,
+      "eventid": "cowrie.session.closed",
+      "message": "Connection lost after 1151 milliseconds",
+      "organization": "NexusAI Research GmbH",
+      "persona_id": "nexusai-gpu01",
+      "protocol": "ssh",
+      "sensor": "cowrie",
+      "session": "ca4616fbf9f0",
+      "site_id": "nexusai-berlin-ml",
+      "src_ip": "198.51.100.1",
+      "src_port": 39476,
+      "timestamp": "2026-09-29T22:15:20.429690Z",
+      "uuid": "ee4a74a4-a7ef-11f1-a902-620b5b4d9617"
+     },
+     "host": {
+      "name": "1cad270d6214"
+     },
+     "log": {
+      "file": {
+       "device_id": "2065",
+       "fingerprint": "2d0fc0f5a1cdae205799f06898b286631ef997277d2119b462332e7165baca5b",
+       "inode": "10201513802",
+       "path": "/logs/enriched/cowrie.json"
+      }
+     },
+     "logset": "sensors",
+     "network": {
+      "protocol": "ssh"
+     },
+     "pipeline": "honeypot",
+     "source": {
+      "port": 39476
+     }
+    }
+   },
+   {
+    "id": "1xlFHaEBXGgnD02FW6YM",
+    "time": "2026-09-30T19:25:19.793Z",
+    "sensor": "cowrie",
+    "src_ip": "",
+    "country": "",
+    "port": "2222",
+    "proto": "ssh",
+    "detail": "login.failed: root / farmboy",
+    "session": "ca4616fbf9f0",
+    "pivots": {
+     "persona": "nexusai-gpu01",
+     "site": "nexusai-berlin-ml",
+     "asset": "gpu01",
+     "fingerprint": "",
+     "fingerprint_kind": "",
+     "command": "",
+     "user": "root",
+     "pass": "farmboy",
+     "path": "",
+     "shasum": "",
+     "asn": "",
+     "org": "",
+     "provider": "",
+     "alert": "",
+     "category": "",
+     "payload_class": "",
+     "tty_replay": "",
+     "ics_severity": ""
+    },
+    "record": {
+     "@timestamp": "2026-09-30T19:25:19.793Z",
+     "destination": {
+      "ip": "172.16.16.2",
+      "port": 2222
+     },
+     "event": {
+      "sensor": "cowrie"
+     },
+     "honeypot": {
+      "asset_id": "gpu01",
+      "canonical_attck_techniques": [
+       "T1110"
+      ],
+      "canonical_pass": "farmboy",
+      "canonical_user": "root",
+      "dst_ip": "172.16.16.2",
+      "dst_port": 2222,
+      "eventid": "cowrie.login.failed",
+      "message": "login attempt [root/farmboy] failed",
+      "organization": "NexusAI Research GmbH",
+      "password": "farmboy",
+      "persona_id": "nexusai-gpu01",
+      "protocol": "ssh",
+      "sensor": "cowrie",
+      "session": "ca4616fbf9f0",
+      "site_id": "nexusai-berlin-ml",
+      "src_ip": "198.51.100.1",
+      "src_port": 39476,
+      "timestamp": "2026-09-29T22:15:19.399063Z",
+      "username": "root",
+      "uuid": "ee4a74a4-a7ef-11f1-a902-620b5b4d9617"
+     },
+     "host": {
+      "name": "1cad270d6214"
+     },
+     "log": {
+      "file": {
+       "device_id": "2065",
+       "fingerprint": "2d0fc0f5a1cdae205799f06898b286631ef997277d2119b462332e7165baca5b",
+       "inode": "10201513802",
+       "path": "/logs/enriched/cowrie.json"
+      }
+     },
+     "logset": "sensors",
+     "network": {
+      "protocol": "ssh"
+     },
+     "pipeline": "honeypot",
+     "source": {
+      "port": 39476
+     },
+     "user": {
+      "name": "root",
+      "password": "farmboy"
+     }
+    }
+   },
+   {
+    "id": "exlFHaEBXGgnD02FW6YL",
+    "time": "2026-09-30T19:25:19.791Z",
+    "sensor": "cowrie",
+    "src_ip": "",
+    "country": "",
+    "port": "2222",
+    "proto": "ssh",
+    "detail": "SSH HASSH: 98f63c4d9c87edbd97ed4747fa031019",
+    "session": "ca4616fbf9f0",
+    "pivots": {
+     "persona": "nexusai-gpu01",
+     "site": "nexusai-berlin-ml",
+     "asset": "gpu01",
+     "fingerprint": "98f63c4d9c87edbd97ed4747fa031019",
+     "fingerprint_kind": "HASSH",
+     "command": "",
+     "user": "",
+     "pass": "",
+     "path": "",
+     "shasum": "",
+     "asn": "",
+     "org": "",
+     "provider": "",
+     "alert": "",
+     "category": "",
+     "payload_class": "",
+     "tty_replay": "",
+     "ics_severity": ""
+    },
+    "record": {
+     "@timestamp": "2026-09-30T19:25:19.791Z",
+     "destination": {
+      "ip": "172.16.16.2",
+      "port": 2222
+     },
+     "event": {
+      "sensor": "cowrie"
+     },
+     "fingerprint": {
+      "kind": "HASSH",
+      "value": "98f63c4d9c87edbd97ed4747fa031019"
+     },
+     "honeypot": {
+      "asset_id": "gpu01",
+      "canonical_attck_techniques": [
+       "T1595"
+      ],
+      "canonical_fingerprint": "98f63c4d9c87edbd97ed4747fa031019",
+      "canonical_fingerprint_kind": "HASSH",
+      "compCS": [
+       "none"
+      ],
+      "dst_ip": "172.16.16.2",
+      "dst_port": 2222,
+      "encCS": [
+       "aes128-gcm@openssh.com",
+       "aes256-gcm@openssh.com",
+       "chacha20-poly1305@openssh.com",
+       "aes128-ctr",
+       "aes192-ctr",
+       "aes256-ctr"
+      ],
+      "eventid": "cowrie.client.kex",
+      "hassh": "98f63c4d9c87edbd97ed4747fa031019",
+      "hasshAlgorithms": "curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group14-sha256,diffie-hellman-group14-sha1,ext-info-c;aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr;hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha2-512,hmac-sha1,hmac-sha1-96;none",
+      "kexAlgs": [
+       "curve25519-sha256",
+       "curve25519-sha256@libssh.org",
+       "ecdh-sha2-nistp256",
+       "ecdh-sha2-nistp384",
+       "ecdh-sha2-nistp521",
+       "diffie-hellman-group14-sha256",
+       "diffie-hellman-group14-sha1",
+       "ext-info-c"
+      ],
+      "keyAlgs": [
+       "rsa-sha2-256-cert-v01@openssh.com",
+       "rsa-sha2-512-cert-v01@openssh.com",
+       "ssh-rsa-cert-v01@openssh.com",
+       "ssh-dss-cert-v01@openssh.com",
+       "ecdsa-sha2-nistp256-cert-v01@openssh.com",
+       "ecdsa-sha2-nistp384-cert-v01@openssh.com",
+       "ecdsa-sha2-nistp521-cert-v01@openssh.com",
+       "ssh-ed25519-cert-v01@openssh.com",
+       "ecdsa-sha2-nistp256",
+       "ecdsa-sha2-nistp384",
+       "ecdsa-sha2-nistp521",
+       "rsa-sha2-256",
+       "rsa-sha2-512",
+       "ssh-rsa",
+       "ssh-dss",
+       "ssh-ed25519"
+      ],
+      "langCS": [
+       ""
+      ],
+      "macCS": [
+       "hmac-sha2-256-etm@openssh.com",
+       "hmac-sha2-512-etm@openssh.com",
+       "hmac-sha2-256",
+       "hmac-sha2-512",
+       "hmac-sha1",
+       "hmac-sha1-96"
+      ],
+      "message": "SSH client hassh fingerprint: 98f63c4d9c87edbd97ed4747fa031019",
+      "organization": "NexusAI Research GmbH",
+      "persona_id": "nexusai-gpu01",
+      "protocol": "ssh",
+      "sensor": "cowrie",
+      "session": "ca4616fbf9f0",
+      "site_id": "nexusai-berlin-ml",
+      "src_ip": "198.51.100.1",
+      "src_port": 39476,
+      "timestamp": "2026-09-29T22:15:19.308875Z",
+      "uuid": "ee4a74a4-a7ef-11f1-a902-620b5b4d9617"
+     },
+     "host": {
+      "name": "1cad270d6214"
+     },
+     "log": {
+      "file": {
+       "device_id": "2065",
+       "fingerprint": "2d0fc0f5a1cdae205799f06898b286631ef997277d2119b462332e7165baca5b",
+       "inode": "10201513802",
+       "path": "/logs/enriched/cowrie.json"
+      }
+     },
+     "logset": "sensors",
+     "network": {
+      "protocol": "ssh"
+     },
+     "pipeline": "honeypot",
+     "source": {
+      "port": 39476
+     }
+    }
+   }
+  ],
+  "fingerprint_ips": null
+ },
+ "identity": {
+  "credentials": [],
+  "dest_ips": 1,
+  "events": 9,
+  "evidence": [
+   {
+    "id": "0aw97KABEfzVyDy5Cbrx",
+    "ts": 1790669817388
+   },
+   {
+    "id": "0Kw97KABEfzVyDy5Cbrx",
+    "ts": 1790669817388
+   },
+   {
+    "id": "b3KB6qABEfzVyDy5hopy",
+    "ts": 1790640750865
+   },
+   {
+    "id": "FXKB6qABEfzVyDy5GYEJ",
+    "ts": 1790640722861
+   },
+   {
+    "id": "SD5l6aABEfzVyDy5ypdP",
+    "ts": 1790622155947
+   },
+   {
+    "id": "MT5l6aABEfzVyDy5upax",
+    "ts": 1790622151946
+   },
+   {
+    "id": "bT5l6aABEfzVyDy5o45H",
+    "ts": 1790622145383
+   },
+   {
+    "id": "mz5l6aABEfzVyDy5dHph",
+    "ts": 1790622134468
+   },
+   {
+    "id": "gT5k6aABEfzVyDy5_14i",
+    "ts": 1790622104457
+   },
+   {
+    "id": "gD5k6aABEfzVyDy5_14i",
+    "ts": 1790622104457
+   },
+   {
+    "id": "tpPD5qABEfzVyDy51AOD",
+    "ts": 1790577988605
+   },
+   {
+    "id": "zZLD5qABEfzVyDy5dv-9",
+    "ts": 1790577964601
+   },
+   {
+    "id": "da0MraABC8fEieV1jx3o",
+    "ts": 1789609674774
+   },
+   {
+    "id": "dK0MraABC8fEieV1jx3o",
+    "ts": 1789609674774
+   },
+   {
+    "id": "P2F5gqABjE4dIyml9S_n",
+    "ts": 1788895424313
+   },
+   {
+    "id": "kw1kdqABeCukwVKDDne7",
+    "ts": 1788692663903
+   },
+   {
+    "id": "9vK_c6ABeCukwVKDv5kL",
+    "ts": 1788648339421
+   },
+   {
+    "id": "9_K_c6ABeCukwVKDv5kL",
+    "ts": 1788648339421
+   }
+  ],
+  "fingerprints": [
+   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 ModatScanner/1.2 (+https://modat.io/)",
+   "RFB 003.008"
+  ],
+  "first": "2026-09-05T22:45:39Z",
+  "id": "c5fd0398517e4871b8fc47e0f4aa0d99",
+  "ips": [
+   "203.0.113.4"
+  ],
+  "last": "2026-09-29T08:16:57Z",
+  "payloads": [],
+  "ports_touched": 1,
+  "protocols_touched": 1,
+  "sensor_counts": {
+   "conpot": 24,
+   "conpot-guardian": 46,
+   "conpot-kamstrup": 118,
+   "conpot-s7-1200": 48,
+   "dnp3": 24,
+   "http-honeypot": 50,
+   "multipot": 115
+  },
+  "sensors": [
+   "conpot",
+   "conpot-guardian",
+   "conpot-kamstrup",
+   "conpot-s7-1200",
+   "dnp3",
+   "http-honeypot",
+   "multipot"
+  ],
+  "techniques": [
+   "T0886",
+   "T1595"
+  ],
+  "updated": "2026-09-29T14:01:39.576484467+00:00",
+  "window_events": 2
+ },
+ "sources": {
+  "total_unique": 29277,
+  "truncated": true,
+  "rows": [
+   {
+    "ip": "203.0.113.4",
+    "country": "DE",
+    "events": 895369,
+    "logins": 0,
+    "sessions": 0,
+    "sensors": [
+     "zeek",
+     "suricata"
+    ],
+    "first": "2026-09-29T15:08:12.092Z",
+    "last": "2026-10-09T15:07:53.682Z"
+   },
+   {
+    "ip": "203.0.113.5",
+    "country": "",
+    "events": 895361,
+    "logins": 0,
+    "sessions": 0,
+    "sensors": [
+     "zeek"
+    ],
+    "first": "2026-09-29T15:08:12.092Z",
+    "last": "2026-10-09T15:07:53.682Z"
+   }
+  ]
+ },
+ "ipProfile": {
+  "ip": "203.0.113.4",
+  "total": 895490,
+  "first": "2026-09-29T15:08:12.092Z",
+  "last": "2026-10-09T15:07:53.682Z",
+  "country": "DE",
+  "asn": "IONOS SE",
+  "sensors": [
+   {
+    "key": "zeek",
+    "count": 895432
+   },
+   {
+    "key": "huginn",
+    "count": 34
+   }
+  ],
+  "ports": [
+   {
+    "key": "502",
+    "count": 895364
+   },
+   {
+    "key": "445",
+    "count": 18
+   }
+  ],
+  "protos": [
+   {
+    "key": "http",
+    "count": 5
+   },
+   {
+    "key": "ssl",
+    "count": 3
+   }
+  ],
+  "credentials": [],
+  "commands": [],
+  "sessions": [],
+  "techniques": [],
+  "payloads": [],
+  "alerts": [],
+  "fingerprints": [],
+  "paths": [],
+  "events": [],
+  "portbridge": {
+   "os": "Linux 2.2.x-3.x",
+   "first": "2026-09-29T18:10:17.769Z",
+   "last": "2026-10-08T20:47:42.131Z",
+   "ports_touched": [
+    {
+     "key": "445",
+     "count": 2
+    },
+    {
+     "key": "53",
+     "count": 2
+    }
+   ]
+  },
+  "correlation": {
+   "total": 895520,
+   "truncated": true,
+   "sensors": [
+    {
+     "key": "zeek",
+     "count": 895432
+    },
+    {
+     "key": "suricata",
+     "count": 45
+    }
+   ],
+   "tunnel_connections": 4,
+   "tunnel_os_guesses": [
+    "Linux 2.2.x-3.x"
+   ],
+   "records": []
+  },
+  "confirmed_malicious": false
+ },
+ "blockedEmpty": {
+  "rows": [],
+  "total": 0
+ },
+ "campaignsEmpty": {
+  "rows": [],
+  "total": 0
+ }
+}

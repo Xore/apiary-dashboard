@@ -8,19 +8,15 @@ import { ApiError } from './errors'
 import { CONFIG } from './mock/details'
 import { enlargedRead, originalArgs } from './mock/large'
 import type { MockScenario } from './scenarios'
+import { READ_ONLY_EXEMPT, isRead } from './readOnly'
 
-/** Writes read-only mode still allows: turning it off, and one's own
- * preferences and problem reports. Exported because src/data/api.ts enforces
- * the same rule on the live tier, which has no read-only concept of its own:
- * one list, or the guard silently applies to the mock tier only. */
-export const READ_ONLY_EXEMPT: ReadonlySet<string> = new Set(['saveConfigSection', 'rollbackConfig', 'savePreferences', 'submitProblemReport'])
+// The generator (scripts/gen-queries.ts) reads the read-only rule from here.
+export { isRead }
 
 const readOnly = () => CONFIG.behavior.readOnly
 
 /** Controls of the mock itself, not backend calls. */
 const MOCK_CONTROLS: ReadonlySet<string> = new Set(['simulateIncident', 'resolveIncidents'])
-
-export const isRead = (name: string) => /^(get|search|semanticSearch|preview|resolve|validate)/.test(name)
 
 /** Catalogs are code, not data: an empty backend still ships them. */
 const KEEP_WHEN_EMPTY: Record<string, readonly string[]> = {

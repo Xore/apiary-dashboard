@@ -11,7 +11,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { isChartName } from '#/data/contracts/charts'
 import { serveDownload } from '#/data/downloads'
-import { chartPayload } from '#/data/mock/charts'
 import { ApiError } from '#/data/errors'
 import { isLiveBackend, liveChart } from '#/data/api'
 
@@ -44,6 +43,8 @@ export const Route = createFileRoute('/api/chart/$name')({
               throw error
             }
           }
+          // The mock tier is loaded only for the arm that serves it.
+          const { chartPayload } = await import('#/data/mock/charts')
           const data = await chartPayload(params.name, q, search)
           if (data === null) return plain(502, 'chart unavailable')
           return Response.json(data, { headers: { 'cache-control': 'no-store' } })

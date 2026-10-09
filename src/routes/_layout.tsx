@@ -8,7 +8,7 @@ import type { PaneId } from '#/components/SettingsDialog'
 import { ShellAppShell } from '#/components/ShellAppShell'
 import { getPreferences, getSessionUser, getShellConfig } from '#/data/queries'
 import { isScenario } from '#/data/scenarios'
-import { setNavigationScenario } from '#/data/serverFn'
+import { getMockScenariosAllowed, setNavigationScenario } from '#/data/serverFn'
 import type { MockScenario } from '#/data/scenarios'
 import { isNarrowViewport } from '#/lib/viewport'
 import { recentShellRead, rememberShellRead } from '#/lib/shellRead'
@@ -53,7 +53,10 @@ export const Route = createFileRoute('/_layout')({
     }
     return { user }
   },
-  loader: async ({ context }) => ({ user: context.user, config: await getShellConfig(), narrow: isNarrowViewport() }),
+  loader: async ({ context }) => {
+    const [config, mockScenarios] = await Promise.all([getShellConfig(), getMockScenariosAllowed()])
+    return { user: context.user, config, mockScenarios, narrow: isNarrowViewport() }
+  },
   // The document title follows navigation (WCAG 2.4.2): it is what a
   // screen reader announces on arrival and what tells tabs apart.
   head: ({ matches, loaderData }) => {
@@ -78,7 +81,7 @@ function rememberedSearch(path: string): string | null {
 }
 
 function LayoutComponent() {
-  const { user, config, narrow } = Route.useLoaderData()
+  const { user, config, mockScenarios, narrow } = Route.useLoaderData()
   const prefs = usePreferences()
   const location = useLocation()
   // Keep each page's last filters for "remember filters" (this tab only).
@@ -99,5 +102,5 @@ function LayoutComponent() {
   const navigate = useNavigate()
   const setSettings = (pane: PaneId | undefined) =>
     void navigate({ to: '.', search: (prev: Record<string, unknown>) => ({ ...prev, settings: pane }) })
-  return <ShellAppShell user={user} config={config} narrow={narrow} settingsPane={settings} onSettingsPane={setSettings} />
+  return <ShellAppShell user={user} config={config} mockScenarios={mockScenarios} narrow={narrow} settingsPane={settings} onSettingsPane={setSettings} />
 }
