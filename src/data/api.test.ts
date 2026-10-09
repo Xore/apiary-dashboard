@@ -250,59 +250,6 @@ describe('which queries the real backend answers', () => {
   })
 })
 
-describe('the remaining live query adapters', () => {
-  const emptyFacets = {
-    sensors: [], sources: [], countries: [], protocols: [], ports: [],
-    signatures: [], kinds: [], personas: [], providers: [], cities: [],
-  }
-  const emptyCatalog = {
-    hash: [], domain: [], url: [], credential: [], command: [], fingerprint: [],
-    cve: [], signature: [], username: [], password: [],
-  }
-
-  async function expectGet(name: string, args: unknown[], path: string, response: unknown) {
-    const calls = stub({ [path]: response })
-    expect(await liveQuery(name, undefined)!(...args), name).toEqual(response)
-    expect(new URL(calls[0]).pathname, name).toBe(path)
-  }
-
-  it('routes entity, IOC, payload, blocklist, and session reads to their endpoints', async () => {
-    await expectGet('getAsn', ['AS64496'], '/api/v1/correlations/asn/AS64496', null)
-    await expectGet('getIdentity', ['att/1'], '/api/v1/correlations/identity/att%2F1', null)
-    await expectGet('getCampaign', ['203.0.113.0/24'], '/api/v1/campaigns/203.0.113.0%2F24', null)
-    await expectGet('getEntityTimeline', ['asn', 'AS64496'], '/api/v1/store/asn/AS64496/timeline', [])
-    await expectGet('getRelated', ['identity', 'att/1'], '/api/v1/store/identity/att%2F1/related', [])
-    await expectGet('getIoc', ['url', 'https://bad.test/a b'], '/api/v1/ioc/url/https%3A%2F%2Fbad.test%2Fa%20b', null)
-    await expectGet('getIocCatalog', [], '/api/v1/ioc-catalog', emptyCatalog)
-    await expectGet('getPayloadDelivery', ['sha/1'], '/api/v1/payloads/sha%2F1/delivery', { events: [], sessions: [], sources: [] })
-    await expectGet('getBlockedIps', [], '/api/v1/store/blocked-ips', [])
-    await expectGet('getSessionEvents', ['sess/1'], '/api/v1/sessions/sess%2F1/events', [])
-  })
-
-  it('routes every source child view and preserves its time window', async () => {
-    const paths = [
-      ['getSourceEvents', '/api/v1/sources/203.0.113.42/events'],
-      ['getSourceSessions', '/api/v1/sources/203.0.113.42/sessions'],
-      ['getSourceTimeline', '/api/v1/sources/203.0.113.42/timeline'],
-    ] as const
-    for (const [name, path] of paths) {
-      const calls = stub({ [path]: [] })
-      expect(await liveQuery(name, undefined)!('203.0.113.42', '6h'), name).toEqual([])
-      expect(Object.fromEntries(new URL(calls[0]).searchParams), name).toEqual({ from: 'now-6h', to: 'now' })
-    }
-    await expectGet('getSourceNetwork', ['203.0.113.42'], '/api/v1/sources/203.0.113.42/network', null)
-    await expectGet('getSourceIdentity', ['203.0.113.42'], '/api/v1/sources/203.0.113.42/identity', null)
-  })
-
-  it('passes facet filters through the facet endpoint', async () => {
-    const calls = stub({ '/api/v1/facets/events': emptyFacets })
-    expect(await liveQuery('getFacets', undefined)!('events', { country: 'NL', port: 22 })).toEqual(emptyFacets)
-    const url = new URL(calls[0])
-    expect(url.pathname).toBe('/api/v1/facets/events')
-    expect(Object.fromEntries(url.searchParams)).toEqual({ country: 'NL', port: '22' })
-  })
-})
-
 describe('the requests it builds', () => {
   it('sends every page filter as the param events.rs declares', async () => {
     const calls = stub({ '/api/v1/events': page, '/api/v1/filter-values': values })

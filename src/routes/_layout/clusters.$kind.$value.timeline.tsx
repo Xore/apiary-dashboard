@@ -3,11 +3,12 @@ import { orPending } from '#/lib/pending'
 import { createFileRoute } from '@tanstack/react-router'
 import { Timeline } from '#/components/EntityBlocks'
 import { getEntityTimeline } from '#/data/queries'
+import { backendGapOf } from '#/lib/backendGap'
 
 export const Route = createFileRoute('/_layout/clusters/$kind/$value/timeline')({
   ssr: pageSsr,
   loaderDeps: ({ search }) => ({ range: search.range }),
-  loader: ({ params, deps }) => getEntityTimeline('cluster', `${params.kind}:${params.value}`, deps.range),
+  loader: ({ params, deps }) => backendGapOf(getEntityTimeline('cluster', `${params.kind}:${params.value}`, deps.range)),
   component: TabView,
   pendingComponent: TabView,
 })

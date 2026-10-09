@@ -3,11 +3,12 @@ import { orPending } from '#/lib/pending'
 import { createFileRoute } from '@tanstack/react-router'
 import { Timeline } from '#/components/EntityBlocks'
 import { getEntityTimeline } from '#/data/queries'
+import { backendGapOf } from '#/lib/backendGap'
 
 export const Route = createFileRoute('/_layout/asn/$asn/timeline')({
   ssr: pageSsr,
   loaderDeps: ({ search }) => ({ range: search.range }),
-  loader: ({ params, deps }) => getEntityTimeline('asn', params.asn, deps.range),
+  loader: ({ params, deps }) => backendGapOf(getEntityTimeline('asn', params.asn, deps.range)),
   component: TabView,
   pendingComponent: TabView,
 })

@@ -443,3 +443,24 @@ export interface FusionWire {
   values: number[]
   ips: string[]
 }
+
+// ---- GET /api/v1/investigate/blocked-ips ------------------------------------
+
+/** One dashboard-ip-block-v1 `_source`, as `blocked_ips` serves it: the raw
+ * document. It carries no `Active` — that is computed on the single-address
+ * read (ip_block.rs `read`), not stored — so the list applies the same rule
+ * itself (see `activeBlockIps`). Lapsed blocks are in the list too. */
+export interface BlockedIpRowWire {
+  IP: string
+  Blocked: boolean
+  BlockedBy?: string
+  BlockedAt?: string
+  ExpiresAt?: string | null
+}
+
+/** GET /api/v1/investigate/blocked-ips. The handler asks for 100 rows
+ * whatever the caller wants, so `total` can exceed `rows.length`. */
+export interface BlockedIpsWire {
+  total: number
+  rows: BlockedIpRowWire[]
+}

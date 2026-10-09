@@ -6,6 +6,10 @@ export type ApiErrorKind = 'unavailable' | 'overloaded' | 'expired' | 'forbidden
 
 const STATUS: Record<ApiErrorKind, number> = { unavailable: 502, overloaded: 503, expired: 401, forbidden: 403, locked: 423, invalid: 400 }
 
+/** The detail every query no backend route serves yet carries. A page reads
+ * it to say "not available yet" rather than "the backend did not answer". */
+export const NOT_YET = 'not available from the backend yet'
+
 export class ApiError extends Error {
   readonly kind: ApiErrorKind
   readonly status: number
