@@ -17,6 +17,7 @@ import type {
   MapPoint,
   NetworkCampaign,
   SourceProfile,
+  SharedSignal,
   SourceGroup,
   Technique,
 } from '../types'
@@ -27,6 +28,7 @@ import type {
   BlockedIpsWire,
   AttckGridWire,
   CampaignTimelineWire,
+  CampaignWire,
   FusionWire,
   SankeyWire,
   CampaignPageWire,
@@ -122,8 +124,7 @@ export const attackerGraph = (wire: AttackerGraphWire): AttackerGraphWire => ({ 
  * where the wire's `ports_touched` is the *scored* count the correlator
  * blended into `score` — a different number under a similar name, so the
  * page's own value is used and the wire's is dropped. */
-export const networkCampaigns = (wire: CampaignPageWire): NetworkCampaign[] =>
-  wire.rows.map((row) => {
+export const networkCampaign = (row: CampaignWire): NetworkCampaign => {
     const campaign: NetworkCampaign = {
       cidr: row.cidr,
       score: row.score,
@@ -146,7 +147,9 @@ export const networkCampaigns = (wire: CampaignPageWire): NetworkCampaign[] =>
     }
     const scan = scanOf(row.scan)
     return scan ? { ...campaign, scan } : campaign
-  })
+}
+
+export const networkCampaigns = (wire: CampaignPageWire): NetworkCampaign[] => wire.rows.map((row) => networkCampaign(row))
 
 /** GET /api/v1/cred-reuse — a bare array, most-shared first.
  * `CredEdge.id` is the `user:pass` pair: the wire splits the two halves and
@@ -305,6 +308,13 @@ export const identityFusion = (wire: FusionWire): IdentityFusion => ({ categorie
 
 // ---- the entity pages' SourceGroup ---------------------------------------
 
+/** Value → count, most frequent first, ties by name. */
+const tally = (values: string[]): CountRow[] => {
+  const buckets = new Map<string, number>()
+  for (const value of values) buckets.set(value, (buckets.get(value) ?? 0) + 1)
+  return [...buckets].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([label, count]) => ({ id: label, label, count }))
+}
+
 /** The page `SourceGroup`, built from one correlation's records — the same
  * records the entity pages' event tab renders, folded by their own list
  * definitions. The rows arrive already mapped through the seam's
@@ -330,11 +340,6 @@ export const correlationGroup = (wire: CorrelationWire, events: HoneypotEvent[])
   const byIp = new Map<string, HoneypotEvent[]>()
   for (const row of events) if (row.srcIp) byIp.set(row.srcIp, [...(byIp.get(row.srcIp) ?? []), row])
   const times = events.map((row) => row.timestamp).sort()
-  const tally = (values: string[]): CountRow[] => {
-    const buckets = new Map<string, number>()
-    for (const value of values) buckets.set(value, (buckets.get(value) ?? 0) + 1)
-    return [...buckets].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([label, count]) => ({ id: label, label, count }))
-  }
   const members: SourceProfile[] = [...byIp].map(([ip, rows]) => ({
     ip,
     country: rows.find((row) => row.country)?.country ?? '',
@@ -417,4 +422,76 @@ export const sourceCounts = (events: HoneypotEvent[]): CountRow[] => {
   const perSource = new Map<string, number>()
   for (const event of events) perSource.set(event.srcIp, (perSource.get(event.srcIp) ?? 0) + 1)
   return [...perSource].sort((a, b) => b[1] - a[1]).map(([ip, count]) => ({ id: ip, label: ip, count }))
+}
+
+// ---- GET /api/v1/investigate/{identity,campaign}/{id} -----------------------
+
+/** The most member addresses an identity page profiles. An identity can hold
+ * thousands of addresses; the first 50 are read and the page's header states
+ * the identity's own total (`AttackerEntity.ips.length`). */
+export const MEMBER_LIMIT = 50
+
+/** One ip profile (GET /api/v1/investigate/ip/{ip}) as a group member: the
+ * same row `sourceProfiles` builds from /sources, for an address the source
+ * list's top 1000 does not hold. `asn` on this wire is the organization name. */
+export const profileMember = (wire: IpProfileWire): SourceProfile => ({
+  ip: wire.ip,
+  country: wire.country,
+  org: wire.asn,
+  events: wire.total,
+  logins: 0,
+  sessions: wire.sessions.reduce((sum, row) => sum + row.count, 0),
+  sensors: wire.sensors.map((row) => row.key),
+  first: wire.first,
+  last: wire.last,
+})
+
+/** The identity's `SourceGroup`: the members are given (profiled per
+ * address), and every other field is folded from the events read for those
+ * addresses (GET /api/v1/events?ips=, newest 100). So `sensors`, `ports` and
+ * the leaderboards describe those events, not every event of the identity.
+ * `totalMatches` is that read's own total. The events read does not cover the
+ * portbridge tunnel, so there are no tunnel connections or OS guesses: 0 and
+ * none, as nothing was counted. */
+export const membersGroup = (members: SourceProfile[], events: HoneypotEvent[], total: number): SourceGroup => {
+  const times = events.map((row) => row.timestamp).sort()
+  return {
+    members,
+    events,
+    totalMatches: total,
+    tunnelConnections: 0,
+    tunnelOsGuesses: [],
+    ...(times[0] ? { first: times[0] } : {}),
+    ...(times.length ? { last: times.at(-1)! } : {}),
+    sensors: tally(events.map((row) => row.sensor)),
+    countries: tally(events.flatMap((row) => (row.country ? [row.country] : []))),
+    networks: tally(members.map((member) => `${member.ip.split('.').slice(0, 3).join('.')}.0/24`)),
+    ports: tally(events.map((row) => String(row.dstPort))),
+    credentials: tally(events.map((row) => row.username ?? '')),
+    commands: tally(events.map((row) => row.command ?? '')),
+    payloads: tally(events.map((row) => String(row.fields.shasum ?? ''))),
+  }
+}
+
+/** Signals two or more member addresses share, among the events read: a
+ * credential pair, a client fingerprint, a payload hash or an ASN seen from
+ * at least two distinct addresses. The backend serves no per-value member
+ * list, so this is derived from the (at most 100) events the page holds; a
+ * signal only visible past them is not listed. Most-shared first. */
+export const sharedSignals = (events: HoneypotEvent[]): SharedSignal[] => {
+  const seen = new Map<string, SharedSignal>()
+  const note = (kind: SharedSignal['kind'], value: string | undefined, ip: string) => {
+    if (!value || !ip) return
+    const id = `${kind}:${value}`
+    const signal = seen.get(id) ?? { id, kind, value, members: [] }
+    if (!signal.members.includes(ip)) signal.members.push(ip)
+    seen.set(id, signal)
+  }
+  for (const row of events) {
+    if (row.username || row.password) note('credential', `${row.username ?? ''}:${row.password ?? ''}`, row.srcIp)
+    note('fingerprint', row.fingerprint, row.srcIp)
+    note('payload', row.fields.shasum ? String(row.fields.shasum) : undefined, row.srcIp)
+    note('asn', row.asn, row.srcIp)
+  }
+  return [...seen.values()].filter((signal) => signal.members.length >= 2).sort((a, b) => b.members.length - a.members.length || a.id.localeCompare(b.id))
 }

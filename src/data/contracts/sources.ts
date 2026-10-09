@@ -52,6 +52,11 @@ export interface AttackerPageWire {
   rows: Array<AttackerEntityWire & { _doc_id: string }>
 }
 
+/** GET /api/v1/investigate/identity/{id} — one attackers-v1 document by id,
+ * the same `_source` the list and `/sources/{ip}/identities` serve. 404 when
+ * no identity has that id. */
+export type IdentityDocWire = AttackerEntityWire
+
 // ---- GET /api/v1/sources?offset&size ----------------------------------------
 
 /** One row of GET /api/v1/sources (aggregates.rs `SourceRow`). This is the
@@ -108,6 +113,12 @@ export interface CampaignWire {
   generated: string
   explanation: string
 }
+
+/** GET /api/v1/investigate/campaign/{id} — one campaigns-v1 document by its
+ * id (the /24 CIDR, percent-encoded), exactly the `_source` the list serves
+ * without the store's `_doc_id`. It carries no member addresses; those come
+ * from the CIDR correlation. 404 when no campaign has that id. */
+export type CampaignDocWire = CampaignWire
 
 export interface CampaignPageWire {
   total: number
