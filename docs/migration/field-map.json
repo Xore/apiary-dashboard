@@ -76,7 +76,8 @@
   },
   "cape.$sha.tsx": {
     "run.report_summary.summary_keys": "CapeRun.sections",
-    "run.report_summary.debug_log": "CapeRun.log"
+    "run.report_summary.debug_log": "CapeRun.log",
+    "run.report_summary.package": "CapeRun.package"
   },
   "revdeck.$sha.tsx": {
     "run.revdeck.tool_calls": "RevDeckRun.steps.length"

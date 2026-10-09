@@ -1418,6 +1418,8 @@ export interface CapeRun extends Record<string, unknown> {
   sections: string[]
   /** Errors from CAPE's own analysis log. */
   debugErrors: string[]
+  /** The package CAPE ran the sample with (exe, dll, …), when it reports one. */
+  package?: string
 }
 
 export type GithubStatus = 'published' | 'dry_run' | 'denylist_blocked' | 'quota_exceeded'

@@ -242,6 +242,19 @@ describe('evidence adapters', () => {
     expect(runs[0].processes).toEqual([{ pid: 1200, name: 'powershell.exe', commandLine: 'C:\\tmp\\p.exe' }])
   })
 
+  it('maps report_summary.package onto the run, and leaves it off when the report has none', () => {
+    const base = { sha256: '3'.repeat(64), requested_at: '2026-10-01T11:50:00Z', started_at: '2026-10-01T11:50:01Z', completed_at: '2026-10-01T12:00:00Z', exit_status: 'ok', cape_status: 'reported', task_id: 8812, signatures: [] }
+    const [withPackage, withoutPackage] = capeRuns({
+      total: 2,
+      rows: [
+        { _doc_id: 'a', cape: { ...base, report_summary: { package: 'dll', malscore: 4 } } satisfies CapeRunWire },
+        { _doc_id: 'b', cape: { ...base, sha256: '4'.repeat(64), report_summary: { malscore: 4 } } satisfies CapeRunWire },
+      ],
+    })
+    expect(withPackage.package).toBe('dll')
+    expect(withoutPackage).not.toHaveProperty('package')
+  })
+
   it('maps GET /github-analysis/{sha}, reading one scanner failure as undetected', () => {
     const run = githubAnalysis(githubWire)
     expect(run.status).toBe('published')

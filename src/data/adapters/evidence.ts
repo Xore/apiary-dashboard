@@ -393,6 +393,7 @@ export function capeRun(wire: CapeRunWire): CapeRun {
     totalCalls: summary?.total_calls ?? 0,
     sections: summary?.summary_keys ?? [],
     debugErrors: lines((summary?.debug_errors as string[] | undefined) ?? undefined),
+    ...(summary?.package ? { package: summary.package } : {}),
   }
 }
 
