@@ -38,7 +38,7 @@ function EventLayout() {
   return (
     <EntityFrame
       kind="Event"
-      title={<Pending width={360}>{event?.summary}</Pending>}
+      title={<Pending width={360}>{event && (event.summary ?? '—')}</Pending>}
       basePath={`/events/${encodeURIComponent(id)}`}
       actions={
         loaded && (
@@ -51,7 +51,7 @@ function EventLayout() {
       tokens={
         event && (
           <>
-            <SeverityToken severity={event.severity} />
+            {event.severity && <SeverityToken severity={event.severity} />}
             <Token size="sm" label={event.type} />
           </>
         )
@@ -59,9 +59,9 @@ function EventLayout() {
       facts={[
         { label: 'Time', value: event && formatDateTime(event.timestamp) },
         { label: 'Sensor', value: event && <EntityLink kind="sensor" id={event.sensor} /> },
-        { label: 'Service', value: event && `${event.protocol.toUpperCase()} ${event.dstPort}` },
+        { label: 'Service', value: event && (event.protocol ? `${event.protocol.toUpperCase()} ${event.dstPort}` : `port ${event.dstPort}`) },
         { label: 'Source', value: event && <EntityLink kind="source" id={event.srcIp} /> },
-        { label: 'Session', value: event && <EntityLink kind="session" id={event.sessionId} /> },
+        { label: 'Session', value: event && (event.sessionId ? <EntityLink kind="session" id={event.sessionId} /> : '—') },
       ]}
     >
       <Outlet />

@@ -18,7 +18,7 @@ const eventColumns = (showSource: boolean): TableColumn<HoneypotEvent>[] => [
   ...(showSource
     ? [{ key: 'srcIp', header: 'Source', width: pixel(136), renderCell: (row: HoneypotEvent) => <EntityLink kind="source" id={row.srcIp} /> }]
     : []),
-  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <EntityLink kind="event" id={row.id}><Text type="code">{row.summary}</Text></EntityLink> },
+  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <EntityLink kind="event" id={row.id}><Text type="code">{row.summary ?? '—'}</Text></EntityLink> },
 ]
 
 /** Events around a subject, each linking to its full event page. */

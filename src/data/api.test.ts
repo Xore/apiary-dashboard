@@ -381,10 +381,36 @@ describe('the responses it maps', () => {
     const out = await live('getEvents')({})
     expect(out).toMatchObject({ total: 1, values: { sensors: ['cowrie'], countries: ['NL'], ports: [22] } })
     expect(out.rows[0]).toMatchObject({ id: 'ev_9f2c1a', srcIp: '203.0.113.42', dstPort: 22, command: 'uname -a' })
-    // The seven gap fields, filled at the seam rather than reaching a page
-    // undefined. severity is the honest one: the wire classifies none.
-    expect(out.rows[0]).toMatchObject({ type: 'command.input', severity: 'info', srcPort: 0, eventName: 'cowrie.command.input', techniques: [], city: '' })
+    // The gap fields the seam fills. The row carries no severity, source
+    // port or city, so those are absent: never a placeholder.
+    expect(out.rows[0]).toMatchObject({ type: 'command.input', eventName: 'cowrie.command.input', techniques: [] })
+    expect(out.rows[0].severity).toBeUndefined()
+    expect(out.rows[0].srcPort).toBeUndefined()
+    expect(out.rows[0].city).toBeUndefined()
     expect(out.rows[0].organization).toBeUndefined()
+  })
+
+  it('maps ics_severity to severity, and leaves severity absent on every other row', async () => {
+    for (const ics of ['critical', 'high'] as const) {
+      stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, ics_severity: ics } }] }, '/api/v1/filter-values': values })
+      expect((await live('getEvents')({})).rows[0]).toMatchObject({ severity: ics, icsSeverity: ics })
+    }
+    stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, ics_severity: '' } }] }, '/api/v1/filter-values': values })
+    expect((await live('getEvents')({})).rows[0].severity).toBeUndefined()
+  })
+
+  it('leaves provider and network enrichment absent when the row does not carry them', async () => {
+    stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, provider: '', asn: '', org: '' } }] }, '/api/v1/filter-values': values })
+    const [event] = (await live('getEvents')({})).rows
+    expect(event).toMatchObject({ country: 'NL', srcIp: '203.0.113.42' })
+    expect(event.provider).toBeUndefined()
+    expect(event.asn).toBeUndefined()
+    expect(event.org).toBeUndefined()
+    // A class the page does not know is absent too, not rounded to `network`.
+    stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, provider: 'martian' } }] }, '/api/v1/filter-values': values })
+    expect((await live('getEvents')({})).rows[0].provider).toBeUndefined()
+    stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, provider: 'hosting' } }] }, '/api/v1/filter-values': values })
+    expect((await live('getEvents')({})).rows[0].provider).toBe('hosting')
   })
 
   it('classifies the kind off the sensor own event name, and an IDS alert off the signature', async () => {
@@ -402,17 +428,18 @@ describe('the responses it maps', () => {
     }
     stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, alert: 'ET SCAN Nmap' } }] }, '/api/v1/filter-values': values })
     expect((await live('getEvents')({})).rows[0].type).toBe('ids.alert')
-    // An unrecognised sensor event falls to the page own catch-all rather
-    // than to a kind the page does not have.
+    // An unrecognised sensor event falls to `connection`, the one kind every
+    // honeypot row is certain of, rather than a protocol the row does not show.
     stub({ '/api/v1/events': { ...page, rows: [{ ...row, record: { honeypot: { event: 'icmp_echo_reply' } } }] }, '/api/v1/filter-values': values })
-    expect((await live('getEvents')({})).rows[0].type).toBe('protocol.request')
+    expect((await live('getEvents')({})).rows[0].type).toBe('connection')
   })
 
   it('maps the detail endpoint onto its own fields, without inventing the row it does not serve', async () => {
     stub({ '/api/v1/event/': eventPageWire })
     const out = await live('getEventDetail')('ev_9f2c1a')
     expect(out).toMatchObject({ hashes: ['d41d8cd98f00b204e9800998ecf8427e'], recordingShasum: undefined })
-    expect(out!.event).toMatchObject({ id: 'ev_9f2c1a', sensor: 'cowrie', srcIp: '203.0.113.42', summary: '', dstPort: 0 })
+    expect(out!.event).toMatchObject({ id: 'ev_9f2c1a', sensor: 'cowrie', srcIp: '203.0.113.42', dstPort: 0 })
+    expect(out!.event.summary).toBeUndefined()
     expect(out!.reading).toMatchObject({ what: expect.any(String) })
     // The relation lists stay empty: the wire rows are four-field samples.
     expect([out!.session, out!.connection, out!.source]).toEqual([[], [], []])
@@ -423,7 +450,8 @@ describe('the responses it maps', () => {
     const out = await live('getSessionDetail')('sess-77a1')
     expect(out).toMatchObject({ id: 'sess-77a1', srcIp: '203.0.113.42', country: 'NL' })
     expect(out!.sensors).toEqual([{ id: 'cowrie', label: 'cowrie', count: 1 }])
-    expect(out!.events[0]).toMatchObject({ severity: 'info', eventName: 'cowrie.command.input' })
+    expect(out!.events[0]).toMatchObject({ eventName: 'cowrie.command.input' })
+    expect(out!.events[0].severity).toBeUndefined()
   })
 
   it('maps the recordings list and the replay, filtered to the one shasum', async () => {
@@ -1478,12 +1506,13 @@ describe('sensors', () => {
     // These rows are sensors.rs `SensorEvent`, NOT the shared events.rs
     // `EventRow`: no pivots, no country, no session. The eleven gaps are
     // filled at the seam with what is genuinely absent upstream — the kind
-    // off the sensor's own event name, everything else empty or `info`.
+    // off the sensor's own event name, everything else absent.
     stub(operationsFixtures())
     const [sensorEvent] = (await live('getSensorDetail')('cowrie'))!.recentEvents
-    expect(sensorEvent).toMatchObject({ id: 'ev-1', sensor: 'cowrie', srcIp: '203.0.113.42', srcPort: 51322, dstPort: 19022, type: 'command.input', eventName: 'cowrie.command.input', severity: 'info' })
+    expect(sensorEvent).toMatchObject({ id: 'ev-1', sensor: 'cowrie', srcIp: '203.0.113.42', srcPort: 51322, dstPort: 19022, type: 'command.input', eventName: 'cowrie.command.input', techniques: [] })
     expect(sensorEvent.fields).toEqual({ eventid: 'cowrie.command.input', input: 'uname -a' })
-    expect(sensorEvent).toMatchObject({ asn: '', org: '', city: '', country: '', sessionId: '', techniques: [] })
+    // The endpoint says nothing of these, so none of them is invented.
+    for (const key of ['severity', 'protocol', 'provider', 'asn', 'org', 'city', 'country', 'sessionId', 'summary'] as const) expect(sensorEvent[key], key).toBeUndefined()
   })
 })
 
