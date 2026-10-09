@@ -17,7 +17,7 @@
 // backend-service charts.rs / kill_chain.rs / fusion.rs, `/api/v1/live` from
 // live.rs:129, and `/api/v1/topology` from topology.rs:698. The mock
 // fixtures below are built in the wire shapes those handlers declare.
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Route as ChartRoute } from '#/routes/api.chart.$name'
 import { Route as LiveRoute } from '#/routes/api.live'
 import { Route as FlowRoute } from '#/routes/api.topology.flow'
@@ -313,6 +313,12 @@ describe('/api/topology/flow — one slice of the tier\'s document', () => {
 
 describe('/api/live — the gate covers the real stream', () => {
   const get = handler(LiveRoute)
+  // The mock arm loads its feed on first use (src/routes/api.live.ts). That
+  // one-time load is CPU work, and the gate reads the event-loop lag it
+  // causes, so load it here rather than inside a test that measures the gate.
+  beforeAll(async () => {
+    await import('#/data/mock/liveFeed')
+  })
 
   /** One upstream SSE connection, ending when `close` resolves. */
   const upstream = (frames: string[], close?: () => void) => () =>

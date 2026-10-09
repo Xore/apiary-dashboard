@@ -34,6 +34,7 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun scripts/check-public-leaks.ts
+      - run: bun scripts/check-no-mock-imports.ts
 
   checks:
     name: Typecheck, lint, test, build

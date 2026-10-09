@@ -86,11 +86,11 @@ import {
   credentialList,
 } from './adapters/tools'
 import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesDocument, preferencesQuery, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
-import { readingOf } from './mock/sensors'
+import { readingOf } from '#/lib/sensorSpecs'
 import { authorize } from '#/server/authorize'
 import { envInt } from '#/server/admission'
 import { recordShed } from '#/server/obs'
-import { isRead, READ_ONLY_EXEMPT } from './scenario'
+import { isRead, READ_ONLY_EXEMPT } from './readOnly'
 import {
   analyzerCatalog,
   analyzerInfos,

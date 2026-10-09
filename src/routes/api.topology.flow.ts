@@ -6,7 +6,6 @@
 // untouched (backend-service topology.rs:644 — `TopologyResponse.flow`).
 import { createFileRoute } from '@tanstack/react-router'
 import { serveDownload } from '#/data/downloads'
-import { topologyFlow } from '#/data/mock/charts'
 import { ApiError } from '#/data/errors'
 import { isLiveBackend, liveTopologyFlow } from '#/data/api'
 
@@ -31,6 +30,8 @@ export const Route = createFileRoute('/api/topology/flow')({
               throw error
             }
           }
+          // The mock tier is loaded only for the arm that serves it.
+          const { topologyFlow } = await import('#/data/mock/charts')
           return Response.json(await topologyFlow(q), { headers: { 'cache-control': 'no-store' } })
         }),
     },
