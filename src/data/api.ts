@@ -85,7 +85,7 @@ import {
   createdCanarytoken,
   credentialList,
 } from './adapters/tools'
-import { DEFAULT_PREFERENCES_WIRE, capturedMail, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
+import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesDocument, preferencesQuery, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
 import { envInt } from '#/server/admission'
@@ -147,7 +147,7 @@ import type {
   TopologySensorWire,
   TopologyWire,
 } from './contracts/operations'
-import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
+import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, PreferencesWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
 import type {
   AgentCampaignRow,
   AuthEventRow,
@@ -733,7 +733,8 @@ async function sessionOf(): Promise<{ user: SessionUser | null; subject: string;
  * this is `Promise.all` and the rejection is the `ApiError` the page's error
  * boundary already tells apart.
  *
- * `/api/v1/preferences` is NOT among the nine: see `getPreferences` below. */
+ * `/api/v1/preferences` is NOT among the nine: it is per-subject, and
+ * `getPreferences` reads it. */
 const getSettings: Backend['getSettings'] = async () => {
   const [config, users, history, audit, services, reporter, storage, templates, session] = await Promise.all([
     get<ConfigWire>('getSettings', '/api/v1/config'),
@@ -755,11 +756,8 @@ const getSettings: Backend['getSettings'] = async () => {
     templates: reportTemplates(templates ?? { templates: [], elements: [] }).templates,
     users: users ?? { users: [] },
     // The backend's own `default_preferences`, NOT the wire's per-subject
-    // document: `GET /api/v1/preferences` needs a subject and is a
-    // PUBLIC_QUERY (authorize.ts:9 — the navigation guard and the sign-in
-    // pages call it before sign-in), so it is deliberately NOT wired here.
-    // See `getPreferences` below for the full reasoning. These are the
-    // defaults the appearance pane edits, so the page renders real values.
+    // document: that is `getPreferences`'s read, and `savePreferences` is
+    // still unwired (see LIVE below), so the appearance pane edits defaults.
     preferences: DEFAULT_PREFERENCES_WIRE,
     services: services ?? { available: false, services: [] },
     history: history ?? { entries: [] },
@@ -767,6 +765,22 @@ const getSettings: Backend['getSettings'] = async () => {
     reporter: reporter ?? { available: false },
     storage: storage ?? { cluster_status: 'unreachable', index_count: 0, doc_count: 0, store_bytes: 0 },
   })
+}
+
+/** GET /api/v1/preferences for the signed-in operator.
+ *
+ * A PUBLIC_QUERY (authorize.ts:9): the root loader resolves it on every
+ * navigation, the sign-in pages included. Before sign-in there is no
+ * subject, and the wire answers an empty one with a 400 — so a caller with
+ * no session gets the backend's own `default_preferences` without a call,
+ * and the sign-in page renders exactly as a fresh operator's would. Once
+ * signed in, the subject comes from the session record (`sessionOf`), and
+ * the first read projects the operator into the preferences store. */
+const getPreferences: Backend['getPreferences'] = async () => {
+  const { user, subject, username } = await sessionOf()
+  if (!subject) return preferences(DEFAULT_PREFERENCES_WIRE)
+  const wire = await get<PreferencesWire>('getPreferences', '/api/v1/preferences', { ...preferencesQuery(subject, { username, role: user?.roles[0] }) })
+  return wire ? preferencesDocument(wire) : preferences(DEFAULT_PREFERENCES_WIRE)
 }
 
 /** What the identity panel shows for a caller no session resolved. The mock
@@ -2277,19 +2291,10 @@ const getSessionEvents: Backend['getSessionEvents'] = async (sessionId) =>
  * DELIBERATELY ABSENT, and the reason is the one thing in this slice worth
  * reading before changing anything:
  *
- * - `getPreferences` — a PUBLIC_QUERY (authorize.ts:9). The navigation guard
- *   resolves it on every navigation and the sign-in pages render with it, so
- *   it runs BEFORE sign-in. The real `GET /api/v1/preferences` needs the
- *   service token AND a subject: an empty subject is a 400 (preferences.rs
- *   `subject` validation). A pre-sign-in call has no subject, so wiring it
- *   turns the sign-in page into a 400 on every load — the deadlock the task
- *   brief names. It remains unwired, so a live deployment gets the explicit
- *   not-available error until the read can move after sign-in.
- *
- * - `savePreferences` — same document, same reason. `PUT
- *   /api/v1/preferences` merges a `deny_unknown_fields` patch, so it can be
- *   wired without the read; it is not, because it would then write the wire
- *   while `getPreferences` cannot read it.
+ * - `savePreferences` — `PUT /api/v1/preferences` merges a
+ *   `deny_unknown_fields` patch from the page's whole `Preferences`, which
+ *   needs a diff against the stored document (`preferencesPatch` carries
+ *   only what changed). Not wired yet; `getPreferences` is.
  *
  * - `previewReport` — reports' own gap: the backend renders a report, it does
  *   not preview a draft, and there is no `/reports/preview` route. A live
@@ -2313,6 +2318,7 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   getReplayDetail,
   searchAll,
   getSettings,
+  getPreferences,
   getShellConfig,
   validateConfig,
   saveConfigSection,
