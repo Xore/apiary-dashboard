@@ -120,6 +120,7 @@ describe('which queries the real backend answers', () => {
         'searchHistory',
         // settings, preferences and shell (#81)
         'getMail',
+        'getPreferences',
         'getProblemReports',
         'getSettings',
         'getShellConfig',
@@ -234,16 +235,8 @@ describe('which queries the real backend answers', () => {
     expect(liveQuery('previewReport', undefined)).toBeUndefined()
   })
 
-  it('leaves getPreferences and savePreferences on the mock — the public-query deadlock', () => {
-    // The trap #81 exists to not fall into. `getPreferences` is a
-    // PUBLIC_QUERY: the navigation guard calls it on every navigation and
-    // the sign-in pages render with it, so it runs BEFORE a subject exists.
-    // The real endpoint needs one (an empty subject is a 400), so wiring it
-    // breaks sign-in itself. Both halves stay on the mock, deliberately —
-    // wiring only the write would save to the wire and render from the mock.
-    expect(liveQuery('getPreferences', undefined)).toBeUndefined()
+  it('leaves savePreferences on the mock until the write diffs the stored document', () => {
     expect(liveQuery('savePreferences', undefined)).toBeUndefined()
-    expect(liveQueryNames()).not.toContain('getPreferences')
   })
 
   it('applies the same authorization decision the mock does', async () => {
@@ -901,10 +894,10 @@ describe('the settings page, fanned out over its eight documents', () => {
     expect(out.services[0]).toMatchObject({ name: 'hp-tanner', state: 'running' })
     expect(out.storage).toMatchObject({ clusterStatus: 'green', indexCount: 42 })
     expect(out.reportTemplates).toHaveLength(1)
-    // NOT the wire's per-subject document — that GET is the public-query trap
-    // and is not wired. The backend's own default_preferences render instead.
+    // NOT the wire's per-subject document — that is getPreferences' read.
+    // The backend's own default_preferences render instead.
     expect(out.preferences).toMatchObject({ theme: 'system', rowsPerPage: 50, notifyCanary: false })
-    // The preferences endpoint is never called from a signed-in page either.
+    // getSettings itself never calls the preferences endpoint.
     expect(calls.some((url) => url.includes('/api/v1/preferences'))).toBe(false)
   })
 

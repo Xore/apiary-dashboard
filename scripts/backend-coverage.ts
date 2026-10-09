@@ -12,11 +12,6 @@ export type Exception = {
 }
 
 export const BACKEND_EXCEPTIONS: Record<string, Exception> = {
-  getPreferences: {
-    status: 'mock-only',
-    reason:
-      'The read runs before sign-in, but the backend requires a subject; wiring it would deadlock sign-in.',
-  },
   getReplay: {
     status: 'local',
     reason:
@@ -38,7 +33,7 @@ export const BACKEND_EXCEPTIONS: Record<string, Exception> = {
   savePreferences: {
     status: 'mock-only',
     reason:
-      'Kept with getPreferences so reads and writes do not use different stores.',
+      'The page saves a whole Preferences; the backend merges a deny_unknown_fields patch, so the write needs a diff that is not wired yet.',
   },
   simulateIncident: {
     status: 'local',
