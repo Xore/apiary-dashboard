@@ -123,6 +123,7 @@ describe('which queries the real backend answers', () => {
         'getProblemReports',
         'getSettings',
         'getShellConfig',
+        'getSessionUser',
         'rollbackConfig',
         'runServiceAction',
         'saveConfigSection',
