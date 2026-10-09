@@ -708,7 +708,7 @@ export async function previewReport(definition: ReportDefinition): Promise<Repor
   const { window, ip, sensor, port, signature } = definition.scope
   const list = (values: string[]) => values.join(', ')
   const filters: Array<[NonNullable<ReportPreview['emptyFilter']>['field'], string, (e: HoneypotEvent) => boolean]> = [
-    ['window', `No events in the last ${window}.`, (e) => inRange(e.timestamp, window)],
+    ['window', `No events in the last ${window}.`, (e) => inRange(e.timestamp, window, MOCK_NOW)],
     ['ip', `${list(ip)} sent nothing in this window.`, (e) => ip.length === 0 || ip.includes(e.srcIp)],
     ['sensor', `${sensor.length === 1 ? 'Sensor' : 'Sensors'} ${list(sensor)} recorded nothing in this window.`, (e) => sensor.length === 0 || sensor.includes(e.sensor)],
     ['port', `Nothing reached port ${list(port)} in this window.`, (e) => port.length === 0 || port.includes(String(e.dstPort))],
@@ -899,7 +899,7 @@ export async function getAnalysisResults(range?: string): Promise<AnalysisResult
   return {
     // The analyzers' results in the app-wide range; runs, the queue and the
     // catalogs are not results and are always shown whole.
-    results: ANALYSIS_RESULTS.filter((r) => r.analyzer === 'workbench' || inRange(r.at, range)),
+    results: ANALYSIS_RESULTS.filter((r) => r.analyzer === 'workbench' || inRange(r.at, range, MOCK_NOW)),
     gpuQueue: GPU_QUEUE.map((j) => ({ ...j })),
     analyzers: ANALYZERS,
     runs: WORKBENCH_RUNS.filter((r) => r.owner === MOCK_USER.name).map((r) => structuredClone(r)),
@@ -1502,12 +1502,12 @@ function summarizeSessions(events: HoneypotEvent[]): SessionSummary[] {
 
 export async function getSourceEvents(ip: string, range?: string): Promise<HoneypotEvent[]> {
   await mockDelay()
-  return EVENTS.filter((e) => e.srcIp === ip && inRange(e.timestamp, range))
+  return EVENTS.filter((e) => e.srcIp === ip && inRange(e.timestamp, range, MOCK_NOW))
 }
 
 export async function getSourceSessions(ip: string, range?: string): Promise<SessionSummary[]> {
   await mockDelay()
-  return summarizeSessions(EVENTS.filter((e) => e.srcIp === ip && inRange(e.timestamp, range)))
+  return summarizeSessions(EVENTS.filter((e) => e.srcIp === ip && inRange(e.timestamp, range, MOCK_NOW)))
 }
 
 /** Everything that happened involving a source, newest first: its events plus
@@ -1936,7 +1936,7 @@ export async function getEntityTimeline(kind: TimelineEntity, id: string, range?
     ...(wide ? AUTH_FAILURES.filter((f) => f.ip && ips.has(f.ip)) : []).map((f): TimelineItem => ({ id: f.id, at: f.timestamp, kind: 'auth', title: `Failed login to ${f.clientId}`, detail: `${f.error}${f.username ? ` · ${f.username}` : ''}`, severity: 'medium', href: `/auth-events/${f.id}` })),
     ...(wide ? ALERTS.filter((a) => [...ips].some((ip) => a.message.includes(ip))) : []).map((a): TimelineItem => ({ id: a.key, at: a.lastSeen, kind: 'alert', title: a.message, detail: `${a.kind} · observed ${a.count}×`, severity: a.severity, href: `/alerts/${encodeURIComponent(alertClass(a))}` })),
   ]
-  return items.filter((i) => inRange(i.at, range) && (i.kind === 'event' || i.kind === 'capture' || inWindow(i.at))).sort((a, b) => b.at.localeCompare(a.at))
+  return items.filter((i) => inRange(i.at, range, MOCK_NOW) && (i.kind === 'event' || i.kind === 'capture' || inWindow(i.at))).sort((a, b) => b.at.localeCompare(a.at))
 }
 
 // ---- Related entities (epic #25, Phase E) -----------------------------------

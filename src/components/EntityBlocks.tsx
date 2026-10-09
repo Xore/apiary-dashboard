@@ -16,7 +16,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import { inRange } from '#/data/queries'
 import type { HoneypotEvent, SessionSummary, SharedSignal, SourceGroup, SourceProfile, TimelineItem, TimelineKind } from '#/data/types'
 import { rangeLabel } from '#/lib/range'
-import { formatClock, formatDateTime, formatDay, formatNumber } from '#/lib/format'
+import { formatClock, formatDateTime, formatDay, formatNumber, now } from '#/lib/format'
 import { MiniTable, Panel, StatTile } from './DashboardBlocks'
 import { EventsPanel } from './DetailBlocks'
 import { EntityLink } from './EntityLink'
@@ -176,14 +176,14 @@ export const eventTimeline = (events: HoneypotEvent[]): TimelineItem[] =>
 export function RangeTimeline({ events }: { events: HoneypotEvent[] | undefined }) {
   const range = useRange()
   if (!events) return <SkeletonBlock height={320} />
-  return <Timeline items={eventTimeline(events.filter((e) => inRange(e.timestamp, range)))} />
+  return <Timeline items={eventTimeline(events.filter((e) => inRange(e.timestamp, range, now())))} />
 }
 
 /** A group's events inside the app-wide range, newest first. */
 export function RangeEvents({ events, action }: { events: HoneypotEvent[] | undefined; action?: React.ReactNode }) {
   const range = useRange()
   if (!events) return <EventsPanel title={`Events · ${rangeLabel(range).toLowerCase()}`} events={undefined} showSource action={action} />
-  const shown = events.filter((e) => inRange(e.timestamp, range))
+  const shown = events.filter((e) => inRange(e.timestamp, range, now()))
   return (
     <VStack gap={2}>
       <EventsPanel title={`Events · ${rangeLabel(range).toLowerCase()} (${formatNumber(shown.length)})`} events={shown.slice(0, 200)} showSource action={action} empty="No events in this time range." />
