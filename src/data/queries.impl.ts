@@ -823,12 +823,12 @@ export async function getCanarytokens(): Promise<{ types: CanaryTokenType[]; tok
 }
 
 /** Mock write: mints a token as the self-hosted Canarytokens platform would. */
-export async function createCanarytoken(input: { type: string; memo: string; snippet?: string; imageName?: string }): Promise<CanaryToken> {
+export async function createCanarytoken(input: { type: string; memo: string; snippet?: string; image?: { name: string; contentType: string; base64: string } }): Promise<CanaryToken> {
   await mockDelay()
   // What the platform itself refuses, before anything is minted.
   const kind = CANARY_TYPES.find((t) => t.type === input.type)
   if (!kind) throw new ApiError('invalid', 'createCanarytoken', { detail: `Unknown token type ${input.type}.` })
-  if (kind.requiresUpload && !input.imageName) throw new ApiError('invalid', 'createCanarytoken', { detail: `${kind.label} needs an image to serve.` })
+  if (kind.requiresUpload && !input.image) throw new ApiError('invalid', 'createCanarytoken', { detail: `${kind.label} needs an image to serve.` })
   if (input.snippet && !kind.supportsSnippet) throw new ApiError('invalid', 'createCanarytoken', { detail: `${kind.label} does not take a text snippet.` })
   const id = Array.from(crypto.getRandomValues(new Uint8Array(13)), (b) => b.toString(16).padStart(2, '0')).join('').slice(0, 25)
   const token: CanaryToken = {

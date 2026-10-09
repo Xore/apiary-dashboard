@@ -1672,13 +1672,38 @@ describe('the tools slice reads the endpoints the Rust tier actually serves', ()
     expect(bodiesOf()[0].body).toEqual({ token_type: 'ms_word', memo: 'payroll', created_by: '' })
   })
 
-  it('refuses a web_image live rather than minting a token with no bytes', async () => {
-    // The page's dialog carries the image as its NAME only, while
-    // canarytokens.rs:178-180 decodes `file_base64` and 400s without it.
-    // Sending the name alone lets the backend refuse it in its own words
-    // instead of this tier pretending the upload happened.
-    stub(toolsFixtures({ '/api/v1/canarytokens': fail(400, 'a file upload is required for this token type') }))
-    await expect(live('createCanarytoken')({ type: 'web_image', memo: 'badge', imageName: 'badge.png' })).rejects.toThrow(ApiError)
+  it('sends a web image as base64 with its name and content type', async () => {
+    stub(toolsFixtures({ '/api/v1/canarytokens': tokenRecord }))
+    const png = btoa('\x89PNG-bytes')
+    await live('createCanarytoken')({ type: 'web_image', memo: 'badge', image: { name: 'badge.png', contentType: 'image/png', base64: png } })
+    expect(bodiesOf()).toEqual([{ path: '/api/v1/canarytokens', body: { token_type: 'web_image', memo: 'badge', created_by: '', file_base64: png, file_name: 'badge.png', file_content_type: 'image/png' } }])
+  })
+
+  // The trust boundary: each of these is refused before the read-only guard
+  // or the create call fetches anything, so the stub records no request.
+  it.each([
+    ['a non-image type', { name: 'run.exe', contentType: 'application/octet-stream', base64: btoa('MZ') }, 'Use a PNG, JPEG or GIF image.'],
+    ['malformed base64', { name: 'a.png', contentType: 'image/png', base64: 'not base64!' }, 'The image is not valid base64.'],
+    ['an empty file', { name: 'a.png', contentType: 'image/png', base64: '' }, 'The image is empty.'],
+    ['a missing file name', { name: '', contentType: 'image/png', base64: btoa('x') }, 'The image needs a file name.'],
+  ])('refuses %s before any request', async (_, image, detail) => {
+    const calls = stub(toolsFixtures({ '/api/v1/canarytokens': tokenRecord }))
+    const error = await live('createCanarytoken')({ type: 'web_image', memo: 'badge', image }).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).kind).toBe('invalid')
+    expect((error as ApiError).detail).toBe(detail)
+    expect(calls).toEqual([])
+  })
+
+  it('refuses an image over 8 MiB decoded, and accepts one exactly at the limit', async () => {
+    // 'AAAA' decodes to three zero bytes, so 4k characters are 3k bytes.
+    const calls = stub(toolsFixtures({ '/api/v1/canarytokens': tokenRecord }))
+    const over = 'A'.repeat(4 * 2796203) // 8 MiB + 1 byte
+    await expect(live('createCanarytoken')({ type: 'web_image', memo: 'badge', image: { name: 'big.png', contentType: 'image/png', base64: over } })).rejects.toThrow(ApiError)
+    expect(calls).toEqual([])
+    const atLimit = 'A'.repeat(4 * 2796202) // 8 MiB exactly
+    await live('createCanarytoken')({ type: 'web_image', memo: 'badge', image: { name: 'edge.png', contentType: 'image/png', base64: atLimit } })
+    expect(bodiesOf()[0].path).toBe('/api/v1/canarytokens')
   })
 
   it('reads the credentials and the linkable tokens from the two list endpoints', async () => {

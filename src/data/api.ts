@@ -80,10 +80,12 @@ import {
   baitCredential,
   canarytokenList,
   canarytokenStorePage,
+  canaryImageProblem,
   canaryTokenTypes,
   canaryTriggers,
   createdCanarytoken,
   credentialList,
+  decodedBase64Length,
 } from './adapters/tools'
 import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesPatch, preferencesQuery, preferencesWriteBody, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import { readingOf } from './mock/sensors'
@@ -582,22 +584,24 @@ const getCanarytokens: Backend['getCanarytokens'] = async () => {
  * concept, so `canarytokens.rs CreateBody.created_by` is a field this tier
  * fills from the session it already resolved — never from client input.
  *
- * GAP (documented, not invented): the page's dialog carries a web image as
- * its FILENAME only (`imageName`), while `create` requires `file_base64` for a
- * `requires_upload` type and 400s without it (canarytokens.rs:178-180). There
- * is no upload channel from the browser through this tier's contract, so
- * `file_name` is sent when the dialog has one and no bytes are claimed. A
- * `web_image` therefore fails live with the backend's own 400 rather than
- * minting a token that serves nothing. Wiring the bytes would mean changing
- * `createCanarytoken`'s page signature, which is generated (queries.impl.ts). */
+ * A web image (`requires_upload`) travels as base64 in the body: the handler
+ * decodes `file_base64` and 400s without it (canarytokens.rs:178-180). The
+ * bytes are checked here, before any fetch, against the same limits the
+ * handler enforces (8 MiB decoded, an image type), so a bad upload is refused
+ * by this tier and never reaches the backend. */
 const createCanarytoken: Backend['createCanarytoken'] = async (input) => {
+  if (input.image) {
+    const size = decodedBase64Length(input.image.base64)
+    const problem = size === undefined ? 'The image is not valid base64.' : !input.image.name ? 'The image needs a file name.' : canaryImageProblem({ type: input.image.contentType, size })
+    if (problem) throw new ApiError('invalid', 'createCanarytoken', { detail: problem })
+  }
   await guardReadOnly('createCanarytoken')
   const wire = await post<CreatedCanarytokenWire>('createCanarytoken', '/api/v1/canarytokens', {
     token_type: input.type,
     memo: input.memo,
     created_by: callerOf()?.name ?? '',
     ...(input.snippet ? { include_text_snippet: true, text_snippet: input.snippet } : {}),
-    ...(input.imageName ? { file_name: input.imageName } : {}),
+    ...(input.image ? { file_base64: input.image.base64, file_name: input.image.name, file_content_type: input.image.contentType } : {}),
   })
   return createdCanarytoken(wire)
 }

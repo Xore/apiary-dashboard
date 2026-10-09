@@ -1,6 +1,7 @@
 // Wire → page mapping for the tools slice (canarytokens, bait credentials).
 // Pure functions over the shapes in ../contracts/tools; nothing here fetches.
 import type { BaitCredential, CanaryToken, CanaryTokenType, CanaryTrigger } from '../types'
+import { CANARY_IMAGE_MAX_BYTES, CANARY_IMAGE_TYPES } from '../contracts/tools'
 import type {
   CanaryFiredPageWire,
   CanaryTokenTypeWire,
@@ -87,3 +88,23 @@ export function baitCredential(wire: CredentialRecordWire): BaitCredential {
 
 /** GET /api/v1/credentials. */
 export const credentialList = (wire: CredentialListWire): BaitCredential[] => wire.credentials.map(baitCredential)
+
+/** Why a web image cannot be uploaded, in words for the operator, or
+ * undefined when it can. The dialog runs it on the picked File before submit;
+ * the live adapter runs it again on the bytes it is about to forward, so the
+ * tier's trust boundary does not depend on the browser having checked. */
+export function canaryImageProblem(file: { type: string; size: number }): string | undefined {
+  if (!(CANARY_IMAGE_TYPES as readonly string[]).includes(file.type)) return 'Use a PNG, JPEG or GIF image.'
+  if (file.size === 0) return 'The image is empty.'
+  if (file.size > CANARY_IMAGE_MAX_BYTES) return `The image must be ${CANARY_IMAGE_MAX_BYTES / (1024 * 1024)} MiB or smaller.`
+  return undefined
+}
+
+/** The decoded length of a standard base64 string, computed from its length
+ * rather than by decoding it (an 8 MiB decode is the thing being bounded).
+ * undefined when the string is not well-formed base64. */
+export function decodedBase64Length(base64: string): number | undefined {
+  if (base64.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) return undefined
+  const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0
+  return (base64.length / 4) * 3 - padding
+}

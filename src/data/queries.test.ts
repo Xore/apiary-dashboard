@@ -54,6 +54,14 @@ describe('cross-page consistency', () => {
   })
 })
 
+describe('mock canarytoken writes', () => {
+  it('mints a web_image when the image is supplied, and refuses one without it', async () => {
+    const token = await q.createCanarytoken({ type: 'web_image', memo: 'badge', image: { name: 'badge.png', contentType: 'image/png', base64: btoa('png') } })
+    expect(token).toMatchObject({ type: 'web_image', memo: 'badge' })
+    await expect(q.createCanarytoken({ type: 'web_image', memo: 'badge' })).rejects.toThrow()
+  })
+})
+
 describe('link integrity', () => {
   it('every referenced payload hash has an analysis page', async () => {
     const [attackers, clusters, llm] = await Promise.all([q.getAttackers(), q.getInfraClusters(), q.getLlmAnalyses()])
