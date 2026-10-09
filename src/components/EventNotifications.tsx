@@ -10,6 +10,12 @@ import { usePreferences } from '#/lib/prefs'
 const RANK: Record<Severity, number> = { info: 0, low: 1, medium: 2, high: 3, critical: 4 }
 const MIN_GAP_MS = 15_000
 
+/** A missing severity sits below `info`: an unclassified event clears no
+ * threshold except a canarytoken fire, which is checked on its own. */
+const rankOf = (severity: Severity | undefined): number => (severity ? RANK[severity] : -1)
+
+const detailOf = (event: HoneypotEvent): string => event.summary || event.eventName || 'Event'
+
 /** A short two-tone chime, made on the spot (no audio file to ship). */
 function chime() {
   try {
@@ -41,15 +47,15 @@ export function EventNotifications() {
     (event: HoneypotEvent) => {
       if (!prefs || (!prefs.notifyDesktop && !prefs.notifySound)) return
       const canary = event.sensor === 'canarytokens' && prefs.notifyCanary
-      if (!canary && RANK[event.severity] < RANK[prefs.notifySeverity]) return
+      if (!canary && rankOf(event.severity) < RANK[prefs.notifySeverity]) return
       pending.current.push(event)
       if (Date.now() - last.current < MIN_GAP_MS) return
       last.current = Date.now()
       const batch = pending.current
       pending.current = []
       const head = batch[0]
-      const title = batch.length === 1 ? `${head.severity}: ${head.summary}` : `${batch.length} events at ${prefs.notifySeverity} or above`
-      const body = batch.length === 1 ? `${head.sensor} · from ${head.srcIp}` : `Newest: ${head.summary}`
+      const title = batch.length === 1 ? [head.severity, detailOf(head)].filter(Boolean).join(': ') : `${batch.length} events at ${prefs.notifySeverity} or above`
+      const body = batch.length === 1 ? `${head.sensor} · from ${head.srcIp}` : `Newest: ${detailOf(head)}`
       if (prefs.notifyDesktop && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         const note = new Notification(title, { body, tag: 'apiary-events' })
         note.onclick = () => {

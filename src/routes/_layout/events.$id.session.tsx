@@ -10,5 +10,6 @@ export const Route = createFileRoute('/_layout/events/$id/session')({ ssr: pageS
 
 function Tab() {
   const d = orPending(parent.useLoaderData())
-  return <EventsPanel title="The rest of this session" events={d?.session} action={d && <EntityLink kind="session" id={d.event.sessionId}>Open session</EntityLink>} empty="This event is the whole session." />
+  const sessionId = d?.event.sessionId
+  return <EventsPanel title="The rest of this session" events={d?.session} action={d && sessionId ? <EntityLink kind="session" id={sessionId}>Open session</EntityLink> : undefined} empty="This event is the whole session." />
 }

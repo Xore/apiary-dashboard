@@ -22,6 +22,8 @@ import {
   yaraRuns,
 } from './evidence'
 
+const optionSchema = { timeout_min_seconds: 30, timeout_max_seconds: 3600, queue_age_min_seconds: 60, queue_age_max_seconds: 86400, retry_limit_max: 3 }
+
 const inventory = {
   _doc_id: 'inv-1',
   Hash: 'a'.repeat(64),
@@ -240,6 +242,19 @@ describe('evidence adapters', () => {
     expect(runs[0].processes).toEqual([{ pid: 1200, name: 'powershell.exe', commandLine: 'C:\\tmp\\p.exe' }])
   })
 
+  it('maps report_summary.package onto the run, and leaves it off when the report has none', () => {
+    const base = { sha256: '3'.repeat(64), requested_at: '2026-10-01T11:50:00Z', started_at: '2026-10-01T11:50:01Z', completed_at: '2026-10-01T12:00:00Z', exit_status: 'ok', cape_status: 'reported', task_id: 8812, signatures: [] }
+    const [withPackage, withoutPackage] = capeRuns({
+      total: 2,
+      rows: [
+        { _doc_id: 'a', cape: { ...base, report_summary: { package: 'dll', malscore: 4 } } satisfies CapeRunWire },
+        { _doc_id: 'b', cape: { ...base, sha256: '4'.repeat(64), report_summary: { malscore: 4 } } satisfies CapeRunWire },
+      ],
+    })
+    expect(withPackage.package).toBe('dll')
+    expect(withoutPackage).not.toHaveProperty('package')
+  })
+
   it('maps GET /github-analysis/{sha}, reading one scanner failure as undetected', () => {
     const run = githubAnalysis(githubWire)
     expect(run.status).toBe('published')
@@ -273,13 +288,22 @@ describe('evidence adapters', () => {
     const catalog = analyzerCatalog({
       classification: { code: 'pe32', label: 'Windows PE', platform: 'windows', category: 'binary', analysis_path: 'windows-sandbox', dynamic: true },
       analyzers: [
-        { id: 'deterministic', display_name: 'Static', description: 'Hashes and rules', gpu_consuming: false, accepted_kinds: ['PE32'], availability: 'configured', required_role: 'viewer', detonates: false, confirmation: 'none', externally_publishing: false, requires_opt_in: false, applicable: true },
-        { id: 'windows-sandbox', display_name: 'Windows sandbox', description: 'Detonates on KVM', gpu_consuming: false, accepted_kinds: ['PE32'], availability: 'unconfigured', reason: 'no snapshot', required_role: 'admin', detonates: true, confirmation: 'detonate', externally_publishing: false, requires_opt_in: false, applicable: false, reason_unavailable: '' },
+        { id: 'deterministic', display_name: 'Static', description: 'Hashes and rules', gpu_consuming: false, accepted_kinds: ['PE32'], availability: 'configured', required_role: 'viewer', detonates: false, confirmation: 'none', externally_publishing: false, requires_opt_in: false, applicable: true, default_options: { timeout_seconds: 300, max_queue_age_seconds: 3600, retry_limit: 0 }, option_schema: optionSchema },
+        { id: 'windows-sandbox', display_name: 'Windows sandbox', description: 'Detonates on KVM', gpu_consuming: false, accepted_kinds: ['PE32'], availability: 'unconfigured', reason: 'no snapshot', required_role: 'admin', detonates: true, confirmation: 'detonate', externally_publishing: false, requires_opt_in: false, applicable: false, reason_unavailable: '', default_options: { timeout_seconds: 600, max_queue_age_seconds: 7200, retry_limit: 1 }, option_schema: optionSchema },
       ],
     } as never)
     expect(catalog.classification.category).toBe('executable')
     expect(catalog.analyzers[0]).toMatchObject({ id: 'static', label: 'Static', gpu: false, availability: 'available', requiredRole: 'viewer', localOnly: true })
     expect(catalog.analyzers[1]).toMatchObject({ id: 'sandbox', availability: 'unavailable', availabilityNote: 'no snapshot', requiredRole: 'admin', detonates: true, confirmation: 'detonate', applicable: false })
+  })
+
+  it('maps each analyzer default_options and option_schema onto the page shape', () => {
+    const catalog = analyzerCatalog({
+      classification: { code: 'elf', label: 'ELF', platform: 'linux', category: 'binary', analysis_path: 'linux-sandbox', dynamic: true },
+      analyzers: [{ id: 'linux-sandbox', display_name: 'Linux sandbox', description: 'Detonates on QEMU', gpu_consuming: false, accepted_kinds: ['ELF'], availability: 'configured', required_role: 'admin', detonates: true, confirmation: 'detonate', externally_publishing: false, requires_opt_in: false, applicable: true, default_options: { timeout_seconds: 600, max_queue_age_seconds: 7200, retry_limit: 2 }, option_schema: optionSchema }],
+    } as never)
+    expect(catalog.analyzers[0].defaultOptions).toEqual({ timeoutSeconds: 600, maxQueueAgeSeconds: 7200, retryLimit: 2 })
+    expect(catalog.analyzers[0].optionSchema).toEqual({ timeoutMinSeconds: 30, timeoutMaxSeconds: 3600, queueAgeMinSeconds: 60, queueAgeMaxSeconds: 86400, retryLimitMax: 3 })
   })
 
   it('maps GET /workbench/runs/{id}', () => {
@@ -290,10 +314,17 @@ describe('evidence adapters', () => {
   })
 
   it('builds the POST /workbench/runs body, mapping page ids back to wire ids', () => {
-    const body = createWorkbenchRunBody('5'.repeat(64), ['static', 'sandbox'], { static: { depth: 2 } }, { id: 'rc-1', name: 'full sweep', revision: 3 })
+    const body = createWorkbenchRunBody('5'.repeat(64), ['static', 'sandbox'], { static: { timeoutSeconds: 120, maxQueueAgeSeconds: 900, retryLimit: 1 }, sandbox: { timeoutSeconds: 600, maxQueueAgeSeconds: 3600, retryLimit: 0 } }, { id: 'rc-1', name: 'full sweep', revision: 3 })
     expect(body.payload_sha256).toBe('5'.repeat(64))
     expect(body.recipe_id).toBe('rc-1')
-    expect(body.analyzers.map((a) => a.analyzer_id)).toEqual(['deterministic', 'linux-sandbox'])
+    expect(body.analyzers).toEqual([
+      { analyzer_id: 'deterministic', options: { timeout_seconds: 120, max_queue_age_seconds: 900, retry_limit: 1 } },
+      { analyzer_id: 'linux-sandbox', options: { timeout_seconds: 600, max_queue_age_seconds: 3600, retry_limit: 0 } },
+    ])
+  })
+
+  it('refuses to build a run body for an analyzer with no options', () => {
+    expect(() => createWorkbenchRunBody('5'.repeat(64), ['static'], {})).toThrow('No options set for analyzer static')
   })
 
   it('maps GET /gpu-queue and /ml-health', () => {

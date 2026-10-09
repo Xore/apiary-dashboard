@@ -331,7 +331,7 @@ export const correlationGroup = (wire: CorrelationWire, events: HoneypotEvent[])
     ...(times[0] ? { first: times[0] } : {}),
     ...(times.length ? { last: times.at(-1)! } : {}),
     sensors: wire.sensors.map((row) => ({ id: row.key, label: row.key, count: row.count })),
-    countries: tally(events.map((row) => row.country)),
+    countries: tally(events.flatMap((row) => (row.country ? [row.country] : []))),
     networks: tally(members.map((member) => `${member.ip.split('.').slice(0, 3).join('.')}.0/24`)),
     ports: tally(events.map((row) => String(row.dstPort))),
     // The page event carries each pivot already lifted off the wire row:

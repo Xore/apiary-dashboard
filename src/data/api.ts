@@ -86,12 +86,14 @@ import {
   baitCredential,
   canarytokenList,
   canarytokenStorePage,
+  canaryImageProblem,
   canaryTokenTypes,
   canaryTriggers,
   createdCanarytoken,
   credentialList,
+  decodedBase64Length,
 } from './adapters/tools'
-import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesDocument, preferencesQuery, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
+import { DEFAULT_PREFERENCES_WIRE, capturedMail, preferences, preferencesPatch, preferencesQuery, preferencesWriteBody, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import type { DashboardViews } from './adapters/monitor'
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
@@ -154,7 +156,7 @@ import type {
   TopologySensorWire,
   TopologyWire,
 } from './contracts/operations'
-import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, PreferencesWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
+import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, PreferencesDocWire, PreferencesWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
 import type {
   AgentCampaignRow,
   AuthEventRow,
@@ -213,7 +215,7 @@ import type {
   SourcesPageWire,
 } from './contracts/sources'
 import type { Backend, Caller } from './backend'
-import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig } from './types'
+import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Preferences, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig } from './types'
 
 /** A dashboard that hangs forever is worse than one that errors. */
 const TIMEOUT_MS = envInt('BACKEND_TIMEOUT_MS', 30_000)
@@ -487,8 +489,8 @@ const paged = (wire: { total: number; offset: number; rows: EventRow[] }): Paged
  * sensor specs classify. The values are the literals the backend's own
  * canonicalizer fixtures and its DISCONNECT filter use; `pivots.alert`
  * (a Suricata signature, read off the wire) makes a row an IDS alert.
- * Everything else falls to `protocol.request`, the page's own catch-all for
- * a non-HTTP application request. */
+ * Everything else falls to `connection`, the least specific kind a honeypot
+ * row can be certain of (see `pageEvent`). */
 const TYPE_OF_EVENT: Record<string, EventType> = {
   'cowrie.login.failed': 'login.failed',
   'cowrie.login.success': 'login.success',
@@ -523,37 +525,29 @@ function eventNameOf(row: EventRow): string {
  * because the row carries no value for them. They are filled here, at the
  * seam, because the seam's signatures are the page types:
  *
- * - `type` — classified off the sensor's own event name above.
- * - `severity` — always `info`. The wire classifies no severity for a
- *   generic event: the Go tier's `classify.go` severity did not survive the
- *   Rust port, and the canonical frontend consequently renders no severity
- *   column at all. `info` says "nothing known" rather than "nothing wrong" —
- *   the same reading the repo already gives an uncounted facet. Only a DNP3
- *   control function carries one, and that is `icsSeverity`, mapped already.
+ * - `type` — classified off the sensor's own event name above, or `ids.alert`
+ *   when the row carries a Suricata alert. A name outside `TYPE_OF_EVENT`
+ *   falls to `connection`: every row is a connection to a sensor, and that
+ *   is the one kind it is certain of. `protocol.request` would claim a
+ *   non-HTTP application request, and `http.request` a web one, neither of
+ *   which the row shows.
  * - `eventName` — the sensor's own event name, verbatim.
- * - `srcPort` — 0. The row carries only the destination port.
- * - `techniques` — empty. The ATT&CK mapping is a pipeline result, not a
- *   field of the row.
- * - `organization` — omitted. `pivots.org` is the ATTACKER's network
- *   organization and is already on `org`; the decoy organization is a
- *   sensor field the row does not carry.
- * - `city` — "". The row carries `source.geo.country_iso_code` only.
+ * - `techniques` — empty, meaning none assigned. The ATT&CK mapping is a
+ *   pipeline result, not a field of the row.
+ * - `srcPort`, `city`, `organization` — not on the row, so not set. Absent,
+ *   never `0` or `''`.
  *
- * A GAP, not a conversion: the explorer's Severity column and the event
- * page's kind token show "info" and a best-effort kind against real data,
- * where they show a real classification against the mock.
+ * `severity` is not set here. `toHoneypotEvent` sets it from
+ * `ics_severity` when the row carries one, and leaves it absent otherwise.
  */
 function pageEvent(row: EventRow): HoneypotEvent {
   const name = eventNameOf(row)
   // Typed as exactly the gap the row cannot fill, so a renamed page field
   // fails the compiler here rather than reaching a page undefined.
   const gap: Pick<HoneypotEvent, EventRowGap> = {
-    type: row.pivots.alert ? 'ids.alert' : (TYPE_OF_EVENT[name] ?? 'protocol.request'),
-    severity: 'info',
-    srcPort: 0,
+    type: row.pivots.alert ? 'ids.alert' : (TYPE_OF_EVENT[name] ?? 'connection'),
     eventName: name,
     techniques: [],
-    city: '',
   }
   // The one cast in this module, and the compiler forces it:
   // `Omit<HoneypotEvent, EventRowGap>` is structurally vacuous, because
@@ -597,22 +591,24 @@ const getCanarytokens: Backend['getCanarytokens'] = async () => {
  * concept, so `canarytokens.rs CreateBody.created_by` is a field this tier
  * fills from the session it already resolved — never from client input.
  *
- * GAP (documented, not invented): the page's dialog carries a web image as
- * its FILENAME only (`imageName`), while `create` requires `file_base64` for a
- * `requires_upload` type and 400s without it (canarytokens.rs:178-180). There
- * is no upload channel from the browser through this tier's contract, so
- * `file_name` is sent when the dialog has one and no bytes are claimed. A
- * `web_image` therefore fails live with the backend's own 400 rather than
- * minting a token that serves nothing. Wiring the bytes would mean changing
- * `createCanarytoken`'s page signature, which is generated (queries.impl.ts). */
+ * A web image (`requires_upload`) travels as base64 in the body: the handler
+ * decodes `file_base64` and 400s without it (canarytokens.rs:178-180). The
+ * bytes are checked here, before any fetch, against the same limits the
+ * handler enforces (8 MiB decoded, an image type), so a bad upload is refused
+ * by this tier and never reaches the backend. */
 const createCanarytoken: Backend['createCanarytoken'] = async (input) => {
+  if (input.image) {
+    const size = decodedBase64Length(input.image.base64)
+    const problem = size === undefined ? 'The image is not valid base64.' : !input.image.name ? 'The image needs a file name.' : canaryImageProblem({ type: input.image.contentType, size })
+    if (problem) throw new ApiError('invalid', 'createCanarytoken', { detail: problem })
+  }
   await guardReadOnly('createCanarytoken')
   const wire = await post<CreatedCanarytokenWire>('createCanarytoken', '/api/v1/canarytokens', {
     token_type: input.type,
     memo: input.memo,
     created_by: callerOf()?.name ?? '',
     ...(input.snippet ? { include_text_snippet: true, text_snippet: input.snippet } : {}),
-    ...(input.imageName ? { file_name: input.imageName } : {}),
+    ...(input.image ? { file_base64: input.image.base64, file_name: input.image.name, file_content_type: input.image.contentType } : {}),
   })
   return createdCanarytoken(wire)
 }
@@ -740,10 +736,12 @@ async function sessionOf(): Promise<{ user: SessionUser | null; subject: string;
  * this is `Promise.all` and the rejection is the `ApiError` the page's error
  * boundary already tells apart.
  *
- * `/api/v1/preferences` is NOT among the nine: it is per-subject, and
- * `getPreferences` reads it. */
+ * `/api/v1/preferences` is not among the nine: it is per-subject, and it is
+ * the eighth leg here only through `storedPreferencesWire`, the read
+ * `getPreferences` and `savePreferences` share. */
 const getSettings: Backend['getSettings'] = async () => {
-  const [config, users, history, audit, services, reporter, storage, templates, session] = await Promise.all([
+  const session = await sessionOf()
+  const [config, users, history, audit, services, reporter, storage, templates, stored] = await Promise.all([
     get<ConfigWire>('getSettings', '/api/v1/config'),
     get<UsersWire>('getSettings', '/api/v1/users'),
     get<ConfigHistoryWire>('getSettings', '/api/v1/config/history'),
@@ -752,7 +750,7 @@ const getSettings: Backend['getSettings'] = async () => {
     get<ReporterStatsWire>('getSettings', '/api/v1/reporter-stats'),
     get<StorageWire>('getSettings', '/api/v1/settings/storage'),
     get<ReportTemplatesWire>('getSettings', '/api/v1/reports/templates'),
-    sessionOf(),
+    storedPreferencesWire(session, 'getSettings'),
   ])
   return settingsData({
     // The signed-in operator. The wire has no session, so it comes from the
@@ -762,10 +760,10 @@ const getSettings: Backend['getSettings'] = async () => {
     config: config ?? { revision: 0, payload: {} },
     templates: reportTemplates(templates ?? { templates: [], elements: [] }).templates,
     users: users ?? { users: [] },
-    // The backend's own `default_preferences`, NOT the wire's per-subject
-    // document: that is `getPreferences`'s read, and `savePreferences` is
-    // still unwired (see LIVE below), so the appearance pane edits defaults.
-    preferences: DEFAULT_PREFERENCES_WIRE,
+    // The signed-in operator's stored document, the same read `getPreferences`
+    // makes. The dialog seeds its form from this, and `savePreferences` diffs
+    // against it, so a save after this read sends only the changed keys.
+    preferences: stored,
     services: services ?? { available: false, services: [] },
     history: history ?? { entries: [] },
     audit: audit ?? { events: [] },
@@ -783,11 +781,46 @@ const getSettings: Backend['getSettings'] = async () => {
  * and the sign-in page renders exactly as a fresh operator's would. Once
  * signed in, the subject comes from the session record (`sessionOf`), and
  * the first read projects the operator into the preferences store. */
-const getPreferences: Backend['getPreferences'] = async () => {
-  const { user, subject, username } = await sessionOf()
-  if (!subject) return preferences(DEFAULT_PREFERENCES_WIRE)
-  const wire = await get<PreferencesWire>('getPreferences', '/api/v1/preferences', { ...preferencesQuery(subject, { username, role: user?.roles[0] }) })
-  return wire ? preferencesDocument(wire) : preferences(DEFAULT_PREFERENCES_WIRE)
+const getPreferences: Backend['getPreferences'] = async () => preferences(await storedPreferencesWire(await sessionOf(), 'getPreferences'))
+
+/** The signed-in operator's stored preferences document, as the wire has it:
+ * the one baseline `getPreferences`, `getSettings` and `savePreferences` all
+ * read, so they cannot disagree about what is stored.
+ *
+ * No subject answers the backend defaults without a call (the wire 400s an
+ * empty subject). A stored document the wire does not have (null) answers
+ * the same defaults, as a first-time operator's would. Any other failure
+ * throws, through `get`. */
+async function storedPreferencesWire(session: Awaited<ReturnType<typeof sessionOf>>, endpoint: string): Promise<PreferencesDocWire> {
+  if (!session.subject) return DEFAULT_PREFERENCES_WIRE
+  const wire = await get<PreferencesWire>(endpoint, '/api/v1/preferences', { ...preferencesQuery(session.subject, { username: session.username, role: session.user?.roles[0] }) })
+  return wire ? wire.preferences : DEFAULT_PREFERENCES_WIRE
+}
+
+/** The page fields that differ from the stored document's page form. The
+ * page hands over its whole `Preferences`, so the diff is what says which
+ * fields the operator changed; `preferencesPatch` then drops the page-only
+ * fields (`notifyCanary`, `mapBasemap`) so they never reach the wire. */
+const changedPreferences = (next: Preferences, stored: Preferences): Partial<Preferences> => {
+  const changed: Partial<Preferences> = {}
+  for (const key of Object.keys(next) as Array<keyof Preferences>) if (next[key] !== stored[key]) Object.assign(changed, { [key]: next[key] })
+  return changed
+}
+
+/** PUT /api/v1/preferences for the signed-in operator, carrying only the
+ * fields that changed against the stored document.
+ *
+ * The stored document is read first, because the PUT merges a
+ * `deny_unknown_fields` patch: a full-page send would overwrite every field
+ * the operator did not touch with whatever the page holds, and would 400 on
+ * `notifyCanary`. An unchanged save makes no PUT. No session is `expired`,
+ * the same as the sign-in flow expects of a write it cannot attribute. */
+const savePreferences: Backend['savePreferences'] = async (next) => {
+  const session = await sessionOf()
+  if (!session.subject) throw new ApiError('expired', 'savePreferences')
+  const patch = preferencesPatch(changedPreferences(next, preferences(await storedPreferencesWire(session, 'savePreferences'))))
+  if (Object.keys(patch).length === 0) return
+  await request<PreferencesWire>('savePreferences', '/api/v1/preferences', { method: 'PUT', body: preferencesWriteBody(session.subject, patch, session.username) })
 }
 
 /** What the identity panel shows for a caller no session resolved. The mock
@@ -1159,7 +1192,15 @@ const getNetwork: Backend['getNetwork'] = async (cidr) => {
   // `events` is non-empty here: a group with no member is the page's
   // not-found, returned above.
   const first = events.find((row) => row.asn || row.org) ?? events[0]
-  return { cidr, asn: first.asn, org: first.org, country: first.country, group, ...(campaign ? { campaign } : {}) }
+  // Absent attributes are left out of the entity, not carried as `undefined`.
+  return {
+    cidr,
+    ...(first.asn ? { asn: first.asn } : {}),
+    ...(first.org ? { org: first.org } : {}),
+    ...(first.country ? { country: first.country } : {}),
+    group,
+    ...(campaign ? { campaign } : {}),
+  }
 }
 
 /** GET /api/v1/investigate/cluster?kind=&value= — the same endpoint
@@ -1258,17 +1299,17 @@ const getSensorDetail: Backend['getSensorDetail'] = async (id) => {
  * the sensor's own fields, no pivots and no enrichment, so every one of the
  * eleven is genuinely absent upstream and none is inferred:
  *
- * - `type` / `eventName` / `summary` / `severity` — nothing upstream
- *   classifies. `eventName` is the sensor's own event name verbatim and
- *   `type` is read off it the same way `TYPE_OF_EVENT` does for a real row,
- *   falling to the page's own `protocol.request` catch-all; `severity` is
- *   `info` for the same reason as #75 ("nothing known", not "nothing
- *   wrong").
- * - `asn` / `org` / `city` / `country` — network enrichment, computed on the
- *   events slice's pipeline and not part of this endpoint.
- * - `techniques` — an ATT&CK mapping, also a pipeline result.
- * - `provider` — the `source.as.type` class, same place.
- * - `sessionId` — sessions are correlated by the events slice's endpoint.
+ * - `type` / `eventName` — `eventName` is the sensor's own event name verbatim
+ *   and `type` is read off it the same way `TYPE_OF_EVENT` does for a real
+ *   row, falling to `connection` (see `pageEvent` for why not
+ *   `protocol.request`).
+ * - `techniques` — empty, meaning none assigned. An ATT&CK mapping is a
+ *   pipeline result, not part of this endpoint.
+ * - `severity`, `summary`, `asn` / `org` / `city` / `country` / `provider`,
+ *   `sessionId` — not upstream: nothing classifies the row (the endpoint has
+ *   no ICS severity), and the network enrichment and session correlation are
+ *   on the events slice's pipeline, not this endpoint. Left absent, never
+ *   `info`, `''` or `network`.
  *
  * `srcIpClaimed`, `persona`, `site`, `asset`, `fingerprint` and friends stay
  * absent rather than blank: `sensorEvents` already omits them and the page
@@ -1279,22 +1320,14 @@ const sensorPageEvents = (wire: SensorEventsWire): HoneypotEvent[] =>
     // extends `Record<string, unknown>`, so `Omit<HoneypotEvent, …>` has
     // `keyof` = `string | number` and omits nothing. The adapter's field
     // selection is still what runs; the Pick is only the type it earned,
-    // and `sensorEvents` is the one place that lists which eight fields
+    // and `sensorEvents` is the one place that lists which fields
     // the endpoint really fills.
-    const filled = row as Pick<HoneypotEvent, 'id' | 'timestamp' | 'sensor' | 'protocol' | 'srcIp' | 'srcPort' | 'dstPort' | 'fields'>
+    const filled = row as Pick<HoneypotEvent, 'id' | 'timestamp' | 'sensor' | 'srcIp' | 'srcPort' | 'dstPort' | 'fields'>
     const name = sensorEventName(filled.fields)
     const gap: Pick<HoneypotEvent, SensorEventGap> = {
-      type: TYPE_OF_EVENT[name] ?? 'protocol.request',
-      severity: 'info',
+      type: TYPE_OF_EVENT[name] ?? 'connection',
       eventName: name,
-      summary: '',
-      asn: '',
-      org: '',
       techniques: [],
-      provider: 'network',
-      city: '',
-      country: '',
-      sessionId: '',
     }
     return { ...filled, ...gap }
   })
@@ -1699,12 +1732,10 @@ const callerOf = (): Caller => requestScope.getStore()?.user
  * actor: workbench_api.rs's `require_actor` rejects a missing or blank
  * `x-actor-username` with a JSON 401, and takes run ownership from it.
  *
- * The page's config is keyed by analyzer id (its own option block per
- * analyzer) already, so it is the options map as-is; the body adapter then
- * narrows each block to the three numbers the backend validates. */
+ * The config's options are keyed by analyzer id, each the three numbers the
+ * backend validates; the body adapter sends them as they are. */
 const startAnalysisRun: Backend['startAnalysisRun'] = async (config) => {
-  const options = Object.fromEntries(config.analyzers.map((id) => [id, config[id]])) as Record<string, Record<string, string | number | boolean | string[]>>
-  const wire = await post<CreateWorkbenchRunWire>('startAnalysisRun', '/api/v1/workbench/runs', createWorkbenchRunBody(config.hash, config.analyzers, options), { mounted: true, user: callerOf() })
+  const wire = await post<CreateWorkbenchRunWire>('startAnalysisRun', '/api/v1/workbench/runs', createWorkbenchRunBody(config.hash, config.analyzers, config.options), { mounted: true, user: callerOf() })
   return { run: workbenchRun(wire.run), reused: wire.reused }
 }
 
@@ -2279,11 +2310,6 @@ const getSessionEvents: Backend['getSessionEvents'] = async (sessionId) =>
  * DELIBERATELY ABSENT, and the reason is the one thing in this slice worth
  * reading before changing anything:
  *
- * - `savePreferences` — `PUT /api/v1/preferences` merges a
- *   `deny_unknown_fields` patch from the page's whole `Preferences`, which
- *   needs a diff against the stored document (`preferencesPatch` carries
- *   only what changed). Not wired yet; `getPreferences` is.
- *
  * - `previewReport` — reports' own gap: the backend renders a report, it does
  *   not preview a draft, and there is no `/reports/preview` route. A live
  *   deployment gets an explicit not-available error. The other half
@@ -2307,6 +2333,7 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   searchAll,
   getSettings,
   getPreferences,
+  savePreferences,
   getShellConfig,
   validateConfig,
   saveConfigSection,

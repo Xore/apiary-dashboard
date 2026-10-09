@@ -1,7 +1,7 @@
 // The browser side of the data seam's server functions: which mock scenario
 // a call runs in, and the record of every call the report-a-problem capture
 // keeps. Client-safe.
-import { createIsomorphicFn, createMiddleware } from '@tanstack/react-start'
+import { createIsomorphicFn, createMiddleware, createServerFn } from '@tanstack/react-start'
 import { getRequestUrl } from '@tanstack/react-start/server'
 import { ApiError, asApiError } from './errors'
 import { API_CALL, isScenario } from './scenarios'
@@ -48,6 +48,19 @@ export function pageScenario(): MockScenario {
 export const mockScenarioMiddleware = createMiddleware({ type: 'function' })
   .client(({ next }) => next({ sendContext: { mock: pageScenario() } }))
   .server(({ next, context }) => next({ context: { mock: mockScenariosAllowed() && isScenario(context.mock) ? context.mock : 'normal' } }))
+
+/** The clock the pages count times from: the mock tier's fixed clock when no
+ * live backend answers (its fixtures are relative to it), else null, the
+ * wall clock. Pure: the handler supplies both inputs. */
+export const clockFor = (live: boolean, mockNow: number): number | null => (live ? null : mockNow)
+
+/** The mock clock, decided by whether a live backend is configured (not by
+ * the dev scenario override: a live backend always runs on the real clock).
+ * The mock and live modules load only inside the handler, on the server. */
+export const getMockClock = createServerFn({ method: 'GET' }).handler(async () => {
+  const [{ isLiveBackend }, { MOCK_NOW }] = await Promise.all([import('./api'), import('./mock/random')])
+  return clockFor(isLiveBackend(), MOCK_NOW)
+})
 
 /** What crosses the wire, as Start's serializer can prove: JSON. The
  * exports keep each query's own types; this is only the handler's side. */

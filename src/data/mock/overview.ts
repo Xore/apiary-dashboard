@@ -79,7 +79,7 @@ function buildViews(): OverviewViews {
     commands: countBy(EVENTS.map((e) => e.command)),
     clients: seededRows(0x6f6, ['SSH-2.0-Go', 'SSH-2.0-libssh_0.9.6', 'SSH-2.0-PuTTY_Release_0.78', 'SSH-2.0-OpenSSH_8.9p1', 'SSH-2.0-paramiko_3.4.0', 'SSH-2.0-ZGrab ZGrab SSH Survey'], 520),
     fingerprints: seededRows(0x707, ['hassh 16f898dd8ed8279e1055350b4e20666c', 'ja3 e7d705a3286e19ea42f587b344ee6865', 'ja4 t13d1516h2_8daaf6152771', 'ua Mozilla/5.0 zgrab/0.x', 'ua python-requests/2.31', 'ja4 t13d190900_9dc949149365'], 410),
-    paths: countBy(EVENTS.filter((e) => e.type === 'http.request').map((e) => e.summary.replace(/^GET /, ''))),
+    paths: countBy(EVENTS.filter((e) => e.type === 'http.request').map((e) => (e.summary ?? '').replace(/^GET /, ''))),
     osDistribution: seededRows(0x818, ['Linux 2.2.x–3.x', 'Linux 3.11+', 'Windows NT', 'FreeBSD', 'embedded / IoT', 'unknown'], 700),
     tcpClusters: seededRows(0x929, ['64240_2-4-8-1-3_1460_7 (Linux)', '65535_2-1-3-1-1-4_1460_8 (Windows)', '29200_2-4-8-1-3_1460_7 (Mirai-like)', '5840_2-4-8-1-3_1460_5', '1024_2 (masscan)'], 600),
     icsFunctions: seededRows(0xa3a, ['Modbus 3 Read Holding Registers', 'Modbus 43 Read Device ID', 'S7 Read SZL', 'Modbus 6 Write Single Register', 'DNP3 1 Read', 'BACnet ReadProperty'], 180),

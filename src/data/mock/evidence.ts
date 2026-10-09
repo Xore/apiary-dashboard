@@ -526,6 +526,7 @@ export const CAPE_RUNS: CapeRun[] = CAPE_SAMPLES.map((payload, i): CapeRun => {
     totalCalls: failed ? 0 : int(rng, 4_000, 90_000),
     sections: failed ? ['info', 'debug'] : ['info', 'behavior', 'network', 'signatures', 'CAPE', 'procdump', 'debug'],
     debugErrors: failed ? ['Analysis timeout exceeded, terminating analysis', 'Guest agent did not respond to status poll'] : [],
+    ...(failed ? {} : { package: 'exe' }),
   }
 })
 
