@@ -1,8 +1,11 @@
 // Wire → page mapping for the sources & correlation slice. Pure functions
 // over the shapes in ../contracts/sources; nothing here fetches.
+import type { EventRow } from '../contracts/events'
 import type {
   AttackerEntity,
   BlockRecord,
+  SessionSummary,
+  TimelineItem,
   ClusterKind,
   CountRow,
   CredEdge,
@@ -18,8 +21,10 @@ import type {
   Technique,
 } from '../types'
 import type {
+  AttackerEntityWire,
   AttackerGraphWire,
   AttackerPageWire,
+  BlockedIpsWire,
   AttckGridWire,
   CampaignTimelineWire,
   FusionWire,
@@ -75,29 +80,32 @@ export const mapPoints = (wire: MapPointsWire): MapPoint[] =>
 
 // ---- GET /api/v1/attackers --------------------------------------------------
 
-/** GET /api/v1/attackers — the entity documents, page-shaped.
+/** One attackers-v1 document → the page's AttackerEntity. Shared by the store
+ * list and the single-address read (`/api/v1/sources/{ip}/identities`).
  * `protocols_touched` has no page field. */
-export const attackers = (wire: AttackerPageWire): AttackerEntity[] =>
-  wire.rows.map((row) => {
-    const entity: AttackerEntity = {
-      id: row.id,
-      ips: row.ips,
-      fingerprints: row.fingerprints,
-      payloads: row.payloads,
-      credentials: row.credentials,
-      sensors: row.sensors,
-      events: row.events,
-      first: row.first,
-      last: row.last,
-      updated: row.updated,
-      verdicts: row.verdicts,
-      techniques: row.techniques,
-      destIps: row.dest_ips,
-      portsTouched: row.ports_touched,
-    }
-    const scan = scanOf(row.scan)
-    return scan ? { ...entity, scan } : entity
-  })
+export const attacker = (row: AttackerEntityWire): AttackerEntity => {
+  const entity: AttackerEntity = {
+    id: row.id,
+    ips: row.ips,
+    fingerprints: row.fingerprints,
+    payloads: row.payloads,
+    credentials: row.credentials,
+    sensors: row.sensors,
+    events: row.events,
+    first: row.first,
+    last: row.last,
+    updated: row.updated,
+    verdicts: row.verdicts,
+    techniques: row.techniques,
+    destIps: row.dest_ips,
+    portsTouched: row.ports_touched,
+  }
+  const scan = scanOf(row.scan)
+  return scan ? { ...entity, scan } : entity
+}
+
+/** GET /api/v1/attackers — the entity documents, page-shaped. */
+export const attackers = (wire: AttackerPageWire): AttackerEntity[] => wire.rows.map((row) => attacker(row))
 
 /** GET /api/v1/attackers-graph?id= — the Cytoscape shape, unchanged. No
  * page type consumes it: `AttackerGraph.tsx` lays the star out from
@@ -169,6 +177,22 @@ export const infraClusters = (wire: ClusterPageWire): InfraCluster[] =>
   wire.rows.map((row) => ({ id: `${row.kind}:${row.value}`, kind: clusterKind(row.kind), value: row.value, sources: row.sources, events: row.events, sensors: row.sensors }))
 
 // ---- GET /api/v1/ip-block ----------------------------------------------------
+
+/** GET /api/v1/investigate/blocked-ips → the addresses whose block holds now.
+ * The same rule as ip_block.rs `active()`: `Blocked`, and either no expiry or
+ * one still ahead. The list is the raw document, so this is where it is
+ * applied; a lapsed row is dropped rather than shown as blocked. */
+export const activeBlockIps = (wire: BlockedIpsWire, now = Date.now()): string[] =>
+  wire.rows
+    .filter((row) => {
+      if (!row.Blocked) return false
+      const expires = row.ExpiresAt?.trim()
+      if (!expires || expires.startsWith('0001-')) return true
+      const at = Date.parse(expires)
+      return Number.isNaN(at) || now < at
+    })
+    .map((row) => row.IP)
+    .sort()
 
 /** GET /api/v1/ip-block/{ip} — the page's BlockRecord. A record the backend
  * reports as lapsed (`Blocked` true, `Active` false) has no BlockRecord at
@@ -343,4 +367,54 @@ export const correlationGroup = (wire: CorrelationWire, events: HoneypotEvent[])
     commands: tally(events.map((row) => row.command ?? '')),
     payloads: tally(events.map((row) => String(row.fields.shasum ?? ''))),
   }
+}
+
+// ---- the events read, as a source's timeline and sessions -------------------
+
+/** GET /api/v1/events?ip= as the source's timeline: one item per event, newest
+ * first as the handler serves it. A row carrying a payload hash is a capture,
+ * and links to the payload; every other row links to its event. Only the
+ * events of this source are here — the mock's timeline also folds in ML
+ * anomalies, LLM analyses, canary triggers, auth failures and alerts, which
+ * the backend does not serve for a source yet. */
+export const sourceTimeline = (rows: EventRow[]): TimelineItem[] =>
+  rows.map((row) => {
+    const place = [row.src_ip, row.sensor].filter(Boolean).join(' · ')
+    const hash = row.pivots.shasum
+    if (hash) return { id: row.id, at: row.time, kind: 'capture', title: `Payload captured: ${hash.slice(0, 16)}…`, detail: place, href: `/payloads/${hash}` }
+    const service = [row.proto.toUpperCase(), row.port].filter(Boolean).join(' ')
+    return { id: row.id, at: row.time, kind: 'event', title: row.detail || row.sensor, detail: [place, service].filter(Boolean).join(' · '), href: `/events/${row.id}` }
+  })
+
+/** The sessions among a set of events, derived from those events alone.
+ * `logins`, `commands` and `downloads` count the page's event types, so they
+ * agree with the explorer's classification. `recordingShasum` is not derived
+ * here: it needs the session's close record, which this read does not carry.
+ * Newest session first. Events with no session id are not sessions. */
+export const sessionSummaries = (events: HoneypotEvent[]): SessionSummary[] => {
+  const groups = new Map<string, HoneypotEvent[]>()
+  for (const event of events) if (event.sessionId) groups.set(event.sessionId, [...(groups.get(event.sessionId) ?? []), event])
+  return [...groups]
+    .map(([id, rows]): SessionSummary => {
+      const times = rows.map((row) => row.timestamp).sort()
+      return {
+        id,
+        srcIp: rows[0].srcIp,
+        sensors: [...new Set(rows.map((row) => row.sensor))],
+        first: times[0],
+        last: times[times.length - 1],
+        events: rows.length,
+        logins: rows.filter((row) => row.type === 'login.failed' || row.type === 'login.success').length,
+        commands: rows.filter((row) => row.type === 'command.input').length,
+        downloads: rows.filter((row) => row.type === 'file.download').length,
+      }
+    })
+    .sort((a, b) => b.last.localeCompare(a.last))
+}
+
+/** Address → count, most frequent first: a payload's sources. */
+export const sourceCounts = (events: HoneypotEvent[]): CountRow[] => {
+  const perSource = new Map<string, number>()
+  for (const event of events) perSource.set(event.srcIp, (perSource.get(event.srcIp) ?? 0) + 1)
+  return [...perSource].sort((a, b) => b[1] - a[1]).map(([ip, count]) => ({ id: ip, label: ip, count }))
 }

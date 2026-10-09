@@ -7,6 +7,7 @@ import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
+import { unavailableOf } from '#/lib/unavailable'
 import { Panel } from '#/components/DashboardBlocks'
 import { EntityLink } from '#/components/EntityLink'
 import { GroupOverview } from '#/components/EntityBlocks'
@@ -15,7 +16,7 @@ const parent = getRouteApi('/_layout/campaigns/$cidr')
 
 export const Route = createFileRoute('/_layout/campaigns/$cidr/')({
   ssr: pageSsr,
-  loader: ({ params }) => getRelated('campaign', params.cidr),
+  loader: ({ params }) => unavailableOf(getRelated('campaign', params.cidr)),
   component: CampaignOverview,
   pendingComponent: CampaignOverview,
 })

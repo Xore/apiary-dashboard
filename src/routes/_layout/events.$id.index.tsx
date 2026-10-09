@@ -10,6 +10,7 @@ import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { RelatedPanel } from '#/components/Related'
 import { getRelated } from '#/data/queries'
+import { unavailableOf } from '#/lib/unavailable'
 import { Panel } from '#/components/DashboardBlocks'
 import { EventsPanel, attckUrl } from '#/components/DetailBlocks'
 import { EntityLink } from '#/components/EntityLink'
@@ -19,7 +20,7 @@ const parent = getRouteApi('/_layout/events/$id')
 
 export const Route = createFileRoute('/_layout/events/$id/')({
   ssr: pageSsr,
-  loader: ({ params }) => getRelated('event', params.id),
+  loader: ({ params }) => unavailableOf(getRelated('event', params.id)),
   component: EventOverview,
   pendingComponent: EventOverview,
 })

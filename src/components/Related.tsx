@@ -8,8 +8,11 @@ import { useNavigate } from '@tanstack/react-router'
 import type { RelatedGroup } from '#/data/types'
 import { ENTITIES, entityHref } from '#/lib/entities'
 import type { EntityKind } from '#/lib/entities'
+import { isUnavailable } from '#/lib/unavailable'
+import type { Unavailable } from '#/lib/unavailable'
 import { Panel } from './DashboardBlocks'
 import { EntityLink } from './EntityLink'
+import { PanelUnavailable } from './PanelUnavailable'
 
 // Validated categorical order; groups past the fifth fall back to neutral.
 const COLORS = [
@@ -125,8 +128,14 @@ function RelationGraph({ center, groups }: { center: string; groups: RelatedGrou
 }
 
 /** Everything else this entity touches, as a list or a graph. */
-export function RelatedPanel({ center, groups }: { center: string; groups: RelatedGroup[] | undefined }) {
+export function RelatedPanel({ center, groups }: { center: string; groups: RelatedGroup[] | Unavailable | undefined }) {
   const [view, setView] = useState<'list' | 'graph'>('list')
+  if (isUnavailable(groups))
+    return (
+      <Panel title="Related">
+        <PanelUnavailable detail={groups.unavailable} />
+      </Panel>
+    )
   if (!groups)
     return (
       <Panel title="Related">

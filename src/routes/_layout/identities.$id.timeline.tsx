@@ -3,11 +3,12 @@ import { orPending } from '#/lib/pending'
 import { createFileRoute } from '@tanstack/react-router'
 import { Timeline } from '#/components/EntityBlocks'
 import { getEntityTimeline } from '#/data/queries'
+import { unavailableOf } from '#/lib/unavailable'
 
 export const Route = createFileRoute('/_layout/identities/$id/timeline')({
   ssr: pageSsr,
   loaderDeps: ({ search }) => ({ range: search.range }),
-  loader: ({ params, deps }) => getEntityTimeline('identity', params.id, deps.range),
+  loader: ({ params, deps }) => unavailableOf(getEntityTimeline('identity', params.id, deps.range)),
   component: TabView,
   pendingComponent: TabView,
 })
