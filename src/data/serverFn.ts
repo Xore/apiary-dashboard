@@ -49,6 +49,10 @@ export const mockScenarioMiddleware = createMiddleware({ type: 'function' })
   .client(({ next }) => next({ sendContext: { mock: pageScenario() } }))
   .server(({ next, context }) => next({ context: { mock: mockScenariosAllowed() && isScenario(context.mock) ? context.mock : 'normal' } }))
 
+/** Whether the Mock data menu may show: the server's policy, since only the
+ * server knows whether a live backend is configured. */
+export const getMockScenariosAllowed = createServerFn({ method: 'GET' }).handler(() => mockScenariosAllowed())
+
 /** The clock the pages count times from: the mock tier's fixed clock when no
  * live backend answers (its fixtures are relative to it), else null, the
  * wall clock. Pure: the handler supplies both inputs. */

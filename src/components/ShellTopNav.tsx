@@ -59,7 +59,7 @@ function BrandMark() {
   )
 }
 
-export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; onOpenPalette: () => void }) {
+export function ShellTopNav({ config, mockScenarios = false, onOpenPalette }: { config: ShellConfig; mockScenarios?: boolean; onOpenPalette: () => void }) {
   // A page with tabs gives the bar to them: the sidebar already says where
   // you are, and the tabs say which view.
   const hasTabs = useViewTabs() !== null
@@ -114,7 +114,7 @@ export function ShellTopNav({ config, onOpenPalette }: { config: ShellConfig; on
               <Kbd keys="mod+k" />
             </HStack>
           )}
-          <MockScenarioMenu compact={isMobile} />
+          {mockScenarios && <MockScenarioMenu compact={isMobile} />}
           <AlertBell compact={isMobile} />
           <LiveBadge compact={isMobile} />
         </HStack>
