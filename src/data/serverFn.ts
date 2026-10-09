@@ -1,7 +1,7 @@
 // The browser side of the data seam's server functions: which mock scenario
 // a call runs in, and the record of every call the report-a-problem capture
 // keeps. Client-safe.
-import { createIsomorphicFn, createMiddleware } from '@tanstack/react-start'
+import { createIsomorphicFn, createMiddleware, createServerFn } from '@tanstack/react-start'
 import { getRequestUrl } from '@tanstack/react-start/server'
 import { ApiError, asApiError } from './errors'
 import { API_CALL, isScenario } from './scenarios'
@@ -48,6 +48,10 @@ export function pageScenario(): MockScenario {
 export const mockScenarioMiddleware = createMiddleware({ type: 'function' })
   .client(({ next }) => next({ sendContext: { mock: pageScenario() } }))
   .server(({ next, context }) => next({ context: { mock: mockScenariosAllowed() && isScenario(context.mock) ? context.mock : 'normal' } }))
+
+/** Whether the Mock data menu may show: the server's policy, since only the
+ * server knows whether a live backend is configured. */
+export const getMockScenariosAllowed = createServerFn({ method: 'GET' }).handler(() => mockScenariosAllowed())
 
 /** What crosses the wire, as Start's serializer can prove: JSON. The
  * exports keep each query's own types; this is only the handler's side. */
