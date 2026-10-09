@@ -20,7 +20,6 @@
 // design, so the only signal is the request's own abort, which is what stops
 // the upstream connection when the operator navigates away.
 import { createFileRoute } from '@tanstack/react-router'
-import { listen } from '#/data/mock/liveFeed'
 import { isScenario } from '#/data/scenarios'
 import { admissionGate, envInt } from '#/server/admission'
 import { resolveUser } from '#/server/identity'
@@ -74,6 +73,14 @@ export const Route = createFileRoute('/api/live')({
           }
         }
 
+        // The mock tier is loaded only for the arm that serves it.
+        const { listen } = await import('#/data/mock/liveFeed')
+        // The client may have left while the module loaded: the abort
+        // listener below is not attached yet, so release the slot here.
+        if (request.signal.aborted) {
+          release()
+          return new Response(null, { status: 499 })
+        }
         const encoder = new TextEncoder()
         let stop = () => {}
         const body = new ReadableStream<Uint8Array>({

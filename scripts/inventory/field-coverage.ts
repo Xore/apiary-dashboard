@@ -91,7 +91,7 @@ export function build() {
   const map = JSON.parse(readFileSync(join(dir, 'field-map.json'), 'utf8')) as FieldMap
   // The data types, and each sensor's own `honeypot.*` fields, which the
   // types leave open (SensorFields) and the mock fleet names.
-  const types = ['src/data/types.ts', 'src/data/mock/fleet.ts', 'src/data/mock/mail.ts'].map((f) => readFileSync(join(root, f), 'utf8')).join('\n')
+  const types = ['src/data/types.ts', 'src/data/mock/fleet.ts', 'src/lib/sensorSpecs.ts', 'src/data/mock/mail.ts'].map((f) => readFileSync(join(root, f), 'utf8')).join('\n')
   const rows = coverage(routes, map, types)
   return { rows, stale: staleEntries(routes, map), markdown: renderCoverage(rows) }
 }

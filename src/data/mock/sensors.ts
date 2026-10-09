@@ -1,10 +1,14 @@
 // Per-sensor readings: each sensor reports the quantities it exists to
 // produce and leaderboards over its own fields, rather than the same five
-// for every sensor. Driven by the sensor's spec in ./fleet, so a sensor
+// for every sensor. Driven by the sensor's spec in #/lib/sensorSpecs, so a sensor
 // added there is readable here without another hand-written case.
 import type { CountRow, HoneypotEvent, Sensor, SensorMeasure, SensorReading } from '../types'
 import { fieldText, readField } from '#/lib/sensorFields'
-import { specOf } from './fleet'
+import { readingOf, specOf } from '#/lib/sensorSpecs'
+
+// The catalog's reading lives in #/lib/sensorSpecs (live code reads it too);
+// re-exported here for the mock's existing callers.
+export { readingOf }
 
 function countBy(values: string[], limit = 8): CountRow[] {
   const counts = new Map<string, number>()
@@ -34,8 +38,3 @@ export function sensorReading(sensor: Sensor, events: HoneypotEvent[]): { measur
   }
 }
 
-/** How to read one sensor's own fields, for pages that show a single event. */
-export function readingOf(sensor: string): SensorReading {
-  const spec = specOf(sensor)
-  return spec ? { what: spec.what, columns: spec.columns, artefacts: spec.artefacts } : { what: '', columns: [], artefacts: [] }
-}
