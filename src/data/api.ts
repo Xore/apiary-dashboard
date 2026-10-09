@@ -1729,12 +1729,10 @@ const callerOf = (): Caller => requestScope.getStore()?.user
  * actor: workbench_api.rs's `require_actor` rejects a missing or blank
  * `x-actor-username` with a JSON 401, and takes run ownership from it.
  *
- * The page's config is keyed by analyzer id (its own option block per
- * analyzer) already, so it is the options map as-is; the body adapter then
- * narrows each block to the three numbers the backend validates. */
+ * The config's options are keyed by analyzer id, each the three numbers the
+ * backend validates; the body adapter sends them as they are. */
 const startAnalysisRun: Backend['startAnalysisRun'] = async (config) => {
-  const options = Object.fromEntries(config.analyzers.map((id) => [id, config[id]])) as Record<string, Record<string, string | number | boolean | string[]>>
-  const wire = await post<CreateWorkbenchRunWire>('startAnalysisRun', '/api/v1/workbench/runs', createWorkbenchRunBody(config.hash, config.analyzers, options), { mounted: true, user: callerOf() })
+  const wire = await post<CreateWorkbenchRunWire>('startAnalysisRun', '/api/v1/workbench/runs', createWorkbenchRunBody(config.hash, config.analyzers, config.options), { mounted: true, user: callerOf() })
   return { run: workbenchRun(wire.run), reused: wire.reused }
 }
 

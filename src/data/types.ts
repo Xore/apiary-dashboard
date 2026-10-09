@@ -758,6 +758,23 @@ export interface GpuJob extends Record<string, unknown> {
 
 export type AnalyzerId = 'static' | 'yara' | 'sandbox' | 'cape' | 'ghidra' | 'revdeck' | 'github'
 
+/** The whole option set one analyzer takes (workbench_domain.rs `WorkbenchOptions`). */
+export interface AnalyzerOptions {
+  timeoutSeconds: number
+  maxQueueAgeSeconds: number
+  retryLimit: number
+}
+
+/** The bounds the backend validates an analyzer's options against
+ * (workbench_domain.rs `WorkbenchOptionSchema`). */
+export interface AnalyzerOptionSchema {
+  timeoutMinSeconds: number
+  timeoutMaxSeconds: number
+  queueAgeMinSeconds: number
+  queueAgeMaxSeconds: number
+  retryLimitMax: number
+}
+
 /** One analyzer as the workbench offers it, and what running it means. */
 export interface AnalyzerInfo {
   id: AnalyzerId
@@ -779,6 +796,10 @@ export interface AnalyzerInfo {
   localOnly: boolean
   /** Never picked by default or by a recipe: the operator ticks it. */
   requiresOptIn: boolean
+  /** The options the backend uses when the operator sets none. */
+  defaultOptions: AnalyzerOptions
+  /** The bounds the operator's options must fall within. */
+  optionSchema: AnalyzerOptionSchema
 }
 
 /** How the pipeline classified a sample, which decides its analysis path. */
@@ -841,22 +862,15 @@ export interface WorkbenchRecipe {
   owner: string
   scope: 'personal' | 'shared'
   createdAt: string
-  analyzers: Array<{ analyzerId: AnalyzerId; options: Record<string, string | number | boolean | string[]> }>
+  analyzers: Array<{ analyzerId: AnalyzerId; options: AnalyzerOptions }>
 }
 
-/** Everything one analysis run can be told, per analyzer. Only the options of
- * the analyzers in `analyzers` apply. */
+/** What one analysis run is told: the analyzers to run, and each one's
+ * options. Every analyzer in `analyzers` has an entry in `options`. */
 export interface AnalysisRunConfig {
   hash: string
   analyzers: AnalyzerId[]
-  static: { minStringLength: number; extractIocs: boolean; decodeCandidates: boolean; sectionEntropy: boolean }
-  yara: { rulesets: string[]; stopAtFirstMatch: boolean; timeoutSeconds: number }
-  sandbox: { image: string; durationSeconds: number; network: 'none' | 'simulated' | 'tor'; capturePcap: boolean; memoryDump: boolean; liveView: boolean }
-  cape: { image: string; durationSeconds: number; package: 'auto' | 'exe' | 'dll'; network: 'none' | 'simulated' | 'tor'; humanInteraction: boolean }
-  ghidra: { depth: 'standard' | 'aggressive'; maxFunctions: number; model: string; capa: boolean; floss: boolean }
-  revdeck: { model: string; maxSteps: number; requireCitations: boolean }
-  github: { dryRun: boolean }
-  run: { priority: 'normal' | 'high'; label: string; notify: boolean; force: boolean }
+  options: Partial<Record<AnalyzerId, AnalyzerOptions>>
 }
 
 export interface AnalysisResultsData {
@@ -1404,6 +1418,8 @@ export interface CapeRun extends Record<string, unknown> {
   sections: string[]
   /** Errors from CAPE's own analysis log. */
   debugErrors: string[]
+  /** The package CAPE ran the sample with (exe, dll, …), when it reports one. */
+  package?: string
 }
 
 export type GithubStatus = 'published' | 'dry_run' | 'denylist_blocked' | 'quota_exceeded'
