@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import { fieldText, readField } from '#/lib/sensorFields'
 import { backend } from './backend'
+import { MOCK_NOW } from './mock/random'
 import { inRange } from './shared'
 
 // The mock backend itself: tests and scripts call it directly.
@@ -48,8 +49,16 @@ describe('cross-page consistency', () => {
     const all = (await q.getAnalysisResults('all')).results.filter((r) => r.analyzer !== 'workbench')
     expect(day.length).toBeGreaterThan(0)
     expect(day.length).toBeLessThan(all.length)
-    for (const r of day) expect(inRange(r.at, '24h'), r.id).toBe(true)
+    for (const r of day) expect(inRange(r.at, '24h', MOCK_NOW), r.id).toBe(true)
     for (const r of all) expect(r.verdict, r.id).toBeDefined()
+  })
+})
+
+describe('mock canarytoken writes', () => {
+  it('mints a web_image when the image is supplied, and refuses one without it', async () => {
+    const token = await q.createCanarytoken({ type: 'web_image', memo: 'badge', image: { name: 'badge.png', contentType: 'image/png', base64: btoa('png') } })
+    expect(token).toMatchObject({ type: 'web_image', memo: 'badge' })
+    await expect(q.createCanarytoken({ type: 'web_image', memo: 'badge' })).rejects.toThrow()
   })
 })
 
@@ -192,32 +201,28 @@ describe('link integrity', () => {
     const config: Parameters<typeof q.startAnalysisRun>[0] = {
       hash,
       analyzers: ['static', 'ghidra'],
-      static: { minStringLength: 8, extractIocs: true, decodeCandidates: false, sectionEntropy: true },
-      yara: { rulesets: [], stopAtFirstMatch: false, timeoutSeconds: 60 },
-      sandbox: { image: 'ubuntu-22.04-x86_64', durationSeconds: 120, network: 'none', capturePcap: false, memoryDump: false, liveView: false },
-      cape: { image: 'win10-22h2', durationSeconds: 120, package: 'auto', network: 'none', humanInteraction: false },
-      ghidra: { depth: 'aggressive', maxFunctions: 50, model: 'llama3.1:8b', capa: true, floss: false },
-      revdeck: { model: 'llama3.1:8b', maxSteps: 10, requireCitations: true },
-      github: { dryRun: true },
-      run: { priority: 'high', label: 'Test run', notify: false, force: true },
+      options: {
+        static: { timeoutSeconds: 120, maxQueueAgeSeconds: 900, retryLimit: 1 },
+        ghidra: { timeoutSeconds: 1200, maxQueueAgeSeconds: 7200, retryLimit: 0 },
+      },
     }
     const queued = await q.startAnalysisRun(config)
-    expect(queued).toMatchObject({ reused: false, run: { label: 'Test run', state: 'queued', owner: 'Operator' } })
+    expect(queued).toMatchObject({ reused: false, run: { label: 'Workbench run', state: 'queued', owner: 'Operator' } })
     expect(queued!.run.children.map((c) => [c.analyzerId, c.state, c.cancelable])).toEqual([['static', 'queued', true], ['ghidra', 'queued', true]])
     // The options travel with the run's record in Analysis results.
     const record = (await q.getAnalysisResults()).results.find((r) => r.id === queued!.run.id)!
-    expect(record.detail).toMatchObject({ priority: 'high', options: { static: { minStringLength: 8 }, ghidra: { depth: 'aggressive', model: 'llama3.1:8b' } } })
+    expect(record.detail).toMatchObject({ options: { static: { timeoutSeconds: 120, maxQueueAgeSeconds: 900, retryLimit: 1 }, ghidra: { timeoutSeconds: 1200, maxQueueAgeSeconds: 7200, retryLimit: 0 } } })
     expect(Object.keys(record.detail.options as object)).toEqual(['static', 'ghidra'])
     const after = (await q.getAnalysisResults()).gpuQueue
     expect(after.length).toBe(before + 1)
-    expect(after[0]).toMatchObject({ jobType: 'ghidra-summary', model: 'llama3.1:8b', status: 'queued' })
+    expect(after[0]).toMatchObject({ jobType: 'ghidra-summary', model: 'qwen2.5-coder:14b', status: 'queued' })
     expect(await q.startAnalysisRun({ ...config, hash: 'deadbeef' })).toBeNull()
 
-    // The same run again while it is in flight is reused, unless forced.
-    const again = await q.startAnalysisRun({ ...config, run: { ...config.run, force: false } })
+    // The same run again while it is in flight is reused.
+    const again = await q.startAnalysisRun(config)
     expect(again).toMatchObject({ reused: true, run: { id: queued!.run.id } })
     // What the sample cannot take is refused, with the reason.
-    await expect(q.startAnalysisRun({ ...config, analyzers: ['cape'] })).rejects.toMatchObject({ status: 400, detail: expect.stringMatching(/^CAPE \(Windows\): Takes PE32/) })
+    await expect(q.startAnalysisRun({ ...config, analyzers: ['cape'], options: { cape: { timeoutSeconds: 300, maxQueueAgeSeconds: 3600, retryLimit: 0 } } })).rejects.toMatchObject({ status: 400, detail: expect.stringMatching(/^CAPE \(Windows\): Takes PE32/) })
   })
 
   it('says which analyzers apply to a sample, and why not', async () => {
@@ -447,7 +452,7 @@ describe('problem reports', () => {
 
 describe('captured mail', () => {
   it('a session with a body has its message; an envelope-only session has none', async () => {
-    const sessions = [...new Set((await q.getEvents({ sensor: 'mailoney' })).rows.map((e) => e.sessionId))]
+    const sessions = [...new Set((await q.getEvents({ sensor: 'mailoney' })).rows.flatMap((e) => (e.sessionId ? [e.sessionId] : [])))]
     const mails = await Promise.all(sessions.map((id) => q.getMail(id)))
     const found = mails.filter((m) => m !== null)
     expect(found.length).toBeGreaterThan(0)

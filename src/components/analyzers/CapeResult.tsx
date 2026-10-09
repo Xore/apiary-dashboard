@@ -27,6 +27,13 @@ export function CapeResult({ run }: { run: CapeRun }) {
           <EntityLink kind="payload" id={run.sha}><Text type="code">{`${run.sha.slice(0, 24)}…`}</Text></EntityLink>
           <Text type="supporting">{`task ${run.taskId} · ${formatDateTime(run.at)} · CAPE status ${run.capeStatus}`}</Text>
         </HStack>
+        {run.package && (
+          <MetadataList label={{ position: 'start', width: 80 }}>
+            <MetadataListItem label="Package">
+              <Text type="code">{run.package}</Text>
+            </MetadataListItem>
+          </MetadataList>
+        )}
         {run.status === 'failed_analysis' ? (
           <Banner status="error" title="This run did not complete" description={run.log} />
         ) : (

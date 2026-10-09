@@ -247,7 +247,7 @@ function buildEvents(sources: AttackSource[]): HoneypotEvent[] {
     source.events += 1
     if (event.timestamp > source.lastSeen) source.lastSeen = event.timestamp
     if (!sessions.has(source.ip)) sessions.set(source.ip, new Set())
-    sessions.get(source.ip)!.add(event.sessionId)
+    if (event.sessionId) sessions.get(source.ip)!.add(event.sessionId)
     const sensor = SENSORS.find((s) => s.id === event.sensor)!
     sensor.eventsLast24h += 1
   }

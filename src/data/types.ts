@@ -16,7 +16,9 @@ export type EventType =
   | 'file.download'
   | 'http.request'
   | 'ids.alert'
-  /** A non-HTTP application request: ICS, SIP, DNS, DICOM, SMTP, IKE. */
+  /** A non-HTTP application request: ICS, SIP, DNS, DICOM, SMTP, IKE. Not the
+   * fallback for an unrecognised live event: it claims a protocol the row does
+   * not show. The live seam falls to `connection` instead. */
   | 'protocol.request'
 
 /** One value in a sensor's own fields: JSON, as the sensor wrote it. */
@@ -54,9 +56,12 @@ export interface HoneypotEvent extends Record<string, unknown> {
   id: string
   timestamp: string
   sensor: string
-  protocol: Protocol
+  /** Absent on sensor-endpoint rows, which do not say which protocol they are. */
+  protocol?: Protocol
   type: EventType
-  severity: Severity
+  /** Absent when the backend does not classify the row. Never defaulted to
+   * `info`: that would claim "nothing known" as a classification. */
+  severity?: Severity
   srcIp: string
   /** What the request itself claimed as its source (X-Forwarded-For), when
    * it disagrees with the address portbridge recorded for the connection.
@@ -64,15 +69,16 @@ export interface HoneypotEvent extends Record<string, unknown> {
    * this is most likely forged, and is kept because hiding it would hide
    * the attempt. */
   srcIpClaimed?: string
-  srcPort: number
+  /** Absent when the row does not carry the source port. */
+  srcPort?: number
   dstPort: number
-  country: string
-  asn: string
-  sessionId: string
+  country?: string
+  asn?: string
+  sessionId?: string
   username?: string
   password?: string
   command?: string
-  summary: string
+  summary?: string
   /** The sensor's own event name: `cowrie.login.failed`, `handshake`, `NEW_CONNECTION`, … */
   eventName: string
   /** The sensor's own `honeypot.*` object, as that sensor writes it. */
@@ -90,9 +96,9 @@ export interface HoneypotEvent extends Record<string, unknown> {
   /** ATT&CK techniques the pipeline mapped this event to. */
   techniques: string[]
   /** The source network: organization, provider class, city. */
-  org: string
-  provider: ProviderClass
-  city: string
+  org?: string
+  provider?: ProviderClass
+  city?: string
   /** What an HTTP request carried (php-code, path-traversal, …). */
   payloadClass?: string
   /** DNP3 control-function severity: an unconfirmed operate is critical. */
@@ -758,6 +764,23 @@ export interface GpuJob extends Record<string, unknown> {
 
 export type AnalyzerId = 'static' | 'yara' | 'sandbox' | 'cape' | 'ghidra' | 'revdeck' | 'github'
 
+/** The whole option set one analyzer takes (workbench_domain.rs `WorkbenchOptions`). */
+export interface AnalyzerOptions {
+  timeoutSeconds: number
+  maxQueueAgeSeconds: number
+  retryLimit: number
+}
+
+/** The bounds the backend validates an analyzer's options against
+ * (workbench_domain.rs `WorkbenchOptionSchema`). */
+export interface AnalyzerOptionSchema {
+  timeoutMinSeconds: number
+  timeoutMaxSeconds: number
+  queueAgeMinSeconds: number
+  queueAgeMaxSeconds: number
+  retryLimitMax: number
+}
+
 /** One analyzer as the workbench offers it, and what running it means. */
 export interface AnalyzerInfo {
   id: AnalyzerId
@@ -779,6 +802,10 @@ export interface AnalyzerInfo {
   localOnly: boolean
   /** Never picked by default or by a recipe: the operator ticks it. */
   requiresOptIn: boolean
+  /** The options the backend uses when the operator sets none. */
+  defaultOptions: AnalyzerOptions
+  /** The bounds the operator's options must fall within. */
+  optionSchema: AnalyzerOptionSchema
 }
 
 /** How the pipeline classified a sample, which decides its analysis path. */
@@ -841,22 +868,15 @@ export interface WorkbenchRecipe {
   owner: string
   scope: 'personal' | 'shared'
   createdAt: string
-  analyzers: Array<{ analyzerId: AnalyzerId; options: Record<string, string | number | boolean | string[]> }>
+  analyzers: Array<{ analyzerId: AnalyzerId; options: AnalyzerOptions }>
 }
 
-/** Everything one analysis run can be told, per analyzer. Only the options of
- * the analyzers in `analyzers` apply. */
+/** What one analysis run is told: the analyzers to run, and each one's
+ * options. Every analyzer in `analyzers` has an entry in `options`. */
 export interface AnalysisRunConfig {
   hash: string
   analyzers: AnalyzerId[]
-  static: { minStringLength: number; extractIocs: boolean; decodeCandidates: boolean; sectionEntropy: boolean }
-  yara: { rulesets: string[]; stopAtFirstMatch: boolean; timeoutSeconds: number }
-  sandbox: { image: string; durationSeconds: number; network: 'none' | 'simulated' | 'tor'; capturePcap: boolean; memoryDump: boolean; liveView: boolean }
-  cape: { image: string; durationSeconds: number; package: 'auto' | 'exe' | 'dll'; network: 'none' | 'simulated' | 'tor'; humanInteraction: boolean }
-  ghidra: { depth: 'standard' | 'aggressive'; maxFunctions: number; model: string; capa: boolean; floss: boolean }
-  revdeck: { model: string; maxSteps: number; requireCitations: boolean }
-  github: { dryRun: boolean }
-  run: { priority: 'normal' | 'high'; label: string; notify: boolean; force: boolean }
+  options: Partial<Record<AnalyzerId, AnalyzerOptions>>
 }
 
 export interface AnalysisResultsData {
@@ -1404,6 +1424,8 @@ export interface CapeRun extends Record<string, unknown> {
   sections: string[]
   /** Errors from CAPE's own analysis log. */
   debugErrors: string[]
+  /** The package CAPE ran the sample with (exe, dll, …), when it reports one. */
+  package?: string
 }
 
 export type GithubStatus = 'published' | 'dry_run' | 'denylist_blocked' | 'quota_exceeded'
@@ -1557,9 +1579,9 @@ export interface SharedSignal extends Record<string, unknown> {
 
 export interface NetworkEntity {
   cidr: string
-  asn: string
-  org: string
-  country: string
+  asn?: string
+  org?: string
+  country?: string
   group: SourceGroup
   campaign?: NetworkCampaign
 }
