@@ -29,6 +29,10 @@ export interface SessionUser {
   name: string
   email: string
   roles: string[]
+  /** OIDC subject identifier, for backend calls that need it. */
+  sub?: string
+  /** OIDC username, for backend calls that need it. */
+  username?: string
 }
 
 export interface Sensor extends Record<string, unknown> {

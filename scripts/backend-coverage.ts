@@ -12,11 +12,6 @@ export type Exception = {
 }
 
 export const BACKEND_EXCEPTIONS: Record<string, Exception> = {
-  getPreferences: {
-    status: 'mock-only',
-    reason:
-      'The read runs before sign-in, but the backend requires a subject; wiring it would deadlock sign-in.',
-  },
   getReplay: {
     status: 'local',
     reason:

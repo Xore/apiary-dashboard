@@ -85,7 +85,7 @@ import {
   createdCanarytoken,
   credentialList,
 } from './adapters/tools'
-import { DEFAULT_PREFERENCES_WIRE, capturedMail, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
+import { DEFAULT_PREFERENCES_WIRE, capturedMail, configProblems, configRollbackBody, configSectionBody, configSectionPath, configValidateBody, preferencesDocument, problemReportBody, problemReports, problemStatusPatch, settingsData, shellConfig } from './adapters/settings'
 import { readingOf } from './mock/sensors'
 import { authorize } from '#/server/authorize'
 import { envInt } from '#/server/admission'
@@ -147,7 +147,7 @@ import type {
   TopologySensorWire,
   TopologyWire,
 } from './contracts/operations'
-import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
+import type { AuditWire, ConfigHistoryWire, ConfigValidateWire, ConfigWire, MailWire, PreferencesWire, ProblemReportCreatedWire, ProblemReportsPageWire, ReporterStatsWire, ServiceActionWireResponse, ServicesWire, StorageWire, UsersWire } from './contracts/settings'
 import type {
   AgentCampaignRow,
   AuthEventRow,
@@ -2415,6 +2415,15 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   // backend — letting the auth redirect in _layout.tsx fire before any
   // backend-dependent query runs.
   getSessionUser: async () => callerOf() ?? null,
+  // getPreferences — wired after sign-in so the subject is available.
+  // The backend requires subject/username/role as query params; the caller
+  // carries them from the OIDC session (identity.ts userOf).
+  getPreferences: async () => {
+    const user = callerOf()
+    if (!user?.sub) throw new ApiError('unavailable', 'getPreferences', { detail: 'no session subject' })
+    const wire = await get<PreferencesWire>('getPreferences', '/api/v1/preferences', { subject: user.sub, username: user.username, role: user.roles[0] })
+    return wire ? preferencesDocument(wire) : DEFAULT_PREFERENCES_WIRE
+  },
 }
 
 /** The guarded live implementation of `name`, or undefined when this slice

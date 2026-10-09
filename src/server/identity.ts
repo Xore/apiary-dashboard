@@ -9,7 +9,7 @@ import type { Session } from './session'
 
 export const FIXTURE_ADMIN: SessionUser = { name: 'Dev Operator', email: 'operator@example.test', roles: ['admin'] }
 
-export const userOf = (session: Session): SessionUser => ({ name: session.displayName, email: session.email, roles: [session.role] })
+export const userOf = (session: Session): SessionUser => ({ name: session.displayName, email: session.email, roles: [session.role], sub: session.sub, username: session.username })
 
 /** A store that does not answer signs nobody in: the request is treated
  * as signed out (sign-in, 401), never as an error page or a guess. */

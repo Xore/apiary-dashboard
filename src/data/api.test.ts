@@ -216,6 +216,7 @@ describe('which queries the real backend answers', () => {
         'getMlAnomalies',
         'getOverview',
         'getOverviewViews',
+        'getPreferences',
         'semanticSearch',
         'setAnomalyDisposition',
       ].sort(),
@@ -234,16 +235,14 @@ describe('which queries the real backend answers', () => {
     expect(liveQuery('previewReport', undefined)).toBeUndefined()
   })
 
-  it('leaves getPreferences and savePreferences on the mock — the public-query deadlock', () => {
-    // The trap #81 exists to not fall into. `getPreferences` is a
-    // PUBLIC_QUERY: the navigation guard calls it on every navigation and
-    // the sign-in pages render with it, so it runs BEFORE a subject exists.
-    // The real endpoint needs one (an empty subject is a 400), so wiring it
-    // breaks sign-in itself. Both halves stay on the mock, deliberately —
-    // wiring only the write would save to the wire and render from the mock.
-    expect(liveQuery('getPreferences', undefined)).toBeUndefined()
+  it('wires getPreferences after sign-in, leaves savePreferences on the mock', () => {
+    // getPreferences is now wired because getSessionUser (PR #214) ensures
+    // the auth redirect fires first, so the subject is available from the
+    // OIDC session when getPreferences runs. savePreferences stays on the
+    // mock because the write path is not yet adapted.
+    expect(liveQuery('getPreferences', undefined)).not.toBeUndefined()
     expect(liveQuery('savePreferences', undefined)).toBeUndefined()
-    expect(liveQueryNames()).not.toContain('getPreferences')
+    expect(liveQueryNames()).toContain('getPreferences')
   })
 
   it('applies the same authorization decision the mock does', async () => {
