@@ -3,6 +3,7 @@ import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { useContext } from 'react'
 import type { ReactNode } from 'react'
 import { Card } from '@astryxdesign/core/Card'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { ClickableCard } from '@astryxdesign/core/ClickableCard'
 import { Icon } from '@astryxdesign/core/Icon'
 import { Link } from '@astryxdesign/core/Link'
@@ -55,10 +56,11 @@ export function Panel({ title, action, children }: { title: ReactNode; action?: 
 
 type StatTileProps = {
   label: string
-  /** Undefined while the page's data loads: a skeleton in its place. */
-  value: number | undefined
+  /** Undefined while the page's data loads: a skeleton in its place. Null when
+   * the backend cannot supply the figure: "not available", never a zero. */
+  value: number | null | undefined
   /** Previous-period value; shows a signed change when present. */
-  previous?: number
+  previous?: number | null
   caption?: string
   trend?: number[]
   /** Makes the tile a link, e.g. to a pre-filtered view. */
@@ -81,8 +83,30 @@ function TileSkeletonLines({ caption, trend }: { caption: boolean; trend: boolea
 /** No change, or one too small to show at one decimal (+0.0 %). */
 const isFlat = (value: number, previous: number) => (previous === 0 ? value === 0 : Math.abs((value - previous) / previous) < 0.0005)
 
-/** Headline number tile. */
+/** A 24 h breakdown's title. When the breakdown counts only the latest rows of
+ * the window, the title says so: "latest N of 24h" rather than a total. */
+export const windowTitle = (title: string, sampled: number | null | undefined): string =>
+  sampled ? title.replace(', 24h', `, latest ${formatNumber(sampled)} of 24h`) : title
+
+/** Stands in for a widget the backend cannot fill yet. It says so, so an
+ * empty chart or table is never read as a quiet fleet. */
+export function NotAvailable() {
+  return <EmptyState isCompact title="Not available from the backend yet" />
+}
+
+/** Headline number tile. `null` is a figure the backend cannot supply yet. */
 export function StatTile({ label, value, previous, caption, trend, href }: StatTileProps) {
+  if (value === null)
+    return (
+      <Card>
+        <VStack gap={2}>
+          <Text type="label" color="secondary">
+            {label}
+          </Text>
+          <NotAvailable />
+        </VStack>
+      </Card>
+    )
   if (value === undefined)
     return (
       <Card aria-busy>
@@ -101,7 +125,7 @@ export function StatTile({ label, value, previous, caption, trend, href }: StatT
       </Text>
       <HStack gap={2} vAlign="center">
         <Text size="xl" weight="semibold">{formatCompact(value)}</Text>
-        {previous !== undefined &&
+        {typeof previous === 'number' &&
           (isFlat(value, previous) ? (
             // An arrow on no change reads as a rise.
             <Text type="supporting">no change</Text>
@@ -126,8 +150,9 @@ export function CountTable({ header, label = header, rows, countHeader = 'Count'
   header: string
   /** What screen readers call the table; defaults to the value header. */
   label?: string
-  /** Undefined while loading: the columns, and skeleton rows. */
-  rows: CountRow[] | undefined
+  /** Undefined while loading: the columns, and skeleton rows. Null when the
+   * backend cannot supply the rows: "not available". */
+  rows: CountRow[] | null | undefined
   countHeader?: string
   isCode?: boolean
   /** Makes each value a link, e.g. to its own detail page. */
@@ -154,6 +179,7 @@ export function CountTable({ header, label = header, rows, countHeader = 'Count'
     },
     { key: 'count', header: countHeader, width: pixel(88), align: 'end', renderCell: (row) => formatNumber(row.count) },
   ]
+  if (rows === null) return <NotAvailable />
   if (!rows) return <SkeletonTable columns={columns} rows={8} density={tableDensity(prefs)} label={label} />
   return <Table data={rows} columns={columns} idKey="id" density={tableDensity(prefs)} textOverflow="truncate" aria-label={label} />
 }
@@ -164,7 +190,7 @@ export function MiniTable({ title, header = 'Value', countHeader, rows, isCode, 
   header?: string
   countHeader?: string
   entity?: EntityKind
-  rows: CountRow[] | undefined
+  rows: CountRow[] | null | undefined
   isCode?: boolean
   linkTo?: (label: string) => string
 }) {

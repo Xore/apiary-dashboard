@@ -18,7 +18,7 @@ describe('cross-page consistency', () => {
 
   it('ML severity tiles add up to the 24h total', async () => {
     const ml = await q.getMlAnomalies()
-    expect(ml.bySeverity.reduce((sum, row) => sum + row.count, 0)).toBe(ml.total24h)
+    expect(ml.bySeverity?.reduce((sum, row) => sum + row.count, 0)).toBe(ml.total24h)
   })
 
   it('source health and topology agree on unhealthy feeds', async () => {

@@ -1,6 +1,7 @@
 import { pageSsr } from '#/lib/pageSsr'
 import { ActionLink } from '#/components/ActionLink'
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { virusTotalLink } from '#/lib/toolLinks'
 import { OpenInMenu } from '#/components/OpenInMenu'
 import { Card } from '@astryxdesign/core/Card'
@@ -13,7 +14,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { Token } from '@astryxdesign/core/Token'
 import { createFileRoute } from '@tanstack/react-router'
 import { Histogram, ProtocolTimeline, RankBars, SensorHeatmap, SeriesLines } from '#/components/charts'
-import { CountTable, MiniTable, Panel, SkeletonTiles, StatTile } from '#/components/DashboardBlocks'
+import { CountTable, MiniTable, NotAvailable, Panel, SkeletonTiles, StatTile } from '#/components/DashboardBlocks'
 import { SkeletonBlock, SkeletonPanels } from '#/components/EntityBlocks'
 import { SkeletonTable } from '#/components/SkeletonTable'
 import { orPending } from '#/lib/pending'
@@ -24,7 +25,7 @@ import { BugAntIcon, ChartBarIcon, CpuChipIcon, FingerPrintIcon, KeyIcon, UserGr
 import { searchTabs, sectionOf } from '#/components/ViewTabs'
 import { WorldMap } from '#/components/WorldMap'
 import { getOverview, getOverviewViews } from '#/data/queries'
-import type { CapturedPayload, HoneypotEvent, NetworkCampaign, OverviewViews, SensorFeed } from '#/data/types'
+import type { AttackVectors, CapturedPayload, HoneypotEvent, NetworkCampaign, OverviewViews, SensorFeed, SeriesPoint, TimeBucket, Unavailable } from '#/data/types'
 import { formatClock, formatDateTime, formatNumber, formatTime } from '#/lib/format'
 import { EntityLink } from '#/components/EntityLink'
 import { FilterSelect } from '#/components/FilterSelect'
@@ -64,6 +65,9 @@ const KPI_HREF: Record<string, string> = {
   logins: '/events?kind=login-success',
   payloads: '/payloads',
 }
+/** The tiles in order. A tile the live data lacks renders as not available. */
+const KPI_ORDER = ['events', 'sources', 'sessions', 'logins', 'payloads'] as const
+const KPI_LABEL: Record<(typeof KPI_ORDER)[number], string> = { events: 'Events', sources: 'Unique sources', sessions: 'Sessions', logins: 'Successful logins', payloads: 'Payloads captured' }
 export const Route = createFileRoute('/_layout/')({
   ssr: pageSsr,
   staticData: { viewTabs: searchTabs({ label: 'Dashboard views', param: 'view', tabs: () => [...VIEWS] }) },
@@ -82,6 +86,18 @@ export const Route = createFileRoute('/_layout/')({
 const formatBytes = (bytes: number) => (bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${(bytes / 1e6).toFixed(0)} MB`)
 const ipLink = (ip: string) => `/sources/${ip}`
 
+/** A chart's body when the backend answered, and the not-available note when
+ * the data is `null`. */
+function available<T>(data: T | null, draw: (data: T) => ReactNode): ReactNode {
+  return data === null ? <NotAvailable /> : draw(data)
+}
+
+/** The series a chart draws: each key the points carry but `time`, in first-seen order. */
+const seriesOf = (points: SeriesPoint[]) => [...new Set(points.flatMap((p) => Object.keys(p).filter((k) => k !== 'time')))].map((key) => ({ key, label: key }))
+
+/** The 24 hours before an instant, as ISO: the window the live charts draw. */
+const dayBefore = (iso: string) => new Date(Date.parse(iso) - 24 * 3_600_000).toISOString()
+
 // ---- Live operations ---------------------------------------------------------
 
 const eventColumns: TableColumn<HoneypotEvent>[] = [
@@ -95,9 +111,11 @@ const eventColumns: TableColumn<HoneypotEvent>[] = [
 ]
 
 function AttackVectorsPanel({ views }: { views: OverviewViews }) {
-  const sensors = Object.keys(views.vectors).filter((s) => !s.startsWith('suricata'))
+  const bySensor: Partial<Record<string, AttackVectors>> = views.vectors ?? {}
+  const sensors = Object.keys(bySensor).filter((s) => !s.startsWith('suricata'))
   const [sensor, setSensor] = useState(sensors[0])
-  const vectors = views.vectors[sensor] as OverviewViews['vectors'][string] | undefined
+  const vectors = bySensor[sensor]
+  if (views.vectors === null) return <Panel title="Attack vectors"><NotAvailable /></Panel>
   return (
     <Panel
       title="Attack vectors"
@@ -135,23 +153,21 @@ function AttackVectorsPanel({ views }: { views: OverviewViews }) {
   )
 }
 
-function LiveView({ views, recent, timeline, start }: { views: OverviewViews; recent: HoneypotEvent[]; timeline: Parameters<typeof ProtocolTimeline>[0]['buckets']; start: string }) {
+function LiveView({ views, recent, timeline, start }: { views: OverviewViews; recent: Unavailable<HoneypotEvent[]>; timeline: Unavailable<TimeBucket[]>; start: string }) {
   return (
     <VStack gap={4}>
       <Panel title="Activity, last 24h" action={<ActionLink href="/events">Event explorer</ActionLink>}>
-        <SensorHeatmap rows={views.heatmap} startIso={start} />
+        {available(views.heatmap, (rows) => <SensorHeatmap rows={rows} startIso={start} />)}
       </Panel>
       <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
-        <Panel title="Events by protocol">
-          <ProtocolTimeline buckets={timeline} />
-        </Panel>
+        <Panel title="Events by protocol">{available(timeline, (buckets) => <ProtocolTimeline buckets={buckets} />)}</Panel>
         <AttackVectorsPanel views={views} />
       </Grid>
       <Panel title="Attack origins" action={<ActionLink href="/ips">Attack sources</ActionLink>}>
-        <WorldMap points={views.mapPoints} />
+        {available(views.mapPoints, (points) => <WorldMap points={points} />)}
       </Panel>
       <Panel title="Recent events" action={<ActionLink href="/events">All events</ActionLink>}>
-        <Table data={recent} columns={eventColumns} idKey="id" density="compact" textOverflow="truncate" hasHover />
+        {available(recent, (rows) => <Table data={rows} columns={eventColumns} idKey="id" density="compact" textOverflow="truncate" hasHover />)}
       </Panel>
     </VStack>
   )
@@ -198,13 +214,13 @@ function HealthView({ views }: { views: OverviewViews }) {
     <VStack gap={4}>
       <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
         <Panel title="Sensor feeds" action={<ActionLink href="/source-health">Source & pipeline health</ActionLink>}>
-          <Table data={views.feeds} columns={feedColumns} idKey="sensor" density="compact" />
+          {available(views.feeds, (rows) => <Table data={rows} columns={feedColumns} idKey="sensor" density="compact" />)}
         </Panel>
         <MiniTable title="Protocols probed" header="Protocol" rows={views.protocols} linkTo={(p) => `/events?proto=${p}`} />
       </Grid>
       {showMl && (
         <Panel title="ML classification backlog, last 7 days" action={<ActionLink href="/ml-anomalies">ML anomalies</ActionLink>}>
-          <SeriesLines data={views.mlBacklog} series={[{ key: 'classified', label: 'Classified' }, { key: 'pending', label: 'Pending' }]} dayTicks />
+          {available(views.mlBacklog, (points) => <SeriesLines data={points} series={seriesOf(points)} dayTicks />)}
         </Panel>
       )}
     </VStack>
@@ -230,20 +246,20 @@ function ThreatsView({ views, section }: { views: OverviewViews; section?: strin
         <VStack gap={4}>
           <Grid columns={{ minWidth: 320, repeat: 'fit' }} gap={4}>
             <Panel title="Traffic volume, bytes/hour, last 7 days">
-              <SeriesLines data={views.netflowBytes} series={[{ key: 'bytes', label: 'Bytes' }]} format={formatBytes} dayTicks />
+              {available(views.netflowBytes, (points) => <SeriesLines data={points} series={[{ key: 'bytes', label: 'Bytes' }]} format={formatBytes} dayTicks />)}
             </Panel>
             <Panel title="Traffic volume, packets/hour, last 7 days">
-              <SeriesLines data={views.netflowPackets} series={[{ key: 'packets', label: 'Packets' }]} dayTicks />
+              {available(views.netflowPackets, (points) => <SeriesLines data={points} series={[{ key: 'packets', label: 'Packets' }]} dayTicks />)}
             </Panel>
           </Grid>
           <Panel title="Protocol-conformance violations by protocol">
-            <SeriesLines data={views.conformance} series={[{ key: 'http', label: 'HTTP' }, { key: 'smb', label: 'SMB' }, { key: 'sip', label: 'SIP' }]} dayTicks />
+            {available(views.conformance, (points) => <SeriesLines data={points} series={[{ key: 'http', label: 'HTTP' }, { key: 'smb', label: 'SMB' }, { key: 'sip', label: 'SIP' }]} dayTicks />)}
           </Panel>
         </VStack>
       )}
       {current === 'exploits' && (
         <Panel title="Top exploited CVEs / named incidents, last 7 days" action={<ActionLink href="/iocs?kind=cve">All CVEs</ActionLink>}>
-          <RankBars rows={views.cves} />
+          {available(views.cves, (rows) => <RankBars rows={rows} />)}
         </Panel>
       )}
     </VStack>
@@ -252,7 +268,10 @@ function ThreatsView({ views, section }: { views: OverviewViews; section?: strin
 
 // ---- Attacker behavior -------------------------------------------------------
 
-const FINGERPRINT_BARS: Array<[string, keyof OverviewViews]> = [
+/** The deep-dive bar charts, all `Unavailable<CountRow[]>` on the views. */
+type CountChart = 'osDistribution' | 'tcpClusters' | 'tls' | 'ssh' | 'ja4h' | 'ja4l' | 'ja4x' | 'decoyRequests' | 'decoyClients' | 'icsFunctions'
+
+const FINGERPRINT_BARS: Array<[string, CountChart]> = [
   ['Attacker OS distribution', 'osDistribution'],
   ['Attacker TCP-stack clusters (JA4T)', 'tcpClusters'],
   ['TLS scanner fingerprints (JA4), wire-level, last 7 days', 'tls'],
@@ -261,18 +280,18 @@ const FINGERPRINT_BARS: Array<[string, keyof OverviewViews]> = [
   ['Connection-latency fingerprints (JA4L), last 7 days', 'ja4l'],
   ['Certificate construction fingerprints (JA4X), last 7 days', 'ja4x'],
 ]
-const DECOY_BARS: Array<[string, keyof OverviewViews]> = [
+const DECOY_BARS: Array<[string, CountChart]> = [
   ['Decoy requests (TLS-terminated), last 7 days', 'decoyRequests'],
   ['Who reached the decoys (JA4)', 'decoyClients'],
   ['ICS function codes: what they asked the PLCs to do', 'icsFunctions'],
 ]
 
-function Bars({ views, bars }: { views: OverviewViews; bars: Array<[string, keyof OverviewViews]> }) {
+function Bars({ views, bars }: { views: OverviewViews; bars: Array<[string, CountChart]> }) {
   return (
     <Grid columns={{ minWidth: 320, max: 2, repeat: 'fit' }} gap={4}>
       {bars.map(([title, key]) => (
         <Panel key={key} title={title}>
-          <RankBars rows={views[key] as OverviewViews['cves']} />
+          {available(views[key], (rows) => <RankBars rows={rows} />)}
         </Panel>
       ))}
     </Grid>
@@ -302,7 +321,7 @@ function BehaviorView({ views, section }: { views: OverviewViews; section?: stri
           <Bars views={views} bars={DECOY_BARS} />
           <Panel title="Attacker time wasted (endlessh tarpit)">
             <Text type="supporting">How long each tarpitted connection stayed before giving up.</Text>
-            <Histogram rows={views.endlessh} />
+            {available(views.endlessh, (rows) => <Histogram rows={rows} />)}
           </Panel>
         </VStack>
       )}
@@ -337,10 +356,10 @@ function EvidenceView({ views }: { views: OverviewViews }) {
         <MiniTable title="Alert categories" header="Category" rows={views.alertCategories} />
       </Grid>
       <Panel title="Captured payloads" action={<ActionLink href="/payloads">All payloads</ActionLink>}>
-        <Table data={views.payloads} columns={payloadColumns} idKey="hash" density="compact" />
+        {available(views.payloads, (rows) => <Table data={rows} columns={payloadColumns} idKey="hash" density="compact" />)}
       </Panel>
       <Panel title="Correlated campaigns, rolling 7 days" action={<ActionLink href="/campaigns">All campaigns</ActionLink>}>
-        <Table data={views.campaigns} columns={campaignColumns} idKey="cidr" density="compact" />
+        {available(views.campaigns, (rows) => <Table data={rows} columns={campaignColumns} idKey="cidr" density="compact" />)}
       </Panel>
     </VStack>
   )
@@ -361,14 +380,21 @@ function OverviewPage() {
         {view === 'live' && (
           // Two to a row on a phone, so the numbers do not fill its first screen.
           <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
-            {overview ? overview.kpis.map((kpi) => <StatTile key={kpi.id} {...kpi} href={KPI_HREF[kpi.id]} caption="Last 24h vs. previous 24h" />) : <SkeletonTiles count={5} />}
+            {overview ? (
+              KPI_ORDER.map((id) => {
+                const kpi = overview.kpis.find((k) => k.id === id)
+                return kpi ? <StatTile key={id} {...kpi} href={KPI_HREF[id]} caption="Last 24h vs. previous 24h" /> : <StatTile key={id} label={KPI_LABEL[id]} value={null} href={KPI_HREF[id]} />
+              })
+            ) : (
+              <SkeletonTiles count={5} />
+            )}
           </Grid>
         )}
         {!overview || !views ? (
           view === 'live' ? <LiveSkeleton /> : <SkeletonPanels count={4} lines={6} />
         ) : (
           <>
-            {view === 'live' && <LiveView views={views} recent={overview.recentEvents} timeline={overview.timeline} start={overview.timeline.at(0)?.time ?? overview.generatedAt} />}
+            {view === 'live' && <LiveView views={views} recent={overview.recentEvents} timeline={overview.timeline} start={dayBefore(overview.generatedAt)} />}
             {view === 'health' && <HealthView views={views} />}
             {view === 'threats' && <ThreatsView views={views} section={section} />}
             {view === 'behavior' && <BehaviorView views={views} section={section} />}
