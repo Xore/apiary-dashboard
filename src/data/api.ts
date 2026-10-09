@@ -1550,8 +1550,7 @@ const generatePayloadReport: Backend['generatePayloadReport'] = async (hash) => 
  * `/api/v1/config` twice more, which is one config document and not a
  * correctness question.
  *
- * `previewReport` has no endpoint at all, so a live deployment returns the
- * explicit not-available error until that endpoint exists. */
+ * A live deployment has no draft preview to show: see `previewReport`. */
 const generateReportFrom: Backend['generateReportFrom'] = async (definition, keep) => {
   // A one-off is created, so it carries no id: `create_definition` 400s one.
   const saved = await saveReportDefinition(keep ? definition : { ...definition, id: '' })
@@ -2284,6 +2283,13 @@ const getBlockedIps: Backend['getBlockedIps'] = async () => (await get<QueryResu
 const getSessionEvents: Backend['getSessionEvents'] = async (sessionId) =>
   (await get<QueryResult<'getSessionEvents'>>('getSessionEvents', `/api/v1/sessions/${encodeURIComponent(sessionId)}/events`)) ?? []
 
+/** There is no preview route (APIARY#3524): the backend renders a stored
+ * report (`reports_api::render_definition_to_stored`) but does not render a
+ * draft without saving it. So a live deployment has no preview and answers
+ * `null` without a request. The wizard runs its checks without counts and
+ * shows the document's structure only, and the mock keeps its preview. */
+const previewReport: Backend['previewReport'] = async () => null
+
 /** This slice's queries, and nothing else. Each keeps the mock
  * implementation's signature exactly — `queries.ts` is generated from it and
  * pages are typed against it.
@@ -2296,10 +2302,7 @@ const getSessionEvents: Backend['getSessionEvents'] = async (sessionId) =>
  *   needs a diff against the stored document (`preferencesPatch` carries
  *   only what changed). Not wired yet; `getPreferences` is.
  *
- * - `previewReport` — reports' own gap: the backend renders a report, it does
- *   not preview a draft, and there is no `/reports/preview` route. A live
- *   deployment gets an explicit not-available error. The other half
- *   of the reports gap list (`sandbox-runs` / payload search for the artifact
+ * - The reports gap list (`sandbox-runs` / payload search for the artifact
  *   pickers) is in contracts/reports.ts, typed and deliberately unadapted: no
  *   page type exists to adapt them to.
  *
@@ -2401,6 +2404,7 @@ const LIVE: Partial<Record<keyof Backend, (...args: never[]) => Promise<unknown>
   deleteGeneratedReport,
   generatePayloadReport,
   generateReportFrom,
+  previewReport,
   // Monitor (#74)
   getOverview,
   getOverviewViews,

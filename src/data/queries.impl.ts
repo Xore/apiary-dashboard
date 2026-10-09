@@ -703,7 +703,7 @@ export async function getFacets(_kind = 'events', filters: EventFilters = {}): P
 const SAMPLE_ROWS = 4
 const formatCount = (n: number) => n.toLocaleString('en-US')
 
-export async function previewReport(definition: ReportDefinition): Promise<ReportPreview> {
+async function draftPreview(definition: ReportDefinition): Promise<ReportPreview> {
   await mockDelay()
   const { window, ip, sensor, port, signature } = definition.scope
   const list = (values: string[]) => values.join(', ')
@@ -778,6 +778,12 @@ export async function previewReport(definition: ReportDefinition): Promise<Repor
   }
 }
 
+/** The mock always has a preview. The live tier has none (APIARY#3524), so
+ * the signature admits null and the wizard must work without one. */
+export async function previewReport(definition: ReportDefinition): Promise<ReportPreview | null> {
+  return draftPreview(definition)
+}
+
 /** Generates a PDF from a draft, saving the draft as a reusable definition
  * first when asked to (a one-off report keeps no definition). */
 /** One sample's own PDF report; it joins the report history like any other. */
@@ -801,7 +807,7 @@ export async function generatePayloadReport(hash: string): Promise<GeneratedRepo
 export async function generateReportFrom(definition: ReportDefinition, keep: boolean): Promise<{ report: GeneratedReport; definition?: ReportDefinition }> {
   await mockDelay()
   const saved = keep ? await saveReportDefinition(definition) : undefined
-  const preview = await previewReport(definition)
+  const preview = await draftPreview(definition)
   const report: GeneratedReport = {
     id: `rpt-${Date.now().toString(36)}`,
     title: definition.name || definition.branding.title,

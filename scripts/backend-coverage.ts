@@ -21,10 +21,6 @@ export const BACKEND_EXCEPTIONS: Record<string, Exception> = {
     status: 'unused',
     reason: 'No rewrite route or component calls this legacy query.',
   },
-  previewReport: {
-    status: 'mock-only',
-    reason: 'The backend generates reports but has no draft-preview endpoint.',
-  },
   resolveIncidents: {
     status: 'local',
     reason:

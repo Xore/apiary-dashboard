@@ -359,10 +359,13 @@ export const reportPdf = (id: string) => async (_search: URLSearchParams, q: Bac
     { text: definition.branding.classification, size: 9, bold: true },
     { text: report.title, size: 22, bold: true, gap: 8 },
     { text: `${template?.name ?? report.template} - generated ${report.createdAt.slice(0, 16).replace('T', ' ')} UTC`, size: 10 },
-    { text: `Covers ${preview.period.from.slice(0, 10)} to ${preview.period.to.slice(0, 10)}`, size: 10 },
-    { text: `${formatNumber(preview.events)} events from ${formatNumber(preview.sources)} sources on ${formatNumber(preview.sensors)} sensors, ${formatNumber(preview.sessions)} sessions`, size: 11, gap: 10 },
   ]
-  for (const section of preview.sections) {
+  // The live tier has no preview (APIARY#3524): the document then has no counts.
+  if (preview) {
+    lines.push({ text: `Covers ${preview.period.from.slice(0, 10)} to ${preview.period.to.slice(0, 10)}`, size: 10 })
+    lines.push({ text: `${formatNumber(preview.events)} events from ${formatNumber(preview.sources)} sources on ${formatNumber(preview.sensors)} sensors, ${formatNumber(preview.sessions)} sessions`, size: 11, gap: 10 })
+  }
+  for (const section of preview?.sections ?? []) {
     lines.push({ text: section.label, size: 14, bold: true, gap: 12 })
     lines.push({ text: `${section.columns[0]}  |  ${section.columns[1]}`, size: 9, bold: true })
     for (const [a, b] of section.sample) lines.push({ text: `${a}  |  ${b}`, size: 9 })

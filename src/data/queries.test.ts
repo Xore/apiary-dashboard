@@ -159,17 +159,23 @@ describe('link integrity', () => {
   it('report previews name the scope filter that leaves nothing, and generating keeps or skips the definition', async () => {
     const data = await q.getReports()
     const draft = { ...structuredClone(data.definitions[1]), id: '', name: 'Preview test' }
-    const full = await q.previewReport(draft)
+    // The mock always has a preview; the live tier answers null (APIARY#3524).
+    const previewOf = async (definition: typeof draft) => {
+      const preview = await q.previewReport(definition)
+      if (!preview) throw new Error('the mock always previews')
+      return preview
+    }
+    const full = await previewOf(draft)
     expect(full.emptyFilter).toBeUndefined()
     expect(full.events).toBeGreaterThan(0)
     expect(full.sections.map((s) => s.id)).toEqual(draft.elements)
     // The preview prints the scope's own rows: scoped to one source, only that source appears.
     const ip = full.sections.find((s) => s.id === 'sources')?.sample[0]?.[0] ?? (await q.getFacets()).sources[0].value
-    const scoped = await q.previewReport({ ...draft, elements: ['sources', 'appendix'], scope: { ...draft.scope, ip: [ip] } })
+    const scoped = await previewOf({ ...draft, elements: ['sources', 'appendix'], scope: { ...draft.scope, ip: [ip] } })
     expect(scoped.sections[0].sample.map(([source]) => source)).toEqual([ip])
     expect(scoped.sections[1].sample.every(([, event]) => event.startsWith(`${ip} `))).toBe(true)
     expect(Date.parse(scoped.period.to) - Date.parse(scoped.period.from)).toBeGreaterThan(0)
-    const empty = await q.previewReport({ ...draft, scope: { ...draft.scope, ip: ['10.9.9.9'] } })
+    const empty = await previewOf({ ...draft, scope: { ...draft.scope, ip: ['10.9.9.9'] } })
     expect(empty.emptyFilter?.field).toBe('ip')
     expect(empty.events).toBe(0)
     const oneOff = await q.generateReportFrom(draft, false)
