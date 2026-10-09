@@ -1,6 +1,6 @@
 // The entity drill-down reads (#221): the events-derived source and session
-// reads, the source identity and network, the blocklist, and the queries no
-// backend route serves yet. Every list failure must throw, never answer [];
+// reads, the source identity and network, the identity and campaign pages, the
+// blocklist, and the queries no backend route serves yet. Every list failure must throw, never answer [];
 // every unavailable query must throw without calling the backend at all.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from './errors'
@@ -8,6 +8,7 @@ import { liveQuery } from './api'
 import type { Backend } from './backend'
 import { activeBlockIps, sessionSummaries } from './adapters/sources'
 import fixtures from './__fixtures__/entity-reads.json'
+import groups from './__fixtures__/entity-groups.json'
 
 type Failure = { status: number }
 type Route = unknown | Failure
@@ -140,6 +141,66 @@ describe('the single-entity reads', () => {
   })
 })
 
+describe('the identity and campaign pages', () => {
+  const [listed, ...unlisted] = groups.memberIps
+  const sources = { total_unique: 1, truncated: false, rows: [{ ip: listed, country: 'NL', events: 12, logins: 0, sessions: 0, sensors: ['zeek'], first: '2026-10-01T00:00:00Z', last: '2026-10-09T00:00:00Z' }] }
+
+  it('builds an identity from its document, its events and a profile for every member', async () => {
+    const calls = stub({
+      '/api/v1/investigate/identity/': groups.identity,
+      '/api/v1/events': groups.events,
+      '/api/v1/sources': sources,
+      '/api/v1/investigate/ip/': fixtures.ipProfile,
+    })
+    const entity = await live('getIdentity')(groups.identity.id)
+    const paths = calls.map((url) => new URL(url).pathname)
+    expect(paths[0]).toBe(`/api/v1/investigate/identity/${groups.identity.id}`)
+    expect(params(calls.find((url) => url.includes('/events?'))!)).toEqual({ offset: '0', size: '100', ips: groups.memberIps.join(','), since: '365d' })
+    expect(paths.filter((path) => path.startsWith('/api/v1/investigate/ip/'))).toHaveLength(unlisted.length)
+    expect(entity!.identity).toMatchObject({ id: groups.identity.id, ips: groups.memberIps })
+    expect(entity!.group.members).toHaveLength(groups.memberIps.length)
+    expect(entity!.group.members[0]).toMatchObject({ ip: listed, country: 'NL', events: 12 })
+    expect(entity!.group.totalMatches).toBe(groups.events.total)
+    expect(entity!.group.events).toHaveLength(groups.events.rows.length)
+    expect(entity!.group.tunnelConnections).toBe(0)
+  })
+
+  it('reads at most 50 members of a wider identity and drops a member the backend has no profile for', async () => {
+    const wide = { ...groups.identity, ips: Array.from({ length: 80 }, (_, i) => `198.51.100.${i + 1}`) }
+    const calls = stub({ '/api/v1/investigate/identity/': wide, '/api/v1/events': groups.events, '/api/v1/sources': sources, '/api/v1/investigate/ip/': { status: 404 } })
+    const entity = await live('getIdentity')(groups.identity.id)
+    expect(params(calls.find((url) => url.includes('/events?'))!).ips.split(',')).toHaveLength(50)
+    expect(entity!.identity.ips).toHaveLength(80)
+    expect(entity!.group.members).toEqual([])
+  })
+
+  it('answers null for an unknown identity, and throws when the events read fails', async () => {
+    stub({ '/api/v1/investigate/identity/': { status: 404 } })
+    expect(await live('getIdentity')('missing')).toBeNull()
+    stub({ '/api/v1/investigate/identity/': groups.identity, '/api/v1/events': { status: 502 }, '/api/v1/sources': sources })
+    await expect(live('getIdentity')(groups.identity.id)).rejects.toBeInstanceOf(ApiError)
+  })
+
+  it('builds a campaign from its document and the correlation of its /24', async () => {
+    const calls = stub({ '/api/v1/investigate/campaign/': groups.campaign, '/api/v1/investigate/cidr/': groups.cidr })
+    const entity = await live('getCampaign')('198.51.100.0/24')
+    expect(calls.map((url) => new URL(url).pathname)).toEqual(['/api/v1/investigate/campaign/198.51.100.0%2F24', '/api/v1/investigate/cidr/198.51.100.0%2F24'])
+    expect(entity!.campaign).toMatchObject({ cidr: '198.51.100.0/24', score: groups.campaign.score, uniqueIps: groups.campaign.unique_ips })
+    expect(entity!.group.members.map((m) => m.ip).sort()).toEqual(['198.51.100.73', '198.51.100.75'])
+    expect(entity!.group.totalMatches).toBe(groups.cidr.correlation.total)
+  })
+
+  it('gives a campaign whose prefix has no events an empty group, and answers null for an unknown campaign', async () => {
+    stub({ '/api/v1/investigate/campaign/': groups.campaign, '/api/v1/investigate/cidr/': { status: 404 } })
+    const entity = await live('getCampaign')('198.51.100.0/24')
+    expect(entity!.group).toMatchObject({ members: [], events: [], totalMatches: 0 })
+    stub({ '/api/v1/investigate/campaign/': { status: 404 } })
+    expect(await live('getCampaign')('192.0.2.0/24')).toBeNull()
+    stub({ '/api/v1/investigate/campaign/': { status: 502 } })
+    await expect(live('getCampaign')('192.0.2.0/24')).rejects.toBeInstanceOf(ApiError)
+  })
+})
+
 describe('the blocklist', () => {
   it('reads the block list and keeps only the blocks that hold now', async () => {
     const calls = stub({ '/api/v1/investigate/blocked-ips': fixtures.blockedEmpty })
@@ -191,8 +252,6 @@ describe('the queries no backend route serves yet', () => {
     ['getEntityTimeline', ['asn', 'AS64496', 'all'], 'Xore/APIARY#3554'],
     ['getRelated', ['identity', 'c5fd0398517e4871b8fc47e0f4aa0d99'], 'Xore/APIARY#3554'],
     ['getFacets', ['events', {}], 'Xore/APIARY#3524'],
-    ['getIdentity', ['c5fd0398517e4871b8fc47e0f4aa0d99'], 'Xore/apiary-dashboard#221'],
-    ['getCampaign', ['203.0.113.0/24'], 'Xore/apiary-dashboard#221'],
   ]
 
   it.each(UNAVAILABLE)('%s throws unavailable without calling the backend', async (name, args, gap) => {

@@ -3,7 +3,8 @@
 // attackers and investigate pages already render.
 import { describe, expect, it } from 'vitest'
 import type { AttackerEntityWire, CampaignWire, ClusterWire, CorrelationWire, CredEdgeWire, IpBlockWire, IpProfileWire, MapPointsWire, SourceRowWire } from '../contracts/sources'
-import { attackerGraph, attackers, correlation, credReuse, infraClusters, ipBlockRecord, ipCorrelation, ipProfile, mapPoints, networkCampaigns, setIpBlockBody, sourceProfiles } from './sources'
+import type { HoneypotEvent } from '../types'
+import { sharedSignals, attackerGraph, attackers, correlation, credReuse, infraClusters, ipBlockRecord, ipCorrelation, ipProfile, mapPoints, networkCampaigns, setIpBlockBody, sourceProfiles } from './sources'
 
 const sourceRow: SourceRowWire = {
   ip: '203.0.113.42',
@@ -196,5 +197,22 @@ describe('sources adapters', () => {
     expect(out.sensors).toEqual([])
     expect(out.source.org).toBe('')
     expect(out.correlation.tunnelOsGuesses).toEqual([])
+  })
+})
+describe('sharedSignals', () => {
+  const event = (srcIp: string, extra: Partial<HoneypotEvent>): HoneypotEvent => ({ id: srcIp, timestamp: '2026-10-09T00:00:00Z', sensor: 'cowrie', type: 'connection', srcIp, dstPort: 22, eventName: 'x', fields: {}, techniques: [], ...extra })
+
+  it('lists a value only when two or more distinct addresses carry it, most shared first', () => {
+    const rows = [
+      event('203.0.113.1', { username: 'root', password: 'root', fingerprint: 'hassh-a', asn: 'AS64496' }),
+      event('203.0.113.1', { username: 'root', password: 'root' }),
+      event('203.0.113.2', { username: 'root', password: 'root', fingerprint: 'hassh-b' }),
+      event('203.0.113.3', { username: 'root', password: 'root', fields: { shasum: 'abc' } }),
+      event('203.0.113.2', { fields: { shasum: 'abc' } }),
+    ]
+    expect(sharedSignals(rows)).toEqual([
+      { id: 'credential:root:root', kind: 'credential', value: 'root:root', members: ['203.0.113.1', '203.0.113.2', '203.0.113.3'] },
+      { id: 'payload:abc', kind: 'payload', value: 'abc', members: ['203.0.113.3', '203.0.113.2'] },
+    ])
   })
 })

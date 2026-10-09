@@ -68,7 +68,12 @@ import {
   activeBlockIps,
   attacker,
   mapPoints,
+  MEMBER_LIMIT,
+  membersGroup,
+  networkCampaign,
   networkCampaigns,
+  profileMember,
+  sharedSignals,
   sessionSummaries,
   setIpBlockBody,
   sourceCounts,
@@ -212,7 +217,9 @@ import type {
   CampaignTimelineWire,
   ClusterCorrelationWire,
   ClusterPageWire,
+  CampaignDocWire,
   CidrCorrelationWire,
+  IdentityDocWire,
   CredEdgeWire,
   FusionWire,
   IpBlockWire,
@@ -222,7 +229,7 @@ import type {
   SourcesPageWire,
 } from './contracts/sources'
 import type { Backend, Caller } from './backend'
-import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Preferences, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig } from './types'
+import type { ClusterEntity, CountRow, EventType, HoneypotEvent, Kpi, MlAnomaly, Paged, Preferences, ScorePoint, Sensor, SensorFields, SessionUser, ShellConfig, SourceProfile } from './types'
 
 /** A dashboard that hangs forever is worse than one that errors. */
 const TIMEOUT_MS = envInt('BACKEND_TIMEOUT_MS', 30_000)
@@ -1208,6 +1215,54 @@ const getNetwork: Backend['getNetwork'] = async (cidr) => {
     group,
     ...(campaign ? { campaign } : {}),
   }
+}
+
+/** GET /api/v1/investigate/identity/{id} (the attackers-v1 document), then
+ * the group of its first 50 addresses: GET /api/v1/events?ips= for their
+ * newest events, and each address's profile, from GET /api/v1/sources (the
+ * top 1000) or GET /api/v1/investigate/ip/{ip} for one that list does not
+ * hold. An address with no events in the 10-day window has no profile and is
+ * not listed as a member; the identity's own `ips` still names it. A 404 on
+ * the document is "no such identity", the page's null. */
+const getIdentity: Backend['getIdentity'] = async (id) => {
+  const doc = await get<IdentityDocWire>('getIdentity', `/api/v1/investigate/identity/${encodeURIComponent(id)}`)
+  if (!doc) return null
+  const ips = doc.ips.slice(0, MEMBER_LIMIT)
+  const identity = attacker(doc)
+  if (!ips.length) return { identity, group: membersGroup([], [], 0), shared: [] }
+  const [events, sources] = await Promise.all([
+    eventsWire('getIdentity', { ips: ips.join(','), since: '365d' }),
+    get<SourcesPageWire>('getIdentity', '/api/v1/sources', { offset: 0, size: 1000 }),
+  ])
+  const listed = new Map(sourceProfiles(listOf('getIdentity', sources)).map((row) => [row.ip, row]))
+  const members = (
+    await Promise.all(
+      ips.map(async (ip) => {
+        const row = listed.get(ip)
+        if (row) return row
+        const profile = await get<IpProfileWire>('getIdentity', `/api/v1/investigate/ip/${encodeURIComponent(ip)}`)
+        return profile ? profileMember(profile) : null
+      }),
+    )
+  ).filter((row): row is SourceProfile => row !== null)
+  const rows = paged(events).rows
+  return { identity, group: membersGroup(members, rows, events.total), shared: sharedSignals(rows) }
+}
+
+/** GET /api/v1/investigate/campaign/{id} (the campaigns-v1 document, id the
+ * /24) and GET /api/v1/investigate/cidr/{cidr} (its correlation, the same
+ * read the network page makes). The campaign document names no member
+ * addresses, so the members are the distinct addresses of the correlation's
+ * records (a floor on wide prefixes, see `correlationGroup`). A prefix with
+ * no events in the window has no correlation: the group is empty rather than
+ * invented. A 404 on the document is the page's null. */
+const getCampaign: Backend['getCampaign'] = async (id) => {
+  const doc = await get<CampaignDocWire>('getCampaign', `/api/v1/investigate/campaign/${encodeURIComponent(id)}`)
+  if (!doc) return null
+  const wire = await get<CidrCorrelationWire>('getCampaign', `/api/v1/investigate/cidr/${encodeURIComponent(doc.cidr)}`)
+  const events = wire ? wire.correlation.records.map(pageEvent) : []
+  const group = wire ? correlationGroup(wire.correlation, events) : membersGroup([], [], 0)
+  return { campaign: networkCampaign(doc), group, shared: sharedSignals(events) }
 }
 
 /** GET /api/v1/investigate/cluster?kind=&value= — the same endpoint
@@ -2358,14 +2413,6 @@ const getBlockedIps: Backend['getBlockedIps'] = async () => activeBlockIps(listO
 
 const getAsn: Backend['getAsn'] = async () => {
   throw unavailable('getAsn', 'Xore/APIARY#3554')
-}
-/** The member group is built from backend reads this tier does not make yet
- * (see the issue tracking this slice), so the page cannot be filled honestly. */
-const getIdentity: Backend['getIdentity'] = async () => {
-  throw unavailable('getIdentity', 'member group not built yet, Xore/apiary-dashboard#221')
-}
-const getCampaign: Backend['getCampaign'] = async () => {
-  throw unavailable('getCampaign', 'member group not built yet, Xore/apiary-dashboard#221')
 }
 const getEntityTimeline: Backend['getEntityTimeline'] = async () => {
   throw unavailable('getEntityTimeline', 'Xore/APIARY#3554')
