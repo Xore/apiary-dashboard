@@ -25,7 +25,7 @@ Effective access for every generated HTTP route and every server query. “Viewe
 | `/auth/callback` | allow | allow | allow | public route handler |
 | `/auth/login` | allow | allow | allow | public route handler |
 | `/auth/logout` | same-origin | same-origin | same-origin | `Origin`/`Referer`; cross-origin 403 |
-| `/export/portbridge-manual-blackhole.txt` | allow | allow | allow | network boundary; backend service token |
+| `/export/portbridge-manual-blackhole.txt` | 401 (or token) | allow | allow | `x-service-token` = `SERVICE_TOKEN`, else session with `getBlockedIps` access |
 | `/agent-campaigns/$id` | 307 sign-in | allow | allow | `_layout` navigation guard |
 | `/alerts/$key` | 307 sign-in | allow | allow | `_layout` navigation guard |
 | `/asn/$asn` | 307 sign-in | allow | allow | `_layout` navigation guard |

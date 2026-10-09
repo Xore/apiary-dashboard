@@ -69,8 +69,19 @@ A server function call whose session has gone (401) sends the browser to sign in
 On the server:
 - every server function passes a **same-origin check** (a cross-site state-changing call gets 403), and a state-changing one must carry the `x-csrf-token` header the dashboard's own fetch adds;
 - every query is **authorized for the caller**: no session → 401; a viewer calling an admin-only write → 403; the canonical permissions are in `src/server/authorize.ts`;
-- direct handlers (`/api/*`) check the session themselves; `/healthz` and the firewall's blocklist export are deliberately public; `/metrics` needs the service token in `x-service-token`;
+- direct handlers (`/api/*`) check the session themselves; `/healthz` is deliberately public; `/metrics` needs the service token in `x-service-token`;
+- the firewall blocklist export (`/export/portbridge-manual-blackhole.txt`) takes either that service token or a signed-in session the query policy allows (see below);
 - `/auth/logout` needs a same-origin Origin or Referer, then destroys the session.
+
+#### Machine access: the blocklist export
+
+`GET /export/portbridge-manual-blackhole.txt` returns the manual blackhole list, one IP per line (`text/plain`, `no-store`). It is the only URL the VPS firewall puller reads.
+
+- Machine client: send the header `X-Service-Token: <SERVICE_TOKEN>`. The token is compared in constant time and is never taken from the URL or the query string. With `SERVICE_TOKEN` unset, this path never matches.
+- Person: a signed-in session whose role `getBlockedIps` allows under `src/server/authorize.ts`.
+- No credentials: `401 unauthorized`. A signed-in role the policy refuses: `403 forbidden`.
+
+The VPS job sends the header from its `DASHBOARD_SERVICE_TOKEN`, which must hold the same value as `SERVICE_TOKEN`.
 
 The server refuses to boot in an environment that would open it:
 

@@ -14,6 +14,7 @@ export type RoutePolicy =
   | 'same-origin'
   | 'service-token'
   | 'network'
+  | 'session-or-token'
   | 'page'
   | 'handler'
   | 'admin-page'
@@ -39,7 +40,7 @@ export function routePolicy(path: string, type = generatedTypes.get(path)): Rout
     return 'public'
   if (route === '/auth/logout') return 'same-origin'
   if (route === '/metrics') return 'service-token'
-  if (route === '/export/portbridge-manual-blackhole.txt') return 'network'
+  if (route === '/export/portbridge-manual-blackhole.txt') return 'session-or-token'
   if (route === '/admin') return 'admin-page'
   if (route === '/api/payload/$hash/download') return 'admin-handler'
   if (route.startsWith('/api/')) return 'handler'
@@ -74,6 +75,12 @@ const ROUTE_ACCESS: Record<
     viewer: 'allow',
     admin: 'allow',
     enforcement: 'network boundary; backend service token',
+  },
+  'session-or-token': {
+    anonymous: '401 (or token)',
+    viewer: 'allow',
+    admin: 'allow',
+    enforcement: '`x-service-token` = `SERVICE_TOKEN`, else session with `getBlockedIps` access',
   },
   page: {
     anonymous: '307 sign-in',
