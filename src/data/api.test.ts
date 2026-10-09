@@ -128,6 +128,7 @@ describe('which queries the real backend answers', () => {
         'rollbackConfig',
         'runServiceAction',
         'saveConfigSection',
+        'savePreferences',
         'setProblemStatus',
         'submitProblemReport',
         'validateConfig',
@@ -235,8 +236,8 @@ describe('which queries the real backend answers', () => {
     expect(liveQuery('previewReport', undefined)).toBeUndefined()
   })
 
-  it('leaves savePreferences on the mock until the write diffs the stored document', () => {
-    expect(liveQuery('savePreferences', undefined)).toBeUndefined()
+  it('answers savePreferences live: the write diffs the stored document', () => {
+    expect(liveQuery('savePreferences', undefined)).toBeTypeOf('function')
   })
 
   it('applies the same authorization decision the mock does', async () => {
@@ -327,10 +328,36 @@ describe('the responses it maps', () => {
     const out = await live('getEvents')({})
     expect(out).toMatchObject({ total: 1, values: { sensors: ['cowrie'], countries: ['NL'], ports: [22] } })
     expect(out.rows[0]).toMatchObject({ id: 'ev_9f2c1a', srcIp: '203.0.113.42', dstPort: 22, command: 'uname -a' })
-    // The seven gap fields, filled at the seam rather than reaching a page
-    // undefined. severity is the honest one: the wire classifies none.
-    expect(out.rows[0]).toMatchObject({ type: 'command.input', severity: 'info', srcPort: 0, eventName: 'cowrie.command.input', techniques: [], city: '' })
+    // The gap fields the seam fills. The row carries no severity, source
+    // port or city, so those are absent: never a placeholder.
+    expect(out.rows[0]).toMatchObject({ type: 'command.input', eventName: 'cowrie.command.input', techniques: [] })
+    expect(out.rows[0].severity).toBeUndefined()
+    expect(out.rows[0].srcPort).toBeUndefined()
+    expect(out.rows[0].city).toBeUndefined()
     expect(out.rows[0].organization).toBeUndefined()
+  })
+
+  it('maps ics_severity to severity, and leaves severity absent on every other row', async () => {
+    for (const ics of ['critical', 'high'] as const) {
+      stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, ics_severity: ics } }] }, '/api/v1/filter-values': values })
+      expect((await live('getEvents')({})).rows[0]).toMatchObject({ severity: ics, icsSeverity: ics })
+    }
+    stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, ics_severity: '' } }] }, '/api/v1/filter-values': values })
+    expect((await live('getEvents')({})).rows[0].severity).toBeUndefined()
+  })
+
+  it('leaves provider and network enrichment absent when the row does not carry them', async () => {
+    stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, provider: '', asn: '', org: '' } }] }, '/api/v1/filter-values': values })
+    const [event] = (await live('getEvents')({})).rows
+    expect(event).toMatchObject({ country: 'NL', srcIp: '203.0.113.42' })
+    expect(event.provider).toBeUndefined()
+    expect(event.asn).toBeUndefined()
+    expect(event.org).toBeUndefined()
+    // A class the page does not know is absent too, not rounded to `network`.
+    stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, provider: 'martian' } }] }, '/api/v1/filter-values': values })
+    expect((await live('getEvents')({})).rows[0].provider).toBeUndefined()
+    stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, provider: 'hosting' } }] }, '/api/v1/filter-values': values })
+    expect((await live('getEvents')({})).rows[0].provider).toBe('hosting')
   })
 
   it('classifies the kind off the sensor own event name, and an IDS alert off the signature', async () => {
@@ -348,17 +375,18 @@ describe('the responses it maps', () => {
     }
     stub({ '/api/v1/events': { ...page, rows: [{ ...row, pivots: { ...pivots, alert: 'ET SCAN Nmap' } }] }, '/api/v1/filter-values': values })
     expect((await live('getEvents')({})).rows[0].type).toBe('ids.alert')
-    // An unrecognised sensor event falls to the page own catch-all rather
-    // than to a kind the page does not have.
+    // An unrecognised sensor event falls to `connection`, the one kind every
+    // honeypot row is certain of, rather than a protocol the row does not show.
     stub({ '/api/v1/events': { ...page, rows: [{ ...row, record: { honeypot: { event: 'icmp_echo_reply' } } }] }, '/api/v1/filter-values': values })
-    expect((await live('getEvents')({})).rows[0].type).toBe('protocol.request')
+    expect((await live('getEvents')({})).rows[0].type).toBe('connection')
   })
 
   it('maps the detail endpoint onto its own fields, without inventing the row it does not serve', async () => {
     stub({ '/api/v1/event/': eventPageWire })
     const out = await live('getEventDetail')('ev_9f2c1a')
     expect(out).toMatchObject({ hashes: ['d41d8cd98f00b204e9800998ecf8427e'], recordingShasum: undefined })
-    expect(out!.event).toMatchObject({ id: 'ev_9f2c1a', sensor: 'cowrie', srcIp: '203.0.113.42', summary: '', dstPort: 0 })
+    expect(out!.event).toMatchObject({ id: 'ev_9f2c1a', sensor: 'cowrie', srcIp: '203.0.113.42', dstPort: 0 })
+    expect(out!.event.summary).toBeUndefined()
     expect(out!.reading).toMatchObject({ what: expect.any(String) })
     // The relation lists stay empty: the wire rows are four-field samples.
     expect([out!.session, out!.connection, out!.source]).toEqual([[], [], []])
@@ -369,7 +397,8 @@ describe('the responses it maps', () => {
     const out = await live('getSessionDetail')('sess-77a1')
     expect(out).toMatchObject({ id: 'sess-77a1', srcIp: '203.0.113.42', country: 'NL' })
     expect(out!.sensors).toEqual([{ id: 'cowrie', label: 'cowrie', count: 1 }])
-    expect(out!.events[0]).toMatchObject({ severity: 'info', eventName: 'cowrie.command.input' })
+    expect(out!.events[0]).toMatchObject({ eventName: 'cowrie.command.input' })
+    expect(out!.events[0].severity).toBeUndefined()
   })
 
   it('maps the recordings list and the replay, filtered to the one shasum', async () => {
@@ -775,7 +804,7 @@ describe('the mutations', () => {
   it('POSTs the workbench run body to the mounted base', async () => {
     process.env.BACKEND_MOUNTED_URL = 'http://mounted.test'
     const calls = stub({ '/api/v1/workbench/runs': { run: { id: 'wr-1', payload_sha256: 'a'.repeat(64), payload_kind: 'PE32', owner: 'alice', state: 'queued', created_at: '', updated_at: '', children: [] }, reused: false } })
-    const run = await liveQuery('startAnalysisRun', admin)!({ hash: 'a'.repeat(64), analyzers: ['static'], static: { minStringLength: 4 } })
+    const run = await liveQuery('startAnalysisRun', admin)!({ hash: 'a'.repeat(64), analyzers: ['static'], options: { static: { timeoutSeconds: 300, maxQueueAgeSeconds: 3600, retryLimit: 0 } } })
     expect(run).toMatchObject({ reused: false, run: { id: 'wr-1', hash: 'a'.repeat(64) } })
     expect(calls[0]).toMatch(/^http:\/\/mounted\.test\/api\/v1\/workbench\/runs$/)
     const body = JSON.parse((vi.mocked(fetch).mock.calls.at(-1)?.[1] as RequestInit).body as string)
@@ -841,10 +870,10 @@ describe('the settings page, fanned out over its eight documents', () => {
     expect(out.services[0]).toMatchObject({ name: 'hp-tanner', state: 'running' })
     expect(out.storage).toMatchObject({ clusterStatus: 'green', indexCount: 42 })
     expect(out.reportTemplates).toHaveLength(1)
-    // NOT the wire's per-subject document — that is getPreferences' read.
-    // The backend's own default_preferences render instead.
+    // No signed-in operator in this file, so the stored document is the
+    // backend's default_preferences. The operator's own document is covered
+    // in api.preferences.test.ts.
     expect(out.preferences).toMatchObject({ theme: 'system', rowsPerPage: 50, notifyCanary: false })
-    // getSettings itself never calls the preferences endpoint.
     expect(calls.some((url) => url.includes('/api/v1/preferences'))).toBe(false)
   })
 
@@ -1424,12 +1453,13 @@ describe('sensors', () => {
     // These rows are sensors.rs `SensorEvent`, NOT the shared events.rs
     // `EventRow`: no pivots, no country, no session. The eleven gaps are
     // filled at the seam with what is genuinely absent upstream — the kind
-    // off the sensor's own event name, everything else empty or `info`.
+    // off the sensor's own event name, everything else absent.
     stub(operationsFixtures())
     const [sensorEvent] = (await live('getSensorDetail')('cowrie'))!.recentEvents
-    expect(sensorEvent).toMatchObject({ id: 'ev-1', sensor: 'cowrie', srcIp: '203.0.113.42', srcPort: 51322, dstPort: 19022, type: 'command.input', eventName: 'cowrie.command.input', severity: 'info' })
+    expect(sensorEvent).toMatchObject({ id: 'ev-1', sensor: 'cowrie', srcIp: '203.0.113.42', srcPort: 51322, dstPort: 19022, type: 'command.input', eventName: 'cowrie.command.input', techniques: [] })
     expect(sensorEvent.fields).toEqual({ eventid: 'cowrie.command.input', input: 'uname -a' })
-    expect(sensorEvent).toMatchObject({ asn: '', org: '', city: '', country: '', sessionId: '', techniques: [] })
+    // The endpoint says nothing of these, so none of them is invented.
+    for (const key of ['severity', 'protocol', 'provider', 'asn', 'org', 'city', 'country', 'sessionId', 'summary'] as const) expect(sensorEvent[key], key).toBeUndefined()
   })
 })
 
@@ -1589,13 +1619,38 @@ describe('the tools slice reads the endpoints the Rust tier actually serves', ()
     expect(bodiesOf()[0].body).toEqual({ token_type: 'ms_word', memo: 'payroll', created_by: '' })
   })
 
-  it('refuses a web_image live rather than minting a token with no bytes', async () => {
-    // The page's dialog carries the image as its NAME only, while
-    // canarytokens.rs:178-180 decodes `file_base64` and 400s without it.
-    // Sending the name alone lets the backend refuse it in its own words
-    // instead of this tier pretending the upload happened.
-    stub(toolsFixtures({ '/api/v1/canarytokens': fail(400, 'a file upload is required for this token type') }))
-    await expect(live('createCanarytoken')({ type: 'web_image', memo: 'badge', imageName: 'badge.png' })).rejects.toThrow(ApiError)
+  it('sends a web image as base64 with its name and content type', async () => {
+    stub(toolsFixtures({ '/api/v1/canarytokens': tokenRecord }))
+    const png = btoa('\x89PNG-bytes')
+    await live('createCanarytoken')({ type: 'web_image', memo: 'badge', image: { name: 'badge.png', contentType: 'image/png', base64: png } })
+    expect(bodiesOf()).toEqual([{ path: '/api/v1/canarytokens', body: { token_type: 'web_image', memo: 'badge', created_by: '', file_base64: png, file_name: 'badge.png', file_content_type: 'image/png' } }])
+  })
+
+  // The trust boundary: each of these is refused before the read-only guard
+  // or the create call fetches anything, so the stub records no request.
+  it.each([
+    ['a non-image type', { name: 'run.exe', contentType: 'application/octet-stream', base64: btoa('MZ') }, 'Use a PNG, JPEG or GIF image.'],
+    ['malformed base64', { name: 'a.png', contentType: 'image/png', base64: 'not base64!' }, 'The image is not valid base64.'],
+    ['an empty file', { name: 'a.png', contentType: 'image/png', base64: '' }, 'The image is empty.'],
+    ['a missing file name', { name: '', contentType: 'image/png', base64: btoa('x') }, 'The image needs a file name.'],
+  ])('refuses %s before any request', async (_, image, detail) => {
+    const calls = stub(toolsFixtures({ '/api/v1/canarytokens': tokenRecord }))
+    const error = await live('createCanarytoken')({ type: 'web_image', memo: 'badge', image }).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).kind).toBe('invalid')
+    expect((error as ApiError).detail).toBe(detail)
+    expect(calls).toEqual([])
+  })
+
+  it('refuses an image over 8 MiB decoded, and accepts one exactly at the limit', async () => {
+    // 'AAAA' decodes to three zero bytes, so 4k characters are 3k bytes.
+    const calls = stub(toolsFixtures({ '/api/v1/canarytokens': tokenRecord }))
+    const over = 'A'.repeat(4 * 2796203) // 8 MiB + 1 byte
+    await expect(live('createCanarytoken')({ type: 'web_image', memo: 'badge', image: { name: 'big.png', contentType: 'image/png', base64: over } })).rejects.toThrow(ApiError)
+    expect(calls).toEqual([])
+    const atLimit = 'A'.repeat(4 * 2796202) // 8 MiB exactly
+    await live('createCanarytoken')({ type: 'web_image', memo: 'badge', image: { name: 'edge.png', contentType: 'image/png', base64: atLimit } })
+    expect(bodiesOf()[0].path).toBe('/api/v1/canarytokens')
   })
 
   it('reads the credentials and the linkable tokens from the two list endpoints', async () => {

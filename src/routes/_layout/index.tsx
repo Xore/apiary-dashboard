@@ -88,10 +88,10 @@ const eventColumns: TableColumn<HoneypotEvent>[] = [
   { key: 'timestamp', header: <ZoneHeader label="Time" />, width: pixel(128), renderCell: (row) => <Text type="supporting">{formatClock(row.timestamp)}</Text> },
   { key: 'severity', header: 'Severity', width: pixel(96), renderCell: (row) => <SeverityToken severity={row.severity} /> },
   { key: 'sensor', header: 'Sensor', width: pixel(170) },
-  { key: 'srcIp', header: 'Source', width: pixel(152), renderCell: (row) => <HStack gap={1.5} vAlign="center"><Link href={ipLink(row.srcIp)}>{row.srcIp}</Link><Text type="supporting">{row.country}</Text></HStack> },
+  { key: 'srcIp', header: 'Source', width: pixel(152), renderCell: (row) => <HStack gap={1.5} vAlign="center"><Link href={ipLink(row.srcIp)}>{row.srcIp}</Link><Text type="supporting">{row.country ?? '—'}</Text></HStack> },
   // The Event explorer's widths, so the same rows read the same.
-  { key: 'dstPort', header: 'Port', width: pixel(120), renderCell: (row) => `${row.dstPort}/${row.protocol}` },
-  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <EntityLink kind="event" id={row.id}><Text type="code">{row.summary}</Text></EntityLink> },
+  { key: 'dstPort', header: 'Port', width: pixel(120), renderCell: (row) => (row.protocol ? `${row.dstPort}/${row.protocol}` : `${row.dstPort}`) },
+  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <EntityLink kind="event" id={row.id}><Text type="code">{row.summary ?? '—'}</Text></EntityLink> },
 ]
 
 function AttackVectorsPanel({ views }: { views: OverviewViews }) {

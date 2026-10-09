@@ -7,9 +7,11 @@ import {
   canaryTokenTypes,
   canaryTriggers,
   canarytokenList,
+  canaryImageProblem,
   canarytokenStorePage,
   createdCanarytoken,
   credentialList,
+  decodedBase64Length,
 } from './tools'
 
 const record: CanarytokenRecordWire = {
@@ -81,5 +83,29 @@ describe('tools adapters', () => {
     const rotated = baitCredential({ ...credential, rotated_at: '2026-10-02T09:00:00Z', rotated_by: 'admin', linked_token_id: record.id })
     expect(rotated).toMatchObject({ rotatedAt: '2026-10-02T09:00:00Z', rotatedBy: 'admin', linkedTokenId: record.id })
     expect('linkedTokenId' in baitCredential({ ...credential, linked_token_id: '' })).toBe(false)
+  })
+})
+
+describe('the web-image upload rules the dialog and the live adapter share', () => {
+  it('accepts a PNG, JPEG or GIF within 8 MiB', () => {
+    for (const type of ['image/png', 'image/jpeg', 'image/gif']) expect(canaryImageProblem({ type, size: 1024 })).toBeUndefined()
+    expect(canaryImageProblem({ type: 'image/png', size: 8 * 1024 * 1024 })).toBeUndefined()
+  })
+
+  it('refuses anything that is not a supported image, empty, or over 8 MiB', () => {
+    expect(canaryImageProblem({ type: 'image/svg+xml', size: 10 })).toBe('Use a PNG, JPEG or GIF image.')
+    expect(canaryImageProblem({ type: '', size: 10 })).toBe('Use a PNG, JPEG or GIF image.')
+    expect(canaryImageProblem({ type: 'image/png', size: 0 })).toBe('The image is empty.')
+    expect(canaryImageProblem({ type: 'image/png', size: 8 * 1024 * 1024 + 1 })).toBe('The image must be 8 MiB or smaller.')
+  })
+
+  it('computes the decoded length of base64 from its padding, and rejects malformed input', () => {
+    expect(decodedBase64Length(btoa('abc'))).toBe(3)
+    expect(decodedBase64Length(btoa('ab'))).toBe(2)
+    expect(decodedBase64Length(btoa('a'))).toBe(1)
+    expect(decodedBase64Length('')).toBe(0)
+    expect(decodedBase64Length('abc')).toBeUndefined()
+    expect(decodedBase64Length('ab!d')).toBeUndefined()
+    expect(decodedBase64Length('a===')).toBeUndefined()
   })
 })

@@ -8,10 +8,11 @@
 import type { EventRow } from '../contracts/events'
 import type { HoneypotEvent, ProviderClass } from '../types'
 
-/** HoneypotEvent fields the event row does not carry, and why:
+/** HoneypotEvent fields the event row never sets, and why:
  *
- * - `type`, `severity` — the row has no event kind or severity of its own;
- *   `detail` is the sensor's rendered sentence, not a classification.
+ * - `type` — the row has no event kind of its own; `detail` is the sensor's
+ *   rendered sentence, not a classification. The seam derives it from the
+ *   event name (`pageEvent`).
  * - `eventName` — the sensor's own event name (`cowrie.login.failed`,
  *   `NEW_CONNECTION`, …) is inside `record.honeypot` under whatever key
  *   that sensor writes it as, not lifted to the row.
@@ -23,8 +24,11 @@ import type { HoneypotEvent, ProviderClass } from '../types'
  * - `organization` — the decoy org. `pivots.org` is the ATTACKER's
  *   network org (`source.as.org`), a different value that the row does
  *   carry as `org`.
+ *
+ * `severity` is not in this list: it is set when `pivots.ics_severity` says
+ * so, and omitted otherwise. Nothing on the wire classifies a generic row.
  */
-export type EventRowGap = 'type' | 'severity' | 'eventName' | 'srcPort' | 'techniques' | 'city' | 'organization'
+export type EventRowGap = 'type' | 'eventName' | 'srcPort' | 'techniques' | 'city' | 'organization'
 
 const PROVIDERS: readonly ProviderClass[] = ['network', 'hosting', 'cloud', 'scanner', 'blocklist:spamhaus']
 
@@ -42,13 +46,13 @@ export function toHoneypotEvent(row: EventRow): Omit<HoneypotEvent, EventRowGap>
     srcIp: row.src_ip,
     srcIpClaimed: opt(row.src_ip_claimed ?? ''),
     dstPort: Number(row.port) || 0,
-    country: row.country,
-    asn: p.asn,
-    sessionId: row.session,
+    country: opt(row.country),
+    asn: opt(p.asn),
+    sessionId: opt(row.session),
     username: opt(p.user),
     password: opt(p.pass),
     command: opt(p.command),
-    summary: row.detail,
+    summary: opt(row.detail),
     // The sensor's own object, passed through as written (credentials
     // already replaced with [redacted] for the two decoys the backend
     // scrubs — see EsRecord).
@@ -58,12 +62,16 @@ export function toHoneypotEvent(row: EventRow): Omit<HoneypotEvent, EventRowGap>
     asset: opt(p.asset),
     fingerprint: opt(p.fingerprint),
     fingerprintKind: opt(p.fingerprint_kind),
-    org: p.org,
-    // An unknown class falls back to the plain network class.
-    provider: PROVIDERS.includes(p.provider as ProviderClass) ? p.provider : 'network',
+    org: opt(p.org),
+    // A class the page does not know stays absent rather than being
+    // rounded to `network`: that would claim a classification the row lacks.
+    provider: PROVIDERS.includes(p.provider as ProviderClass) ? p.provider : undefined,
     payloadClass: opt(p.payload_class),
     // Only DNP3 sets this, and only to those two values (ics_severity.rs).
     icsSeverity: ics === 'critical' || ics === 'high' ? ics : undefined,
+    // The same two values, read as the row's severity. Absent on every
+    // other row: an unclassified event has no severity, not `info`.
+    severity: ics === 'critical' || ics === 'high' ? ics : undefined,
     communityId: opt(row.record.network?.community_id ?? ''),
   }
 }

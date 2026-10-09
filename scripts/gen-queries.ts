@@ -30,7 +30,7 @@ export function renderQueries(): string {
     "import { announced, mockScenarioMiddleware } from './serverFn'",
     "import type { Json } from './serverFn'",
     '',
-    "export { alertKeyOf, generatePassword, inRange, mockNow, redact } from './shared'",
+    "export { alertKeyOf, generatePassword, inRange, redact } from './shared'",
     `export type { ${types.join(', ')} } from './queries.impl'`,
     '',
     '/** The server function for one query, called like the query itself. */',

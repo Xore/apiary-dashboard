@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { configureTime, formatChange, formatRelative, zoneLabel, formatClock, formatCompact, formatDateTime, formatDay, formatNumber, formatTime } from './format'
+import { configureTime, formatChange, formatRelative, now, zoneLabel, formatClock, formatCompact, formatDateTime, formatDay, formatNumber, formatTime } from './format'
+import { inRange } from '#/data/shared'
 
 describe('formatters', () => {
   const iso = '2026-09-23T09:05:07Z'
@@ -41,8 +42,8 @@ describe('time preferences', () => {
   })
 
   it('counts back from the clock for relative timestamps', () => {
-    const now = Date.parse('2026-09-23T12:00:00Z')
-    configureTime({ relative: true, now: () => now })
+    const noon = Date.parse('2026-09-23T12:00:00Z')
+    configureTime({ relative: true, now: () => noon })
     expect(formatRelative('2026-09-23T11:59:40Z')).toBe('just now')
     expect(formatDateTime('2026-09-23T11:55:00Z')).toBe('5 min ago')
     expect(formatDateTime('2026-09-23T09:00:00Z')).toBe('3 h ago')
@@ -53,5 +54,16 @@ describe('time preferences', () => {
     expect(formatDateTime('2026-09-23T12:20:00Z')).toBe('in 20 min')
     expect(formatDateTime('2026-09-24T06:30:00Z')).toBe('in 19 h')
     expect(formatDateTime('2026-09-28T12:00:00Z')).toBe('in 5 d')
+  })
+
+  it('reads the configured clock, which ranges count back from', () => {
+    configureTime({ now: () => Date.parse('2026-09-23T12:00:00Z') })
+    expect(now()).toBe(Date.parse('2026-09-23T12:00:00Z'))
+    // The wall clock is long past these: only the configured clock puts them in range.
+    expect(inRange('2026-09-23T11:30:00Z', '1h', now())).toBe(true)
+    expect(inRange('2026-09-23T09:00:00Z', '1h', now())).toBe(false)
+    expect(inRange('2026-09-23T09:00:00Z', '24h', now())).toBe(true)
+    // With no clock given, a range counts back from the wall clock.
+    expect(inRange('2026-09-23T11:30:00Z', '1h')).toBe(false)
   })
 })

@@ -29,6 +29,9 @@ export function configureTime(next: Partial<TimeSettings>) {
   formats = build(settings)
 }
 
+/** The configured clock: the wall clock, or the mock tier's fixed one. */
+export const now = () => settings.now()
+
 /** The short name of the zone times are shown in, e.g. UTC or CEST. */
 export const zoneLabel = () => formats.zone
 

@@ -41,7 +41,7 @@ function EventOverview() {
     <VStack gap={4}>
       <Grid columns={{ minWidth: 340, repeat: 'fit' }} gap={4}>
         <Panel title="What the sensor captured">
-          <Text type="code">{event.summary}</Text>
+          <Text type="code">{event.summary ?? '—'}</Text>
           {reading.what && <Text type="supporting">{`${event.sensor}: ${reading.what}.`}</Text>}
           <MetadataList label={{ position: 'start', width: 104 }}>
             {event.username && (
@@ -106,7 +106,7 @@ function EventOverview() {
         <Panel title="Where it came from">
           <MetadataList label={{ position: 'start', width: 104 }}>
             <MetadataListItem label="Source">
-              <EntityLink kind="source" id={event.srcIp}>{`${event.srcIp}:${event.srcPort}`}</EntityLink>
+              <EntityLink kind="source" id={event.srcIp}>{event.srcPort === undefined ? event.srcIp : `${event.srcIp}:${event.srcPort}`}</EntityLink>
             </MetadataListItem>
             {event.srcIpClaimed && (
               <MetadataListItem label="Claimed">
@@ -117,16 +117,24 @@ function EventOverview() {
               </MetadataListItem>
             )}
             <MetadataListItem label="Network">
-              <EntityLink kind="asn" id={event.asn}>{`${event.asn} · ${event.org}`}</EntityLink>
+              {event.asn ? (
+                <EntityLink kind="asn" id={event.asn}>{event.org ? `${event.asn} · ${event.org}` : event.asn}</EntityLink>
+              ) : (
+                <Text type="supporting">—</Text>
+              )}
             </MetadataListItem>
             <MetadataListItem label="Provider">
-              <EntityLink kind="provider" id={event.provider} />
+              {event.provider ? <EntityLink kind="provider" id={event.provider} /> : <Text type="supporting">—</Text>}
             </MetadataListItem>
             <MetadataListItem label="Location">
-              <HStack gap={1}>
-                <Text>{`${event.city},`}</Text>
-                <EntityLink kind="country" id={event.country} />
-              </HStack>
+              {event.country ? (
+                <HStack gap={1}>
+                  {event.city && <Text>{`${event.city},`}</Text>}
+                  <EntityLink kind="country" id={event.country} />
+                </HStack>
+              ) : (
+                <Text type="supporting">{event.city ?? '—'}</Text>
+              )}
             </MetadataListItem>
             <MetadataListItem label="Port">
               <EntityLink kind="port" id={String(event.dstPort)} />
@@ -144,8 +152,8 @@ function EventOverview() {
           ))}
         </Panel>
       )}
-      <EventsPanel title="Around it in this session" events={session.slice(0, 8)} action={<EntityLink kind="session" id={event.sessionId}>Full session</EntityLink>} empty="This event is the whole session." />
-      <RelatedPanel center={event.summary} groups={related} />
+      <EventsPanel title="Around it in this session" events={session.slice(0, 8)} action={event.sessionId ? <EntityLink kind="session" id={event.sessionId}>Full session</EntityLink> : undefined} empty="This event is the whole session." />
+      <RelatedPanel center={event.summary ?? event.eventName} groups={related} />
     </VStack>
   )
 }

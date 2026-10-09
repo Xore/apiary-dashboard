@@ -137,13 +137,13 @@ const columns: TableColumn<HoneypotEvent>[] = [
     renderCell: (row) => (
       <HStack gap={1.5} vAlign="center">
         <EntityLink kind="source" id={row.srcIp} />
-        <Text type="supporting">{row.country}</Text>
+        <Text type="supporting">{row.country ?? '—'}</Text>
         {row.srcIpClaimed && <ClaimedSource claimed={row.srcIpClaimed} />}
       </HStack>
     ),
   },
-  { key: 'dstPort', header: 'Port', width: pixel(120), renderCell: (row) => `${row.dstPort}/${row.protocol}` },
-  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <Text type="code">{row.summary}</Text> },
+  { key: 'dstPort', header: 'Port', width: pixel(120), renderCell: (row) => (row.protocol ? `${row.dstPort}/${row.protocol}` : `${row.dstPort}`) },
+  { key: 'summary', header: 'Detail', width: proportional(3), renderCell: (row) => <Text type="code">{row.summary ?? '—'}</Text> },
   { key: 'openIn', header: <VisuallyHidden>Open in</VisuallyHidden>, width: pixel(96), align: 'end', renderCell: (row) => <EventOpenIn event={row} /> },
 ]
 

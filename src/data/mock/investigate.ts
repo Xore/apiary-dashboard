@@ -255,7 +255,7 @@ const PROMPT = 'root@svr04:~# '
 
 function buildRecordings(): { recordings: Recording[]; replays: Map<string, Replay> } {
   const rng = createRng(0x77e0)
-  const sessions = [...byKey(EVENTS.filter((e) => e.type === 'command.input'), (e) => e.sessionId)]
+  const sessions = [...byKey(EVENTS.filter((e) => e.type === 'command.input'), (e) => e.sessionId ?? '')]
   const replays = new Map<string, Replay>()
   // Bot traffic is repetitive: many sessions share one content-addressed
   // recording, so a small pool of transcripts backs every session.
