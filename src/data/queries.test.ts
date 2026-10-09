@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import { fieldText, readField } from '#/lib/sensorFields'
 import { backend } from './backend'
+import { MOCK_NOW } from './mock/random'
 import { inRange } from './shared'
 
 // The mock backend itself: tests and scripts call it directly.
@@ -48,7 +49,7 @@ describe('cross-page consistency', () => {
     const all = (await q.getAnalysisResults('all')).results.filter((r) => r.analyzer !== 'workbench')
     expect(day.length).toBeGreaterThan(0)
     expect(day.length).toBeLessThan(all.length)
-    for (const r of day) expect(inRange(r.at, '24h'), r.id).toBe(true)
+    for (const r of day) expect(inRange(r.at, '24h', MOCK_NOW), r.id).toBe(true)
     for (const r of all) expect(r.verdict, r.id).toBeDefined()
   })
 })
