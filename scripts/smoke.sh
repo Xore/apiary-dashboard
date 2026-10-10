@@ -146,7 +146,7 @@ ANON_CHECKS=(
   "/api/chart/os-distribution 401"
   "/api/topology/flow 401"
   "/healthz 200"
-  "/export/portbridge-manual-blackhole.txt 200"
+  "/export/portbridge-manual-blackhole.txt 401"
   "/auth/login 200"
 )
 

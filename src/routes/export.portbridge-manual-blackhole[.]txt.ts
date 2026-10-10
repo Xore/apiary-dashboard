@@ -1,10 +1,31 @@
-// GET /export/portbridge-manual-blackhole.txt — the VPS firewall puller's
-// URL (every five minutes; must stay byte-identical across the cutover).
-// No session check, as in production: the WireGuard tunnel is the trust
-// boundary for this one path.
+// GET /export/portbridge-manual-blackhole.txt — the manual blackhole list the
+// VPS firewall puller reads (every five minutes; the body must stay
+// byte-identical across the cutover).
+//
+// Two callers may read it, and nobody else:
+// - a machine client sending `X-Service-Token` equal to SERVICE_TOKEN (the
+//   VPS job, vps/portbridge-manual-blackhole-refresh.sh);
+// - a signed-in session whose role the query policy allows for `getBlockedIps`.
+// Anything else is 401 (no credentials) or 403 (signed in, role refused).
 import { createFileRoute } from '@tanstack/react-router'
 import { blackholeExport, serveDownload } from '#/data/downloads'
+import { authorize } from '#/server/authorize'
+import { resolveUser } from '#/server/identity'
+import { hasServiceToken } from '#/server/serviceToken'
+
+const text = (status: number, message: string) => new Response(message, { status, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } })
 
 export const Route = createFileRoute('/export/portbridge-manual-blackhole.txt')({
-  server: { handlers: { GET: ({ request }) => serveDownload(request, blackholeExport(), { session: false }) } },
+  server: {
+    handlers: {
+      GET: async ({ request }) => {
+        if (!hasServiceToken(request)) {
+          const user = await resolveUser(request)
+          if (!user) return text(401, 'unauthorized')
+          if (authorize('getBlockedIps', user) !== 'allowed') return text(403, 'forbidden')
+        }
+        return serveDownload(request, blackholeExport(), { session: false })
+      },
+    },
+  },
 })
